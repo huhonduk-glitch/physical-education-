@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import { db } from '../db/db'
 import type { AppSettings } from '../db/settings'
@@ -88,6 +89,17 @@ export default function SettingsPage() {
         </Section>
 
         <PinChange />
+
+        <Section title="수업 기록">
+          <Link to="/more/settings/buttons" className="btn btn-outline w-full justify-between">
+            <span>기록 버튼 편집 (미준비·솔선수범·부장 활동)</span>
+            <span aria-hidden>›</span>
+          </Link>
+          <Link to="/more/settings/timetable" className="btn btn-outline w-full justify-between">
+            <span>수업 시간표 · 교시 시각</span>
+            <span aria-hidden>›</span>
+          </Link>
+        </Section>
 
         <Section title="연동 앱 주소">
           <TextSetting id="bracket" type="url" label="팀 편성 (SPORTS BRACKET)" k="bracketUrl" />
