@@ -1,19 +1,24 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-export default function PageHeader({ title, back, right }: { title: string; back?: boolean; right?: ReactNode }) {
+/** 화면 제목 줄. 스크롤해도 위에 붙어 있고, 뒤 배경이 살짝 비친다. */
+export default function PageHeader({ title, sub, back, right }: { title: ReactNode; sub?: ReactNode; back?: boolean; right?: ReactNode }) {
   const navigate = useNavigate()
   return (
-    <header className="sticky top-0 z-20 border-b-2 border-zinc-200 bg-white pt-[env(safe-area-inset-top)]">
-      {/* 제목 줄도 본문과 같은 너비로 맞춰 PC에서 제목과 내용이 한 줄로 정렬되게 한다 */}
-      <div className="page flex min-h-[60px] items-center gap-2 px-2">
+    <header className="sticky top-0 z-20 bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+      <div className="page flex min-h-[64px] items-center gap-1 px-2">
         {back && (
-          <button type="button" className="btn btn-ghost px-2 text-2xl" aria-label="뒤로" onClick={() => navigate(-1)}>
-            ‹
+          <button type="button" className="btn btn-ghost -ml-1 px-2" aria-label="뒤로" onClick={() => navigate(-1)}>
+            <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
           </button>
         )}
-        <h1 className={`flex-1 text-xl font-extrabold ${back ? '' : 'pl-2'}`}>{title}</h1>
-        {right}
+        <div className={`min-w-0 flex-1 ${back ? '' : 'pl-2'}`}>
+          <h1 className="truncate text-[1.4rem] leading-tight font-extrabold tracking-tight">{title}</h1>
+          {sub && <p className="truncate text-sm font-semibold text-ink-3">{sub}</p>}
+        </div>
+        {right && <div className="flex shrink-0 items-center gap-2 pr-1">{right}</div>}
       </div>
     </header>
   )

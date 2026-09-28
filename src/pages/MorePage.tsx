@@ -22,17 +22,17 @@ export default function MorePage() {
       <PageHeader title="더보기" />
       <div className="page space-y-3 py-4">
         {MENU.map((m) => (
-          <Link key={m.to} to={m.to} className="card flex min-h-[60px] items-center justify-between text-lg font-bold hover:bg-zinc-50">
+          <Link key={m.to} to={m.to} className="card flex min-h-[60px] items-center justify-between text-lg font-bold hover:bg-fill">
             <span>{m.label}</span>
             <span aria-hidden>›</span>
           </Link>
         ))}
-        <button type="button" className="card flex min-h-[60px] w-full items-center text-lg font-bold hover:bg-zinc-50" onClick={lock}>
+        <button type="button" className="card flex min-h-[60px] w-full items-center text-lg font-bold hover:bg-fill" onClick={lock}>
           🔒 지금 잠그기
         </button>
         <ul className="space-y-2 pt-2">
           {LATER.map((m) => (
-            <li key={m.label} className="flex min-h-[52px] items-center justify-between rounded-xl bg-zinc-100 px-4 text-zinc-600">
+            <li key={m.label} className="flex min-h-[52px] items-center justify-between rounded-xl bg-fill px-4 text-ink-3">
               <span>{m.label}</span>
               <span className="text-sm">{m.phase}단계 예정</span>
             </li>

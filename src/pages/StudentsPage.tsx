@@ -88,27 +88,27 @@ export default function StudentsPage() {
             })}
           </div>
 
-          <ul className="mt-3 divide-y-2 divide-zinc-100 rounded-xl border-2 border-zinc-200">
+          <ul className="mt-3 divide-y divide-line rounded-xl border border-line">
             {list.map((s) => (
               <li key={s.id}>
                 <Link
                   to={`/students/${s.id}`}
-                  className={`flex min-h-[52px] items-center gap-3 px-3 hover:bg-zinc-50 ${s.status === '전출' ? 'bg-zinc-100 text-zinc-500' : ''}`}
+                  className={`flex min-h-[52px] items-center gap-3 px-3 hover:bg-fill ${s.status === '전출' ? 'bg-fill text-ink-3' : ''}`}
                 >
                 <span className="w-8 text-right text-lg font-extrabold tabular-nums">{s.number}</span>
                 <span className="flex-1 text-lg">{s.name}</span>
-                <span className="text-zinc-600">{genderLabel(s.gender)}</span>
+                <span className="text-ink-3">{genderLabel(s.gender)}</span>
                 {s.status !== '재학' && (
-                  <span className="rounded-md bg-zinc-200 px-2 py-0.5 text-sm font-bold text-zinc-700">{s.status}</span>
+                  <span className="rounded-md bg-fill-2 px-2 py-0.5 text-sm font-bold text-ink-2">{s.status}</span>
                 )}
-                <span aria-hidden className="text-zinc-400">›</span>
+                <span aria-hidden className="text-ink-3">›</span>
                 </Link>
               </li>
             ))}
           </ul>
 
           {leftCount > 0 && (
-            <button type="button" className="btn btn-ghost mt-2 text-zinc-700 underline" onClick={() => setShowLeft((v) => !v)}>
+            <button type="button" className="btn btn-ghost mt-2 text-ink-2 underline" onClick={() => setShowLeft((v) => !v)}>
               {showLeft ? '전출생 숨기기' : `전출생 ${leftCount}명 보기`}
             </button>
           )}

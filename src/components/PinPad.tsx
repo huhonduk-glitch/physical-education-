@@ -33,14 +33,14 @@ export default function PinPad({ value, onChange, onSubmit, disabled, maxLength 
     return () => window.removeEventListener('keydown', onKey)
   }, [value, onChange, onSubmit, disabled, maxLength])
 
-  const key = 'btn h-16 text-2xl border-zinc-400 bg-white text-black active:bg-zinc-200'
+  const key = 'btn h-[68px] rounded-2xl bg-white text-[1.7rem] font-bold text-ink shadow-[var(--shadow-card)] active:bg-fill-2'
   return (
     <div className="mx-auto w-full max-w-xs">
-      <div className="mb-5 flex justify-center gap-3" aria-label={`${value.length}자리 입력됨`}>
+      <div className="mb-8 flex justify-center gap-3.5" aria-label={`${value.length}자리 입력됨`}>
         {Array.from({ length: maxLength }, (_, i) => (
           <span
             key={i}
-            className={`h-5 w-5 rounded-full border-2 border-brand ${i < value.length ? 'bg-brand' : 'bg-white'}`}
+            className={`h-4 w-4 rounded-full transition-colors ${i < value.length ? 'bg-brand' : 'bg-fill-2'}`}
           />
         ))}
       </div>
@@ -58,7 +58,7 @@ export default function PinPad({ value, onChange, onSubmit, disabled, maxLength 
         </button>
         <button
           type="button"
-          className="btn btn-primary h-16 text-lg"
+          className="btn btn-primary h-[68px] rounded-2xl text-lg"
           onClick={onSubmit}
           disabled={disabled || value.length < 4}
         >

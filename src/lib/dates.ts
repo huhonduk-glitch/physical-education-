@@ -33,3 +33,39 @@ export function dayBefore(date: string): string {
   const [y, m, d] = date.split('-').map(Number)
   return toDateStr(new Date(y, m - 1, d - 1))
 }
+
+/** n일 뒤(음수면 앞) 날짜 */
+export function addDays(date: string, n: number): string {
+  const [y, m, d] = date.split('-').map(Number)
+  return toDateStr(new Date(y, m - 1, d + n))
+}
+
+/** 'YYYY-MM' 달의 다음/이전 달 */
+export function addMonths(month: string, n: number): string {
+  const [y, m] = month.split('-').map(Number)
+  const d = new Date(y, m - 1 + n, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+/**
+ * 달력 한 달치 칸 (일요일 시작, 6주 고정이 아니라 필요한 주만큼).
+ * 그 달이 아닌 날은 null.
+ */
+export function monthGrid(month: string): (string | null)[][] {
+  const [y, m] = month.split('-').map(Number)
+  const first = new Date(y, m - 1, 1)
+  const days = new Date(y, m, 0).getDate()
+  const cells: (string | null)[] = Array(first.getDay()).fill(null)
+  for (let d = 1; d <= days; d++) cells.push(toDateStr(new Date(y, m - 1, d)))
+  while (cells.length % 7) cells.push(null)
+  const weeks: (string | null)[][] = []
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7))
+  return weeks
+}
+
+/** '2026-09-28' → '9월 28일 (월)' */
+export function longDateLabel(date: string): string {
+  const [y, m, d] = date.split('-').map(Number)
+  const wd = '일월화수목금토'[new Date(y, m - 1, d).getDay()]
+  return `${m}월 ${d}일 (${wd})`
+}

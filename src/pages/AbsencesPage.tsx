@@ -69,7 +69,7 @@ export default function AbsencesPage() {
         {list.length === 0 ? (
           <p className="card">견학 기록이 없어요</p>
         ) : view === 'list' ? (
-          <ul className="divide-y-2 divide-zinc-100 rounded-xl border-2 border-zinc-200">
+          <ul className="divide-y divide-line rounded-xl border border-line">
             {list.map((a) => {
               const s = byId.get(a.studentId)!
               return (
@@ -79,7 +79,7 @@ export default function AbsencesPage() {
                     {s.grade}-{s.classNo} {s.number}번 {s.name}
                   </Link>
                   <Masked text={a.detail ? `${a.reason} · ${a.detail}` : a.reason} />
-                  <button type="button" className="btn btn-ghost px-2 text-zinc-600" onClick={() => confirm('이 견학 기록을 지울까요?') && db.absences.delete(a.id)}>
+                  <button type="button" className="btn btn-ghost px-2 text-ink-3" onClick={() => confirm('이 견학 기록을 지울까요?') && db.absences.delete(a.id)}>
                     지우기
                   </button>
                 </li>

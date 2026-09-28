@@ -46,13 +46,13 @@ async function downloadAs(e: React.MouseEvent<HTMLAnchorElement>, url: string, f
 export default function NeisGuide({ kind }: { kind: 'roster' | 'paps' }) {
   const f = FILES[kind]
   return (
-    <div className="space-y-3 rounded-xl border-2 border-zinc-200 bg-zinc-50 p-3">
+    <div className="space-y-3 rounded-xl border border-line bg-fill p-3">
       <p className="font-bold">📍 나이스에서 {f.what} 받는 곳</p>
       <ol className="flex flex-wrap items-center gap-1 text-[0.95rem]" aria-label="나이스 메뉴 경로">
         {NEIS_PAPS_MENU_PATH.map((step, i) => (
           <li key={step} className="flex items-center gap-1">
-            {i > 0 && <span aria-hidden className="text-zinc-500">›</span>}
-            <span className="rounded-md bg-white px-2 py-1 font-bold ring-1 ring-zinc-300">{step}</span>
+            {i > 0 && <span aria-hidden className="text-ink-3">›</span>}
+            <span className="rounded-md bg-white px-2 py-1 font-bold ring-1 ring-line">{step}</span>
           </li>
         ))}
       </ol>

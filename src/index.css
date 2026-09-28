@@ -1,16 +1,35 @@
 @import "tailwindcss";
 
-/* 햇빛 아래에서도 잘 보이도록: 흰 바탕 + 검은 글씨 + 진한 파랑, 큰 글씨 (CLAUDE.md 1장) */
+/*
+ * 디자인 기준 (CLAUDE.md 1장): 햇빛 아래에서도 잘 보이는 고대비 + 큰 글씨 + 누르는 곳 48px 이상.
+ * 요즘 국내 앱처럼 연회색 바탕 위에 흰 카드, 진한 파랑 강조색, Pretendard 글꼴(앱 안에 포함 → 오프라인 OK).
+ * 색 대비: 본문 #191f28 / 보조 #4e5968 (흰 바탕 7:1 이상), 버튼 파랑 #1b64da (흰 글씨 5:1 이상).
+ */
 @theme {
-  --color-brand: #0b3d91;
-  --color-brand-dark: #072a66;
-  --color-brand-light: #e6eefb;
-  --color-danger: #b91c1c;
-  --color-danger-light: #fee2e2;
-  --color-caution: #92400e;
-  --color-caution-light: #fef3c7;
-  --color-ok: #166534;
-  --color-ok-light: #dcfce7;
+  --font-sans: 'Pretendard Variable', Pretendard, system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+
+  --color-ink: #191f28;
+  --color-ink-2: #4e5968;
+  --color-ink-3: #6b7684;
+  --color-line: #e5e8eb;
+  --color-bg: #f2f4f6;
+  --color-fill: #f2f4f6;
+  --color-fill-2: #e5e8eb;
+
+  --color-brand: #1b64da;
+  --color-brand-dark: #1957c2;
+  --color-brand-light: #e8f3ff;
+  --color-brand-ink: #1b64da;
+
+  --color-danger: #d22030;
+  --color-danger-light: #ffeeee;
+  --color-caution: #9a5b00;
+  --color-caution-light: #fff5e0;
+  --color-ok: #0a7d50;
+  --color-ok-light: #e5f8ef;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 8px rgb(0 0 0 / 0.04);
+  --shadow-float: 0 8px 24px rgb(0 0 0 / 0.12);
 }
 
 html {
@@ -20,14 +39,25 @@ html {
 
 body {
   margin: 0;
-  background: #ffffff;
-  color: #000000;
-  font-family: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-feature-settings: 'tnum' 0;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
   /* 한글이 낱글자 단위로 끊기지 않고 띄어쓰기 단위로 줄바꿈되게 (좁은 폰 화면) */
   word-break: keep-all;
   overflow-wrap: anywhere;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  letter-spacing: inherit;
 }
 
 @layer components {
@@ -40,7 +70,8 @@ body {
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  /* 모든 누르는 것은 최소 48px */
+
+  /* ── 버튼 (모두 48px 이상) ── */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -48,15 +79,22 @@ body {
     gap: 0.4rem;
     min-height: 48px;
     min-width: 48px;
-    padding: 0 1rem;
-    border-radius: 0.75rem;
+    padding: 0 1.05rem;
+    border-radius: 14px;
     font-weight: 700;
-    border: 2px solid transparent;
+    border: 0;
     user-select: none;
     cursor: pointer;
+    transition:
+      background-color 0.15s,
+      transform 0.08s,
+      box-shadow 0.15s;
+  }
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
   }
   .btn:disabled {
-    opacity: 0.4;
+    opacity: 0.38;
     cursor: not-allowed;
   }
   .btn-primary {
@@ -66,65 +104,217 @@ body {
   .btn-primary:active:not(:disabled) {
     background: var(--color-brand-dark);
   }
+  /* 보조 버튼: 연한 파랑 바탕 (이전 테두리형을 대신함) */
   .btn-outline {
-    background: #fff;
-    color: var(--color-brand);
-    border-color: var(--color-brand);
+    background: var(--color-brand-light);
+    color: var(--color-brand-ink);
   }
   .btn-outline:active:not(:disabled) {
-    background: var(--color-brand-light);
+    background: #d3e6ff;
   }
-  @media (hover: hover) {
-    .btn-primary:hover:not(:disabled) {
-      background: var(--color-brand-dark);
-    }
-    .btn-outline:hover:not(:disabled),
-    .btn-ghost:hover:not(:disabled) {
-      background: var(--color-brand-light);
-    }
-    .btn-danger:hover:not(:disabled) {
-      filter: brightness(0.9);
-    }
+  .btn-soft {
+    background: var(--color-fill);
+    color: var(--color-ink);
   }
-  .btn:focus-visible {
-    outline: 3px solid var(--color-brand);
-    outline-offset: 2px;
+  .btn-soft:active:not(:disabled) {
+    background: var(--color-fill-2);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-ink);
   }
   .btn-danger {
     background: var(--color-danger);
     color: #fff;
   }
-  .btn-ghost {
-    background: transparent;
-    color: #000;
+  .btn-danger-soft {
+    background: var(--color-danger-light);
+    color: var(--color-danger);
   }
+  @media (hover: hover) {
+    .btn-primary:hover:not(:disabled) {
+      background: var(--color-brand-dark);
+    }
+    .btn-outline:hover:not(:disabled) {
+      background: #d3e6ff;
+    }
+    .btn-soft:hover:not(:disabled),
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--color-fill-2);
+    }
+    .btn-danger:hover:not(:disabled) {
+      filter: brightness(0.92);
+    }
+  }
+  .btn:focus-visible,
+  .field:focus-visible,
+  a:focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--color-brand) 55%, transparent);
+    outline-offset: 2px;
+  }
+
+  /* ── 입력 칸 ── */
   .field {
     min-height: 48px;
     width: 100%;
-    padding: 0 0.75rem;
-    border: 2px solid #52525b;
-    border-radius: 0.6rem;
-    background: #fff;
-    color: #000;
+    padding: 0 0.85rem;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background: var(--color-fill);
+    color: var(--color-ink);
     font-size: 1rem;
+    transition:
+      border-color 0.15s,
+      background-color 0.15s;
+  }
+  .field::placeholder {
+    color: var(--color-ink-3);
   }
   .field:focus {
-    outline: 3px solid var(--color-brand);
-    outline-offset: 1px;
-  }
-  .card {
-    border: 2px solid #d4d4d8;
-    border-radius: 1rem;
+    outline: none;
+    border-color: var(--color-brand);
     background: #fff;
-    padding: 1rem;
+  }
+  select.field {
+    appearance: none;
+    padding-right: 2rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234e5968' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+  }
+
+  /* ── 카드·글자 ── */
+  .card {
+    border-radius: 20px;
+    background: #fff;
+    padding: 1.1rem;
+    box-shadow: var(--shadow-card);
+  }
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
   }
   .label {
     display: block;
     font-weight: 700;
-    margin-bottom: 0.35rem;
+    font-size: 0.92rem;
+    color: var(--color-ink-2);
+    margin-bottom: 0.4rem;
   }
   .hint {
     font-size: 0.85rem;
-    color: #3f3f46;
+    line-height: 1.5;
+    color: var(--color-ink-3);
+  }
+
+  /* ── 알약 모양 선택 버튼 (반·필터·세그먼트) ── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    min-height: 44px;
+    padding: 0 1rem;
+    border-radius: 999px;
+    font-weight: 700;
+    background: #fff;
+    color: var(--color-ink-2);
+    box-shadow: inset 0 0 0 1.5px var(--color-line);
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .chip[aria-selected='true'],
+  .chip[aria-pressed='true'] {
+    background: var(--color-ink);
+    color: #fff;
+    box-shadow: none;
+  }
+  .segment {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 14px;
+    background: var(--color-fill-2);
+  }
+  .segment > button {
+    flex: 1;
+    min-height: 44px;
+    border-radius: 11px;
+    font-weight: 700;
+    color: var(--color-ink-2);
+  }
+  .segment > button[aria-selected='true'],
+  .segment > button[aria-pressed='true'] {
+    background: #fff;
+    color: var(--color-ink);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* 목록 (카드 안의 줄) */
+  .list-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 56px;
+    padding: 0.5rem 1.1rem;
+  }
+  .list-row + .list-row {
+    border-top: 1px solid var(--color-line);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.anim-sheet {
+  animation: sheet-up 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.anim-fade {
+  animation: fade-in 0.18s ease-out;
+}
+.anim-pop {
+  animation: pop-in 0.2s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anim-sheet,
+  .anim-fade,
+  .anim-pop {
+    animation: none;
+  }
+  .btn {
+    transition: none;
   }
 }

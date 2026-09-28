@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import Icon from '../components/Icon'
 import PinPad from '../components/PinPad'
 import { db } from '../db/db'
 import { lockoutSeconds, verifyPin, type StoredPin } from '../lib/pin'
@@ -67,7 +68,10 @@ export default function LockPage({ stored, onUnlock }: { stored: StoredPin; onUn
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center p-5">
-      <p className="mb-1 text-center text-2xl font-extrabold">🔒 PIN 입력</p>
+      <span className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-brand text-white shadow-[0_8px_20px_rgb(27_100_218/0.35)]">
+        <Icon name="lock" size={30} />
+      </span>
+      <p className="mb-1 text-center text-2xl font-extrabold tracking-tight">PIN을 입력하세요</p>
       <p className="hint mb-6 text-center">체육수업 누가기록</p>
       <p className="mb-4 min-h-[1.5em] text-center font-bold text-danger" role="alert">
         {waiting
@@ -77,7 +81,7 @@ export default function LockPage({ stored, onUnlock }: { stored: StoredPin; onUn
             : ''}
       </p>
       <PinPad value={pin} onChange={setPin} onSubmit={submit} disabled={checking || waiting} />
-      <button type="button" className="btn btn-ghost mx-auto mt-8 text-zinc-600 underline" onClick={() => setForgot(true)}>
+      <button type="button" className="btn btn-ghost mx-auto mt-8 text-ink-3" onClick={() => setForgot(true)}>
         PIN을 잊었어요
       </button>
     </main>
@@ -97,7 +101,7 @@ function ForgotPin({ onCancel }: { onCancel: () => void }) {
   return (
     <main className="mx-auto min-h-dvh max-w-md p-5">
       <h1 className="mt-6 text-2xl font-extrabold">PIN을 잊었을 때</h1>
-      <div className="card mt-4 border-danger bg-danger-light">
+      <div className="card mt-4 bg-danger-light shadow-none">
         <p className="font-bold">PIN은 이 기기에만 저장되어 있어서 찾거나 바꿀 방법이 없어요.</p>
         <p className="mt-2">
           처음부터 다시 쓰려면 <b>이 기기의 모든 학생 명렬과 기록을 지워야</b> 해요. 백업 파일이 있다면 나중에 복원할 수 있어요.

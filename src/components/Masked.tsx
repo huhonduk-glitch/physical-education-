@@ -4,11 +4,11 @@ import { useState } from 'react'
 export default function Masked({ text, label = '사유 보기' }: { text: string; label?: string }) {
   const [show, setShow] = useState(false)
   return show ? (
-    <button type="button" className="min-h-[40px] rounded-lg bg-zinc-100 px-2 text-left font-bold" onClick={() => setShow(false)}>
+    <button type="button" className="min-h-[40px] rounded-lg bg-fill px-2 text-left font-bold" onClick={() => setShow(false)}>
       {text}
     </button>
   ) : (
-    <button type="button" className="min-h-[40px] rounded-lg bg-zinc-200 px-3 text-sm font-bold text-zinc-700" onClick={() => setShow(true)}>
+    <button type="button" className="min-h-[40px] rounded-lg bg-fill-2 px-3 text-sm font-bold text-ink-2" onClick={() => setShow(true)}>
       🔒 {label}
     </button>
   )

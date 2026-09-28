@@ -207,7 +207,7 @@ function CaptainHistory({ captains, name }: { captains: Captain[]; name: (id: st
         .map((c) => {
           const mine = (acts ?? []).filter((r) => r.studentId === c.studentId)
           return (
-            <li key={c.id} className="rounded-xl bg-zinc-50 p-3">
+            <li key={c.id} className="rounded-xl bg-fill p-3">
               <p className="font-bold">
                 체육{c.role} · {name(c.studentId)}
               </p>

@@ -6,6 +6,7 @@ import { addAbsences, addRecords, type UndoToken } from '../db/recordsRepo'
 import type { Absence, RecordType, Student } from '../db/types'
 import { useApp } from '../state/AppContext'
 import BottomSheet from './BottomSheet'
+import Icon, { type IconName } from './Icon'
 import KeywordPicker from './KeywordPicker'
 
 export const TYPE_LABEL: Record<RecordType, string> = {
@@ -72,20 +73,20 @@ export default function RecordSheet({ students, date, period, onClose, onRecorde
     void record(type, category, type === 'exemplary' ? { keywordIds } : {})
   }
 
-  const btn = 'btn btn-outline min-h-[52px] w-full text-[1.05rem]'
+  const btn = 'btn btn-soft min-h-[54px] w-full text-[1.02rem]'
   return (
     <BottomSheet title={single ? <>{single.number}번 {single.name}</> : <>{students.length}명 한꺼번에 기록</>} onClose={onClose}>
       <div className="space-y-5">
         {!single && <p className="hint">{students.map((s) => s.number).join(', ')}번</p>}
 
         {pending ? (
-          <section className="space-y-3 rounded-xl border-2 border-brand p-3">
+          <section className="anim-pop space-y-3 rounded-2xl bg-brand-light p-4">
             <p className="font-bold">
               {TYPE_LABEL[pending.type]} · 기타 — 메모를 적어 주세요
             </p>
             <input className="field" autoFocus value={note} onChange={(e) => setNote(e.target.value)} placeholder="예: 줄넘기 안 가져옴" />
             <div className="flex gap-2">
-              <button type="button" className="btn btn-outline flex-1" onClick={() => setPending(null)}>
+              <button type="button" className="btn btn-soft flex-1 bg-white" onClick={() => setPending(null)}>
                 취소
               </button>
               <button
@@ -101,7 +102,7 @@ export default function RecordSheet({ students, date, period, onClose, onRecorde
         ) : (
           <>
             <section>
-              <h3 className="mb-2 font-extrabold text-danger">❗ 준비물 미준비</h3>
+              <SectionTitle icon="alert" tone="bg-danger-light text-danger">준비물 미준비</SectionTitle>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {settings.recordButtons.unprepared.map((c) => (
                   <button key={c} type="button" className={btn} disabled={busy} onClick={() => tapCategory('unprepared', c)}>
@@ -112,7 +113,7 @@ export default function RecordSheet({ students, date, period, onClose, onRecorde
             </section>
 
             <section>
-              <h3 className="mb-2 font-extrabold text-brand">⭐ 솔선수범</h3>
+              <SectionTitle icon="star" tone="bg-brand-light text-brand">솔선수범</SectionTitle>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {settings.recordButtons.exemplary.map((c) => (
                   <button key={c} type="button" className={btn} disabled={busy} onClick={() => tapCategory('exemplary', c)}>
@@ -126,7 +127,7 @@ export default function RecordSheet({ students, date, period, onClose, onRecorde
             </section>
 
             <section>
-              <h3 className="mb-2 font-extrabold text-zinc-700">🩹 견학</h3>
+              <SectionTitle icon="bandage" tone="bg-fill-2 text-ink-2">견학</SectionTitle>
               <div className="grid grid-cols-4 gap-2">
                 {ABSENCE_REASONS.map((r) => (
                   <button key={r} type="button" className={btn} disabled={busy} onClick={() => absent(r)}>
@@ -144,7 +145,7 @@ export default function RecordSheet({ students, date, period, onClose, onRecorde
             </section>
 
             <section className="space-y-2">
-              <h3 className="font-extrabold">📝 관찰 메모</h3>
+              <SectionTitle icon="note" tone="bg-ok-light text-ok">관찰 메모</SectionTitle>
               <textarea className="field min-h-[5rem] py-2" value={obsNote} onChange={(e) => setObsNote(e.target.value)} placeholder="예: 모둠 활동에서 역할을 나눠 줌" aria-label="관찰 메모" />
               <KeywordPicker value={obsKeywords} onChange={setObsKeywords} />
               <button
@@ -177,21 +178,21 @@ function TodayList({ student, date }: { student: Student; date: string }) {
   if (!data) return null
   const empty = data.records.length === 0 && data.absences.length === 0
   return (
-    <section className="rounded-xl bg-zinc-50 p-3">
+    <section className="rounded-2xl bg-fill p-4">
       <div className="mb-1 flex items-center justify-between">
         <h3 className="font-extrabold">오늘 기록</h3>
-        <Link to={`/students/${student.id}`} className="btn btn-ghost px-2 text-brand underline">
+        <Link to={`/students/${student.id}`} className="btn min-h-[40px] bg-white px-3 text-sm text-brand">
           누적 기록 보기
         </Link>
       </div>
       {empty ? (
         <p className="hint">아직 없어요</p>
       ) : (
-        <ul className="divide-y divide-zinc-200">
+        <ul className="divide-y divide-line">
           {data.absences.map((a) => (
             <li key={a.id} className="flex min-h-[48px] items-center gap-2">
-              <span className="flex-1">🩹 견학</span>
-              <button type="button" className="btn btn-ghost px-2 text-zinc-600" aria-label="견학 지우기" onClick={() => db.absences.delete(a.id)}>
+              <span className="flex-1 font-semibold">견학</span>
+              <button type="button" className="btn btn-ghost px-2 text-ink-3" aria-label="견학 지우기" onClick={() => db.absences.delete(a.id)}>
                 지우기
               </button>
             </li>
@@ -200,9 +201,9 @@ function TodayList({ student, date }: { student: Student; date: string }) {
             <li key={r.id} className="flex min-h-[48px] items-center gap-2">
               <span className="flex-1">
                 {TYPE_LABEL[r.type]} · {r.category}
-                {r.note ? <span className="text-zinc-600"> — {r.note}</span> : null}
+                {r.note ? <span className="text-ink-3"> — {r.note}</span> : null}
               </span>
-              <button type="button" className="btn btn-ghost px-2 text-zinc-600" aria-label={`${r.category} 지우기`} onClick={() => db.records.delete(r.id)}>
+              <button type="button" className="btn btn-ghost px-2 text-ink-3" aria-label={`${r.category} 지우기`} onClick={() => db.records.delete(r.id)}>
                 지우기
               </button>
             </li>
@@ -210,5 +211,16 @@ function TodayList({ student, date }: { student: Student; date: string }) {
         </ul>
       )}
     </section>
+  )
+}
+
+function SectionTitle({ icon, tone, children }: { icon: IconName; tone: string; children: string }) {
+  return (
+    <h3 className="mb-2.5 flex items-center gap-2 text-[1.05rem] font-extrabold">
+      <span className={`grid h-8 w-8 place-items-center rounded-xl ${tone}`}>
+        <Icon name={icon} size={18} strokeWidth={2.4} />
+      </span>
+      {children}
+    </h3>
   )
 }

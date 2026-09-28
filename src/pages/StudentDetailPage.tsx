@@ -75,15 +75,15 @@ export default function StudentDetailPage() {
       <div className="page space-y-4 py-4">
         <Card title="기본 정보">
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">
-            <dt className="text-zinc-600">학년·반·번호</dt>
+            <dt className="text-ink-3">학년·반·번호</dt>
             <dd className="font-bold">
               {s.grade}학년 {s.classNo}반 {s.number}번
             </dd>
-            <dt className="text-zinc-600">학번</dt>
+            <dt className="text-ink-3">학번</dt>
             <dd className="font-bold tabular-nums">{s.studentCode}</dd>
-            <dt className="text-zinc-600">성별</dt>
+            <dt className="text-ink-3">성별</dt>
             <dd className="font-bold">{genderLabel(s.gender)}</dd>
-            <dt className="text-zinc-600">학년도</dt>
+            <dt className="text-ink-3">학년도</dt>
             <dd className="font-bold">{s.schoolYear}</dd>
           </dl>
           <label className="label mt-2" htmlFor="status">
@@ -171,7 +171,7 @@ export default function StudentDetailPage() {
                 <li key={k.keyword.id}>
                   <button
                     type="button"
-                    className="flex min-h-[44px] w-full items-center gap-2 rounded-lg bg-zinc-50 px-3 text-left"
+                    className="flex min-h-[44px] w-full items-center gap-2 rounded-lg bg-fill px-3 text-left"
                     aria-expanded={openKw === k.keyword.id}
                     onClick={() => setOpenKw(openKw === k.keyword.id ? null : k.keyword.id)}
                   >
@@ -200,7 +200,7 @@ export default function StudentDetailPage() {
             <ul className="space-y-1">
               {observations.map((r) => (
                 <li key={r.id}>
-                  <span className="text-zinc-600">{shortDateLabel(r.date)}</span> {r.note}
+                  <span className="text-ink-3">{shortDateLabel(r.date)}</span> {r.note}
                 </li>
               ))}
             </ul>
@@ -215,17 +215,17 @@ export default function StudentDetailPage() {
           {recent.length === 0 ? (
             <p className="hint">없어요</p>
           ) : (
-            <ul className="divide-y divide-zinc-100">
+            <ul className="divide-y divide-line">
               {recent.map((r) => (
                 <li key={r.id} className="flex min-h-[48px] items-center gap-2">
-                  <span className="w-20 shrink-0 text-sm tabular-nums text-zinc-600">{shortDateLabel(r.date)}</span>
+                  <span className="w-20 shrink-0 text-sm tabular-nums text-ink-3">{shortDateLabel(r.date)}</span>
                   <span className="flex-1">
                     {TYPE_LABEL[r.type]} · {r.category}
-                    {r.note ? <span className="text-zinc-600"> — {r.note}</span> : null}
+                    {r.note ? <span className="text-ink-3"> — {r.note}</span> : null}
                   </span>
                   <button
                     type="button"
-                    className="btn btn-ghost px-2 text-zinc-600"
+                    className="btn btn-ghost px-2 text-ink-3"
                     onClick={() => confirm('이 기록을 지울까요?') && db.records.delete(r.id)}
                   >
                     지우기
