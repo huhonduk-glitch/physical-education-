@@ -17,7 +17,7 @@ type Step = 'input' | 'preview' | 'confirm' | 'done'
 
 /** 명렬 올리기: ① 파일 또는 붙여넣기 → ② 미리보기(바로 고치기) → ③ 저장 확인 → ④ 끝 (CLAUDE.md 4-1) */
 export default function RosterImportPage() {
-  const { settings } = useApp()
+  const { settings, readOnly } = useApp()
   const [step, setStep] = useState<Step>('input')
   const [source, setSource] = useState<'file' | 'paste'>('file')
   const [rows, setRows] = useState<RosterRow[]>([])
@@ -208,7 +208,7 @@ export default function RosterImportPage() {
                 desc="올린 반은 이 명단대로 바꿔요. 명단에서 빠진 학생은 기록이 있으면 '전출'로 남기고, 없으면 지워요."
               />
             </fieldset>
-            <button type="button" className="btn btn-primary w-full text-lg" disabled={blocked || busy || rows.length === 0} onClick={toConfirm}>
+            <button type="button" className="btn btn-primary w-full text-lg" disabled={readOnly || blocked || busy || rows.length === 0} onClick={toConfirm}>
               {blocked ? '빨간 칸을 먼저 고쳐 주세요' : '다음: 저장 확인'}
             </button>
           </Preview>
@@ -248,7 +248,7 @@ export default function RosterImportPage() {
 
 function ModeOption({ checked, onSelect, title, desc }: { checked: boolean; onSelect: () => void; title: string; desc: string }) {
   return (
-    <label className={`flex min-h-[48px] cursor-pointer gap-3 rounded-xl border-2 p-3 ${checked ? 'border-brand bg-brand-light' : 'border-zinc-200'}`}>
+    <label className={`flex min-h-[48px] cursor-pointer gap-3 rounded-xl border-2 p-3 ${checked ? 'border-brand bg-brand-light' : 'border-line'}`}>
       <input type="radio" name="mode" className="mt-1 h-6 w-6 shrink-0 accent-[var(--color-brand)]" checked={checked} onChange={onSelect} />
       <span>
         <b>{title}</b>
@@ -308,9 +308,9 @@ function Preview({
         </div>
       </div>
 
-      <div className="relative overflow-x-auto rounded-xl border-2 border-zinc-300">
+      <div className="relative overflow-x-auto rounded-xl border border-line">
         <table className="w-full border-collapse text-left">
-          <thead className="bg-zinc-100">
+          <thead className="bg-fill">
             <tr>
               <th className="p-1 text-sm">줄</th>
               <th className="p-1 text-sm">학년</th>
@@ -360,8 +360,8 @@ function PreviewRow({
   )
   return (
     <>
-      <tr className={`border-t-2 border-zinc-200 ${rowError ? 'bg-danger-light' : ''}`}>
-        <td className="p-1 text-center text-sm text-zinc-700" title={r.source}>{r.source.replace(/\D+$/, '').replace(/^.*:/, '')}</td>
+      <tr className={`border-t-2 border-line ${rowError ? 'bg-danger-light' : ''}`}>
+        <td className="p-1 text-center text-sm text-ink-2" title={r.source}>{r.source.replace(/\D+$/, '').replace(/^.*:/, '')}</td>
         <td className="p-1">{numInput('grade', '학년')}</td>
         <td className="p-1">{numInput('classNo', '반')}</td>
         <td className="p-1">{numInput('number', '번호')}</td>
@@ -386,7 +386,7 @@ function PreviewRow({
           </select>
         </td>
         <td className="p-0">
-          <button type="button" className="btn btn-ghost min-w-[40px] px-0 text-xl text-zinc-600" aria-label={`${r.source} 빼기`} onClick={() => onRemove(r.key)}>
+          <button type="button" className="btn btn-ghost min-w-[40px] px-0 text-xl text-ink-3" aria-label={`${r.source} 빼기`} onClick={() => onRemove(r.key)}>
             ✕
           </button>
         </td>
@@ -444,7 +444,7 @@ function Confirm({
           <h2 className="text-lg font-extrabold">이름이 다른 학생</h2>
           <p className="hint">같은 학년·반·번호에 이름이 달라요. 오타를 고친 것인지, 다른 학생인지 골라 주세요.</p>
           {plan.nameConflicts.map((c) => (
-            <fieldset key={c.student.id} className="rounded-xl border-2 border-zinc-200 p-3">
+            <fieldset key={c.student.id} className="rounded-xl border border-line p-3">
               <legend className="px-1 font-bold">
                 {c.student.grade}-{c.student.classNo} {c.student.number}번: {c.student.name} → {c.incoming.name}
               </legend>

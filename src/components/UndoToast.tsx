@@ -18,10 +18,10 @@ export default function UndoToast({ message, onUndo, onDone, seconds = 5 }: { me
   return (
     <div
       role="status"
-      className="fixed inset-x-3 bottom-[calc(80px+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-xl items-center gap-3 rounded-2xl bg-zinc-900 px-4 py-2 text-white shadow-xl lg:bottom-6 lg:left-64"
+      className="anim-pop fixed inset-x-3 bottom-[calc(76px+env(safe-area-inset-bottom))] z-50 mx-auto flex max-w-xl items-center gap-3 rounded-2xl bg-ink px-4 py-2 text-white shadow-[var(--shadow-float)] lg:bottom-6 lg:left-64"
     >
       <p className="flex-1 font-bold">{message}</p>
-      <button type="button" className="btn bg-white text-black" onClick={onUndo}>
+      <button type="button" className="btn min-h-[44px] bg-white/15 text-white" onClick={onUndo}>
         되돌리기 ({left})
       </button>
     </div>

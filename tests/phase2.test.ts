@@ -193,3 +193,23 @@ describe('기록 저장·되돌리기 (기기 안 저장소)', () => {
     ])
   })
 })
+
+describe('달력', async () => {
+  const { addDays, addMonths, monthGrid, longDateLabel } = await import('../src/lib/dates')
+  it('날짜 더하기·달 넘기기', () => {
+    expect(addDays('2026-02-28', 1)).toBe('2026-03-01')
+    expect(addDays('2026-03-01', -1)).toBe('2026-02-28')
+    expect(addMonths('2026-12', 1)).toBe('2027-01')
+    expect(addMonths('2026-01', -1)).toBe('2025-12')
+  })
+  it('달력 칸: 2026년 9월은 화요일 시작, 5주', () => {
+    const g = monthGrid('2026-09')
+    expect(g).toHaveLength(5)
+    expect(g[0].slice(0, 3)).toEqual([null, null, '2026-09-01'])
+    expect(g.flat().filter(Boolean)).toHaveLength(30)
+    expect(g.every((w) => w.length === 7)).toBe(true)
+  })
+  it('긴 날짜 이름', () => {
+    expect(longDateLabel('2026-09-28')).toBe('9월 28일 (월)')
+  })
+})

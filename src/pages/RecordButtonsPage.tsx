@@ -49,7 +49,7 @@ function Group({ title, list, onChange, onReset }: { title: string; list: string
     <section className="card space-y-2">
       <div className="flex items-center">
         <h2 className="flex-1 text-lg font-extrabold">{title}</h2>
-        <button type="button" className="btn btn-ghost px-2 text-sm text-zinc-600" onClick={() => confirm('처음 버튼으로 되돌릴까요?') && onReset()}>
+        <button type="button" className="btn btn-ghost px-2 text-sm text-ink-3" onClick={() => confirm('처음 버튼으로 되돌릴까요?') && onReset()}>
           처음대로
         </button>
       </div>
@@ -75,7 +75,7 @@ function Group({ title, list, onChange, onReset }: { title: string; list: string
               </>
             ) : (
               <>
-                <span className="min-h-[48px] flex-1 content-center rounded-lg bg-zinc-50 px-3 font-bold">{b}</span>
+                <span className="min-h-[48px] flex-1 content-center rounded-lg bg-fill px-3 font-bold">{b}</span>
                 <button type="button" className="btn btn-ghost px-2" aria-label={`${b} 위로`} disabled={i === 0} onClick={() => move(i, -1)}>
                   ▲
                 </button>

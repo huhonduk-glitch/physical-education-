@@ -39,11 +39,8 @@ function TextSetting({ id, label, k, hint, type = 'text' }: { id: string; label:
 
 export default function SettingsPage() {
   const { settings, updateSettings } = useApp()
-  const [papsInfo, setPapsInfo] = useState<{ version: string; source: string } | null>(null)
-
-  useEffect(() => {
-    import('../data/paps-standards.json').then((m) => setPapsInfo({ version: m.default.version, source: m.default.source }))
-  }, [])
+  const { standards } = useApp()
+  const papsInfo = { version: standards.version, source: standards.source }
 
   return (
     <>
@@ -66,19 +63,13 @@ export default function SettingsPage() {
             onChange={(v) => updateSettings({ schoolGenderType: v })}
           />
           <p className="hint -mt-2">명렬에 성별 칸이 없을 때 쓰여요. 남녀공학이면 직접 골라야 해요.</p>
-          <div>
-            <span className="label">현재 학년도</span>
-            <div className="flex items-center gap-3">
-              <button type="button" className="btn btn-outline text-xl" aria-label="1년 전" onClick={() => updateSettings({ schoolYear: settings.schoolYear - 1 })}>
-                −
-              </button>
-              <span className="min-w-[5ch] text-center text-2xl font-extrabold tabular-nums">{settings.schoolYear}</span>
-              <button type="button" className="btn btn-outline text-xl" aria-label="1년 뒤" onClick={() => updateSettings({ schoolYear: settings.schoolYear + 1 })}>
-                +
-              </button>
-            </div>
-            <p className="hint mt-1">학생과 기록은 학년도별로 따로 보관돼요.</p>
-          </div>
+          <Link to="/more/data" className="flex min-h-[56px] items-center gap-3 rounded-2xl bg-fill px-4">
+            <span className="flex-1">
+              <span className="label mb-0">현재 학년도</span>
+              <span className="text-xl font-extrabold tabular-nums">{settings.schoolYear}학년도</span>
+            </span>
+            <span className="text-sm font-bold text-brand">학년도 바꾸기 ›</span>
+          </Link>
         </Section>
 
         <Section title="나이스 기본값">
@@ -97,6 +88,14 @@ export default function SettingsPage() {
           </Link>
           <Link to="/more/settings/timetable" className="btn btn-outline w-full justify-between">
             <span>수업 시간표 · 교시 시각</span>
+            <span aria-hidden>›</span>
+          </Link>
+          <Link to="/more/keywords" className="btn btn-outline w-full justify-between">
+            <span>세특 키워드 사전</span>
+            <span aria-hidden>›</span>
+          </Link>
+          <Link to="/paps/setup" className="btn btn-outline w-full justify-between">
+            <span>PAPS 설정 (나이스 양식 · 허용 범위 · 계산 방식)</span>
             <span aria-hidden>›</span>
           </Link>
         </Section>

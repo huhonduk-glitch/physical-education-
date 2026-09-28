@@ -89,7 +89,8 @@ export interface PapsResult {
   schoolYear: number
   studentId: string
   eventId: string
-  attempt: 1 | 2 | null
+  /** 차수 (1차·2차, 심박수는 1~3회) */
+  attempt: number | null
   side: 'R' | 'L' | null
   value?: number
   excluded: boolean
@@ -126,4 +127,11 @@ export interface TimerPreset {
   name: string
   mode: string
   config: Record<string, unknown>
+}
+
+export interface AudioFile {
+  id: string
+  name: string
+  blob: Blob
+  addedAt: number
 }

@@ -27,7 +27,7 @@ export default function KeywordPicker({ value, onChange, defaultOpen = false }: 
                     type="button"
                     aria-pressed={value.includes(k.id)}
                     className={`min-h-[40px] rounded-full border-2 px-3 text-[0.9rem] font-bold ${
-                      value.includes(k.id) ? 'border-brand bg-brand text-white' : 'border-zinc-300 bg-white text-zinc-800'
+                      value.includes(k.id) ? 'border-brand bg-brand text-white' : 'border-line bg-white text-ink'
                     }`}
                     onClick={() => toggle(k.id)}
                   >

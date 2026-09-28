@@ -15,7 +15,7 @@ const ROLES: Captain['role'][] = ['부장', '부부장']
 
 /** 체육부장 관리 (CLAUDE.md 4-3): 지정·교체 이력, 날짜별 활동 체크, 누적 횟수 */
 export default function CaptainsPage() {
-  const { settings } = useApp()
+  const { settings, readOnly } = useApp()
   const year = settings.schoolYear
   const students = useLiveQuery(() => db.students.where('schoolYear').equals(year).toArray(), [year])
   const classes = useMemo(() => classesOf((students ?? []).filter((s) => s.status !== '전출')), [students])
@@ -73,7 +73,7 @@ export default function CaptainsPage() {
                   <label className="label" htmlFor={`sel-${role}`}>
                     체육{role}
                   </label>
-                  <select id={`sel-${role}`} className="field" value={cap?.studentId ?? ''} onChange={(e) => change(role, e.target.value || null)}>
+                  <select id={`sel-${role}`} className="field" disabled={readOnly} value={cap?.studentId ?? ''} onChange={(e) => change(role, e.target.value || null)}>
                     <option value="">— 없음 —</option>
                     {classStudents.map((s) => (
                       <option key={s.id} value={s.id}>
@@ -90,6 +90,7 @@ export default function CaptainsPage() {
               schoolYear={year}
               people={current.filter((c) => c.cap).map((c) => ({ role: c.role, student: byId.get(c.cap!.studentId) }))}
               buttons={settings.recordButtons.captain}
+              readOnly={readOnly}
             />
 
             <section className="card space-y-3">
@@ -112,11 +113,13 @@ function ActivityCheck({
   schoolYear,
   people,
   buttons,
+  readOnly,
 }: {
   date: string
   schoolYear: number
   people: { role: Captain['role']; student?: Student }[]
   buttons: string[]
+  readOnly: boolean
 }) {
   const ids = people.map((p) => p.student?.id).filter((x): x is string => !!x)
   const done = useLiveQuery(
@@ -157,7 +160,7 @@ function ActivityCheck({
                   {buttons.map((b) => {
                     const on = !!done?.some((r) => r.studentId === student.id && r.category === b)
                     return (
-                      <button key={b} type="button" aria-pressed={on} className={`btn min-h-[52px] ${on ? 'btn-primary' : 'btn-outline'}`} onClick={() => toggle(student.id, b)}>
+                      <button key={b} type="button" aria-pressed={on} className={`btn min-h-[52px] ${on ? 'btn-primary' : 'btn-outline'}`} disabled={readOnly} onClick={() => toggle(student.id, b)}>
                         {on ? '✔ ' : ''}
                         {b}
                       </button>
@@ -207,7 +210,7 @@ function CaptainHistory({ captains, name }: { captains: Captain[]; name: (id: st
         .map((c) => {
           const mine = (acts ?? []).filter((r) => r.studentId === c.studentId)
           return (
-            <li key={c.id} className="rounded-xl bg-zinc-50 p-3">
+            <li key={c.id} className="rounded-xl bg-fill p-3">
               <p className="font-bold">
                 체육{c.role} · {name(c.studentId)}
               </p>

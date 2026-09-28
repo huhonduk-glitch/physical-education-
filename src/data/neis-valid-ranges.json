@@ -1,0 +1,71 @@
+{
+  "note": "나이스 입력 허용 범위(추정값). 초기값은 paps-standards.json의 suggestedNeisRanges(공식 xls의 최소·최대값). 교사가 나이스에서 확인해 설정에서 고친다. 등급 기준과 별개. decimals: 소수 종목 2, 회·점 단위 0. 신장·체중은 근거 자료가 없어 범위를 비워 둔다(검사 안 함).",
+  "estimated": true,
+  "ranges": {
+    "shuttleRun": {
+      "min": 0,
+      "max": 150,
+      "decimals": 0
+    },
+    "longRunWalk": {
+      "min": 120,
+      "max": 999,
+      "decimals": 0
+    },
+    "stepTest": {
+      "min": 0,
+      "max": 150,
+      "decimals": 2
+    },
+    "sitAndReach": {
+      "min": -40,
+      "max": 50,
+      "decimals": 2
+    },
+    "totalFlexibility": {
+      "min": 0,
+      "max": 8,
+      "decimals": 0
+    },
+    "curlUp": {
+      "min": 0,
+      "max": 200,
+      "decimals": 0
+    },
+    "gripStrength": {
+      "min": 0,
+      "max": 200,
+      "decimals": 2
+    },
+    "sprint50m": {
+      "min": 5,
+      "max": 30,
+      "decimals": 2
+    },
+    "standingLongJump": {
+      "min": 0,
+      "max": 300,
+      "decimals": 2
+    },
+    "pushUp": {
+      "min": 0,
+      "max": 150,
+      "decimals": 0
+    },
+    "height": {
+      "min": null,
+      "max": null,
+      "decimals": 2
+    },
+    "weight": {
+      "min": null,
+      "max": null,
+      "decimals": 2
+    },
+    "heartRate": {
+      "min": null,
+      "max": null,
+      "decimals": 0
+    }
+  }
+}

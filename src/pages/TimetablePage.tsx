@@ -33,9 +33,9 @@ export default function TimetablePage() {
         <p className="hint">담당 반을 넣어 두면 [수업] 탭을 열 때 지금 교시의 반이 자동으로 골라져요. 수업 시작 10분 전부터 그 교시로 봐요.</p>
         {classes.length === 0 && <p className="card">먼저 학생 명렬을 올려야 반을 고를 수 있어요.</p>}
 
-        <div className="overflow-x-auto rounded-xl border-2 border-zinc-300">
+        <div className="overflow-x-auto rounded-xl border border-line">
           <table className="w-full border-collapse text-center">
-            <thead className="bg-zinc-100">
+            <thead className="bg-fill">
               <tr>
                 <th className="p-1 text-sm">교시</th>
                 {DAYS.map((d) => (
@@ -47,7 +47,7 @@ export default function TimetablePage() {
             </thead>
             <tbody>
               {Array.from({ length: periods }, (_, i) => i + 1).map((p) => (
-                <tr key={p} className="border-t-2 border-zinc-200">
+                <tr key={p} className="border-t-2 border-line">
                   <th className="p-1 text-sm">{p}</th>
                   {DAYS.map((d, di) => {
                     const c = cell(di + 1, p)
