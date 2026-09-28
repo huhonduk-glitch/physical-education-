@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/* 햇빛 아래에서도 잘 보이도록: 흰 바탕 + 검은 글씨 + 진한 파랑, 큰 글씨 (CLAUDE.md 1장) */
+@theme {
+  --color-brand: #0b3d91;
+  --color-brand-dark: #072a66;
+  --color-brand-light: #e6eefb;
+  --color-danger: #b91c1c;
+  --color-danger-light: #fee2e2;
+  --color-caution: #92400e;
+  --color-caution-light: #fef3c7;
+  --color-ok: #166534;
+  --color-ok-light: #dcfce7;
+}
+
+html {
+  font-size: 18px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: #000000;
+  font-family: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+@layer components {
+  /* 모든 누르는 것은 최소 48px */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 48px;
+    min-width: 48px;
+    padding: 0 1rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    border: 2px solid transparent;
+    user-select: none;
+    cursor: pointer;
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--color-brand);
+    color: #fff;
+  }
+  .btn-primary:active:not(:disabled) {
+    background: var(--color-brand-dark);
+  }
+  .btn-outline {
+    background: #fff;
+    color: var(--color-brand);
+    border-color: var(--color-brand);
+  }
+  .btn-outline:active:not(:disabled) {
+    background: var(--color-brand-light);
+  }
+  .btn-danger {
+    background: var(--color-danger);
+    color: #fff;
+  }
+  .btn-ghost {
+    background: transparent;
+    color: #000;
+  }
+  .field {
+    min-height: 48px;
+    width: 100%;
+    padding: 0 0.75rem;
+    border: 2px solid #52525b;
+    border-radius: 0.6rem;
+    background: #fff;
+    color: #000;
+    font-size: 1rem;
+  }
+  .field:focus {
+    outline: 3px solid var(--color-brand);
+    outline-offset: 1px;
+  }
+  .card {
+    border: 2px solid #d4d4d8;
+    border-radius: 1rem;
+    background: #fff;
+    padding: 1rem;
+  }
+  .label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+  }
+  .hint {
+    font-size: 0.85rem;
+    color: #3f3f46;
+  }
+}

@@ -1,0 +1,21 @@
+# PR마다 테스트와 빌드를 돌려, 망가진 코드가 main에 들어가지 않게 한다. (배포는 하지 않음)
+name: 검사 (PR)
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test
+      - run: npm run build

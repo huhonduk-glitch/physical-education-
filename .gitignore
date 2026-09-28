@@ -1,0 +1,11 @@
+# 실제 학생 정보가 담긴 파일은 절대 커밋하지 않는다 (CLAUDE.md 2장)
+*.real.*
+*실명*
+backup*.json
+
+node_modules/
+dist/
+dev-dist/
+coverage/
+*.local
+.DS_Store
