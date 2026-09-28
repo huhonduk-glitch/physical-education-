@@ -2,9 +2,12 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import BottomNav from './components/BottomNav'
+import MiniTimer from './components/MiniTimer'
+import { TimerProvider } from './state/TimerContext'
 import { db } from './db/db'
 import { loadSettings, saveSettings, type AppSettings } from './db/settings'
 import { ensureKeywordSeed } from './db/recordsRepo'
+import { DEFAULT_STANDARDS, type PapsStandards } from './lib/paps'
 import { PIN_SETTING_KEY, type StoredPin } from './lib/pin'
 import ClassPage from './pages/ClassPage'
 import LockPage from './pages/LockPage'
@@ -27,6 +30,7 @@ const RELOCK_AFTER_MS = 5 * 60 * 1000
 
 export default function App() {
   const settings = useLiveQuery(() => loadSettings(db), [])
+  const stdRow = useLiveQuery(() => db.settings.get('papsStandards').then((r) => r ?? null), [])
   const pinRow = useLiveQuery(() => db.settings.get(PIN_SETTING_KEY).then((r) => r ?? null), [])
   const [unlocked, setUnlocked] = useState(false)
   const hiddenAt = useRef<number | null>(null)
@@ -52,10 +56,11 @@ export default function App() {
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => saveSettings(db, patch), [])
   const lock = useCallback(() => setUnlocked(false), [])
-  const ctx = useMemo(
-    () => (settings ? { settings, updateSettings, lock } : null),
-    [settings, updateSettings, lock],
-  )
+  const ctx = useMemo(() => {
+    if (!settings) return null
+    const standards = (stdRow?.value as PapsStandards | undefined) ?? DEFAULT_STANDARDS
+    return { settings, updateSettings, lock, readOnly: settings.latestYear > settings.schoolYear, standards }
+  }, [settings, updateSettings, lock, stdRow])
 
   if (settings === undefined || pinRow === undefined || !ctx) {
     return <div className="p-6 text-lg">불러오는 중…</div>
@@ -75,6 +80,8 @@ export default function App() {
 
   return (
     <AppContext.Provider value={ctx}>
+      <TimerProvider>
+      <MiniTimer />
       <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-60">
         <Routes>
           <Route path="/" element={<ClassPage />} />
@@ -93,6 +100,7 @@ export default function App() {
         </Routes>
       </div>
       <BottomNav />
+      </TimerProvider>
     </AppContext.Provider>
   )
 }

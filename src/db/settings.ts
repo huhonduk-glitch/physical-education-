@@ -1,4 +1,7 @@
 import type { PeDatabase } from './db'
+import neisRanges from '../data/neis-valid-ranges.json'
+import type { Ranges } from '../lib/neisExport'
+import type { FlexMode, StepMethod } from '../lib/paps'
 import type { SchoolGenderType, SchoolLevel } from './types'
 
 /** 설정 화면에서 바꾸는 값들. settings 테이블에 key 하나씩 저장한다. */
@@ -22,6 +25,18 @@ export interface AppSettings {
   periodStarts: string[]
   /** 한 교시 길이(분) */
   periodMinutes: number
+  /** 지금까지 만든 가장 최근 학년도. 이보다 이전 학년도를 보면 읽기 전용 (4-11) */
+  latestYear: number
+  /** 종합유연성 점수 방식: 법령(기본) / 기준표 (4-5) */
+  papsFlexMode: FlexMode
+  /** 스텝검사 심박 측정 방식: 촉진법 / 심박계 */
+  papsStepMethod: StepMethod
+  /** 나이스 입력 허용 범위·소수 자릿수 (추정값에서 시작, 교사가 고침) */
+  neisRanges: Ranges
+  /** 학년도별 나이스 PAPS 양식 헤더 */
+  neisTemplates: Record<string, string[]>
+  /** 마지막 백업 시각 (ms) */
+  lastBackupAt: number
 }
 
 export interface RecordButtons {
@@ -65,6 +80,12 @@ export function defaultSettings(): AppSettings {
     timetable: [],
     periodStarts: ['09:00', '10:00', '11:00', '12:00', '13:50', '14:50', '15:50'],
     periodMinutes: 50,
+    latestYear: 0,
+    papsFlexMode: 'regulation',
+    papsStepMethod: 'palpation',
+    neisRanges: structuredClone((neisRanges as { ranges: Ranges }).ranges),
+    neisTemplates: {},
+    lastBackupAt: 0,
   }
 }
 

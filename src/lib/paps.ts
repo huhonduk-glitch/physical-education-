@@ -168,7 +168,7 @@ export function officialSuggestion(std: PapsStandards, eventId: EventId, v: numb
 
 /** 칸 하나 (원자료) */
 export interface Cell {
-  attempt: 1 | 2 | null
+  attempt: number | null
   side: 'R' | 'L' | null
   value: number
 }

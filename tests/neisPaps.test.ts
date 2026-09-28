@@ -6,7 +6,7 @@ import ranges from '../src/data/neis-valid-ranges.json'
 import { parseNeisHeader, parseNeisHeaders, splitHeaderLine } from '../src/lib/neisHeaderParser'
 import { buildRows, checkValue, exceedsDecimals, rowsToXlsx, validateExport, type Ranges, type Values } from '../src/lib/neisExport'
 import { DEFAULT_STANDARDS } from '../src/lib/paps'
-import { cellId, cellsOf, cellsForKey, selectedFromColumns, standardHeaders } from '../src/lib/papsLayout'
+import { cellId, cellsOf, cellsForKey, selectedFromColumns, standardHeaders, type CellSpec } from '../src/lib/papsLayout'
 import { parsePapsPaste } from '../src/lib/papsPasteParser'
 
 const R = (ranges as { ranges: Ranges }).ranges
@@ -166,7 +166,7 @@ describe('PAPS 붙여넣기 파서 (CLAUDE.md 4-5 모든 모양)', () => {
     { key: 'gripStrength' as const, attempt: 2, side: 'R' as const },
     { key: 'gripStrength' as const, attempt: 2, side: 'L' as const },
   ]
-  const one = (text: string, cells = single) => parsePapsPaste(text, { students, cells }).rows[0]
+  const one = (text: string, cells: CellSpec[] = single) => parsePapsPaste(text, { students, cells }).rows[0]
 
   it('1\\t34 (번호, 값)', () => {
     expect(one('1\t34')).toMatchObject({ studentId: 'a', values: { 'shuttleRun||': 34 }, errors: [] })

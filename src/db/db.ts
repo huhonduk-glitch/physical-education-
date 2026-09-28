@@ -11,6 +11,7 @@ import type {
   SettingRow,
   Student,
   TimerPreset,
+  AudioFile,
 } from './types'
 
 /**
@@ -29,6 +30,7 @@ export class PeDatabase extends Dexie {
   assessments!: EntityTable<Assessment, 'id'>
   assessmentScores!: EntityTable<AssessmentScore, 'id'>
   timerPresets!: EntityTable<TimerPreset, 'id'>
+  audioFiles!: EntityTable<AudioFile, 'id'>
 
   constructor(name = 'pe-records') {
     super(name)
@@ -45,6 +47,8 @@ export class PeDatabase extends Dexie {
       assessmentScores: 'id, assessmentId, studentId, [assessmentId+studentId]',
       timerPresets: 'id',
     })
+    // v2: 왕복오래달리기 음원(교사가 올린 mp3)을 기기에 보관
+    this.version(2).stores({ audioFiles: 'id' })
   }
 }
 
