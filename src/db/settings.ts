@@ -14,6 +14,35 @@ export interface AppSettings {
   /** 연동 앱 주소 (CLAUDE.md 4-10) */
   bracketUrl: string
   tacticUrl: string
+  /** 빠른 기록 버튼 항목 (설정에서 추가·수정·순서 변경) */
+  recordButtons: RecordButtons
+  /** 수업 시간표: 요일·교시별 담당 반 */
+  timetable: TimetableEntry[]
+  /** 교시 시작 시각 'HH:MM' (1교시부터). 학교마다 달라서 설정에서 고친다 */
+  periodStarts: string[]
+  /** 한 교시 길이(분) */
+  periodMinutes: number
+}
+
+export interface RecordButtons {
+  unprepared: string[]
+  exemplary: string[]
+  captain: string[]
+}
+
+export interface TimetableEntry {
+  /** 1=월 … 5=금 */
+  day: number
+  period: number
+  grade: number
+  classNo: number
+}
+
+/** 버튼 기본값 (CLAUDE.md 4-2, 4-3). '기타'는 누르면 메모를 받는다 */
+export const DEFAULT_RECORD_BUTTONS: RecordButtons = {
+  unprepared: ['체육복', '실내화', '교구', '기타'],
+  exemplary: ['정리정돈', '친구 도움', '리더십', '안전 지킴', '적극 참여', '기타'],
+  captain: ['준비운동 인솔', '교구 준비·정리', '출석 확인', '기타'],
 }
 
 /** 학년도는 3월에 바뀐다. 1~2월이면 지난해가 학년도다. */
@@ -32,6 +61,10 @@ export function defaultSettings(): AppSettings {
     defaultDept: '일반학과',
     bracketUrl: 'https://sports-bracket.netlify.app',
     tacticUrl: 'https://k-tacticboard.netlify.app',
+    recordButtons: structuredClone(DEFAULT_RECORD_BUTTONS),
+    timetable: [],
+    periodStarts: ['09:00', '10:00', '11:00', '12:00', '13:50', '14:50', '15:50'],
+    periodMinutes: 50,
   }
 }
 
