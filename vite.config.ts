@@ -14,7 +14,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      injectRegister: false, // UpdateBanner가 직접 등록한다 (새 버전 알림)
       includeAssets: ['icons/favicon-64.png', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'PE LOG · 체육수업 누가기록',
