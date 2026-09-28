@@ -90,13 +90,19 @@ export default function StudentsPage() {
 
           <ul className="mt-3 divide-y-2 divide-zinc-100 rounded-xl border-2 border-zinc-200">
             {list.map((s) => (
-              <li key={s.id} className={`flex min-h-[52px] items-center gap-3 px-3 ${s.status === '전출' ? 'bg-zinc-100 text-zinc-500' : ''}`}>
+              <li key={s.id}>
+                <Link
+                  to={`/students/${s.id}`}
+                  className={`flex min-h-[52px] items-center gap-3 px-3 hover:bg-zinc-50 ${s.status === '전출' ? 'bg-zinc-100 text-zinc-500' : ''}`}
+                >
                 <span className="w-8 text-right text-lg font-extrabold tabular-nums">{s.number}</span>
                 <span className="flex-1 text-lg">{s.name}</span>
                 <span className="text-zinc-600">{genderLabel(s.gender)}</span>
                 {s.status !== '재학' && (
                   <span className="rounded-md bg-zinc-200 px-2 py-0.5 text-sm font-bold text-zinc-700">{s.status}</span>
                 )}
+                <span aria-hidden className="text-zinc-400">›</span>
+                </Link>
               </li>
             ))}
           </ul>
@@ -106,7 +112,7 @@ export default function StudentsPage() {
               {showLeft ? '전출생 숨기기' : `전출생 ${leftCount}명 보기`}
             </button>
           )}
-          <p className="hint mt-4">학생별 누적 기록 화면은 2단계에서 만들어요.</p>
+          <p className="hint mt-4">이름을 누르면 그 학생의 누적 기록을 볼 수 있어요.</p>
         </div>
       )}
     </>

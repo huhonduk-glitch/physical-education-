@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import BottomNav from './components/BottomNav'
 import { db } from './db/db'
 import { loadSettings, saveSettings, type AppSettings } from './db/settings'
+import { ensureKeywordSeed } from './db/recordsRepo'
 import { PIN_SETTING_KEY, type StoredPin } from './lib/pin'
 import ClassPage from './pages/ClassPage'
 import LockPage from './pages/LockPage'
@@ -14,6 +15,11 @@ import SettingsPage from './pages/SettingsPage'
 import SetupPage from './pages/SetupPage'
 import StudentsPage from './pages/StudentsPage'
 import TimerPage from './pages/TimerPage'
+import StudentDetailPage from './pages/StudentDetailPage'
+import CaptainsPage from './pages/CaptainsPage'
+import AbsencesPage from './pages/AbsencesPage'
+import RecordButtonsPage from './pages/RecordButtonsPage'
+import TimetablePage from './pages/TimetablePage'
 import { AppContext } from './state/AppContext'
 
 /** 앱을 다른 앱으로 바꿔 두었다가 이 시간이 지나 돌아오면 다시 PIN을 묻는다. */
@@ -37,6 +43,11 @@ export default function App() {
     }
     document.addEventListener('visibilitychange', onVisibility)
     return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
+
+  // 세특 키워드 기본 사전 (처음 한 번만)
+  useEffect(() => {
+    void ensureKeywordSeed(db)
   }, [])
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => saveSettings(db, patch), [])
@@ -72,7 +83,12 @@ export default function App() {
           <Route path="/students" element={<StudentsPage />} />
           <Route path="/students/import" element={<RosterImportPage />} />
           <Route path="/more" element={<MorePage />} />
+          <Route path="/students/:id" element={<StudentDetailPage />} />
+          <Route path="/more/captains" element={<CaptainsPage />} />
+          <Route path="/more/absences" element={<AbsencesPage />} />
           <Route path="/more/settings" element={<SettingsPage />} />
+          <Route path="/more/settings/buttons" element={<RecordButtonsPage />} />
+          <Route path="/more/settings/timetable" element={<TimetablePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
