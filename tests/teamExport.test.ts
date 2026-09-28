@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bracketCsv, bracketText, tacticBoardJson } from '../src/lib/teamExport'
+import { bracketCsv, bracketText, tacticBoardJson, tacticBoardLink } from '../src/lib/teamExport'
 
 const list = [
   { number: 1, name: '김민수', gender: 'M' as const, level: '상' as const },
@@ -29,5 +29,23 @@ describe('전술 보드 명단 파일', () => {
   })
   it('이름 넣기 선택 시 이름 포함', () => {
     expect(JSON.parse(tacticBoardJson(list, { includeName: true, group: '' })).roster[0].name).toBe('김민수')
+  })
+})
+
+describe('전술 보드 바로 열기 링크', () => {
+  it('전술 보드가 읽는 방식(atob → escape → decodeURIComponent)으로 되읽으면 같은 명단', () => {
+    const json = tacticBoardJson([{ number: 3, name: '학생가', gender: 'F', level: null }], { includeName: true, group: '1-2반' })
+    const link = tacticBoardLink('https://k-tacticboard.netlify.app/', json)
+    expect(link.startsWith('https://k-tacticboard.netlify.app/static/index.html#tactic=')).toBe(true)
+    const enc = link.split('#tactic=')[1]
+    // K-TacticBoard static/app.js 부트 코드와 같은 해독 방법
+    const back = JSON.parse(decodeURIComponent(escape(atob(enc))))
+    expect(back).toEqual(JSON.parse(json))
+  })
+  it('주소 끝의 / 나 # 가 있어도 한 번만 붙는다', () => {
+    expect(tacticBoardLink('https://x.app///#old', '{}')).toBe('https://x.app/static/index.html#tactic=' + btoa('{}'))
+  })
+  it('앱 화면 주소를 직접 적었으면 그대로 쓴다', () => {
+    expect(tacticBoardLink('https://x.app/static/index.html', '{}')).toBe('https://x.app/static/index.html#tactic=' + btoa('{}'))
   })
 })
