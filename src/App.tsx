@@ -64,7 +64,7 @@ export default function App() {
 
   return (
     <AppContext.Provider value={ctx}>
-      <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))]">
+      <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-60">
         <Routes>
           <Route path="/" element={<ClassPage />} />
           <Route path="/timer" element={<TimerPage />} />

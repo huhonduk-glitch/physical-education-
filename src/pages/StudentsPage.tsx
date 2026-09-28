@@ -58,7 +58,7 @@ export default function StudentsPage() {
         }
       />
       {students === undefined ? null : students.length === 0 ? (
-        <div className="p-4">
+        <div className="page py-4">
           <div className="card text-center">
             <p className="text-lg font-bold">아직 등록된 학생이 없어요</p>
             <p className="hint mt-1">나이스 명렬 엑셀을 올리거나 명단을 붙여넣어 주세요.</p>
@@ -68,7 +68,7 @@ export default function StudentsPage() {
           </div>
         </div>
       ) : (
-        <div className="p-4">
+        <div className="page py-4">
           <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2" role="tablist" aria-label="반 고르기">
             {classes.map((c) => {
               const k = `${c.grade}-${c.classNo}`

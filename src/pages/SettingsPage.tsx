@@ -47,7 +47,7 @@ export default function SettingsPage() {
   return (
     <>
       <PageHeader title="설정" back />
-      <div className="space-y-4 p-4">
+      <div className="page space-y-4 py-4">
         <Section title="학교 정보">
           <TextSetting id="schoolName" label="학교 이름" k="schoolName" />
           <Segmented

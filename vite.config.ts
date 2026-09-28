@@ -35,7 +35,7 @@ export default defineConfig({
       },
       workbox: {
         // 운동장 와이파이가 끊겨도 모든 화면이 열리도록 앱 파일 전부를 미리 저장한다.
-        globPatterns: ['**/*.{js,css,html,svg,png,json,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,json,woff2,xlsx}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         navigateFallback: `${BASE}index.html`,
       },

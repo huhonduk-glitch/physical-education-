@@ -25,9 +25,21 @@ body {
   font-family: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+  /* 한글이 낱글자 단위로 끊기지 않고 띄어쓰기 단위로 줄바꿈되게 (좁은 폰 화면) */
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 @layer components {
+  /* 화면 본문: 폰에서는 꽉 차게, PC·태블릿에서는 읽기 좋은 너비로 가운데 정렬 */
+  .page {
+    width: 100%;
+    max-width: 48rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
   /* 모든 누르는 것은 최소 48px */
   .btn {
     display: inline-flex;
@@ -61,6 +73,22 @@ body {
   }
   .btn-outline:active:not(:disabled) {
     background: var(--color-brand-light);
+  }
+  @media (hover: hover) {
+    .btn-primary:hover:not(:disabled) {
+      background: var(--color-brand-dark);
+    }
+    .btn-outline:hover:not(:disabled),
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--color-brand-light);
+    }
+    .btn-danger:hover:not(:disabled) {
+      filter: brightness(0.9);
+    }
+  }
+  .btn:focus-visible {
+    outline: 3px solid var(--color-brand);
+    outline-offset: 2px;
   }
   .btn-danger {
     background: var(--color-danger);
