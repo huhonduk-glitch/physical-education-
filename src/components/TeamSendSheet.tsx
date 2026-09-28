@@ -5,7 +5,7 @@ import { indexResults, loadClassPaps, studentSummary } from '../db/papsRepo'
 import type { Student } from '../db/types'
 import { copyText, saveText } from '../lib/download'
 import { teamLevel, type EventId, type Factor } from '../lib/paps'
-import { bracketCsv, bracketText, tacticBoardJson, type TeamStudent } from '../lib/teamExport'
+import { bracketCsv, bracketText, tacticBoardJson, tacticBoardLink, type TeamStudent } from '../lib/teamExport'
 import { useApp } from '../state/AppContext'
 import BottomSheet from './BottomSheet'
 import Icon from './Icon'
@@ -61,9 +61,10 @@ export default function TeamSendSheet({ students, date, onClose }: { students: S
               <span className="hint block">PAPS 종합등급으로 정해요. 평가 정보라서 기본은 꺼 둬요. 미측정 학생은 빈칸.</span>
             </span>
           </label>
+          <p className="hint">팀 편성 앱은 다른 곳에서 명단을 받는 기능이 없어서, 복사 → 붙여넣기 한 번이 필요해요. 버튼을 누르면 복사와 앱 열기가 한 번에 돼요.</p>
           <pre className="max-h-40 overflow-auto rounded-xl bg-white p-3 text-sm">{bracketText(list.slice(0, 6), withLevel)}{list.length > 6 ? '\n…' : ''}</pre>
           <button type="button" className="btn btn-primary w-full" disabled={list.length === 0} onClick={sendBracket}>
-            <Icon name="copy" /> 복사하고 팀 편성 앱 열기
+            <Icon name="copy" /> 명단 복사하고 팀 편성 앱 열기
           </button>
           <button type="button" className="btn btn-soft w-full bg-white" disabled={list.length === 0} onClick={() => saveText(`팀편성_${cls}반_${date}.csv`, bracketCsv(list, withLevel), 'text/csv;charset=utf-8')}>
             <Icon name="download" /> CSV 파일로 받기
@@ -79,20 +80,34 @@ export default function TeamSendSheet({ students, date, onClose }: { students: S
               <span className="hint block">기본은 번호만 넣어요 (전술 보드 권장: 실명 대신 번호).</span>
             </span>
           </label>
-          <p className="rounded-xl bg-caution-light p-3 text-sm font-semibold text-caution">
-            전술 보드의 [공유·출력 → JSON 불러오기]로 이 파일을 열면 선수 명단이 채워져요. 이때 보드에 그려 둔 그림·장면·경기 기록은 지워지니, 새 보드에서 먼저 불러오세요.
-          </p>
           <button
             type="button"
-            className="btn btn-soft w-full bg-white"
+            className="btn btn-primary w-full"
             disabled={list.length === 0}
-            onClick={() => saveText(`전술보드명단_${cls}반.json`, tacticBoardJson(list, { includeName: withName, group: `${cls}반` }), 'application/json')}
+            onClick={() => {
+              window.open(tacticBoardLink(settings.tacticUrl, tacticBoardJson(list, { includeName: withName, group: `${cls}반` })), '_blank', 'noopener')
+              setMsg(`전술 보드를 열었어요. [선수 명단]에 ${list.length}명이 들어가 있어요.`)
+            }}
           >
-            <Icon name="download" /> 전술 보드용 명단 파일 받기
+            <Icon name="share" /> 명단 넣어서 전술 보드 열기
           </button>
-          <button type="button" className="btn btn-ghost w-full text-brand" onClick={() => window.open(settings.tacticUrl, '_blank', 'noopener')}>
-            전술 보드 열기
-          </button>
+          <p className="hint">
+            전술 보드에 원래 있는 「공유 링크」 방식으로 열어요. 새 보드로 열리고, 전에 [저장]해 둔 보드는 지워지지 않아요. 명단은 인터넷으로 보내지지 않고 이 기기 브라우저 안에서만 전달돼요.
+          </p>
+          <details className="rounded-xl bg-white p-3">
+            <summary className="cursor-pointer font-bold text-ink-2">파일로 받기 (링크가 안 열릴 때)</summary>
+            <p className="mt-2 text-sm font-semibold text-caution">
+              전술 보드의 [공유·출력 → JSON 불러오기]로 이 파일을 열면 명단이 채워져요. 이때 보드에 그려 둔 그림·장면·경기 기록은 지워지니, 새 보드에서 불러오세요.
+            </p>
+            <button
+              type="button"
+              className="btn btn-soft mt-2 w-full"
+              disabled={list.length === 0}
+              onClick={() => saveText(`전술보드명단_${cls}반.json`, tacticBoardJson(list, { includeName: withName, group: `${cls}반` }), 'application/json')}
+            >
+              <Icon name="download" /> 전술 보드용 명단 파일 받기
+            </button>
+          </details>
         </section>
         {msg && <p className="rounded-xl bg-ok-light p-3 font-bold text-ok" role="status">{msg}</p>}
       </div>

@@ -53,3 +53,19 @@ export function tacticBoardJson(list: readonly TeamStudent[], opts: { includeNam
     2,
   )
 }
+
+/**
+ * 전술 보드 바로 열기 링크. K-TacticBoard가 원래 가진 공유 링크 형식(`#tactic=<base64 JSON>`)을 그대로 쓴다.
+ * 전술 보드 코드는 고치지 않는다. `#` 뒤 내용은 인터넷으로 보내지지 않고 그 브라우저 안에서만 읽힌다.
+ * 전술 보드는 이렇게 열어도 자동 저장하지 않으므로, 교사가 [저장]하기 전까지 원래 저장본은 그대로다.
+ */
+export function tacticBoardLink(baseUrl: string, json: string): string {
+  const bytes = new TextEncoder().encode(json)
+  let bin = ''
+  for (const b of bytes) bin += String.fromCharCode(b)
+  // 전술 보드 첫 화면(/)은 static/index.html로 넘어가면서 # 뒤를 버린다(저장소 index.html·netlify.toml 확인).
+  // 그래서 주소가 사이트 첫 화면이면 앱 화면을 직접 연다.
+  let base = baseUrl.split('#')[0].replace(/\/+$/, '')
+  if (/^https?:\/\/[^/]+$/.test(base)) base += '/static/index.html'
+  return `${base}#tactic=${btoa(bin)}`
+}
