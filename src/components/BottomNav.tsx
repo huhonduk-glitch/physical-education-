@@ -44,22 +44,26 @@ const TABS = [
   { to: '/more', label: '더보기', icon: 'more', end: false },
 ]
 
-/** 하단 탭 5개 (CLAUDE.md 5장). 한 손 엄지로 누르기 쉽게 화면 맨 아래에 둔다. */
+/**
+ * 하단 탭 5개 (CLAUDE.md 5장). 폰·태블릿에서는 한 손 엄지로 누르기 쉽게 화면 맨 아래,
+ * 교무실 PC처럼 넓은 화면(1024px 이상)에서는 왼쪽 세로 메뉴로 바뀐다.
+ */
 export default function BottomNav() {
   return (
     <nav
       aria-label="주요 화면"
-      className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-zinc-300 bg-white pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-zinc-300 bg-white pb-[env(safe-area-inset-bottom)] lg:inset-y-0 lg:right-auto lg:w-60 lg:border-t-0 lg:border-r-2 lg:pb-0"
     >
-      <ul className="mx-auto flex max-w-3xl">
+      <p className="hidden px-5 pt-6 pb-4 text-lg font-extrabold text-brand lg:block">체육수업 누가기록</p>
+      <ul className="mx-auto flex max-w-3xl lg:max-w-none lg:flex-col lg:gap-1 lg:px-3">
         {TABS.map((t) => (
           <li key={t.to} className="flex-1">
             <NavLink
               to={t.to}
               end={t.end}
               className={({ isActive }) =>
-                `flex min-h-[64px] flex-col items-center justify-center gap-0.5 text-[0.8rem] font-bold ${
-                  isActive ? 'bg-brand-light text-brand' : 'text-zinc-700'
+                `flex min-h-[64px] flex-col items-center justify-center gap-0.5 text-[0.8rem] font-bold lg:min-h-[52px] lg:flex-row lg:justify-start lg:gap-3 lg:rounded-xl lg:px-4 lg:text-base ${
+                  isActive ? 'bg-brand-light text-brand' : 'text-zinc-700 hover:bg-zinc-100'
                 }`
               }
             >

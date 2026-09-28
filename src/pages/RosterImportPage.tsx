@@ -101,7 +101,7 @@ export default function RosterImportPage() {
   return (
     <>
       <PageHeader title="명렬 올리기" back />
-      <div className="mx-auto max-w-3xl space-y-4 p-4">
+      <div className="page space-y-4 py-4">
         {error && (
           <p className="card border-danger bg-danger-light font-bold text-danger" role="alert">
             {error}

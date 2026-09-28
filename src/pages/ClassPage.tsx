@@ -12,7 +12,7 @@ export default function ClassPage() {
     <>
       <PageHeader title="수업" />
       {count === 0 && (
-        <div className="p-4 pb-0">
+        <div className="page pt-4">
           <div className="card border-brand bg-brand-light">
             <p className="text-lg font-bold">먼저 학생 명렬을 올려 주세요</p>
             <p className="hint mt-1">나이스 명렬 엑셀을 올리거나, 명단을 복사해서 붙여넣으면 돼요.</p>

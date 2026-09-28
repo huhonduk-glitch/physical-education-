@@ -16,7 +16,7 @@ export default function MorePage() {
   return (
     <>
       <PageHeader title="더보기" />
-      <div className="space-y-3 p-4">
+      <div className="page space-y-3 py-4">
         <Link to="/more/settings" className="card flex min-h-[60px] items-center justify-between text-lg font-bold">
           <span>⚙️ 설정</span>
           <span aria-hidden>›</span>
