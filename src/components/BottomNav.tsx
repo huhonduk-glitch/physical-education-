@@ -1,3 +1,4 @@
+import { BrandLine } from './Brand'
 import { NavLink } from 'react-router-dom'
 import Icon, { type IconName } from './Icon'
 
@@ -20,10 +21,7 @@ export default function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:inset-y-0 lg:right-auto lg:w-60 lg:border-t-0 lg:border-r lg:bg-white lg:pb-0"
     >
       <div className="hidden items-center gap-2.5 px-5 pt-7 pb-6 lg:flex">
-        <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand text-white">
-          <Icon name="class" size={20} />
-        </span>
-        <span className="text-[1.05rem] font-extrabold tracking-tight">체육수업 누가기록</span>
+        <BrandLine />
       </div>
       <ul className="mx-auto flex max-w-3xl lg:max-w-none lg:flex-col lg:gap-1 lg:px-3">
         {TABS.map((t) => (

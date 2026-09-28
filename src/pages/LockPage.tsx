@@ -1,5 +1,5 @@
+import { APP_NAME, APP_SUB, Logo } from '../components/Brand'
 import { useEffect, useState } from 'react'
-import Icon from '../components/Icon'
 import PinPad from '../components/PinPad'
 import { db } from '../db/db'
 import { lockoutSeconds, verifyPin, type StoredPin } from '../lib/pin'
@@ -68,11 +68,11 @@ export default function LockPage({ stored, onUnlock }: { stored: StoredPin; onUn
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center p-5">
-      <span className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-brand text-white shadow-[0_8px_20px_rgb(27_100_218/0.35)]">
-        <Icon name="lock" size={30} />
-      </span>
+      <Logo size={72} className="mx-auto mb-4" />
       <p className="mb-1 text-center text-2xl font-extrabold tracking-tight">PIN을 입력하세요</p>
-      <p className="hint mb-6 text-center">체육수업 누가기록</p>
+      <p className="hint mb-6 text-center">
+        {APP_NAME} · {APP_SUB}
+      </p>
       <p className="mb-4 min-h-[1.5em] text-center font-bold text-danger" role="alert">
         {waiting
           ? `${Math.ceil((waitUntil - now) / 1000)}초 뒤에 다시 입력할 수 있어요`
