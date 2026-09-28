@@ -6,8 +6,8 @@ import { useTimer } from '../../state/TimerContext'
 export function BigTime({ children, tone = 'text-ink', size = 'md' }: { children: ReactNode; tone?: string; size?: 'md' | 'lg' }) {
   return (
     <p
-      className={`text-center leading-none font-extrabold tracking-tight tabular-nums ${tone} ${
-        size === 'lg' ? 'text-[min(24vw,15rem)]' : 'text-[min(19vw,6.5rem)]'
+      className={`text-center leading-none font-extrabold tracking-tight whitespace-nowrap tabular-nums ${tone} ${
+        size === 'lg' ? 'text-[min(24vw,15rem)]' : 'text-[min(15vw,6.5rem)]'
       }`}
       aria-live="off"
     >
@@ -60,7 +60,7 @@ export function FullscreenOverlay({ label, children, onClose, tone }: { label: R
     }
   }, [onClose, t])
   return (
-    <div className={`anim-fade fixed inset-0 z-[60] flex flex-col items-center justify-center gap-6 p-6 ${tone ?? 'bg-ink text-white'}`}>
+    <div className={`anim-fade fixed inset-0 z-[70] flex flex-col items-center justify-center gap-6 p-6 ${tone ?? 'bg-ink text-white'}`}>
       <p className="text-[min(5vw,2.5rem)] font-extrabold opacity-80">{label}</p>
       <div className="w-full">{children}</div>
       <div className="flex gap-3">

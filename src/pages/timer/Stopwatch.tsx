@@ -61,16 +61,16 @@ export default function Stopwatch() {
           <ol className="overflow-hidden rounded-2xl bg-fill">
             {t.laps.map((l, i) => (
               <li key={l.id} className="list-row">
-                <span className="w-8 font-bold text-ink-3 tabular-nums">{i + 1}</span>
-                <span className="flex-1 text-lg font-extrabold tabular-nums">{formatStopwatch(l.ms)}</span>
+                <span className="w-6 shrink-0 font-bold text-ink-3 tabular-nums">{i + 1}</span>
+                <span className="shrink-0 text-lg font-extrabold whitespace-nowrap tabular-nums">{formatStopwatch(l.ms)}</span>
                 <select
-                  className="field w-40 bg-white"
+                  className="field min-w-0 flex-1 bg-white px-3"
                   aria-label={`랩 ${i + 1} 학생`}
                   value={l.studentId ?? ''}
                   disabled={!cls}
                   onChange={(e) => t.assignLap(l.id, e.target.value || undefined)}
                 >
-                  <option value="">{cls ? '학생 고르기' : '반 먼저'}</option>
+                  <option value="">{cls ? '학생' : '반 선택'}</option>
                   {pc.students.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.number}번 {s.name}

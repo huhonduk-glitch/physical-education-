@@ -31,3 +31,16 @@ export async function copyText(text: string): Promise<boolean> {
     return ok
   }
 }
+
+/** 표 → xlsx 파일 내려받기 (글자는 글자로, 숫자는 숫자로) */
+export async function saveXlsx(fileName: string, sheets: { name: string; rows: (string | number | null)[][]; widths?: number[] }[]): Promise<void> {
+  const XLSX = await import('xlsx')
+  const wb = XLSX.utils.book_new()
+  for (const s of sheets) {
+    const ws = XLSX.utils.aoa_to_sheet(s.rows.map((r) => r.map((v) => (v === null ? '' : v))))
+    if (s.widths) ws['!cols'] = s.widths.map((w) => ({ wch: w }))
+    XLSX.utils.book_append_sheet(wb, ws, s.name.slice(0, 31))
+  }
+  const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer
+  saveBlob(fileName, new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
+}

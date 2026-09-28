@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ClassPicker, { classesOf, type ClassKey } from '../components/ClassPicker'
+import Icon from '../components/Icon'
 import Masked from '../components/Masked'
 import PageHeader from '../components/PageHeader'
 import { db } from '../db/db'
@@ -17,11 +18,12 @@ export default function AbsencesPage() {
   const { settings } = useApp()
   const year = settings.schoolYear
   const data = useLiveQuery(async () => {
-    const [students, absences] = await Promise.all([
+    const [students, absences, assessments] = await Promise.all([
       db.students.where('schoolYear').equals(year).toArray(),
       db.absences.where('schoolYear').equals(year).toArray(),
+      db.assessments.where('schoolYear').equals(year).filter((x) => x.altTaskEnabled).toArray(),
     ])
-    return { students, absences }
+    return { students, absences, assessments }
   }, [year])
   const [cls, setCls] = useState<ClassKey | null>(null)
   const [view, setView] = useState<'list' | 'stats'>('list')
@@ -73,15 +75,46 @@ export default function AbsencesPage() {
             {list.map((a) => {
               const s = byId.get(a.studentId)!
               return (
-                <li key={a.id} className="flex min-h-[56px] flex-wrap items-center gap-2 px-3 py-1">
-                  <span className="w-20 tabular-nums">{shortDateLabel(a.date)}</span>
-                  <Link to={`/students/${s.id}`} className="flex-1 font-bold underline-offset-2 hover:underline">
-                    {s.grade}-{s.classNo} {s.number}번 {s.name}
-                  </Link>
-                  <Masked text={a.detail ? `${a.reason} · ${a.detail}` : a.reason} />
-                  <button type="button" className="btn btn-ghost px-2 text-ink-3" onClick={() => confirm('이 견학 기록을 지울까요?') && db.absences.delete(a.id)}>
-                    지우기
-                  </button>
+                <li key={a.id} className="space-y-2 px-4 py-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="w-20 font-semibold text-ink-3 tabular-nums">{shortDateLabel(a.date)}</span>
+                    <Link to={`/students/${s.id}`} className="flex-1 font-bold underline-offset-2 hover:underline">
+                      {s.grade}-{s.classNo} {s.number}번 {s.name}
+                    </Link>
+                    <Masked text={a.detail ? `${a.reason} · ${a.detail}` : a.reason} />
+                    <button type="button" className="btn btn-ghost px-2 text-ink-3" aria-label="견학 지우기" onClick={() => confirm('이 견학 기록을 지울까요?') && db.absences.delete(a.id)}>
+                      <Icon name="trash" size={18} />
+                    </button>
+                  </div>
+                  {(data?.assessments ?? []).some((x) => x.grade === s.grade) && (
+                    <div className="flex flex-wrap items-center gap-2 pl-0 sm:pl-[5.5rem]">
+                      <select
+                        className="field min-h-[42px] w-auto flex-1 text-[0.92rem]"
+                        aria-label="대체 과제로 연결할 수행평가"
+                        value={a.altTaskId ?? ''}
+                        onChange={(e) => db.absences.update(a.id, { altTaskId: e.target.value || undefined, altTaskDone: false })}
+                      >
+                        <option value="">대체 과제 없음</option>
+                        {(data?.assessments ?? [])
+                          .filter((x) => x.grade === s.grade)
+                          .map((x) => (
+                            <option key={x.id} value={x.id}>
+                              대체 과제: {x.title}
+                            </option>
+                          ))}
+                      </select>
+                      {a.altTaskId && (
+                        <button
+                          type="button"
+                          aria-pressed={a.altTaskDone}
+                          className={`btn min-h-[42px] px-3 text-sm ${a.altTaskDone ? 'bg-ok-light text-ok' : 'btn-soft'}`}
+                          onClick={() => db.absences.update(a.id, { altTaskDone: !a.altTaskDone })}
+                        >
+                          {a.altTaskDone ? '✔ 제출함' : '미제출'}
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </li>
               )
             })}

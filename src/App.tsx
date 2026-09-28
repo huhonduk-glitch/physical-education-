@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import BottomNav from './components/BottomNav'
 import MiniTimer from './components/MiniTimer'
@@ -10,24 +10,29 @@ import { ensureKeywordSeed } from './db/recordsRepo'
 import { DEFAULT_STANDARDS, type PapsStandards } from './lib/paps'
 import { PIN_SETTING_KEY, type StoredPin } from './lib/pin'
 import ClassPage from './pages/ClassPage'
-import LockPage from './pages/LockPage'
-import MorePage from './pages/MorePage'
-import PapsPage from './pages/PapsPage'
-import RosterImportPage from './pages/RosterImportPage'
-import SettingsPage from './pages/SettingsPage'
-import SetupPage from './pages/SetupPage'
-import StudentsPage from './pages/StudentsPage'
-import TimerPage from './pages/TimerPage'
-import StudentDetailPage from './pages/StudentDetailPage'
-import CaptainsPage from './pages/CaptainsPage'
-import AbsencesPage from './pages/AbsencesPage'
-import RecordButtonsPage from './pages/RecordButtonsPage'
-import TimetablePage from './pages/TimetablePage'
-import PapsInputPage from './pages/paps/PapsInputPage'
-import PapsPastePage from './pages/paps/PapsPastePage'
-import PapsResultsPage from './pages/paps/PapsResultsPage'
-import PapsExportPage from './pages/paps/PapsExportPage'
-import PapsSetupPage from './pages/paps/PapsSetupPage'
+const LockPage = lazy(() => import('./pages/LockPage'))
+const MorePage = lazy(() => import('./pages/MorePage'))
+const PapsPage = lazy(() => import('./pages/PapsPage'))
+const RosterImportPage = lazy(() => import('./pages/RosterImportPage'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const SetupPage = lazy(() => import('./pages/SetupPage'))
+const StudentsPage = lazy(() => import('./pages/StudentsPage'))
+const TimerPage = lazy(() => import('./pages/TimerPage'))
+const StudentDetailPage = lazy(() => import('./pages/StudentDetailPage'))
+const CaptainsPage = lazy(() => import('./pages/CaptainsPage'))
+const AbsencesPage = lazy(() => import('./pages/AbsencesPage'))
+const RecordButtonsPage = lazy(() => import('./pages/RecordButtonsPage'))
+const TimetablePage = lazy(() => import('./pages/TimetablePage'))
+const PapsInputPage = lazy(() => import('./pages/paps/PapsInputPage'))
+const PapsPastePage = lazy(() => import('./pages/paps/PapsPastePage'))
+const PapsResultsPage = lazy(() => import('./pages/paps/PapsResultsPage'))
+const PapsExportPage = lazy(() => import('./pages/paps/PapsExportPage'))
+const PapsSetupPage = lazy(() => import('./pages/paps/PapsSetupPage'))
+const KeywordsPage = lazy(() => import('./pages/KeywordsPage'))
+const AssessmentsPage = lazy(() => import('./pages/AssessmentsPage'))
+const AssessmentGradePage = lazy(() => import('./pages/AssessmentGradePage'))
+const ClassSummaryPage = lazy(() => import('./pages/ClassSummaryPage'))
+const DataPage = lazy(() => import('./pages/DataPage'))
 import { AppContext } from './state/AppContext'
 
 /** 앱을 다른 앱으로 바꿔 두었다가 이 시간이 지나 돌아오면 다시 PIN을 묻는다. */
@@ -74,13 +79,19 @@ export default function App() {
   if (pinRow === null) {
     return (
       <AppContext.Provider value={ctx}>
-        <SetupPage onDone={() => setUnlocked(true)} />
+        <Suspense fallback={null}>
+          <SetupPage onDone={() => setUnlocked(true)} />
+        </Suspense>
       </AppContext.Provider>
     )
   }
 
   if (!unlocked) {
-    return <LockPage stored={pinRow.value as StoredPin} onUnlock={() => setUnlocked(true)} />
+    return (
+      <Suspense fallback={null}>
+        <LockPage stored={pinRow.value as StoredPin} onUnlock={() => setUnlocked(true)} />
+      </Suspense>
+    )
   }
 
   return (
@@ -88,6 +99,7 @@ export default function App() {
       <TimerProvider>
       <MiniTimer />
       <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-60">
+        <Suspense fallback={<div className="p-6 text-ink-3">불러오는 중…</div>}>
         <Routes>
           <Route path="/" element={<ClassPage />} />
           <Route path="/timer" element={<TimerPage />} />
@@ -100,7 +112,12 @@ export default function App() {
           <Route path="/students" element={<StudentsPage />} />
           <Route path="/students/import" element={<RosterImportPage />} />
           <Route path="/more" element={<MorePage />} />
+          <Route path="/students/summary" element={<ClassSummaryPage />} />
           <Route path="/students/:id" element={<StudentDetailPage />} />
+          <Route path="/more/keywords" element={<KeywordsPage />} />
+          <Route path="/more/data" element={<DataPage />} />
+          <Route path="/more/assessments" element={<AssessmentsPage />} />
+          <Route path="/more/assessments/:id" element={<AssessmentGradePage />} />
           <Route path="/more/captains" element={<CaptainsPage />} />
           <Route path="/more/absences" element={<AbsencesPage />} />
           <Route path="/more/settings" element={<SettingsPage />} />
@@ -108,6 +125,7 @@ export default function App() {
           <Route path="/more/settings/timetable" element={<TimetablePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </Suspense>
       </div>
       <BottomNav />
       </TimerProvider>

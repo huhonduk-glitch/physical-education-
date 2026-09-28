@@ -30,6 +30,7 @@ export default function PapsExportPage() {
   const [scope, setScope] = useState<'class' | 'grade'>('class')
   const [out, setOut] = useState<Outcome | null>(null)
   const [busy, setBusy] = useState(false)
+  const [showN, setShowN] = useState(30)
   const year = settings.schoolYear
   const template = settings.neisTemplates[String(year)] ?? null
   const defaults = { course: settings.defaultCourse, track: settings.defaultTrack, dept: settings.defaultDept }
@@ -38,6 +39,7 @@ export default function PapsExportPage() {
     if (!cls) return
     setBusy(true)
     setOut(null)
+    setShowN(30)
     try {
       const targets = scope === 'class' ? [cls] : classes.filter((c) => c.grade === cls.grade)
       const all: Outcome = { issues: [], excluded: [], unknown: [] }
@@ -150,7 +152,7 @@ export default function PapsExportPage() {
                   문제 {out.issues.length}칸 (누락 {out.issues.filter((i) => i.kind === 'missing').length} · 범위·자릿수 {out.issues.filter((i) => i.kind !== 'missing').length})
                 </p>
                 <ul>
-                  {out.issues.slice(0, 300).map((i, k) => (
+                  {out.issues.slice(0, showN).map((i, k) => (
                     <li key={k}>
                       <Link to={`/paps/input/${groupOf(i.cell.split('|')[0])}?c=${i.cls}&s=${i.studentId}`} className="list-row hover:bg-fill">
                         <span className={`badge ${i.kind === 'missing' ? 'bg-caution-light text-caution' : 'bg-danger-light text-danger'}`}>
@@ -174,6 +176,11 @@ export default function PapsExportPage() {
                     </li>
                   ))}
                 </ul>
+                {out.issues.length > showN && (
+                  <button type="button" className="btn btn-ghost w-full text-brand" onClick={() => setShowN((n) => n + 100)}>
+                    나머지 {out.issues.length - showN}칸 더 보기
+                  </button>
+                )}
               </section>
             )}
           </>

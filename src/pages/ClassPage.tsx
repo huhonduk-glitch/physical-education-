@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import ClassPicker, { classesOf, classKeyStr, type ClassKey } from '../components/ClassPicker'
+import BackupWarning from '../components/BackupWarning'
 import DateBar from '../components/DateBar'
 import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
@@ -164,6 +165,7 @@ export default function ClassPage() {
         }
       />
       <div className="page space-y-3 pb-4">
+        <BackupWarning hasData={(students?.length ?? 0) > 0} />
         <ClassPicker classes={classes} value={cls} onChange={choose} />
         <DateBar value={date} onChange={setDate} marked={marked} />
 

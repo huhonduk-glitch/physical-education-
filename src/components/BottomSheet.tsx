@@ -15,7 +15,7 @@ export default function BottomSheet({ title, sub, onClose, children }: { title: 
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center lg:items-center" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[60] flex items-end justify-center lg:items-center" role="dialog" aria-modal="true">
       <button type="button" aria-label="닫기" className="anim-fade absolute inset-0 bg-black/45" onClick={onClose} />
       <div className="anim-sheet relative flex max-h-[90dvh] w-full max-w-2xl flex-col rounded-t-[28px] bg-white pb-[env(safe-area-inset-bottom)] shadow-[var(--shadow-float)] lg:anim-pop lg:rounded-[28px]">
         <div className="mx-auto mt-2 h-1.5 w-10 rounded-full bg-fill-2 lg:hidden" aria-hidden />

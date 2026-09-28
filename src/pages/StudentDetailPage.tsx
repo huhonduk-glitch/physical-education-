@@ -9,6 +9,12 @@ import type { StudentStatus } from '../db/types'
 import { monthLabel, shortDateLabel } from '../lib/dates'
 import { countByCategory, countByMonth, keywordSummary } from '../lib/recordStats'
 import { genderLabel } from '../lib/text'
+import { eventName, fixed } from '../lib/paps'
+import { scoreTotal } from '../lib/seteuk'
+import type { Student } from '../db/types'
+import { useApp } from '../state/AppContext'
+import { usePapsClass } from '../state/usePapsClass'
+import { GradeBadge } from './paps/common'
 
 function Card({ title, children, right }: { title: string; children: ReactNode; right?: ReactNode }) {
   return (
@@ -207,9 +213,8 @@ export default function StudentDetailPage() {
           )}
         </Card>
 
-        <Card title="PAPS · 수행평가">
-          <p className="hint">PAPS 결과는 4단계, 수행평가 점수는 5단계에서 이곳에 나와요.</p>
-        </Card>
+        <PapsCard student={s} />
+        <AssessCard student={s} />
 
         <Card title="최근 기록 (지우기 가능)">
           {recent.length === 0 ? (
@@ -237,5 +242,69 @@ export default function StudentDetailPage() {
         </Card>
       </div>
     </>
+  )
+}
+
+function PapsCard({ student }: { student: Student }) {
+  const { standards } = useApp()
+  const pc = usePapsClass({ grade: student.grade, classNo: student.classNo })
+  const p = pc.summaries.get(student.id)
+  const ex = pc.excluded.get(student.id)
+  return (
+    <Card title="PAPS" right={p?.complete ? <span className="badge bg-ink text-white">종합 {p.total}점 · {p.grade}등급</span> : <span className="badge bg-caution-light text-caution">미완료 {p?.sum ?? 0}점</span>}>
+      {ex !== undefined ? (
+        <p className="hint">측정 제외{ex ? ` · ${ex}` : ''}</p>
+      ) : !p ? (
+        <p className="hint">성별 정보가 없어 등급을 계산할 수 없어요</p>
+      ) : (
+        <ul className="space-y-1">
+          {p.factors.map((f) => (
+            <li key={f.factor} className="flex items-center justify-between gap-2 rounded-xl bg-fill px-3 py-1.5 text-[0.92rem]">
+              <span className="min-w-0 truncate">
+                <b>{f.factor}</b> <span className="text-ink-3">{f.eventId ? eventName(standards, f.eventId, student.gender ?? undefined) : '종목 미정'}</span>
+              </span>
+              <span className="flex shrink-0 items-center gap-1.5">
+                <span className="font-bold tabular-nums">{f.value === null ? '—' : fixed(f.value, 2)}</span>
+                <GradeBadge band={f.band} points={f.points} />
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="hint">나이스 산출값과 다르면 나이스 값이 우선입니다.</p>
+    </Card>
+  )
+}
+
+function AssessCard({ student }: { student: Student }) {
+  const data = useLiveQuery(async () => {
+    const [list, scores] = await Promise.all([
+      db.assessments.where('schoolYear').equals(student.schoolYear).filter((a) => a.grade === student.grade).toArray(),
+      db.assessmentScores.where('studentId').equals(student.id).toArray(),
+    ])
+    return { list, scores: new Map(scores.map((x) => [x.assessmentId, x])) }
+  }, [student.id])
+  return (
+    <Card title="수행평가">
+      {!data || data.list.length === 0 ? (
+        <p className="hint">아직 평가가 없어요</p>
+      ) : (
+        <ul className="space-y-2">
+          {data.list.map((a) => {
+            const sc = data.scores.get(a.id)
+            const total = scoreTotal(a.rubric, sc?.scores ?? {})
+            return (
+              <li key={a.id} className="rounded-xl bg-fill px-3 py-2">
+                <p className="font-bold">
+                  {a.title} {total !== null && <span className="badge bg-ink text-white">합계 {total}</span>}
+                </p>
+                <p className="text-[0.9rem] text-ink-2">{a.rubric.map((r) => `${r.label} ${sc?.scores[r.id] ?? '—'}`).join(' · ')}</p>
+                {sc?.note && <p className="text-[0.88rem] text-ink-3">📝 {sc.note}</p>}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </Card>
   )
 }

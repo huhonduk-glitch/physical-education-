@@ -17,7 +17,7 @@ type Step = 'input' | 'preview' | 'confirm' | 'done'
 
 /** 명렬 올리기: ① 파일 또는 붙여넣기 → ② 미리보기(바로 고치기) → ③ 저장 확인 → ④ 끝 (CLAUDE.md 4-1) */
 export default function RosterImportPage() {
-  const { settings } = useApp()
+  const { settings, readOnly } = useApp()
   const [step, setStep] = useState<Step>('input')
   const [source, setSource] = useState<'file' | 'paste'>('file')
   const [rows, setRows] = useState<RosterRow[]>([])
@@ -208,7 +208,7 @@ export default function RosterImportPage() {
                 desc="올린 반은 이 명단대로 바꿔요. 명단에서 빠진 학생은 기록이 있으면 '전출'로 남기고, 없으면 지워요."
               />
             </fieldset>
-            <button type="button" className="btn btn-primary w-full text-lg" disabled={blocked || busy || rows.length === 0} onClick={toConfirm}>
+            <button type="button" className="btn btn-primary w-full text-lg" disabled={readOnly || blocked || busy || rows.length === 0} onClick={toConfirm}>
               {blocked ? '빨간 칸을 먼저 고쳐 주세요' : '다음: 저장 확인'}
             </button>
           </Preview>
