@@ -40,7 +40,7 @@
 
 **GitHub 규칙**
 - 저장소는 **Private**로 운영한다.
-- 실제 학생 정보가 담긴 파일은 절대 커밋하지 않는다. `.gitignore`에 다음을 넣는다: `references/*roster*`, `*.real.*`, `backup*.json`
+- 실제 학생 정보가 담긴 파일은 절대 커밋하지 않는다. `.gitignore`에 다음을 넣는다: `*.real.*`, `*실명*`, `backup*.json`
 - 명렬 샘플은 가명 처리된 파일만 커밋한다.
 - 기능 단위로 브랜치를 만들고 PR로 병합한다.
 
