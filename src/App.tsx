@@ -23,6 +23,11 @@ import CaptainsPage from './pages/CaptainsPage'
 import AbsencesPage from './pages/AbsencesPage'
 import RecordButtonsPage from './pages/RecordButtonsPage'
 import TimetablePage from './pages/TimetablePage'
+import PapsInputPage from './pages/paps/PapsInputPage'
+import PapsPastePage from './pages/paps/PapsPastePage'
+import PapsResultsPage from './pages/paps/PapsResultsPage'
+import PapsExportPage from './pages/paps/PapsExportPage'
+import PapsSetupPage from './pages/paps/PapsSetupPage'
 import { AppContext } from './state/AppContext'
 
 /** 앱을 다른 앱으로 바꿔 두었다가 이 시간이 지나 돌아오면 다시 PIN을 묻는다. */
@@ -87,6 +92,11 @@ export default function App() {
           <Route path="/" element={<ClassPage />} />
           <Route path="/timer" element={<TimerPage />} />
           <Route path="/paps" element={<PapsPage />} />
+          <Route path="/paps/input/:key" element={<PapsInputPage />} />
+          <Route path="/paps/paste" element={<PapsPastePage />} />
+          <Route path="/paps/results" element={<PapsResultsPage />} />
+          <Route path="/paps/export" element={<PapsExportPage />} />
+          <Route path="/paps/setup" element={<PapsSetupPage />} />
           <Route path="/students" element={<StudentsPage />} />
           <Route path="/students/import" element={<RosterImportPage />} />
           <Route path="/more" element={<MorePage />} />

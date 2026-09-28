@@ -47,8 +47,23 @@ export function cellsOf(columns: readonly NeisColumn[]): CellSpec[] {
   return columns.filter((c) => c.kind === 'measure').map((c) => ({ key: c.key, attempt: c.attempt, side: c.side }))
 }
 
-export function columnsFor(template: string[] | null, selected: Partial<Record<Factor, EventId>>): NeisColumn[] {
-  return parseNeisHeaders(template ?? standardHeaders(selected))
+export function columnsFor(
+  template: { headers: string[]; overrides?: Record<number, CellSpec | null> } | null,
+  selected: Partial<Record<Factor, EventId>>,
+): NeisColumn[] {
+  if (!template) return parseNeisHeaders(standardHeaders(selected))
+  return applyOverrides(parseNeisHeaders(template.headers), template.overrides)
+}
+
+/** 교사가 직접 지정한 열 반영 */
+export function applyOverrides(cols: NeisColumn[], overrides?: Record<number, CellSpec | null>): NeisColumn[] {
+  if (!overrides) return cols
+  return cols.map((c, i) => {
+    const o = overrides[i]
+    if (o === undefined || c.kind === 'common') return c
+    if (o === null) return { kind: 'unknown', header: c.header }
+    return { kind: 'measure', header: c.header, key: o.key, unit: '', attempt: o.attempt, side: o.side }
+  })
 }
 
 /** 종목 하나의 칸들 (입력 화면·붙여넣기 순서) */

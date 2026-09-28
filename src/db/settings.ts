@@ -1,6 +1,7 @@
 import type { PeDatabase } from './db'
 import neisRanges from '../data/neis-valid-ranges.json'
 import type { Ranges } from '../lib/neisExport'
+import type { CellSpec } from '../lib/papsLayout'
 import type { FlexMode, StepMethod } from '../lib/paps'
 import type { SchoolGenderType, SchoolLevel } from './types'
 
@@ -33,10 +34,17 @@ export interface AppSettings {
   papsStepMethod: StepMethod
   /** 나이스 입력 허용 범위·소수 자릿수 (추정값에서 시작, 교사가 고침) */
   neisRanges: Ranges
-  /** 학년도별 나이스 PAPS 양식 헤더 */
-  neisTemplates: Record<string, string[]>
+  /** 학년도별 나이스 PAPS 양식 (헤더 + 교사가 직접 지정한 칸) */
+  neisTemplates: Record<string, NeisTemplate>
   /** 마지막 백업 시각 (ms) */
   lastBackupAt: number
+}
+
+export interface NeisTemplate {
+  headers: string[]
+  /** 알아보지 못한 열을 교사가 지정한 것: 열 번호 → 칸 (null이면 무시) */
+  overrides?: Record<number, CellSpec | null>
+  registeredAt: number
 }
 
 export interface RecordButtons {
