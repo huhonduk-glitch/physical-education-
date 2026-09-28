@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import NeisGuide from '../components/NeisGuide'
 import PageHeader from '../components/PageHeader'
 import { db } from '../db/db'
 import { applyRosterPlan, studentsOfYear, type SaveSummary } from '../db/rosterRepo'
@@ -143,6 +144,7 @@ export default function RosterImportPage() {
                   />
                 </label>
                 <p className="hint">생년월일 칸은 읽기만 하고 저장하지 않아요.</p>
+                <NeisGuide kind="roster" />
               </div>
             ) : (
               <div className="card space-y-3">
