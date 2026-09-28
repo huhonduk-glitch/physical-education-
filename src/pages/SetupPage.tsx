@@ -1,5 +1,5 @@
+import { APP_NAME, APP_SUB, Logo } from '../components/Brand'
 import { useState } from 'react'
-import Icon from '../components/Icon'
 import PinPad from '../components/PinPad'
 import { db } from '../db/db'
 import type { SchoolGenderType, SchoolLevel } from '../db/types'
@@ -42,17 +42,16 @@ export default function SetupPage({ onDone }: { onDone: () => void }) {
 
   return (
     <main className="mx-auto min-h-dvh max-w-md p-5">
-      <span className="mt-6 mb-4 grid h-16 w-16 place-items-center rounded-3xl bg-brand text-white shadow-[0_8px_20px_rgb(27_100_218/0.35)]">
-        <Icon name="class" size={32} />
-      </span>
-      <h1 className="text-[1.7rem] font-extrabold tracking-tight">체육수업 누가기록</h1>
+      <Logo size={72} className="mt-6 mb-4" />
+      <h1 className="text-[2rem] font-black tracking-[0.04em]">{APP_NAME}</h1>
+      <p className="text-lg font-bold text-ink-2">{APP_SUB}</p>
       <p className="hint mt-1">학생 정보는 이 기기 안에만 저장돼요. 인터넷으로 보내지 않아요.</p>
 
       {step === 'info' && (
         <div className="mt-6 space-y-5">
           <div>
             <label className="label" htmlFor="school">학교 이름 (선택)</label>
-            <input id="school" className="field" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} />
+            <input id="school" className="field bg-white" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} />
           </div>
           <Segmented label="학교급" value={level} options={['초', '중', '고']} onChange={setLevel} names={{ 초: '초등학교', 중: '중학교', 고: '고등학교' }} />
           <Segmented
@@ -66,7 +65,7 @@ export default function SetupPage({ onDone }: { onDone: () => void }) {
             <label className="label" htmlFor="year">현재 학년도</label>
             <input
               id="year"
-              className="field"
+              className="field bg-white"
               inputMode="numeric"
               value={year}
               onChange={(e) => setYear(Number(e.target.value.replace(/\D/g, '')) || 0)}

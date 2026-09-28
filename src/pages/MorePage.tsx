@@ -1,3 +1,4 @@
+import { MakerCredit } from '../components/Brand'
 import { Link } from 'react-router-dom'
 import Icon, { type IconName } from '../components/Icon'
 import PageHeader from '../components/PageHeader'
@@ -55,6 +56,7 @@ export default function MorePage() {
           지금 잠그기
         </button>
         <p className="hint text-center">학생 정보는 이 기기 안에만 저장돼요 · 인터넷으로 보내지 않아요</p>
+        <MakerCredit className="pt-4 pb-2" />
       </div>
     </>
   )
