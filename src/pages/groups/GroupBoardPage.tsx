@@ -1,88 +1,62 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
-import ClassPicker, { classesOf, classKeyStr, type ClassKey } from '../components/ClassPicker'
-import BackupWarning from '../components/BackupWarning'
-import DateBar from '../components/DateBar'
-import Icon from '../components/Icon'
-import PageHeader from '../components/PageHeader'
-import RecordSheet from '../components/RecordSheet'
-import TeamSendSheet from '../components/TeamSendSheet'
-import UndoToast from '../components/UndoToast'
-import { db } from '../db/db'
-import { undo, type UndoToken } from '../db/recordsRepo'
-import type { Student } from '../db/types'
-import { todayStr } from '../lib/dates'
-import { summarizeDay } from '../lib/recordStats'
-import { classForNow } from '../lib/timetable'
-import { useApp } from '../state/AppContext'
+import { useCallback, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import BackupWarning from '../../components/BackupWarning'
+import DateBar from '../../components/DateBar'
+import GroupPicker from '../../components/GroupPicker'
+import Icon from '../../components/Icon'
+import PageHeader from '../../components/PageHeader'
+import RecordSheet from '../../components/RecordSheet'
+import TeamSendSheet from '../../components/TeamSendSheet'
+import UndoToast from '../../components/UndoToast'
+import { db } from '../../db/db'
+import { undo, type UndoToken } from '../../db/recordsRepo'
+import type { Student } from '../../db/types'
+import { todayStr } from '../../lib/dates'
+import { memberNo, SEMESTER_LABEL } from '../../lib/groups'
+import { summarizeDay } from '../../lib/recordStats'
+import { classForNow } from '../../lib/timetable'
+import { useApp } from '../../state/AppContext'
+import { useGroups } from '../../state/useGroups'
 
-const LAST_CLASS_KEY = 'pe.lastClass'
+export const LAST_GROUP_KEY = 'pe.lastGroup'
 
-function readLastClass(): string | null {
-  try {
-    return localStorage.getItem(LAST_CLASS_KEY)
-  } catch {
-    return null
-  }
-}
-
-/** 수업 탭: 번호 카드를 눌러 바로 기록하는 핵심 화면 (CLAUDE.md 4-2) */
-export default function ClassPage() {
+/** 수업반 누가기록 보드: 학생 카드를 눌러 바로 기록한다 (CLAUDE.md 4-2) */
+export default function GroupBoardPage() {
   const { settings, readOnly } = useApp()
+  const { id = '' } = useParams()
+  const navigate = useNavigate()
   const [date, setDate] = useState(todayStr())
   const isToday = date === todayStr()
-  const students = useLiveQuery(
-    () => db.students.where('schoolYear').equals(settings.schoolYear).filter((s) => s.status !== '전출').toArray(),
-    [settings.schoolYear],
-  )
-
-  const classes = useMemo(() => classesOf(students ?? []), [students])
+  const { groups, membersOf } = useGroups()
+  const group = groups?.find((g) => g.id === id)
   const now = isToday ? classForNow(new Date(), settings.timetable, settings.periodStarts, settings.periodMinutes) : null
-  const [cls, setCls] = useState<ClassKey | null>(null)
+  const nowHere = now && now.groupId === id ? now : null
 
-  // 처음 열 때: 지금 교시 반(시간표) → 지난번에 본 반 → 첫 번째 반
-  useEffect(() => {
-    if (classes.length === 0 || (cls && classes.some((c) => classKeyStr(c) === classKeyStr(cls)))) return
-    const byTime = now && classes.find((c) => c.grade === now.grade && c.classNo === now.classNo)
-    const last = readLastClass()
-    const byLast = classes.find((c) => classKeyStr(c) === last)
-    setCls(byTime || byLast || classes[0])
-  }, [classes, cls, now])
-
-  const list: Student[] = useMemo(
-    () =>
-      (students ?? [])
-        .filter((s) => cls && s.grade === cls.grade && s.classNo === cls.classNo)
-        .sort((a, b) => a.number - b.number),
-    [students, cls],
-  )
-  const ids = useMemo(() => list.map((s) => s.id), [list])
+  const list: Student[] = useMemo(() => (group ? membersOf(group) : []), [group, membersOf])
 
   const day = useLiveQuery(async () => {
     const [records, absences] = await Promise.all([
-      db.records.where('date').equals(date).filter((r) => r.schoolYear === settings.schoolYear).toArray(),
-      db.absences.where('date').equals(date).filter((a) => a.schoolYear === settings.schoolYear).toArray(),
+      db.records.where('[groupId+date]').equals([id, date]).toArray(),
+      db.absences.where('[groupId+date]').equals([id, date]).toArray(),
     ])
     return summarizeDay(records, absences)
-  }, [date, settings.schoolYear])
+  }, [date, id])
 
-  // 달력에 점 찍을 날짜: 이 반 학생 기록이 있는 날
+  // 달력에 점 찍을 날짜: 이 수업반에서 기록한 날
   const marked = useLiveQuery(async () => {
-    if (ids.length === 0) return new Set<string>()
-    const [r, a] = await Promise.all([db.records.where('studentId').anyOf(ids).toArray(), db.absences.where('studentId').anyOf(ids).toArray()])
+    const [r, a] = await Promise.all([db.records.where('groupId').equals(id).toArray(), db.absences.where('groupId').equals(id).toArray()])
     return new Set([...r.map((x) => x.date), ...a.map((x) => x.date)])
-  }, [ids.join(',')])
+  }, [id])
 
-  const choose = (c: ClassKey | null) => {
-    if (!c) return
-    setCls(c)
+  const choose = (gid: string) => {
     setSelected([])
     try {
-      localStorage.setItem(LAST_CLASS_KEY, classKeyStr(c))
+      localStorage.setItem(LAST_GROUP_KEY, gid)
     } catch {
       /* 무시 */
     }
+    navigate(`/groups/${gid}`, { replace: true })
   }
 
   const [multi, setMulti] = useState(false)
@@ -118,19 +92,15 @@ export default function ClassPage() {
     return { absent, unprepared, exemplary, present: list.length - absent }
   }, [list, day])
 
-  if (students !== undefined && students.length === 0) {
+  if (groups && !group) {
     return (
       <>
-        <PageHeader title="수업" />
+        <PageHeader title="수업반" back />
         <div className="page pt-2">
-          <div className="card flex flex-col items-center gap-3 py-10 text-center">
-            <span className="grid h-16 w-16 place-items-center rounded-3xl bg-brand-light text-brand">
-              <Icon name="students" size={32} />
-            </span>
-            <p className="text-xl font-extrabold">먼저 학생 명렬을 올려 주세요</p>
-            <p className="hint">나이스 명렬 엑셀을 올리거나, 명단을 복사해서 붙여넣으면 돼요.</p>
-            <Link to="/students/import" className="btn btn-primary mt-2 w-full max-w-xs">
-              명렬 올리기
+          <div className="card space-y-3 text-center">
+            <p className="text-lg font-extrabold">이 수업반을 찾을 수 없어요</p>
+            <Link to="/groups" className="btn btn-primary w-full">
+              수업반 목록으로
             </Link>
           </div>
         </div>
@@ -141,8 +111,9 @@ export default function ClassPage() {
   return (
     <>
       <PageHeader
-        title="수업"
-        sub={now && cls && now.grade === cls.grade && now.classNo === cls.classNo ? `시간표 ${now.period}교시 반` : undefined}
+        title={group?.name ?? ''}
+        sub={[group?.subject, group ? SEMESTER_LABEL[group.semester] : '', nowHere ? `지금 ${nowHere.period}교시` : ''].filter(Boolean).join(' · ')}
+        back
         right={
           <>
             <button type="button" className="btn btn-soft px-3" aria-label="팀 편성으로 보내기" onClick={() => setTeamSend(true)} disabled={list.length === 0}>
@@ -165,8 +136,8 @@ export default function ClassPage() {
         }
       />
       <div className="page space-y-3 pb-4">
-        <BackupWarning hasData={(students?.length ?? 0) > 0} />
-        <ClassPicker classes={classes} value={cls} onChange={choose} />
+        <BackupWarning hasData={list.length > 0} />
+        {groups && groups.length > 1 && <GroupPicker groups={groups} value={id} onChange={choose} />}
         <DateBar value={date} onChange={setDate} marked={marked} />
 
         <div className="grid grid-cols-4 gap-2 text-center" aria-label="이 반 요약">
@@ -187,6 +158,14 @@ export default function ClassPage() {
           <p className="anim-pop rounded-2xl bg-brand-light px-4 py-2.5 font-bold text-brand">기록할 학생을 모두 누른 뒤 아래 [기록하기]를 누르세요.</p>
         )}
         {readOnly && <p className="rounded-2xl bg-caution-light px-4 py-2.5 font-bold text-caution">지난 학년도는 읽기 전용이에요.</p>}
+        {group && list.length === 0 && (
+          <div className="card space-y-2 text-center">
+            <p className="font-extrabold">이 수업반에 학생이 없어요</p>
+            <Link to={`/groups/${id}/edit`} className="btn btn-primary w-full">
+              학생 넣기
+            </Link>
+          </div>
+        )}
 
         <ul className="grid grid-cols-5 gap-1.5 sm:gap-2" aria-label="번호 카드">
           {list.map((s) => {
@@ -198,7 +177,7 @@ export default function ClassPage() {
                 <button
                   type="button"
                   aria-pressed={multi ? on : undefined}
-                  aria-label={`${s.number}번 ${s.name}${d?.absent ? ' 견학' : ''}`}
+                  aria-label={`${group ? memberNo(group, s) : s.number}번 ${s.name}${d?.absent ? ' 견학' : ''}`}
                   onClick={() => tapCard(s)}
                   disabled={readOnly}
                   className={`relative flex min-h-[66px] w-full flex-col items-center justify-center rounded-2xl px-0.5 pt-1.5 pb-1 transition-[transform,background-color] active:scale-95 ${
@@ -209,7 +188,7 @@ export default function ClassPage() {
                         : 'bg-white text-ink shadow-[var(--shadow-card)]'
                   }`}
                 >
-                  <span className="text-[1.3rem] leading-none font-extrabold tabular-nums">{s.number}</span>
+                  <span className={`leading-none font-extrabold tabular-nums ${group?.kind === 'elective' ? 'text-[0.95rem]' : 'text-[1.3rem]'}`}>{group ? memberNo(group, s) : s.number}</span>
                   <span className="mt-1 w-full truncate text-center text-[0.74rem] leading-tight font-semibold">{s.name}</span>
                   <span className="mt-1 flex h-2 items-center gap-1" aria-hidden>
                     {d?.absent && <span className={`h-2 w-2 rounded-full ${on ? 'bg-white' : 'bg-ink-3'}`} />}
@@ -258,12 +237,14 @@ export default function ClassPage() {
         <RecordSheet
           students={sheet}
           date={date}
-          period={now && cls && now.grade === cls.grade && now.classNo === cls.classNo ? now.period : undefined}
+          period={nowHere?.period}
+          groupId={id}
+          numberOf={(s) => (group ? memberNo(group, s) : String(s.number))}
           onClose={() => setSheet(null)}
           onRecorded={onRecorded}
         />
       )}
-      {teamSend && cls && <TeamSendSheet students={list} date={date} onClose={() => setTeamSend(false)} />}
+      {teamSend && group && <TeamSendSheet students={list} date={date} onClose={() => setTeamSend(false)} />}
 
       {toast && (
         <UndoToast

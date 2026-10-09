@@ -23,12 +23,16 @@ interface Props {
   students: Student[]
   date: string
   period?: number
+  /** 어느 수업반에서 남기는 기록인지 */
+  groupId?: string
+  /** 카드 번호 표시 (수강반은 학번) */
+  numberOf?: (s: Student) => string
   onClose: () => void
   onRecorded: (token: UndoToken, message: string) => void
 }
 
 /** 번호 카드를 누르면 열리는 기록 창 (CLAUDE.md 4-2). 버튼 한 번에 저장한다. */
-export default function RecordSheet({ students, date, period, onClose, onRecorded }: Props) {
+export default function RecordSheet({ students, date, period, groupId, numberOf = (s) => String(s.number), onClose, onRecorded }: Props) {
   const { settings } = useApp()
   const [keywordIds, setKeywordIds] = useState<string[]>([])
   const [pending, setPending] = useState<{ type: 'unprepared' | 'exemplary'; category: string } | null>(null)
@@ -39,7 +43,7 @@ export default function RecordSheet({ students, date, period, onClose, onRecorde
   const [busy, setBusy] = useState(false)
   const single = students.length === 1 ? students[0] : null
   const ids = students.map((s) => s.id)
-  const who = single ? `${single.number}번 ${single.name}` : `${students.length}명`
+  const who = single ? `${numberOf(single)}번 ${single.name}` : `${students.length}명`
 
   const record = async (type: RecordType, category: string, extra: { note?: string; keywordIds?: string[] } = {}) => {
     if (busy) return
@@ -51,6 +55,7 @@ export default function RecordSheet({ students, date, period, onClose, onRecorde
       period,
       type,
       category,
+      groupId,
       ...extra,
     })
     const what = type === 'unprepared' ? `${category} 미준비` : type === 'exemplary' ? `솔선수범(${category})` : '관찰 메모'
@@ -60,7 +65,7 @@ export default function RecordSheet({ students, date, period, onClose, onRecorde
   const absent = async (reason: Absence['reason']) => {
     if (busy) return
     setBusy(true)
-    const r = await addAbsences(db, { schoolYear: settings.schoolYear, studentIds: ids, date, period, reason, detail: absDetail })
+    const r = await addAbsences(db, { schoolYear: settings.schoolYear, studentIds: ids, date, period, reason, detail: absDetail, groupId })
     onRecorded({ recordIds: [], absenceIds: r.added, absenceBefore: r.updated }, `${who}: 견학`)
   }
 
@@ -75,9 +80,9 @@ export default function RecordSheet({ students, date, period, onClose, onRecorde
 
   const btn = 'btn btn-soft min-h-[54px] w-full text-[1.02rem]'
   return (
-    <BottomSheet title={single ? <>{single.number}번 {single.name}</> : <>{students.length}명 한꺼번에 기록</>} onClose={onClose}>
+    <BottomSheet title={single ? <>{numberOf(single)}번 {single.name}</> : <>{students.length}명 한꺼번에 기록</>} onClose={onClose}>
       <div className="space-y-5">
-        {!single && <p className="hint">{students.map((s) => s.number).join(', ')}번</p>}
+        {!single && <p className="hint">{students.map(numberOf).join(', ')}번</p>}
 
         {pending ? (
           <section className="anim-pop space-y-3 rounded-2xl bg-brand-light p-4">

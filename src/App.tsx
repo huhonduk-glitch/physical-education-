@@ -9,7 +9,7 @@ import { loadSettings, saveSettings, type AppSettings } from './db/settings'
 import { ensureKeywordSeed } from './db/recordsRepo'
 import { DEFAULT_STANDARDS, type PapsStandards } from './lib/paps'
 import { PIN_SETTING_KEY, type StoredPin } from './lib/pin'
-import ClassPage from './pages/ClassPage'
+import HomePage from './pages/HomePage'
 const LockPage = lazy(() => import('./pages/LockPage'))
 const MorePage = lazy(() => import('./pages/MorePage'))
 const PapsPage = lazy(() => import('./pages/PapsPage'))
@@ -33,6 +33,10 @@ const AssessmentsPage = lazy(() => import('./pages/AssessmentsPage'))
 const AssessmentGradePage = lazy(() => import('./pages/AssessmentGradePage'))
 const ClassSummaryPage = lazy(() => import('./pages/ClassSummaryPage'))
 const DataPage = lazy(() => import('./pages/DataPage'))
+const EvalPage = lazy(() => import('./pages/EvalPage'))
+const GroupsPage = lazy(() => import('./pages/groups/GroupsPage'))
+const GroupBoardPage = lazy(() => import('./pages/groups/GroupBoardPage'))
+const GroupEditPage = lazy(() => import('./pages/groups/GroupEditPage'))
 import { AppContext } from './state/AppContext'
 
 /** 앱을 다른 앱으로 바꿔 두었다가 이 시간이 지나 돌아오면 다시 PIN을 묻는다. */
@@ -101,7 +105,12 @@ export default function App() {
       <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-60">
         <Suspense fallback={<div className="p-6 text-ink-3">불러오는 중…</div>}>
         <Routes>
-          <Route path="/" element={<ClassPage />} />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/groups" element={<GroupsPage />} />
+          <Route path="/groups/new" element={<GroupEditPage />} />
+          <Route path="/groups/:id" element={<GroupBoardPage />} />
+          <Route path="/groups/:id/edit" element={<GroupEditPage />} />
+          <Route path="/eval" element={<EvalPage />} />
           <Route path="/timer" element={<TimerPage />} />
           <Route path="/paps" element={<PapsPage />} />
           <Route path="/paps/input/:key" element={<PapsInputPage />} />

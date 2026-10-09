@@ -21,22 +21,23 @@ export function classForNow(
   timetable: readonly TimetableEntry[],
   periodStarts: readonly string[],
   periodMinutes: number,
-): { grade: number; classNo: number; period: number } | null {
+): { groupId: string; period: number } | null {
   const day = now.getDay() // 0=일 … 6=토
   if (day === 0 || day === 6) return null
   const period = currentPeriod(now, periodStarts, periodMinutes)
   if (period === null) return null
   const e = timetable.find((t) => t.day === day && t.period === period)
-  return e ? { grade: e.grade, classNo: e.classNo, period } : null
+  return e ? { groupId: e.groupId, period } : null
 }
 
-/** 시간표 칸 하나를 바꾼 새 목록 (반이 null이면 그 칸을 비운다) */
-export function setTimetableCell(
-  timetable: readonly TimetableEntry[],
-  day: number,
-  period: number,
-  cls: { grade: number; classNo: number } | null,
-): TimetableEntry[] {
+/** 시간표 칸 하나를 바꾼 새 목록 (수업반이 null이면 그 칸을 비운다) */
+export function setTimetableCell(timetable: readonly TimetableEntry[], day: number, period: number, groupId: string | null): TimetableEntry[] {
   const rest = timetable.filter((t) => !(t.day === day && t.period === period))
-  return cls ? [...rest, { day, period, ...cls }] : rest
+  return groupId ? [...rest, { day, period, groupId }] : rest
+}
+
+/** 오늘(요일) 시간표: 교시순 */
+export function todaysLessons(now: Date, timetable: readonly TimetableEntry[]): TimetableEntry[] {
+  const day = now.getDay()
+  return timetable.filter((t) => t.day === day).sort((a, b) => a.period - b.period)
 }

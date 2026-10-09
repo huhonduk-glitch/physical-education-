@@ -12,7 +12,9 @@ import type {
   Student,
   TimerPreset,
   AudioFile,
+  ClassGroup,
 } from './types'
+import { migrateToGroups } from './groupsRepo'
 
 /**
  * 기기 안 저장소 (IndexedDB). 서버로 보내는 것은 없다.
@@ -31,6 +33,7 @@ export class PeDatabase extends Dexie {
   assessmentScores!: EntityTable<AssessmentScore, 'id'>
   timerPresets!: EntityTable<TimerPreset, 'id'>
   audioFiles!: EntityTable<AudioFile, 'id'>
+  groups!: EntityTable<ClassGroup, 'id'>
 
   constructor(name = 'pe-records') {
     super(name)
@@ -49,6 +52,22 @@ export class PeDatabase extends Dexie {
     })
     // v2: 왕복오래달리기 음원(교사가 올린 mp3)을 기기에 보관
     this.version(2).stores({ audioFiles: 'id' })
+    // v3: 수업반(학적반·수강반). 기록·견학에 수업반 표시를 붙이고, 예전 자료를 학적반 수업반으로 옮긴다
+    this.version(3)
+      .stores({
+        groups: 'id, schoolYear, kind, [schoolYear+grade+classNo]',
+        records: 'id, schoolYear, studentId, date, type, [studentId+date], groupId, [groupId+date]',
+        absences: 'id, schoolYear, studentId, date, groupId, [groupId+date]',
+      })
+      .upgrade((tx) =>
+        migrateToGroups({
+          students: tx.table('students'),
+          groups: tx.table('groups'),
+          records: tx.table('records'),
+          absences: tx.table('absences'),
+          settings: tx.table('settings'),
+        }),
+      )
   }
 }
 

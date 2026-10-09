@@ -245,7 +245,8 @@ textarea {
     color: var(--color-ink-2);
   }
   .segment > button[aria-selected='true'],
-  .segment > button[aria-pressed='true'] {
+  .segment > button[aria-pressed='true'],
+  .segment > button[aria-checked='true'] {
     background: #fff;
     color: var(--color-ink);
     box-shadow: var(--shadow-card);

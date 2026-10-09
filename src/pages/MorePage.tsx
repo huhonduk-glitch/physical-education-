@@ -1,18 +1,22 @@
+import { useState } from 'react'
 import { MakerCredit } from '../components/Brand'
 import { Link } from 'react-router-dom'
+import FeatureSheet from '../components/FeatureSheet'
 import Icon, { type IconName } from '../components/Icon'
 import PageHeader from '../components/PageHeader'
+import type { FeatureId } from '../db/settings'
+import { featureOn } from '../lib/features'
 import { useApp } from '../state/AppContext'
 
-const GROUPS: { title: string; items: { to: string; label: string; desc: string; icon: IconName; tone: string }[] }[] = [
+const GROUPS: { title: string; items: { to: string; label: string; desc: string; icon: IconName; tone: string; feature?: FeatureId }[] }[] = [
   {
     title: '수업 관리',
     items: [
-      { to: '/more/assessments', label: '수행평가 채점표', desc: '평가 만들기 · 반별 채점 · 엑셀', icon: 'clipboard', tone: 'bg-brand-light text-brand' },
-      { to: '/more/keywords', label: '세특 키워드', desc: '키워드 사전 · 근거 엑셀', icon: 'tag', tone: 'bg-ok-light text-ok' },
-      { to: '/more/captains', label: '체육부장', desc: '지정 · 교체 이력 · 활동 체크', icon: 'medal', tone: 'bg-caution-light text-caution' },
-      { to: '/more/absences', label: '견학 · 열외', desc: '견학 목록 · 대체 과제', icon: 'bandage', tone: 'bg-fill-2 text-ink-2' },
-      { to: '/students/summary', label: '반 요약', desc: '미준비·솔선수범 상위 · 미측정자', icon: 'list', tone: 'bg-brand-light text-brand' },
+      { to: '/more/assessments', label: '수행평가 채점표', desc: '평가 만들기 · 반별 채점 · 엑셀', icon: 'clipboard', tone: 'bg-brand-light text-brand', feature: 'assess' },
+      { to: '/more/keywords', label: '세특 키워드', desc: '키워드 사전 · 근거 엑셀', icon: 'tag', tone: 'bg-ok-light text-ok', feature: 'seteuk' },
+      { to: '/more/captains', label: '체육부장', desc: '지정 · 교체 이력 · 활동 체크', icon: 'medal', tone: 'bg-caution-light text-caution', feature: 'captains' },
+      { to: '/more/absences', label: '견학 · 열외', desc: '견학 목록 · 대체 과제', icon: 'bandage', tone: 'bg-fill-2 text-ink-2', feature: 'absences' },
+      { to: '/students/summary', label: '반 요약', desc: '미준비·솔선수범 상위 · 미측정자', icon: 'list', tone: 'bg-brand-light text-brand', feature: 'records' },
     ],
   },
   {
@@ -25,12 +29,25 @@ const GROUPS: { title: string; items: { to: string; label: string; desc: string;
 ]
 
 export default function MorePage() {
-  const { lock } = useApp()
+  const { lock, settings } = useApp()
+  const [pick, setPick] = useState(false)
   return (
     <>
       <PageHeader title="더보기" />
       <div className="page space-y-5 pb-8">
-        {GROUPS.map((g) => (
+        <button type="button" className="card flex min-h-[64px] w-full items-center gap-3 text-left" onClick={() => setPick(true)}>
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand text-white">
+            <Icon name="grid" size={20} />
+          </span>
+          <span className="flex-1">
+            <b className="block">쓸 기능 고르기</b>
+            <span className="hint">필요한 기능만 켜서 화면을 단순하게</span>
+          </span>
+          <Icon name="chevronRight" className="text-ink-3" />
+        </button>
+        {GROUPS.map((g) => ({ ...g, items: g.items.filter((m) => !m.feature || featureOn(settings.features, m.feature)) }))
+          .filter((g) => g.items.length > 0)
+          .map((g) => (
           <section key={g.title}>
             <p className="mb-2 px-1 text-sm font-bold text-ink-3">{g.title}</p>
             <div className="card overflow-hidden p-0">
@@ -58,6 +75,7 @@ export default function MorePage() {
         <p className="hint text-center">학생 정보는 이 기기 안에만 저장돼요 · 인터넷으로 보내지 않아요</p>
         <MakerCredit className="pt-4 pb-2" />
       </div>
+      {pick && <FeatureSheet onClose={() => setPick(false)} />}
     </>
   )
 }

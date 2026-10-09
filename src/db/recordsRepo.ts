@@ -26,6 +26,8 @@ export interface NewRecordInput {
   category: string
   note?: string
   keywordIds?: string[]
+  /** 어느 수업반 수업에서 남긴 기록인지 */
+  groupId?: string
 }
 
 /** 여러 학생에게 같은 기록을 한 번에 저장한다. 되돌리기용으로 만든 id 목록을 돌려준다. */
@@ -41,6 +43,7 @@ export async function addRecords(db: PeDatabase, input: NewRecordInput): Promise
     category: input.category,
     ...(input.note?.trim() ? { note: input.note.trim() } : {}),
     keywordIds: input.keywordIds ?? [],
+    ...(input.groupId ? { groupId: input.groupId } : {}),
     createdAt: now,
     updatedAt: now,
   }))
@@ -55,6 +58,7 @@ export interface NewAbsenceInput {
   period?: number
   reason: Absence['reason']
   detail?: string
+  groupId?: string
 }
 
 /** 견학 등록. 같은 날 같은 학생이 이미 견학이면 새로 만들지 않고 사유만 바꾼다. */
@@ -78,6 +82,7 @@ export async function addAbsences(db: PeDatabase, input: NewAbsenceInput): Promi
           reason: input.reason,
           ...(input.detail?.trim() ? { detail: input.detail.trim() } : {}),
           altTaskDone: false,
+          ...(input.groupId ? { groupId: input.groupId } : {}),
         })
         added.push(id)
       }

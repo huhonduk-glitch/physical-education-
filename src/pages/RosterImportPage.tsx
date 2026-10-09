@@ -236,7 +236,10 @@ export default function RosterImportPage() {
               {summary.deleted > 0 && <li>삭제 {summary.deleted}명</li>}
               {summary.skipped > 0 && <li>그대로 둠 {summary.skipped}명</li>}
             </ul>
-            <Link to="/students" className="btn btn-primary w-full">
+            <Link to="/groups" className="btn btn-primary w-full">
+              수업반으로 추가하기 →
+            </Link>
+            <Link to="/students" className="btn btn-soft w-full bg-white">
               명렬 보기
             </Link>
           </div>
