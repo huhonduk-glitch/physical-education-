@@ -3,11 +3,12 @@
  * 왕복오래달리기 음원(mp3)은 크기가 커서 백업에 넣지 않는다.
  */
 import type { PeDatabase } from './db'
+import { runGroupMigration } from './groupsRepo'
 
 export const BACKUP_FORMAT = 'pe-records-backup'
 export const BACKUP_VERSION = 1
 
-const TABLES = ['settings', 'students', 'records', 'captains', 'absences', 'keywords', 'papsConfigs', 'papsResults', 'assessments', 'assessmentScores', 'timerPresets'] as const
+const TABLES = ['settings', 'students', 'records', 'captains', 'absences', 'keywords', 'papsConfigs', 'papsResults', 'assessments', 'assessmentScores', 'timerPresets', 'groups'] as const
 type TableName = (typeof TABLES)[number]
 
 export interface BackupFile {
@@ -51,6 +52,8 @@ export async function restoreAll(db: PeDatabase, file: BackupFile): Promise<void
       if (rows.length) await db.table(t).bulkAdd(rows)
     }
   })
+  // 수업반이 생기기 전에 만든 백업이면 학적반 수업반을 만들어 붙인다
+  await runGroupMigration(db)
 }
 
 export function backupFileName(d = new Date()): string {

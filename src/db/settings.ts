@@ -38,6 +38,8 @@ export interface AppSettings {
   neisTemplates: Record<string, NeisTemplate>
   /** 마지막 백업 시각 (ms) */
   lastBackupAt: number
+  /** 켜 둔 기능 (끈 기능은 홈·탭·더보기에서 숨긴다. 자료는 지우지 않는다) */
+  features: Record<FeatureId, boolean>
 }
 
 export interface NeisTemplate {
@@ -57,9 +59,13 @@ export interface TimetableEntry {
   /** 1=월 … 5=금 */
   day: number
   period: number
-  grade: number
-  classNo: number
+  /** 그 교시에 수업하는 수업반 (v3부터. 예전 '학년·반'은 저장소를 열 때 수업반으로 옮긴다) */
+  groupId: string
 }
+
+/** 홈에서 켜고 끄는 기능 */
+export type FeatureId = 'records' | 'paps' | 'assess' | 'tools' | 'absences' | 'captains' | 'seteuk'
+export const FEATURE_IDS: FeatureId[] = ['records', 'paps', 'assess', 'tools', 'absences', 'captains', 'seteuk']
 
 /** 버튼 기본값 (CLAUDE.md 4-2, 4-3). '기타'는 누르면 메모를 받는다 */
 export const DEFAULT_RECORD_BUTTONS: RecordButtons = {
@@ -94,6 +100,7 @@ export function defaultSettings(): AppSettings {
     neisRanges: structuredClone((neisRanges as { ranges: Ranges }).ranges),
     neisTemplates: {},
     lastBackupAt: 0,
+    features: { records: true, paps: true, assess: true, tools: true, absences: true, captains: true, seteuk: true },
   }
 }
 

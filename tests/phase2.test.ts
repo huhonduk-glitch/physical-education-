@@ -23,8 +23,8 @@ describe('날짜', () => {
 describe('시간표로 지금 반 고르기', () => {
   const starts = ['09:00', '10:00', '11:00']
   const tt = [
-    { day: 1, period: 1, grade: 1, classNo: 3 },
-    { day: 1, period: 2, grade: 2, classNo: 5 },
+    { day: 1, period: 1, groupId: 'g13' },
+    { day: 1, period: 2, groupId: 'g25' },
   ]
   const mon = (h: number, m: number) => new Date(2026, 8, 28, h, m) // 2026-09-28 월요일
 
@@ -37,16 +37,16 @@ describe('시간표로 지금 반 고르기', () => {
     expect(currentPeriod(mon(8, 49), starts, 50)).toBeNull()
   })
   it('시간표에서 반을 찾는다', () => {
-    expect(classForNow(mon(9, 10), tt, starts, 50)).toEqual({ grade: 1, classNo: 3, period: 1 })
-    expect(classForNow(mon(10, 10), tt, starts, 50)).toEqual({ grade: 2, classNo: 5, period: 2 })
+    expect(classForNow(mon(9, 10), tt, starts, 50)).toEqual({ groupId: 'g13', period: 1 })
+    expect(classForNow(mon(10, 10), tt, starts, 50)).toEqual({ groupId: 'g25', period: 2 })
   })
   it('빈 교시·주말은 null', () => {
     expect(classForNow(mon(11, 10), tt, starts, 50)).toBeNull()
     expect(classForNow(new Date(2026, 8, 27, 9, 10), tt, starts, 50)).toBeNull() // 일요일
   })
   it('시간표 칸 바꾸기·비우기', () => {
-    const t2 = setTimetableCell(tt, 1, 1, { grade: 3, classNo: 1 })
-    expect(t2.find((t) => t.day === 1 && t.period === 1)).toEqual({ day: 1, period: 1, grade: 3, classNo: 1 })
+    const t2 = setTimetableCell(tt, 1, 1, 'g31')
+    expect(t2.find((t) => t.day === 1 && t.period === 1)).toEqual({ day: 1, period: 1, groupId: 'g31' })
     expect(t2).toHaveLength(2)
     expect(setTimetableCell(tt, 1, 1, null)).toHaveLength(1)
   })

@@ -1,24 +1,20 @@
-import { useLiveQuery } from 'dexie-react-hooks'
-import { useMemo } from 'react'
-import { classesOf } from '../components/ClassPicker'
+import { Link } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
-import { db } from '../db/db'
 import { setTimetableCell } from '../lib/timetable'
 import { useApp } from '../state/AppContext'
+import { useGroups } from '../state/useGroups'
 
 const DAYS = ['월', '화', '수', '목', '금']
 
-/** 수업 시간표 (CLAUDE.md 4-12): 요일·교시별 담당 반. 수업 탭이 지금 교시의 반을 자동으로 고른다 */
+/** 수업 시간표 (CLAUDE.md 4-12): 요일·교시별 수업반. 홈에 오늘 수업이 뜨고, 지금 교시 반이 맨 위에 온다 */
 export default function TimetablePage() {
   const { settings, updateSettings } = useApp()
-  const students = useLiveQuery(() => db.students.where('schoolYear').equals(settings.schoolYear).toArray(), [settings.schoolYear])
-  const classes = useMemo(() => classesOf(students ?? []), [students])
+  const { groups } = useGroups()
   const periods = settings.periodStarts.length
 
   const cell = (day: number, period: number) => settings.timetable.find((t) => t.day === day && t.period === period)
   const setCell = (day: number, period: number, v: string) => {
-    const [g, c] = v.split('-').map(Number)
-    updateSettings({ timetable: setTimetableCell(settings.timetable, day, period, v ? { grade: g, classNo: c } : null) })
+    updateSettings({ timetable: setTimetableCell(settings.timetable, day, period, v || null) })
   }
   const setStart = (i: number, v: string) => {
     const l = [...settings.periodStarts]
@@ -30,8 +26,15 @@ export default function TimetablePage() {
     <>
       <PageHeader title="수업 시간표" back />
       <div className="page space-y-4 py-4">
-        <p className="hint">담당 반을 넣어 두면 [수업] 탭을 열 때 지금 교시의 반이 자동으로 골라져요. 수업 시작 10분 전부터 그 교시로 봐요.</p>
-        {classes.length === 0 && <p className="card">먼저 학생 명렬을 올려야 반을 고를 수 있어요.</p>}
+        <p className="hint">수업반을 넣어 두면 홈에 오늘 수업이 뜨고, 지금 교시의 반을 바로 열 수 있어요. 수업 시작 10분 전부터 그 교시로 봐요.</p>
+        {groups?.length === 0 && (
+          <p className="card">
+            먼저 수업반을 만들어 주세요.{' '}
+            <Link to="/groups" className="font-bold text-brand underline">
+              수업반 만들기
+            </Link>
+          </p>
+        )}
 
         <div className="overflow-x-auto rounded-xl border border-line">
           <table className="w-full border-collapse text-center">
@@ -55,14 +58,14 @@ export default function TimetablePage() {
                       <td key={d} className="p-0.5">
                         <select
                           aria-label={`${d}요일 ${p}교시`}
-                          className={`field min-w-[3.6rem] px-0.5 text-center ${c ? 'border-brand bg-brand-light font-bold' : ''}`}
-                          value={c ? `${c.grade}-${c.classNo}` : ''}
+                          className={`field min-w-[4.2rem] px-0.5 text-center text-sm ${c ? 'border-brand bg-brand-light font-bold' : ''}`}
+                          value={c?.groupId ?? ''}
                           onChange={(e) => setCell(di + 1, p, e.target.value)}
                         >
                           <option value="">—</option>
-                          {classes.map((k) => (
-                            <option key={`${k.grade}-${k.classNo}`} value={`${k.grade}-${k.classNo}`}>
-                              {k.grade}-{k.classNo}
+                          {(groups ?? []).map((g) => (
+                            <option key={g.id} value={g.id}>
+                              {g.name}
                             </option>
                           ))}
                         </select>

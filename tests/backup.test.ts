@@ -28,8 +28,18 @@ describe('백업·복원', () => {
     expect(c.file.counts.students).toBe(1)
     await restoreAll(b, c.file)
     expect(await b.students.toArray()).toEqual(await a.students.toArray())
-    expect(await b.records.toArray()).toEqual(await a.records.toArray())
+    // 수업반이 생기기 전 기록이라 복원하면서 학적반 수업반이 만들어져 붙는다
+    const groups = await b.groups.toArray()
+    expect(groups.map((g) => g.name)).toEqual(['1학년 3반'])
+    expect(await b.records.toArray()).toEqual((await a.records.toArray()).map((r) => ({ ...r, groupId: groups[0].id })))
     expect(await b.students.get('old')).toBeUndefined()
+
+    // 수업반이 있는 새 백업은 그대로 왕복
+    const again = checkBackup(JSON.parse(JSON.stringify(await exportAll(b))))
+    if (!again.ok) throw new Error(again.error)
+    await restoreAll(a, again.file)
+    expect(await a.groups.toArray()).toEqual(groups)
+    expect(await a.records.toArray()).toEqual(await b.records.toArray())
   })
 
   it('다른 파일은 거부', () => {

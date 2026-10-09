@@ -29,6 +29,31 @@ export interface Student {
   memo: string
 }
 
+/**
+ * 수업반 (고교학점제 대응). 실제로 수업하는 학생 묶음이다.
+ * - homeroom: 학적반 그대로 (학년·반으로 학생을 찾는다 → 명렬을 다시 올려도 자동 반영)
+ * - elective: 수강반·합반 (여러 학적반 학생을 골라 memberIds에 담는다)
+ */
+export interface ClassGroup {
+  id: string
+  schoolYear: number
+  /** 0 = 1년 내내, 1·2 = 학기 */
+  semester: 0 | 1 | 2
+  kind: 'homeroom' | 'elective'
+  name: string
+  /** 과목명 (체육, 운동과 건강, 스포츠 생활 …). 비어 있어도 된다 */
+  subject: string
+  grade?: number
+  classNo?: number
+  /** elective만 쓴다. 학생 id 목록 */
+  memberIds: string[]
+  /** 카드 색 이름 (palette 키) */
+  color: string
+  sortOrder: number
+  archived: boolean
+  createdAt: number
+}
+
 export type RecordType = 'unprepared' | 'exemplary' | 'captain' | 'observation'
 
 export interface ClassRecord {
@@ -41,6 +66,8 @@ export interface ClassRecord {
   category: string
   note?: string
   keywordIds: string[]
+  /** 어느 수업반 수업에서 남긴 기록인지 (v3부터) */
+  groupId?: string
   createdAt: number
   updatedAt: number
 }
@@ -66,6 +93,8 @@ export interface Absence {
   detail?: string
   altTaskId?: string
   altTaskDone: boolean
+  /** 어느 수업반 수업에서 견학했는지 (v3부터) */
+  groupId?: string
 }
 
 export interface Keyword {

@@ -12,7 +12,7 @@ import { useApp } from '../state/AppContext'
 
 /**
  * 견학·열외 목록 (CLAUDE.md 4-6). 건강 정보라 사유는 기본으로 가린다.
- * 새 견학 등록은 수업 탭 번호 카드에서 한다. 대체 과제 연결은 수행평가(5단계)와 함께 만든다.
+ * 새 견학 등록은 수업반 기록 보드의 학생 카드에서 한다. 대체 과제 연결은 수행평가(5단계)와 함께 만든다.
  */
 export default function AbsencesPage() {
   const { settings } = useApp()
@@ -51,7 +51,7 @@ export default function AbsencesPage() {
     <>
       <PageHeader title="견학 · 열외" back />
       <div className="page space-y-4 py-4">
-        <p className="hint">견학 등록은 [수업] 탭에서 번호 카드를 눌러서 해요. 사유는 눌러야 보여요.</p>
+        <p className="hint">견학 등록은 [수업반] → 반을 열고 학생 카드를 눌러서 해요. 사유는 눌러야 보여요.</p>
         <div className="flex flex-wrap gap-2">
           <button type="button" className={`btn ${cls === null ? 'btn-primary' : 'btn-outline'}`} onClick={() => setCls(null)}>
             전체

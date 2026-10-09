@@ -7,6 +7,8 @@ const PATHS: Record<string, string> = {
   paps: 'M4 20V11M10 20V5M16 20v-6M22 20H2',
   students: 'M9 11a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6M16 4.5a3.5 3.5 0 010 7M18 14c2.2.6 3.5 2.8 3.5 6',
   more: 'M4 7h16M4 12h16M4 17h16',
+  home: 'M3 11l9-7 9 7M5 10v10h5v-6h4v6h5V10',
+  layers: 'M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5M3 17l9 5 9-5',
   chevronLeft: 'M15 18l-6-6 6-6',
   chevronRight: 'M9 18l6-6-6-6',
   chevronDown: 'M6 9l6 6 6-6',
