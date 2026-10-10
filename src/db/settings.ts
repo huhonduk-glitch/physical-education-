@@ -3,6 +3,7 @@ import neisRanges from '../data/neis-valid-ranges.json'
 import type { Ranges } from '../lib/neisExport'
 import type { CellSpec } from '../lib/papsLayout'
 import type { FlexMode, StepMethod } from '../lib/paps'
+import type { NeisEvent, NeisSchool } from '../lib/neisOpenApi'
 import type { SchoolGenderType, SchoolLevel } from './types'
 
 /** 설정 화면에서 바꾸는 값들. settings 테이블에 key 하나씩 저장한다. */
@@ -40,6 +41,12 @@ export interface AppSettings {
   lastBackupAt: number
   /** 켜 둔 기능 (끈 기능은 홈·탭·더보기에서 숨긴다. 자료는 지우지 않는다) */
   features: Record<FeatureId, boolean>
+  /** 나이스 공개 자료로 불러올 우리 학교 (학교 공개 정보만. 2026-10-10 교사 승인) */
+  neisSchool: NeisSchool | null
+  /** 나이스 교육정보 개방 포털 인증키 (선택. 이 기기에만 저장) */
+  neisApiKey: string
+  /** 불러온 학사일정 (인터넷이 없어도 홈에 보이도록 기기에 둔다) */
+  neisSchedule: { fetchedAt: number; events: NeisEvent[] } | null
 }
 
 export interface NeisTemplate {
@@ -101,6 +108,9 @@ export function defaultSettings(): AppSettings {
     neisTemplates: {},
     lastBackupAt: 0,
     features: { records: true, paps: true, assess: true, tools: true, absences: true, captains: true, seteuk: true },
+    neisSchool: null,
+    neisApiKey: '',
+    neisSchedule: null,
   }
 }
 

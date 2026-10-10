@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { backupFileName, backupOverdue, checkBackup, exportAll, restoreAll } from '../src/db/backup'
+import { backupFileName, backupOverdue, checkBackup, compareCounts, countAll, exportAll, restoreAll } from '../src/db/backup'
 import { PeDatabase } from '../src/db/db'
 
 describe('백업·복원', () => {
@@ -40,6 +40,23 @@ describe('백업·복원', () => {
     await restoreAll(a, again.file)
     expect(await a.groups.toArray()).toEqual(groups)
     expect(await a.records.toArray()).toEqual(await b.records.toArray())
+  })
+
+  it('수업 일지도 백업되고, 일지가 없던 옛 백업도 복원된다 · 복원 전 비교', async () => {
+    await a.lessons.add({ id: 'l1', schoolYear: 2026, groupId: 'g', date: '2026-04-01', activity: '패스', createdAt: 1, updatedAt: 1 })
+    const file = JSON.parse(JSON.stringify(await exportAll(a)))
+    expect(file.counts.lessons).toBe(1)
+    await restoreAll(b, file)
+    expect(await b.lessons.count()).toBe(1)
+    const old = { ...file, tables: { ...file.tables } }
+    delete old.tables.lessons
+    delete old.counts.lessons
+    const c = checkBackup(old)
+    if (!c.ok) throw new Error(c.error)
+    const cmp = compareCounts(await countAll(b), c.file)
+    expect(cmp.find((r) => r.label === '수업 일지')).toEqual({ label: '수업 일지', now: 1, file: 0, fewer: true })
+    await restoreAll(b, c.file)
+    expect(await b.lessons.count()).toBe(0)
   })
 
   it('다른 파일은 거부', () => {

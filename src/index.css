@@ -225,6 +225,7 @@ textarea {
     cursor: pointer;
   }
   .chip[aria-selected='true'],
+  .chip[aria-checked='true'],
   .chip[aria-pressed='true'] {
     background: var(--color-ink);
     color: #fff;
@@ -317,5 +318,23 @@ textarea {
   }
   .btn {
     transition: none;
+  }
+}
+
+/* 인쇄 (학생 리포트 · 루브릭): 배경을 흰색으로, 한 장에 한 명 */
+@media print {
+  body {
+    background: #fff;
+  }
+  .print-page {
+    break-after: page;
+    box-shadow: none !important;
+  }
+  .print-page:last-child {
+    break-after: auto;
+  }
+  @page {
+    size: A4;
+    margin: 14mm;
   }
 }

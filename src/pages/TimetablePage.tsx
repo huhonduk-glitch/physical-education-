@@ -27,6 +27,10 @@ export default function TimetablePage() {
       <PageHeader title="수업 시간표" back />
       <div className="page space-y-4 py-4">
         <p className="hint">수업반을 넣어 두면 홈에 오늘 수업이 뜨고, 지금 교시의 반을 바로 열 수 있어요. 수업 시작 10분 전부터 그 교시로 봐요.</p>
+        <Link to="/more/settings/neis" className="flex min-h-[52px] items-center gap-3 rounded-2xl bg-ok-light px-4 font-bold text-ok">
+          <span className="flex-1">나이스 시간표에서 내 체육 수업 불러오기</span>
+          <span aria-hidden>›</span>
+        </Link>
         {groups?.length === 0 && (
           <p className="card">
             먼저 수업반을 만들어 주세요.{' '}

@@ -8,7 +8,7 @@ import { runGroupMigration } from './groupsRepo'
 export const BACKUP_FORMAT = 'pe-records-backup'
 export const BACKUP_VERSION = 1
 
-const TABLES = ['settings', 'students', 'records', 'captains', 'absences', 'keywords', 'papsConfigs', 'papsResults', 'assessments', 'assessmentScores', 'timerPresets', 'groups'] as const
+const TABLES = ['settings', 'students', 'records', 'captains', 'absences', 'keywords', 'papsConfigs', 'papsResults', 'assessments', 'assessmentScores', 'timerPresets', 'groups', 'lessons'] as const
 type TableName = (typeof TABLES)[number]
 
 export interface BackupFile {
@@ -65,4 +65,33 @@ export function backupFileName(d = new Date()): string {
 /** 마지막 백업 후 7일이 지났는지 (한 번도 안 했으면 학생이 있을 때만 경고) */
 export function backupOverdue(lastBackupAt: number, now = Date.now(), days = 7): boolean {
   return now - lastBackupAt > days * 24 * 3600 * 1000
+}
+
+/** 사람이 알아보는 이름 (백업 내용 보여 주기). 설정·타이머 설정은 뺀다 */
+export const TABLE_LABELS: Partial<Record<TableName, string>> = {
+  students: '학생',
+  groups: '수업반',
+  records: '누가기록',
+  absences: '견학',
+  captains: '체육부장',
+  papsResults: 'PAPS 기록 칸',
+  assessments: '수행평가',
+  assessmentScores: '채점한 학생',
+  lessons: '수업 일지',
+  keywords: '세특 키워드',
+}
+
+export async function countAll(db: PeDatabase): Promise<Record<TableName, number>> {
+  const out = {} as Record<TableName, number>
+  for (const t of TABLES) out[t] = await db.table(t).count()
+  return out
+}
+
+/** 지금 자료 ↔ 백업 파일 비교 (복원 전 확인). 백업 쪽이 적은 줄은 fewer=true */
+export function compareCounts(now: Partial<Record<string, number>>, file: BackupFile): { label: string; now: number; file: number; fewer: boolean }[] {
+  return Object.entries(TABLE_LABELS).map(([t, label]) => {
+    const f = file.counts?.[t as TableName] ?? (file.tables[t as TableName] as unknown[] | undefined)?.length ?? 0
+    const n = now[t] ?? 0
+    return { label: label!, now: n, file: f, fewer: f < n }
+  })
 }
