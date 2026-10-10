@@ -10,7 +10,7 @@ import { monthLabel, shortDateLabel } from '../lib/dates'
 import { countByCategory, countByMonth, keywordSummary } from '../lib/recordStats'
 import { genderLabel } from '../lib/text'
 import { eventName, fixed } from '../lib/paps'
-import { scoreTotal } from '../lib/seteuk'
+import { appliesTo, fmtNum, itemPoints, itemsOf, totalOf } from '../lib/assessScore'
 import type { Student } from '../db/types'
 import { useApp } from '../state/AppContext'
 import { usePapsClass } from '../state/usePapsClass'
@@ -278,10 +278,12 @@ function PapsCard({ student }: { student: Student }) {
 
 function AssessCard({ student }: { student: Student }) {
   const data = useLiveQuery(async () => {
-    const [list, scores] = await Promise.all([
-      db.assessments.where('schoolYear').equals(student.schoolYear).filter((a) => a.grade === student.grade).toArray(),
+    const [all, scores, groups] = await Promise.all([
+      db.assessments.where('schoolYear').equals(student.schoolYear).toArray(),
       db.assessmentScores.where('studentId').equals(student.id).toArray(),
+      db.groups.where('schoolYear').equals(student.schoolYear).toArray(),
     ])
+    const list = all.filter((a) => appliesTo(a, student, groups))
     return { list, scores: new Map(scores.map((x) => [x.assessmentId, x])) }
   }, [student.id])
   return (
@@ -292,13 +294,27 @@ function AssessCard({ student }: { student: Student }) {
         <ul className="space-y-2">
           {data.list.map((a) => {
             const sc = data.scores.get(a.id)
-            const total = scoreTotal(a.rubric, sc?.scores ?? {})
+            const items = itemsOf(a)
+            const t = totalOf(items, sc?.scores)
             return (
               <li key={a.id} className="rounded-xl bg-fill px-3 py-2">
                 <p className="font-bold">
-                  {a.title} {total !== null && <span className="badge bg-ink text-white">합계 {total}</span>}
+                  {a.title}{' '}
+                  {t.done > 0 && (
+                    <span className={`badge ${t.complete ? 'bg-ink text-white' : 'bg-caution-light text-caution'}`}>
+                      {fmtNum(t.total)}/{t.max}점
+                    </span>
+                  )}
                 </p>
-                <p className="text-[0.9rem] text-ink-2">{a.rubric.map((r) => `${r.label} ${sc?.scores[r.id] ?? '—'}`).join(' · ')}</p>
+                <p className="text-[0.9rem] text-ink-2">
+                  {items
+                    .map((it) => {
+                      const raw = sc?.scores[it.id]
+                      const p = itemPoints(it, raw)
+                      return `${it.label} ${p === null ? '—' : it.method === 'level' ? `${raw}(${fmtNum(p)})` : fmtNum(p)}`
+                    })
+                    .join(' · ')}
+                </p>
                 {sc?.note && <p className="text-[0.88rem] text-ink-3">📝 {sc.note}</p>}
               </li>
             )

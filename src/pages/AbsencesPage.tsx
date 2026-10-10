@@ -8,6 +8,7 @@ import PageHeader from '../components/PageHeader'
 import { db } from '../db/db'
 import { monthLabel, shortDateLabel } from '../lib/dates'
 import { countByMonth } from '../lib/recordStats'
+import { appliesTo } from '../lib/assessScore'
 import { useApp } from '../state/AppContext'
 
 /**
@@ -18,12 +19,13 @@ export default function AbsencesPage() {
   const { settings } = useApp()
   const year = settings.schoolYear
   const data = useLiveQuery(async () => {
-    const [students, absences, assessments] = await Promise.all([
+    const [students, absences, assessments, groups] = await Promise.all([
       db.students.where('schoolYear').equals(year).toArray(),
       db.absences.where('schoolYear').equals(year).toArray(),
       db.assessments.where('schoolYear').equals(year).filter((x) => x.altTaskEnabled).toArray(),
+      db.groups.where('schoolYear').equals(year).toArray(),
     ])
-    return { students, absences, assessments }
+    return { students, absences, assessments, groups }
   }, [year])
   const [cls, setCls] = useState<ClassKey | null>(null)
   const [view, setView] = useState<'list' | 'stats'>('list')
@@ -86,7 +88,7 @@ export default function AbsencesPage() {
                       <Icon name="trash" size={18} />
                     </button>
                   </div>
-                  {(data?.assessments ?? []).some((x) => x.grade === s.grade) && (
+                  {(data?.assessments ?? []).some((x) => appliesTo(x, s, data?.groups ?? [])) && (
                     <div className="flex flex-wrap items-center gap-2 pl-0 sm:pl-[5.5rem]">
                       <select
                         className="field min-h-[42px] w-auto flex-1 text-[0.92rem]"
@@ -96,7 +98,7 @@ export default function AbsencesPage() {
                       >
                         <option value="">대체 과제 없음</option>
                         {(data?.assessments ?? [])
-                          .filter((x) => x.grade === s.grade)
+                          .filter((x) => appliesTo(x, s, data?.groups ?? []))
                           .map((x) => (
                             <option key={x.id} value={x.id}>
                               대체 과제: {x.title}
