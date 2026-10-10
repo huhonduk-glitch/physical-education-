@@ -83,7 +83,7 @@ export default function SettingsPage() {
 
         <Section title="수업 기록">
           <Link to="/more/settings/buttons" className="btn btn-outline w-full justify-between">
-            <span>기록 버튼 편집 (미준비·솔선수범·부장 활동)</span>
+            <span>체크 항목 편집 (지도·칭찬·부장 활동)</span>
             <span aria-hidden>›</span>
           </Link>
           <Link to="/more/settings/timetable" className="btn btn-outline w-full justify-between">
