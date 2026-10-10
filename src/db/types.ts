@@ -134,13 +134,51 @@ export interface RubricItem {
   maxScore?: number
 }
 
+/**
+ * 수행평가 채점 요소 (재설계 3단계).
+ * - level : 등급표 (A=10, B=8 …). 입력값은 등급 글자
+ * - record: 기록표 (줄넘기 120회 이상=10점 …). 입력값은 기록(숫자)
+ * - direct: 점수 직접 입력 (0 ~ max)
+ */
+export type AssessMethod = 'level' | 'record' | 'direct'
+export interface AssessLevel {
+  label: string
+  points: number
+}
+export interface RecordBand {
+  /** 높을수록: 이 기록 '이상'이면 / 낮을수록: 이 기록 '이하'면 */
+  limit: number
+  points: number
+}
+export interface AssessItem {
+  id: string
+  label: string
+  method: AssessMethod
+  /** direct일 때 만점 */
+  max?: number
+  levels?: AssessLevel[]
+  unit?: string
+  better?: 'higher' | 'lower'
+  bands?: RecordBand[]
+  /** 기록표에서 어느 구간에도 들지 못할 때 점수 (기본 점수) */
+  basePoints?: number
+}
+
 export interface Assessment {
   id: string
   schoolYear: number
+  /** 평가 이름 = 나이스 양식의 영역 이름 (예: 나를 지키는 상황별 실전 호신술) */
   title: string
+  /** 예전 방식(학년 단위) 평가에서만 쓴다 */
   grade: number
+  /** 예전 방식 채점 요소. 새 평가는 items를 쓴다 (id가 같아 예전 점수도 그대로 읽힌다) */
   rubric: RubricItem[]
   altTaskEnabled: boolean
+  /** 재설계: 이 평가를 하는 수업반 */
+  groupIds?: string[]
+  /** 재설계: 채점 요소 */
+  items?: AssessItem[]
+  semester?: 0 | 1 | 2
 }
 
 export interface AssessmentScore {

@@ -31,6 +31,8 @@ const PapsSetupPage = lazy(() => import('./pages/paps/PapsSetupPage'))
 const KeywordsPage = lazy(() => import('./pages/KeywordsPage'))
 const AssessmentsPage = lazy(() => import('./pages/AssessmentsPage'))
 const AssessmentGradePage = lazy(() => import('./pages/AssessmentGradePage'))
+const AssessmentEditPage = lazy(() => import('./pages/AssessmentEditPage'))
+const AssessExportPage = lazy(() => import('./pages/AssessExportPage'))
 const ClassSummaryPage = lazy(() => import('./pages/ClassSummaryPage'))
 const DataPage = lazy(() => import('./pages/DataPage'))
 const EvalPage = lazy(() => import('./pages/EvalPage'))
@@ -128,6 +130,9 @@ export default function App() {
           <Route path="/more/keywords" element={<KeywordsPage />} />
           <Route path="/more/data" element={<DataPage />} />
           <Route path="/more/assessments" element={<AssessmentsPage />} />
+          <Route path="/more/assessments/new" element={<AssessmentEditPage />} />
+          <Route path="/more/assessments/export" element={<AssessExportPage />} />
+          <Route path="/more/assessments/:id/edit" element={<AssessmentEditPage />} />
           <Route path="/more/assessments/:id" element={<AssessmentGradePage />} />
           <Route path="/more/captains" element={<CaptainsPage />} />
           <Route path="/more/absences" element={<AbsencesPage />} />
