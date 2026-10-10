@@ -96,12 +96,15 @@ export interface UndoToken {
   absenceIds: string[]
   /** 덮어쓰기 전 견학 기록 (되돌리면 원래대로) */
   absenceBefore: Absence[]
+  /** 체크를 풀면서 지운 기록 (되돌리면 다시 넣는다) */
+  recordsBefore?: ClassRecord[]
 }
 
 /** 방금 한 기록 되돌리기 */
 export async function undo(db: PeDatabase, t: UndoToken): Promise<void> {
   await db.transaction('rw', db.records, db.absences, async () => {
     await db.records.bulkDelete(t.recordIds)
+    if (t.recordsBefore?.length) await db.records.bulkPut(t.recordsBefore)
     await db.absences.bulkDelete(t.absenceIds)
     if (t.absenceBefore.length) await db.absences.bulkPut(t.absenceBefore)
   })
@@ -112,5 +115,35 @@ export async function applyCaptainChange(db: PeDatabase, change: CaptainChange):
     if (change.remove) await db.captains.delete(change.remove)
     if (change.close) await db.captains.update(change.close.id, { to: change.close.to })
     if (change.add) await db.captains.add({ ...change.add, id: newId() })
+  })
+}
+
+export interface ToggleCheckInput {
+  schoolYear: number
+  groupId: string
+  studentId: string
+  date: string
+  period?: number
+  type: 'unprepared' | 'exemplary'
+  category: string
+}
+
+/**
+ * 체크표 칸 누르기: 그날 이 수업반에서 같은 항목 기록이 있으면 지우고(체크 풀기), 없으면 하나 만든다.
+ * 되돌리기용 토큰을 돌려준다.
+ */
+export async function toggleCheck(db: PeDatabase, input: ToggleCheckInput): Promise<{ checked: boolean; token: UndoToken }> {
+  return db.transaction('rw', db.records, async () => {
+    const same = await db.records
+      .where('[groupId+date]')
+      .equals([input.groupId, input.date])
+      .filter((r) => r.studentId === input.studentId && r.type === input.type && r.category === input.category)
+      .toArray()
+    if (same.length) {
+      await db.records.bulkDelete(same.map((r) => r.id))
+      return { checked: false, token: { recordIds: [], absenceIds: [], absenceBefore: [], recordsBefore: same } }
+    }
+    const ids = await addRecords(db, { ...input, studentIds: [input.studentId] })
+    return { checked: true, token: { recordIds: ids, absenceIds: [], absenceBefore: [] } }
   })
 }

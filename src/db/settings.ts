@@ -70,7 +70,7 @@ export const FEATURE_IDS: FeatureId[] = ['records', 'paps', 'assess', 'tools', '
 /** 버튼 기본값 (CLAUDE.md 4-2, 4-3). '기타'는 누르면 메모를 받는다 */
 export const DEFAULT_RECORD_BUTTONS: RecordButtons = {
   unprepared: ['체육복', '실내화', '교구', '기타'],
-  exemplary: ['정리정돈', '친구 도움', '리더십', '안전 지킴', '적극 참여', '기타'],
+  exemplary: ['정리정돈', '용구 정리', '친구 도움', '리더십', '안전 지킴', '적극 참여', '기타'],
   captain: ['준비운동 인솔', '교구 준비·정리', '출석 확인', '기타'],
 }
 

@@ -10,14 +10,27 @@ import RecordSheet from '../../components/RecordSheet'
 import TeamSendSheet from '../../components/TeamSendSheet'
 import UndoToast from '../../components/UndoToast'
 import { db } from '../../db/db'
-import { undo, type UndoToken } from '../../db/recordsRepo'
+import { toggleCheck, undo, type UndoToken } from '../../db/recordsRepo'
 import type { Student } from '../../db/types'
+import { cellCounts, checkItems, type CheckItem } from '../../lib/checkBoard'
 import { todayStr } from '../../lib/dates'
 import { memberNo, SEMESTER_LABEL } from '../../lib/groups'
 import { summarizeDay } from '../../lib/recordStats'
 import { classForNow } from '../../lib/timetable'
 import { useApp } from '../../state/AppContext'
 import { useGroups } from '../../state/useGroups'
+import { ItemCheckView, TableCheckView } from './CheckViews'
+
+type BoardMode = 'cards' | 'items' | 'table'
+const MODE_KEY = 'pe.boardMode'
+const readMode = (): BoardMode => {
+  try {
+    const m = localStorage.getItem(MODE_KEY)
+    return m === 'items' || m === 'table' ? m : 'cards'
+  } catch {
+    return 'cards'
+  }
+}
 
 export const LAST_GROUP_KEY = 'pe.lastGroup'
 
@@ -35,13 +48,29 @@ export default function GroupBoardPage() {
 
   const list: Student[] = useMemo(() => (group ? membersOf(group) : []), [group, membersOf])
 
-  const day = useLiveQuery(async () => {
+  const dayData = useLiveQuery(async () => {
     const [records, absences] = await Promise.all([
       db.records.where('[groupId+date]').equals([id, date]).toArray(),
       db.absences.where('[groupId+date]').equals([id, date]).toArray(),
     ])
-    return summarizeDay(records, absences)
+    return { summary: summarizeDay(records, absences), counts: cellCounts(records), absentIds: new Set(absences.map((a) => a.studentId)) }
   }, [date, id])
+  const day = dayData?.summary
+  const items = useMemo(() => checkItems(settings.recordButtons), [settings.recordButtons])
+  const [mode, setModeState] = useState<BoardMode>(readMode)
+  const setMode = (m: BoardMode) => {
+    setModeState(m)
+    setMulti(false)
+    setSelected([])
+    try {
+      localStorage.setItem(MODE_KEY, m)
+    } catch {
+      /* 무시 */
+    }
+  }
+  const onToggle = (s: Student, item: CheckItem) => {
+    void toggleCheck(db, { schoolYear: settings.schoolYear, groupId: id, studentId: s.id, date, period: nowHere?.period, type: item.type, category: item.label })
+  }
 
   // 달력에 점 찍을 날짜: 이 수업반에서 기록한 날
   const marked = useLiveQuery(async () => {
@@ -119,10 +148,13 @@ export default function GroupBoardPage() {
             <button type="button" className="btn btn-soft px-3" aria-label="팀 편성으로 보내기" onClick={() => setTeamSend(true)} disabled={list.length === 0}>
               <Icon name="team" />
             </button>
+            <Link to={`/groups/${id}/stats`} className="btn btn-soft px-3" aria-label="누적 기록 보기">
+              <Icon name="list" />
+            </Link>
             <button
               type="button"
               aria-pressed={multi}
-              className={`btn ${multi ? 'btn-primary' : 'btn-soft'}`}
+              className={`btn ${multi ? 'btn-primary' : 'btn-soft'} ${mode === 'cards' ? '' : 'hidden'}`}
               disabled={readOnly}
               onClick={() => {
                 setMulti((m) => !m)
@@ -139,13 +171,26 @@ export default function GroupBoardPage() {
         <BackupWarning hasData={list.length > 0} />
         {groups && groups.length > 1 && <GroupPicker groups={groups} value={id} onChange={choose} />}
         <DateBar value={date} onChange={setDate} marked={marked} />
+        <div className="segment" role="tablist" aria-label="기록 방법">
+          {(
+            [
+              ['cards', '학생 카드'],
+              ['items', '항목 체크'],
+              ['table', '체크표'],
+            ] as const
+          ).map(([m, label]) => (
+            <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}>
+              {label}
+            </button>
+          ))}
+        </div>
 
         <div className="grid grid-cols-4 gap-2 text-center" aria-label="이 반 요약">
           {[
             { label: '참여', n: stats.present, cls: 'text-ink' },
             { label: '견학', n: stats.absent, cls: 'text-ink-3' },
-            { label: '미준비', n: stats.unprepared, cls: 'text-danger' },
-            { label: '솔선수범', n: stats.exemplary, cls: 'text-brand' },
+            { label: '지도', n: stats.unprepared, cls: 'text-danger' },
+            { label: '칭찬', n: stats.exemplary, cls: 'text-brand' },
           ].map((x) => (
             <div key={x.label} className="rounded-2xl bg-white py-2 shadow-[var(--shadow-card)]">
               <p className={`text-xl font-extrabold tabular-nums ${x.cls}`}>{x.n}</p>
@@ -167,6 +212,23 @@ export default function GroupBoardPage() {
           </div>
         )}
 
+        {group && list.length > 0 && mode !== 'cards' && (
+          <>
+            {mode === 'items' ? (
+              <ItemCheckView group={group} list={list} items={items} counts={dayData?.counts ?? new Map()} absentIds={dayData?.absentIds ?? new Set()} readOnly={readOnly} onToggle={onToggle} />
+            ) : (
+              <TableCheckView group={group} list={list} items={items} counts={dayData?.counts ?? new Map()} absentIds={dayData?.absentIds ?? new Set()} readOnly={readOnly} onToggle={onToggle} />
+            )}
+            <p className="hint px-1">
+              항목은{' '}
+              <Link to="/more/settings/buttons" className="font-bold text-brand underline">
+                체크 항목 편집
+              </Link>
+              에서 바꿔요. 견학·관찰 메모는 [학생 카드]에서 남겨요.
+            </p>
+          </>
+        )}
+        {mode === 'cards' && (<>
         <ul className="grid grid-cols-5 gap-1.5 sm:gap-2" aria-label="번호 카드">
           {list.map((s) => {
             const d = day?.get(s.id)
@@ -206,10 +268,10 @@ export default function GroupBoardPage() {
         </ul>
         <div className="flex flex-wrap gap-x-4 gap-y-1 px-1 text-[0.8rem] font-semibold text-ink-3">
           <span className="flex items-center gap-1.5">
-            <i className="h-2 w-2 rounded-full bg-danger" /> 미준비
+            <i className="h-2 w-2 rounded-full bg-danger" /> 지도(미준비)
           </span>
           <span className="flex items-center gap-1.5">
-            <i className="h-2 w-2 rounded-full bg-brand" /> 솔선수범
+            <i className="h-2 w-2 rounded-full bg-brand" /> 칭찬(솔선수범)
           </span>
           <span className="flex items-center gap-1.5">
             <i className="h-2 w-2 rounded-full bg-ok" /> 관찰·부장
@@ -218,6 +280,7 @@ export default function GroupBoardPage() {
             <i className="h-2 w-2 rounded-full bg-ink-3" /> 견학(회색 카드)
           </span>
         </div>
+        </>)}
       </div>
 
       {multi && (

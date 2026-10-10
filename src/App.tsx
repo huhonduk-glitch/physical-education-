@@ -37,6 +37,7 @@ const EvalPage = lazy(() => import('./pages/EvalPage'))
 const GroupsPage = lazy(() => import('./pages/groups/GroupsPage'))
 const GroupBoardPage = lazy(() => import('./pages/groups/GroupBoardPage'))
 const GroupEditPage = lazy(() => import('./pages/groups/GroupEditPage'))
+const GroupStatsPage = lazy(() => import('./pages/groups/GroupStatsPage'))
 import { AppContext } from './state/AppContext'
 
 /** 앱을 다른 앱으로 바꿔 두었다가 이 시간이 지나 돌아오면 다시 PIN을 묻는다. */
@@ -110,6 +111,7 @@ export default function App() {
           <Route path="/groups/new" element={<GroupEditPage />} />
           <Route path="/groups/:id" element={<GroupBoardPage />} />
           <Route path="/groups/:id/edit" element={<GroupEditPage />} />
+          <Route path="/groups/:id/stats" element={<GroupStatsPage />} />
           <Route path="/eval" element={<EvalPage />} />
           <Route path="/timer" element={<TimerPage />} />
           <Route path="/paps" element={<PapsPage />} />

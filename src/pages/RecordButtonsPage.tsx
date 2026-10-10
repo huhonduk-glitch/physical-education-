@@ -4,8 +4,8 @@ import { DEFAULT_RECORD_BUTTONS, type RecordButtons } from '../db/settings'
 import { useApp } from '../state/AppContext'
 
 const GROUPS: { key: keyof RecordButtons; title: string }[] = [
-  { key: 'unprepared', title: '❗ 준비물 미준비' },
-  { key: 'exemplary', title: '⭐ 솔선수범' },
+  { key: 'unprepared', title: '− 지도 항목 (복장·준비물 등)' },
+  { key: 'exemplary', title: '+ 칭찬 항목 (정리정돈·용구 정리 등)' },
   { key: 'captain', title: '체육부장 활동' },
 ]
 
@@ -17,9 +17,11 @@ export default function RecordButtonsPage() {
 
   return (
     <>
-      <PageHeader title="기록 버튼 편집" back />
+      <PageHeader title="체크 항목 편집" back />
       <div className="page space-y-4 py-4">
-        <p className="hint">이미 저장한 기록은 바뀌지 않아요. 이름이 &lsquo;기타&rsquo;인 버튼은 누르면 메모를 받아요.</p>
+        <p className="hint">
+          누가기록의 체크 항목이에요. [학생 카드] 버튼과 [항목 체크]·[체크표]에 같이 쓰여요. 이미 저장한 기록은 바뀌지 않아요. &lsquo;기타&rsquo;는 메모를 받는 버튼이라 체크표에는 나오지 않아요.
+        </p>
         {GROUPS.map((g) => (
           <Group key={g.key} title={g.title} list={buttons[g.key]} onChange={(l) => save(g.key, l)} onReset={() => save(g.key, [...DEFAULT_RECORD_BUTTONS[g.key]])} />
         ))}
