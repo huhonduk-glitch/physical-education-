@@ -13,8 +13,14 @@ import type { PapsClassView } from '../../state/usePapsClass'
 const KEY = 'pe.papsClass'
 
 /** PAPS 화면들이 함께 쓰는 '지금 고른 반' (주소 ?c=1-3 → 없으면 지난번 반) */
-export function usePapsClassKey(): { classes: ClassKey[]; cls: ClassKey | null; setCls: (c: ClassKey | null) => void } {
+export function usePapsClassKey(): { classes: ClassKey[]; mine: Set<string>; cls: ClassKey | null; setCls: (c: ClassKey | null) => void } {
   const { settings } = useApp()
+  // 내 수업반(학적반)이 있으면 그 반들을 먼저 보여 준다. 나머지는 [다른 반]으로 접어 둔다
+  const groups = useLiveQuery(() => db.groups.where('schoolYear').equals(settings.schoolYear).toArray(), [settings.schoolYear])
+  const mine = useMemo(
+    () => new Set((groups ?? []).filter((g) => g.kind === 'homeroom' && !g.archived).map((g) => `${g.grade}-${g.classNo}`)),
+    [groups],
+  )
   const [sp, setSp] = useSearchParams()
   const students = useLiveQuery(() => db.students.where('schoolYear').equals(settings.schoolYear).filter((s) => s.status === '재학').toArray(), [settings.schoolYear])
   const classes = useMemo(() => classesOf(students ?? []), [students])
@@ -26,7 +32,7 @@ export function usePapsClassKey(): { classes: ClassKey[]; cls: ClassKey | null; 
     /* 무시 */
   }
   const want = fromUrl ?? saved
-  const cls = classes.find((c) => classKeyStr(c) === want) ?? classes[0] ?? null
+  const cls = classes.find((c) => classKeyStr(c) === want) ?? classes.find((c) => mine.has(classKeyStr(c))) ?? classes[0] ?? null
   useEffect(() => {
     if (cls && fromUrl !== classKeyStr(cls)) setSp((p) => (p.set('c', classKeyStr(cls)), p), { replace: true })
   }, [cls, fromUrl, setSp])
@@ -39,7 +45,7 @@ export function usePapsClassKey(): { classes: ClassKey[]; cls: ClassKey | null; 
     }
     setSp((p) => (p.set('c', classKeyStr(c)), p), { replace: true })
   }
-  return { classes, cls, setCls }
+  return { classes, mine, cls, setCls }
 }
 
 export function gradeTone(g: Band['grade'] | undefined | null): string {

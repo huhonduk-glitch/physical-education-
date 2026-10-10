@@ -17,7 +17,7 @@ import { measureGroups, usePapsClassKey } from './common'
 export default function PapsPastePage() {
   const { settings, readOnly } = useApp()
   const nav = useNavigate()
-  const { classes, cls, setCls } = usePapsClassKey()
+  const { classes, mine, cls, setCls } = usePapsClassKey()
   const pc = usePapsClass(cls)
   const groups = measureGroups(pc.cells).filter((g) => g.key !== 'bmi')
   const [groupKey, setGroupKey] = useState<string>('')
@@ -74,7 +74,7 @@ export default function PapsPastePage() {
     <>
       <PageHeader title="붙여넣기 입력" back />
       <div className="page space-y-4 pb-8">
-        <ClassPicker classes={classes} value={cls} onChange={setCls} />
+        <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
         <section className="card space-y-3">
           <p className="hint">
             엑셀에서 <b>헤더(제목 줄)까지</b> 복사해 붙여넣으면 칸을 알아서 맞춰요. 나이스 양식 전체를 붙여넣어도 돼요.

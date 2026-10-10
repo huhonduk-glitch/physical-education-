@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import BackupWarning from '../../components/BackupWarning'
 import DateBar from '../../components/DateBar'
@@ -14,11 +14,12 @@ import { toggleCheck, undo, type UndoToken } from '../../db/recordsRepo'
 import type { Student } from '../../db/types'
 import { cellCounts, checkItems, type CheckItem } from '../../lib/checkBoard'
 import { todayStr } from '../../lib/dates'
-import { memberNo, SEMESTER_LABEL } from '../../lib/groups'
+import { memberNo, saveLastGroup, SEMESTER_LABEL } from '../../lib/groups'
 import { summarizeDay } from '../../lib/recordStats'
 import { classForNow } from '../../lib/timetable'
 import { useApp } from '../../state/AppContext'
 import { useGroups } from '../../state/useGroups'
+import ClassToolsSheet from './ClassToolsSheet'
 import { ItemCheckView, TableCheckView } from './CheckViews'
 
 type BoardMode = 'cards' | 'items' | 'table'
@@ -31,8 +32,6 @@ const readMode = (): BoardMode => {
     return 'cards'
   }
 }
-
-export const LAST_GROUP_KEY = 'pe.lastGroup'
 
 /** 수업반 누가기록 보드: 학생 카드를 눌러 바로 기록한다 (CLAUDE.md 4-2) */
 export default function GroupBoardPage() {
@@ -80,11 +79,7 @@ export default function GroupBoardPage() {
 
   const choose = (gid: string) => {
     setSelected([])
-    try {
-      localStorage.setItem(LAST_GROUP_KEY, gid)
-    } catch {
-      /* 무시 */
-    }
+    saveLastGroup(gid)
     navigate(`/groups/${gid}`, { replace: true })
   }
 
@@ -92,6 +87,10 @@ export default function GroupBoardPage() {
   const [selected, setSelected] = useState<string[]>([])
   const [sheet, setSheet] = useState<Student[] | null>(null)
   const [teamSend, setTeamSend] = useState(false)
+  const [toolsOpen, setToolsOpen] = useState(false)
+  useEffect(() => {
+    if (group) saveLastGroup(group.id)
+  }, [group])
   const [toast, setToast] = useState<{ token: UndoToken; message: string; key: number } | null>(null)
   const clearToast = useCallback(() => setToast(null), [])
 
@@ -145,7 +144,7 @@ export default function GroupBoardPage() {
         back
         right={
           <>
-            <button type="button" className="btn btn-soft px-3" aria-label="팀 편성으로 보내기" onClick={() => setTeamSend(true)} disabled={list.length === 0}>
+            <button type="button" className="btn btn-soft px-3" aria-label="수업 도구" onClick={() => setToolsOpen(true)} disabled={list.length === 0}>
               <Icon name="team" />
             </button>
             <Link to={`/groups/${id}/stats`} className="btn btn-soft px-3" aria-label="누적 기록 보기">
@@ -307,7 +306,17 @@ export default function GroupBoardPage() {
           onRecorded={onRecorded}
         />
       )}
-      {teamSend && group && <TeamSendSheet students={list} date={date} onClose={() => setTeamSend(false)} />}
+      {toolsOpen && group && (
+        <ClassToolsSheet
+          group={group}
+          onClose={() => setToolsOpen(false)}
+          onTeamSend={() => {
+            setToolsOpen(false)
+            setTeamSend(true)
+          }}
+        />
+      )}
+      {teamSend && group && <TeamSendSheet students={list} date={date} groupName={group.name} numberOf={(s) => memberNo(group, s)} onClose={() => setTeamSend(false)} />}
 
       {toast && (
         <UndoToast

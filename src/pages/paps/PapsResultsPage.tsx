@@ -8,14 +8,14 @@ import { GradeBadge, usePapsClassKey } from './common'
 /** 반 전체 결과: 요인별 대표 기록·등급·점수, 종합점수·종합등급 (CLAUDE.md 4-5) */
 export default function PapsResultsPage() {
   const { standards } = useApp()
-  const { classes, cls, setCls } = usePapsClassKey()
+  const { classes, mine, cls, setCls } = usePapsClassKey()
   const pc = usePapsClass(cls)
   const notMeasured = pc.students.filter((s) => !pc.excluded.has(s.id) && !pc.summaries.get(s.id)?.complete)
   return (
     <>
       <PageHeader title="결과 · 등급" back />
       <div className="page space-y-4 pb-8">
-        <ClassPicker classes={classes} value={cls} onChange={setCls} />
+        <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
         <p className="rounded-2xl bg-fill px-4 py-2 text-[0.85rem] font-semibold text-ink-3">나이스 산출값과 다르면 나이스 값이 우선입니다.</p>
         <ul className="space-y-2">
           {pc.students.map((s) => {

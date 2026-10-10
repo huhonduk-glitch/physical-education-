@@ -1,12 +1,9 @@
-import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
-import { db } from '../db/db'
-import { indexResults, loadClassPaps, studentSummary } from '../db/papsRepo'
 import type { Student } from '../db/types'
 import { copyText, saveText } from '../lib/download'
-import { teamLevel, type EventId, type Factor } from '../lib/paps'
 import { bracketCsv, bracketText, tacticBoardJson, tacticBoardLink, type TeamStudent } from '../lib/teamExport'
 import { useApp } from '../state/AppContext'
+import { useAbsentIds, useTeamLevels } from '../state/useClassTools'
 import BottomSheet from './BottomSheet'
 import Icon from './Icon'
 
@@ -14,34 +11,40 @@ import Icon from './Icon'
  * [팀 편성으로 보내기] (CLAUDE.md 4-10). 이 반에서 그날 참여 가능한 학생만(견학·전출 제외) 넘긴다.
  * 실력 수준은 평가 정보라서 기본으로 끈다.
  */
-export default function TeamSendSheet({ students, date, onClose }: { students: Student[]; date: string; onClose: () => void }) {
-  const { settings, standards } = useApp()
+export default function TeamSendSheet({
+  students,
+  date,
+  groupName,
+  numberOf,
+  onClose,
+}: {
+  students: Student[]
+  date: string
+  /** 수업반 이름 (파일 이름·전술 보드 소속에 씀) */
+  groupName: string
+  /** 보낼 번호 (학적반은 번호, 수강반은 학번) */
+  numberOf: (s: Student) => string
+  onClose: () => void
+}) {
+  const { settings } = useApp()
   const [withLevel, setWithLevel] = useState(false)
   const [withName, setWithName] = useState(false)
   const [msg, setMsg] = useState('')
-  const ids = students.map((s) => s.id)
-  const data = useLiveQuery(async () => {
-    const absent = await db.absences.where('date').equals(date).filter((a) => ids.includes(a.studentId)).toArray()
-    const s0 = students[0]
-    const paps = s0 ? await loadClassPaps(db, settings.schoolYear, s0.grade, s0.classNo, ids) : null
-    return { absent: new Set(absent.map((a) => a.studentId)), paps }
-  }, [date, ids.join(',')])
+  const absent = useAbsentIds(students, date)
+  const levels = useTeamLevels(students, withLevel)
 
-  const list: TeamStudent[] = useMemo(() => {
-    if (!data) return []
-    const { values } = indexResults(data.paps?.results ?? [])
-    const selected = (data.paps?.config?.selectedEvents ?? {}) as Partial<Record<Factor, EventId>>
-    return students
-      .filter((s) => s.status === '재학' && !data.absent.has(s.id))
-      .map((s) => {
-        const p = studentSummary(standards, s, settings.schoolLevel, selected, values.get(s.id), settings.papsFlexMode)
-        return { number: s.number, name: s.name, gender: s.gender, level: p ? teamLevel(p) : null }
-      })
-  }, [data, students, standards, settings.schoolLevel, settings.papsFlexMode])
+  const list: TeamStudent[] = useMemo(
+    () =>
+      absent
+        ? students
+            .filter((s) => s.status === '재학' && !absent.has(s.id))
+            .map((s) => ({ number: Number(numberOf(s)) || s.number, name: s.name, gender: s.gender, level: levels?.get(s.id) ?? null }))
+        : [],
+    [absent, students, levels, numberOf],
+  )
 
   const excludedCount = students.length - list.length
-  const s0 = students[0]
-  const cls = s0 ? `${s0.grade}-${s0.classNo}` : ''
+  const cls = groupName.replace(/\s+/g, '')
 
   const sendBracket = async () => {
     const ok = await copyText(bracketText(list, withLevel))
@@ -50,7 +53,7 @@ export default function TeamSendSheet({ students, date, onClose }: { students: S
   }
 
   return (
-    <BottomSheet title="팀 편성으로 보내기" sub={`${cls}반 · 오늘 참여 ${list.length}명 (견학·전출 ${excludedCount}명 제외)`} onClose={onClose}>
+    <BottomSheet title="팀 편성으로 보내기" sub={`${groupName} · 오늘 참여 ${list.length}명 (견학·전출 ${excludedCount}명 제외)`} onClose={onClose}>
       <div className="space-y-4">
         <section className="space-y-3 rounded-2xl bg-fill p-4">
           <p className="card-title">SPORTS BRACKET (팀 편성)</p>
@@ -66,7 +69,7 @@ export default function TeamSendSheet({ students, date, onClose }: { students: S
           <button type="button" className="btn btn-primary w-full" disabled={list.length === 0} onClick={sendBracket}>
             <Icon name="copy" /> 명단 복사하고 팀 편성 앱 열기
           </button>
-          <button type="button" className="btn btn-soft w-full bg-white" disabled={list.length === 0} onClick={() => saveText(`팀편성_${cls}반_${date}.csv`, bracketCsv(list, withLevel), 'text/csv;charset=utf-8')}>
+          <button type="button" className="btn btn-soft w-full bg-white" disabled={list.length === 0} onClick={() => saveText(`팀편성_${cls}_${date}.csv`, bracketCsv(list, withLevel), 'text/csv;charset=utf-8')}>
             <Icon name="download" /> CSV 파일로 받기
           </button>
         </section>
@@ -85,7 +88,7 @@ export default function TeamSendSheet({ students, date, onClose }: { students: S
             className="btn btn-primary w-full"
             disabled={list.length === 0}
             onClick={() => {
-              window.open(tacticBoardLink(settings.tacticUrl, tacticBoardJson(list, { includeName: withName, group: `${cls}반` })), '_blank', 'noopener')
+              window.open(tacticBoardLink(settings.tacticUrl, tacticBoardJson(list, { includeName: withName, group: groupName })), '_blank', 'noopener')
               setMsg(`전술 보드를 열었어요. [선수 명단]에 ${list.length}명이 들어가 있어요.`)
             }}
           >
@@ -103,7 +106,7 @@ export default function TeamSendSheet({ students, date, onClose }: { students: S
               type="button"
               className="btn btn-soft mt-2 w-full"
               disabled={list.length === 0}
-              onClick={() => saveText(`전술보드명단_${cls}반.json`, tacticBoardJson(list, { includeName: withName, group: `${cls}반` }), 'application/json')}
+              onClick={() => saveText(`전술보드명단_${cls}.json`, tacticBoardJson(list, { includeName: withName, group: groupName }), 'application/json')}
             >
               <Icon name="download" /> 전술 보드용 명단 파일 받기
             </button>

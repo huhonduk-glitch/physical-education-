@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import { formatCountdown, formatStopwatch } from '../lib/timerMath'
@@ -22,7 +23,14 @@ const tabOf = (m: ToolMode): Tab => (m === 'stopwatch' || m === 'countdown' || m
 /** 타이머 탭 (CLAUDE.md 4-4). 다른 화면으로 가도 계속 돌고, 화면 위에 작게 보인다 */
 export default function TimerPage() {
   const t = useTimer()
-  const [tab, setTab] = useState<Tab>(tabOf(t.mode))
+  const [sp] = useSearchParams()
+  const want = sp.get('tab') as Tab | null
+  const [tab, setTab] = useState<Tab>(() => (want && TABS.some(([k]) => k === want) && !t.running ? want : tabOf(t.mode)))
+  // 주소로 탭을 골라 들어왔으면 타이머 모드도 맞춘다 (처음 한 번)
+  useEffect(() => {
+    if (t.running || tabOf(t.mode) === tab) return
+    t.setMode(tab === 'paps' ? 'curlUp' : tab)
+  }, []) // 처음 한 번만
   const [full, setFull] = useState(false)
   const choose = (k: Tab) => {
     if (t.running && tabOf(t.mode) !== k) return
@@ -34,6 +42,7 @@ export default function TimerPage() {
     <>
       <PageHeader
         title="타이머"
+        back
         sub={t.running ? '다른 화면으로 가도 계속 돌아요' : undefined}
         right={
           tab !== 'paps' ? (

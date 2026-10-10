@@ -20,6 +20,23 @@ export const GROUP_COLORS: Record<string, { bg: string; fg: string }> = {
 }
 export const COLOR_KEYS = Object.keys(GROUP_COLORS)
 
+/** 마지막으로 연 수업반 (기기 안에만 저장. 못 읽어도 그냥 넘어간다) */
+export const LAST_GROUP_KEY = 'pe.lastGroup'
+export function readLastGroup(): string | null {
+  try {
+    return localStorage.getItem(LAST_GROUP_KEY)
+  } catch {
+    return null
+  }
+}
+export function saveLastGroup(id: string): void {
+  try {
+    localStorage.setItem(LAST_GROUP_KEY, id)
+  } catch {
+    /* 무시 */
+  }
+}
+
 export const homeroomName = (grade: number, classNo: number) => `${grade}학년 ${classNo}반`
 
 export const SEMESTER_LABEL: Record<ClassGroup['semester'], string> = { 0: '1년', 1: '1학기', 2: '2학기' }

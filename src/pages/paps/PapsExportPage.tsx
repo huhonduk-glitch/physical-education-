@@ -25,7 +25,7 @@ interface Outcome {
 /** 나이스 내보내기 (CLAUDE.md 4-5): 검사 → 문제 없을 때만 파일 */
 export default function PapsExportPage() {
   const { settings, standards } = useApp()
-  const { classes, cls, setCls } = usePapsClassKey()
+  const { classes, mine, cls, setCls } = usePapsClassKey()
   const pc = usePapsClass(cls)
   const [scope, setScope] = useState<'class' | 'grade'>('class')
   const [out, setOut] = useState<Outcome | null>(null)
@@ -94,7 +94,7 @@ export default function PapsExportPage() {
           <p className="font-extrabold">⚠️ 나이스는 기록이 하나라도 비어 있거나 허용 범위를 벗어나면 파일 전체가 업로드되지 않습니다.</p>
           <p className="mt-1 font-semibold">아래 검사가 모두 통과한 뒤 내려받으세요. 측정 제외 학생은 파일에서 빠지므로 나이스에서 따로 처리해야 합니다.</p>
         </section>
-        <ClassPicker classes={classes} value={cls} onChange={(c) => (setCls(c), setOut(null))} />
+        <ClassPicker classes={classes} mine={mine} value={cls} onChange={(c) => (setCls(c), setOut(null))} />
         <section className="card space-y-3">
           <p className="label mb-0">파일 단위</p>
           <div className="segment">

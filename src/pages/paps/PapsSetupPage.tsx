@@ -188,7 +188,7 @@ function TemplateSection() {
 
 function EventsSection() {
   const { settings, standards, readOnly } = useApp()
-  const { classes, cls, setCls } = usePapsClassKey()
+  const { classes, mine, cls, setCls } = usePapsClassKey()
   const pc = usePapsClass(cls)
   const choices = factorChoices(standards, settings.schoolLevel, cls?.grade ?? 1)
   const [msg, setMsg] = useState('')
@@ -207,7 +207,7 @@ function EventsSection() {
     <section className="card space-y-3">
       <p className="card-title">반별 측정 종목</p>
       <p className="hint">체력요인마다 한 종목을 골라요. 나이스 양식을 등록하면 자동으로 맞춰져요. 비만(BMI)은 신장·체중으로 계산해요.</p>
-      <ClassPicker classes={classes} value={cls} onChange={setCls} />
+      <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
       {FACTORS.filter((f) => f !== '비만').map((f) => (
         <label key={f} className="block">
           <span className="label">{f}</span>

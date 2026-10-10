@@ -18,6 +18,9 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const SetupPage = lazy(() => import('./pages/SetupPage'))
 const StudentsPage = lazy(() => import('./pages/StudentsPage'))
 const TimerPage = lazy(() => import('./pages/TimerPage'))
+const ToolsPage = lazy(() => import('./pages/ToolsPage'))
+const PickPage = lazy(() => import('./pages/tools/PickPage'))
+const TeamsPage = lazy(() => import('./pages/tools/TeamsPage'))
 const StudentDetailPage = lazy(() => import('./pages/StudentDetailPage'))
 const CaptainsPage = lazy(() => import('./pages/CaptainsPage'))
 const AbsencesPage = lazy(() => import('./pages/AbsencesPage'))
@@ -116,6 +119,9 @@ export default function App() {
           <Route path="/groups/:id/stats" element={<GroupStatsPage />} />
           <Route path="/eval" element={<EvalPage />} />
           <Route path="/timer" element={<TimerPage />} />
+          <Route path="/tools" element={<ToolsPage />} />
+          <Route path="/tools/pick" element={<PickPage />} />
+          <Route path="/tools/teams" element={<TeamsPage />} />
           <Route path="/paps" element={<PapsPage />} />
           <Route path="/paps/input/:key" element={<PapsInputPage />} />
           <Route path="/paps/paste" element={<PapsPastePage />} />
