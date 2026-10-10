@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState, type ReactNode } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
+import Icon from '../components/Icon'
 import Masked from '../components/Masked'
 import PageHeader from '../components/PageHeader'
 import { TYPE_LABEL } from '../components/RecordSheet'
@@ -77,7 +78,15 @@ export default function StudentDetailPage() {
 
   return (
     <>
-      <PageHeader title={`${s.number}번 ${s.name}`} back />
+      <PageHeader
+        title={`${s.number}번 ${s.name}`}
+        back
+        right={
+          <Link to={`/students/${s.id}/report`} className="btn btn-soft">
+            <Icon name="file" /> 리포트
+          </Link>
+        }
+      />
       <div className="page space-y-4 py-4">
         <Card title="기본 정보">
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1">

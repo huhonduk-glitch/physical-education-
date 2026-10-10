@@ -162,6 +162,18 @@ function ItemColumn({
     <ul className="card divide-y divide-line p-0">
       <li className="px-4 py-2.5 text-sm font-bold text-ink-3">
         {item.method === 'level' ? '등급을 누르세요 (다시 누르면 지워져요)' : item.method === 'record' ? `기록(${item.unit ?? ''})을 넣으면 점수가 정해져요 · 엔터 → 다음 학생` : `점수를 넣으세요 (0~${item.max ?? 0}점) · 엔터 → 다음 학생`}
+        {item.method === 'level' && item.levels?.some((l) => l.desc) && (
+          <details className="mt-1 font-normal text-ink-2">
+            <summary className="cursor-pointer font-bold text-brand">등급 기준 보기</summary>
+            <ul className="mt-1 space-y-0.5">
+              {item.levels.map((l) => (
+                <li key={l.label}>
+                  <b className="text-ink">{l.label}</b> ({fmtNum(l.points)}점) {l.desc}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </li>
       {list.map((s, i) => {
         const raw = byStudent.get(s.id)?.scores[item.id]

@@ -13,6 +13,7 @@ import type {
   TimerPreset,
   AudioFile,
   ClassGroup,
+  Lesson,
 } from './types'
 import { migrateToGroups } from './groupsRepo'
 
@@ -34,6 +35,7 @@ export class PeDatabase extends Dexie {
   timerPresets!: EntityTable<TimerPreset, 'id'>
   audioFiles!: EntityTable<AudioFile, 'id'>
   groups!: EntityTable<ClassGroup, 'id'>
+  lessons!: EntityTable<Lesson, 'id'>
 
   constructor(name = 'pe-records') {
     super(name)
@@ -68,6 +70,8 @@ export class PeDatabase extends Dexie {
           settings: tx.table('settings'),
         }),
       )
+    // v4: 수업 일지
+    this.version(4).stores({ lessons: 'id, schoolYear, groupId, date, [groupId+date]' })
   }
 }
 

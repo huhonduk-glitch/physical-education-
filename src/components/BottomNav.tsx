@@ -40,7 +40,7 @@ export default function BottomNav() {
   return (
     <nav
       aria-label="주요 화면"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:inset-y-0 lg:right-auto lg:w-60 lg:border-t-0 lg:border-r lg:bg-white lg:pb-0"
+      className="fixed inset-x-0 bottom-0 z-30 print:hidden border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:inset-y-0 lg:right-auto lg:w-60 lg:border-t-0 lg:border-r lg:bg-white lg:pb-0"
     >
       <div className="hidden items-center gap-2.5 px-5 pt-7 pb-6 lg:flex">
         <BrandLine />

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 export default function PageHeader({ title, sub, back, right }: { title: ReactNode; sub?: ReactNode; back?: boolean; right?: ReactNode }) {
   const navigate = useNavigate()
   return (
-    <header className="sticky top-0 z-20 bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur-md">
+    <header className="print:hidden sticky top-0 z-20 bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur-md">
       <div className="page flex min-h-[64px] items-center gap-1 px-2">
         {back && (
           <button type="button" className="btn btn-ghost -ml-1 px-2" aria-label="뒤로" onClick={() => navigate(-1)}>
