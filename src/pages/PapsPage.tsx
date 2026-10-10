@@ -13,7 +13,7 @@ import { ReadinessBadge, measureGroups, useReadiness, usePapsClassKey } from './
 /** PAPS 탭 첫 화면: 반 고르기 · 업로드 준비 상태 · 진행률 · 종목별 입력 (CLAUDE.md 4-5) */
 export default function PapsPage() {
   const { standards } = useApp()
-  const { classes, cls, setCls } = usePapsClassKey()
+  const { classes, mine, cls, setCls } = usePapsClassKey()
   const pc = usePapsClass(cls)
   const ready = useReadiness(pc)
   const q = cls ? `?c=${classKeyStr(cls)}` : ''
@@ -41,7 +41,7 @@ export default function PapsPage() {
           </div>
         ) : (
           <>
-            <ClassPicker classes={classes} value={cls} onChange={setCls} />
+            <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
 
             <section className="card space-y-3">
               <div className="flex items-center justify-between gap-2">

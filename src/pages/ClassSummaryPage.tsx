@@ -11,7 +11,7 @@ import { usePapsClassKey } from './paps/common'
 /** 반 전체 요약 (CLAUDE.md 4-9): 미준비 누적 상위, 솔선수범 누적 상위, PAPS 미측정자 */
 export default function ClassSummaryPage() {
   const { settings } = useApp()
-  const { classes, cls, setCls } = usePapsClassKey()
+  const { classes, mine, cls, setCls } = usePapsClassKey()
   const pc = usePapsClass(cls)
   const ids = pc.students.map((s) => s.id)
   const data = useLiveQuery(async () => {
@@ -42,7 +42,7 @@ export default function ClassSummaryPage() {
     <>
       <PageHeader title="반 요약" back />
       <div className="page space-y-4 pb-8">
-        <ClassPicker classes={classes} value={cls} onChange={setCls} />
+        <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Rank title="준비물 미준비 누적 상위" tone="text-danger" rows={top(data?.unprepared)} unit="회" />
           <Rank title="솔선수범 누적 상위" tone="text-brand" rows={top(data?.exemplary)} unit="회" />

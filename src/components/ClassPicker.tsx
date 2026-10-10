@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 export interface ClassKey {
   grade: number
   classNo: number
@@ -5,8 +7,29 @@ export interface ClassKey {
 
 export const classKeyStr = (c: ClassKey) => `${c.grade}-${c.classNo}`
 
-/** 학년-반 고르기 (가로로 밀어서 보기) */
-export default function ClassPicker({ classes, value, onChange, allLabel }: { classes: ClassKey[]; value: ClassKey | null; onChange: (c: ClassKey | null) => void; allLabel?: string }) {
+/**
+ * 학년-반 고르기 (가로로 밀어서 보기).
+ * mine(내 수업반의 '학년-반')을 주면 그 반들만 먼저 보이고, 나머지는 [다른 반 +N]을 눌러야 펼쳐진다.
+ */
+export default function ClassPicker({
+  classes,
+  value,
+  onChange,
+  allLabel,
+  mine,
+}: {
+  classes: ClassKey[]
+  value: ClassKey | null
+  onChange: (c: ClassKey | null) => void
+  allLabel?: string
+  mine?: Set<string>
+}) {
+  const [open, setOpen] = useState(false)
+  const useMine = !!mine && mine.size > 0
+  const isMine = (c: ClassKey) => !useMine || mine!.has(classKeyStr(c)) || (value !== null && classKeyStr(value) === classKeyStr(c))
+  const shown = open ? classes : classes.filter(isMine)
+  const hidden = classes.length - shown.length
+  const others = useMine ? classes.filter((c) => !mine!.has(classKeyStr(c))).length : 0
   return (
     <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none]" role="tablist" aria-label="반 고르기">
       {allLabel && (
@@ -14,7 +37,7 @@ export default function ClassPicker({ classes, value, onChange, allLabel }: { cl
           {allLabel}
         </button>
       )}
-      {classes.map((c) => {
+      {shown.map((c) => {
         const on = value !== null && classKeyStr(value) === classKeyStr(c)
         return (
           <button key={classKeyStr(c)} type="button" role="tab" aria-selected={on} className="chip shrink-0 tabular-nums" onClick={() => onChange(c)}>
@@ -22,6 +45,11 @@ export default function ClassPicker({ classes, value, onChange, allLabel }: { cl
           </button>
         )
       })}
+      {others > 0 && (
+        <button type="button" className="chip shrink-0 border-dashed text-ink-3" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          {open ? '내 반만' : `다른 반 +${hidden}`}
+        </button>
+      )}
     </div>
   )
 }

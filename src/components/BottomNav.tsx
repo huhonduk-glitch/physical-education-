@@ -17,7 +17,7 @@ const TABS: Tab[] = [
   { to: '/', label: '홈', icon: 'home', match: [] },
   { to: '/groups', label: '수업반', icon: 'class', match: ['/groups', '/students'] },
   { to: '/eval', label: '평가', icon: 'paps', match: ['/eval', '/paps', '/more/assessments'], show: (f) => featureOn(f, 'paps') || featureOn(f, 'assess') },
-  { to: '/timer', label: '도구', icon: 'timer', match: ['/timer', '/tools'], show: (f) => featureOn(f, 'tools') },
+  { to: '/tools', label: '도구', icon: 'timer', match: ['/timer', '/tools'], show: (f) => featureOn(f, 'tools') },
   { to: '/more', label: '더보기', icon: 'more', match: ['/more'] },
 ]
 
