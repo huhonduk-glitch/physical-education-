@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildRubric, levelPoints, METHOD_ORDER, METHODS, pickSteps, recommendMethods, rubricTable, rubricToItems, splitMax } from '../src/lib/rubric'
-import { findStandards, type StandardsData } from '../src/lib/standards'
+import { findStandards, STANDARDS, type StandardsData } from '../src/lib/standards'
 import { assessmentProblems, itemMax } from '../src/lib/assessScore'
 
 describe('루브릭 만들기', () => {
@@ -65,5 +65,31 @@ describe('성취기준 목록 찾기', () => {
     expect(findStandards(data, { school: '고', text: '경기전략' })).toHaveLength(1)
     expect(findStandards(data, { school: '중' })).toHaveLength(0)
     expect(findStandards(data, { subject: '과목가', text: '가01' })[0]).toMatchObject({ area: '영역1', subject: '과목가' })
+  })
+})
+
+
+describe('성취기준 목록 (교육부 고시 제2022-33호 별책 11·21에서 옮김)', () => {
+  const all = STANDARDS.subjects.flatMap((s) => s.areas.flatMap((a) => a.standards.map((x) => ({ ...x, subject: s.subject, school: s.school }))))
+  it('중학교 체육 51개 + 고등학교 20과목, 모두 190개, 코드 겹침 없음', () => {
+    expect(all).toHaveLength(190)
+    expect(new Set(all.map((s) => s.code)).size).toBe(190)
+    expect(all.filter((s) => s.school === '중')).toHaveLength(51)
+    expect(STANDARDS.subjects.filter((s) => s.school === '고').map((s) => s.subject)).toHaveLength(20)
+    for (const s of all) {
+      expect(s.code).toMatch(/^\[(9|12)[가-힣]+\d*(-\d{2})?-\d{2}\]$/)
+      expect(s.text.endsWith('다.')).toBe(true)
+    }
+  })
+  it('원문 그대로 (몇 개 대조)', () => {
+    const by = new Map(all.map((s) => [s.code, s]))
+    expect(by.get('[9체01-01]')?.text).toBe('체력 증진의 의미를 이해하고 원리를 분석한다.')
+    expect(by.get('[12운건01-01]')?.text).toBe('운동이 신체적, 정신적 질환 예방과 사회적 건강에 미치는 효과를 파악하고, 운동의 목적과 자신의 수준에 적합한 건강 운동을 계획한다.')
+    expect(by.get('[12스생1-01-01]')).toMatchObject({ subject: '스포츠 생활1', text: '영역형 스포츠의 문화를 이해하고 존중하며, 스포츠퍼슨십을 실천한다.' })
+    expect(by.get('[12스경02-03]')?.note).toContain('[12스경02-02]')
+  })
+  it('실제 성취기준으로 평가 방법 추천이 된다', () => {
+    const by = new Map(all.map((s) => [s.code, s]))
+    expect(recommendMethods(by.get('[12운건01-01]')!.text)[0].method).toBe('report')
   })
 })
