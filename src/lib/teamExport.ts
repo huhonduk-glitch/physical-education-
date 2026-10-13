@@ -9,6 +9,8 @@ export interface TeamStudent {
   name: string
   gender: 'M' | 'F' | null
   level?: '상' | '중' | '하' | null
+  /** 전술 보드 소속 (팀 나누기 결과를 보낼 때 '1팀' 등). 없으면 반 이름 */
+  group?: string
 }
 
 export function bracketText(list: readonly TeamStudent[], includeLevel: boolean): string {
@@ -46,7 +48,7 @@ export function tacticBoardJson(list: readonly TeamStudent[], opts: { includeNam
         name: opts.includeName ? s.name : `${s.number}번`,
         number: s.number,
         position: '',
-        group: opts.group,
+        group: s.group ?? opts.group,
       })),
     },
     null,

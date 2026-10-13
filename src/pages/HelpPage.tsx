@@ -1,0 +1,277 @@
+import type { ReactNode } from 'react'
+import { Link } from 'react-router-dom'
+import Icon, { type IconName } from '../components/Icon'
+import PageHeader from '../components/PageHeader'
+
+interface Topic {
+  id: string
+  icon: IconName
+  title: string
+  summary: string
+  steps: ReactNode[]
+  links?: { to: string; label: string }[]
+  tips?: string[]
+}
+
+const TOPICS: Topic[] = [
+  {
+    id: 'start',
+    icon: 'home',
+    title: '처음 시작하기',
+    summary: 'PIN → 명렬 올리기 → 수업반 만들기, 이 세 가지면 준비 끝이에요.',
+    steps: [
+      '앱을 처음 열면 4~6자리 PIN을 정해요. 앱을 열 때마다 PIN을 물어봐요(폰을 잃어버려도 학생 정보를 지켜요).',
+      <>
+        <b>명렬 올리기</b>: 나이스에서 받은 학생명렬표 엑셀을 그대로 올리거나, 엑셀에서 복사해 붙여넣어요. 생년월일은 저장하지 않아요.
+      </>,
+      <>
+        <b>수업반 만들기</b>: 내가 수업하는 반만 골라요. 학적반은 명렬의 반 그대로, 선택과목·합반은 <b>수강반</b>으로 학생을 골라 만들어요.
+      </>,
+      <>
+        (선택) <b>나이스에서 불러오기</b>: 학교 이름과 인증키를 넣으면 학급·내 체육 시간표·학사일정을 자동으로 채워요.
+      </>,
+      '홈 화면의 [기능 고르기]에서 쓰지 않는 기능은 꺼 두면 화면이 단순해져요. 꺼도 자료는 지워지지 않아요.',
+    ],
+    links: [
+      { to: '/students/import', label: '명렬 올리기' },
+      { to: '/groups', label: '수업반' },
+      { to: '/more/settings/neis', label: '나이스에서 불러오기' },
+      { to: '/more/settings/timetable', label: '수업 시간표' },
+    ],
+  },
+  {
+    id: 'record',
+    icon: 'class',
+    title: '수업 중 누가기록',
+    summary: '수업반을 열고 학생을 누르면 바로 기록돼요. 기록 방법이 3가지예요.',
+    steps: [
+      <>
+        <b>학생 카드</b>: 학생을 누르고 지도(체육복·실내화…), 칭찬(정리정돈·친구 도움…), 견학, 관찰 메모 중 하나를 눌러요. [여러 명]을 켜면 여러 학생에게 한 번에 기록해요.
+      </>,
+      <>
+        <b>항목 체크</b>: 항목(예: 체육복)을 먼저 고르고 해당 학생들을 차례로 눌러요. 한 번 더 누르면 풀려요.
+      </>,
+      <>
+        <b>체크표</b>: 출석부처럼 학생 × 항목 표에 체크해요. 한 반을 1분 안에 체크할 수 있어요.
+      </>,
+      '기록 직후 5초 동안 [실행취소]가 떠요. 날짜 줄을 눌러 지난 날짜에도 기록할 수 있어요.',
+      '체크 항목(지도·칭찬)은 [더보기 → 설정 → 체크 항목 편집]에서 바꿔요.',
+      '반 화면 위쪽 목록 모양 버튼(누적 기록)으로 기간별 학생 합계를 보고 엑셀로 받을 수 있어요.',
+    ],
+    links: [
+      { to: '/groups', label: '수업반 열기' },
+      { to: '/more/settings/buttons', label: '체크 항목 편집' },
+      { to: '/more/absences', label: '견학 · 열외' },
+    ],
+    tips: ['시간표를 넣어 두면 홈에 오늘 수업이 뜨고, 지금 교시 반이 맨 위에 와요.'],
+  },
+  {
+    id: 'tools',
+    icon: 'timer',
+    title: '수업 도구',
+    summary: '타이머, 뽑기, 팀 나누기, 팀 편성·전술 보드 앱 연결을 아래 [도구] 탭에서 써요.',
+    steps: [
+      <>
+        <b>타이머·스톱워치</b>: 카운트다운·인터벌, 크게 보기(빔 화면). 스톱워치 랩을 학생에게 붙이면 <b>PAPS</b>나 <b>수행평가 기록</b>으로 바로 들어가요.
+      </>,
+      <>
+        <b>뽑기</b>: 오늘 견학 학생을 빼고 뽑아요. 명렬이 없어도 번호로 뽑을 수 있어요.
+      </>,
+      <>
+        <b>팀 나누기</b>: 팀 수나 팀당 인원을 정하고 남녀·실력을 고르게 나눠요. 학생을 누르면 다음 팀으로 옮겨요. [팀별로 전술 보드 열기]로 팀을 그대로 전술 보드에 넣어요.
+      </>,
+      <>
+        <b>팀 편성 · 전술 보드</b>: 반 명단을 SPORTS BRACKET(팀 편성·대진표)에 복사해 넣거나, K-TacticBoard(전술 보드)에 넣은 채로 열어요. 실력 수준은 평가 정보라 기본으로 꺼 둬요.
+      </>,
+      <>
+        <b>PAPS 신호음</b>: 윗몸말아올리기 3초 신호, 스텝검사 메트로놈, 왕복오래달리기 음원 재생과 카운터.
+      </>,
+      '수업반 화면 위쪽 사람 모양 버튼 [수업 도구]에서도 그 반으로 바로 열 수 있어요.',
+    ],
+    links: [
+      { to: '/tools', label: '도구 탭' },
+      { to: '/tools/teams', label: '팀 나누기' },
+      { to: '/tools/apps', label: '팀 편성 · 전술 보드' },
+    ],
+  },
+  {
+    id: 'paps',
+    icon: 'paps',
+    title: 'PAPS (학생건강체력평가)',
+    summary: '측정 종목 설정 → 기록 입력(자동 등급) → 나이스 파일 내보내기.',
+    steps: [
+      <>
+        <b>측정 설정</b>: 반마다 체력요인별 종목을 고르거나, 나이스 PAPS 양식 파일을 등록하면 종목·칸이 양식과 똑같아져요.
+      </>,
+      <>
+        <b>입력</b>: 종목을 고르고 번호순으로 입력하면 엔터로 다음 학생. 칸마다 등급·점수가 바로 보여요. 엑셀에서 복사해 [붙여넣기 입력]도 돼요.
+      </>,
+      <>
+        <b>나이스 내보내기</b>: 빠진 칸이나 범위를 벗어난 값이 하나라도 있으면 나이스가 파일을 통째로 거부해요. 그래서 문제가 있으면 파일을 만들지 않고 목록을 보여 줘요. 측정 제외 학생은 파일에서 빠져요.
+      </>,
+      '등급 기준은 교육부 공식 기준표를 그대로 써요. 나이스 산출값과 다르면 나이스 값이 우선이에요.',
+    ],
+    links: [
+      { to: '/paps', label: 'PAPS' },
+      { to: '/paps/setup', label: '측정 설정' },
+      { to: '/paps/export', label: '나이스 내보내기' },
+    ],
+  },
+  {
+    id: 'assess',
+    icon: 'clipboard',
+    title: '수행평가 · 루브릭',
+    summary: '평가 만들기 → 채점표 → 나이스 일괄입력 엑셀. 루브릭 만들기로 채점 기준 초안도 받을 수 있어요.',
+    steps: [
+      <>
+        <b>루브릭 만들기</b>: 성취기준(2022 개정, 중·고 체육 190개)을 고르고 평가 내용(예: 농구 레이업 슛)을 적으면, 알맞은 평가 방법을 추천하고 요소·등급별 기준 초안을 만들어 줘요. 고친 뒤 바로 수행평가로 만들어요.
+      </>,
+      <>
+        <b>평가 만들기</b>: 평가 1개 = 나이스 양식의 영역 1칸이에요. 평가 이름을 나이스 영역 이름과 똑같이 적고, 수업반을 고르고, 채점 요소(등급표·기록표·점수)를 정해요.
+      </>,
+      <>
+        <b>채점</b>: 수업반 명렬이 자동으로 들어간 채점표에서 등급을 누르거나 기록·점수를 넣으면 합계가 자동 계산돼요.
+      </>,
+      <>
+        <b>나이스로 내보내기</b>: 나이스에서 받은 빈 양식을 올리면 점수만 채워서 돌려줘요. 만점이 다르거나 채점이 덜 됐으면 파일을 만들지 않아요.
+      </>,
+    ],
+    links: [
+      { to: '/more/assessments', label: '수행평가' },
+      { to: '/more/assessments/rubric', label: '루브릭 만들기' },
+      { to: '/more/assessments/export', label: '나이스로 내보내기' },
+    ],
+  },
+  {
+    id: 'notes',
+    icon: 'book',
+    title: '일지 · 세특 · 리포트',
+    summary: '수업 일지, 세특 근거 모아보기, 학생별 리포트 인쇄.',
+    steps: [
+      <>
+        <b>수업 일지</b>: 반 화면 날짜 아래 [수업 일지 쓰기]. 단원·한 일·다음 시간 메모를 적으면 다음 시간에 지난 메모가 먼저 보여요.
+      </>,
+      <>
+        <b>세특 모아보기</b>: 학생별 키워드와 근거 기록(칭찬·관찰 메모·수행평가 메모)을 모아 보여 줘요. 근거가 적은 학생부터 볼 수 있어요. <b>문장은 만들지 않아요.</b>
+      </>,
+      <>
+        <b>학생 리포트</b>: 한 장에 한 명씩 인쇄하거나 PDF로 저장해요. 상담·피드백용. 견학 사유는 넣지 않아요.
+      </>,
+    ],
+    links: [
+      { to: '/more/keywords', label: '세특 모아보기' },
+      { to: '/students', label: '학생 명렬 (학생별 리포트)' },
+    ],
+  },
+  {
+    id: 'backup',
+    icon: 'database',
+    title: '백업 · 새 학년도',
+    summary: '자료는 이 기기 안에만 있어요. 1주일에 한 번은 백업하세요.',
+    steps: [
+      '[더보기 → 백업 · 학년도 → 지금 백업 파일 받기]. 받은 파일을 PC나 드라이브에 옮겨 두세요. 백업한 지 7일이 지나면 홈에 알림이 떠요.',
+      '폰을 바꾸면 새 폰에서 [복원]으로 백업 파일을 고르면 그대로 돌아와요. 바꾸기 전에 지금 자료를 한 번 더 자동 백업해요.',
+      '학년도가 바뀌면 [새 학년도 시작]. 지난 학년도 기록은 읽기 전용으로 남고, 키워드·설정은 이어져요.',
+    ],
+    links: [{ to: '/more/data', label: '백업 · 학년도' }],
+    tips: ['백업 파일에는 학생 이름이 들어 있어요. 메신저 단체방이나 공개된 곳에 올리지 마세요.'],
+  },
+  {
+    id: 'privacy',
+    icon: 'lock',
+    title: '개인정보 · 인터넷 없이 쓰기',
+    summary: '학생 정보는 서버로 보내지 않아요. 운동장처럼 인터넷이 없어도 돼요.',
+    steps: [
+      '학생 명렬과 모든 기록은 이 기기의 브라우저 안에만 저장돼요. 서버·분석 도구를 쓰지 않아요.',
+      '한 번 열어 두면 인터넷이 없어도 모든 기능이 동작해요. 홈 화면에 추가하면 앱처럼 쓸 수 있어요.',
+      '인터넷을 쓰는 곳은 두 가지뿐이에요: [나이스에서 불러오기](학교 코드만 보냄), 팀 편성·전술 보드 앱 열기(명단은 링크 안에 담겨 그 기기 브라우저에서만 읽혀요).',
+      '[더보기 → 지금 잠그기]로 바로 잠글 수 있어요.',
+    ],
+  },
+]
+
+const FAQ: { q: string; a: string }[] = [
+  { q: '새 버전이 안 보여요', a: "앱 위에 '새 버전이 나왔어요'가 뜨면 누르세요. 안 뜨면 앱을 완전히 닫았다가 다시 열어 주세요." },
+  { q: '다른 기기(PC)에서도 같은 자료를 보고 싶어요', a: '자료는 기기마다 따로예요. 폰에서 백업 파일을 받아 PC에서 [복원]하면 같은 자료가 들어가요.' },
+  { q: '수강반(선택과목) 학생은 어떻게 넣나요?', a: '[수업반 → 수강반]에서 명렬에 체크해 고르거나, 나이스 수강반 명단을 붙여넣어요. 학번·이름을 알아봐요.' },
+  { q: '기능이 너무 많아요', a: '홈의 [기능 고르기]에서 쓰는 것만 켜 두세요. 꺼도 자료는 그대로예요.' },
+  { q: 'PIN을 잊었어요', a: '잠금 화면의 안내를 따라 자료를 지우고 새로 시작해야 해요. 그래서 백업이 중요해요.' },
+]
+
+/** 사용법: 앱 전체를 한 화면에서 (주제별 접기 + 바로 가기) */
+export default function HelpPage() {
+  return (
+    <>
+      <PageHeader title="사용법" sub="PE LOG 한눈에 보기" back />
+      <div className="page space-y-4 pb-10">
+        <section className="card space-y-2 bg-brand text-white">
+          <p className="text-lg font-extrabold">하루 수업 흐름</p>
+          <ol className="space-y-1 text-[0.95rem] font-semibold">
+            <li>① 홈의 [오늘 수업]에서 지금 교시 반을 눌러요</li>
+            <li>② 학생 카드·체크표로 지도·칭찬·견학을 남겨요</li>
+            <li>③ [도구]에서 타이머·뽑기·팀 나누기를 써요</li>
+            <li>④ 끝나면 [수업 일지]에 한 일과 다음 시간 메모를 적어요</li>
+          </ol>
+        </section>
+
+        <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none]" aria-label="주제">
+          {TOPICS.map((t) => (
+            <a key={t.id} href={`#help-${t.id}`} className="chip shrink-0" onClick={(e) => {
+                e.preventDefault()
+                const el = document.getElementById(`help-${t.id}`) as HTMLDetailsElement | null
+                if (!el) return
+                el.open = true
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}>
+              {t.title}
+            </a>
+          ))}
+        </nav>
+
+        {TOPICS.map((t, i) => (
+          <details key={t.id} id={`help-${t.id}`} className="card scroll-mt-20 space-y-3" open={i === 0}>
+            <summary className="flex cursor-pointer list-none items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-light text-brand">
+                <Icon name={t.icon} size={22} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <b className="block text-lg">{t.title}</b>
+                <span className="hint block">{t.summary}</span>
+              </span>
+              <Icon name="chevronDown" className="text-ink-3" />
+            </summary>
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-[0.97rem] leading-relaxed">
+              {t.steps.map((s, k) => (
+                <li key={k}>{s}</li>
+              ))}
+            </ol>
+            {t.tips?.map((tip) => (
+              <p key={tip} className="rounded-xl bg-caution-light p-3 text-sm font-bold text-caution">
+                💡 {tip}
+              </p>
+            ))}
+            {t.links && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {t.links.map((l) => (
+                  <Link key={l.to} to={l.to} className="btn btn-soft min-h-[44px] text-sm">
+                    {l.label} <Icon name="chevronRight" size={16} />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </details>
+        ))}
+
+        <section className="card space-y-3">
+          <p className="card-title">자주 묻는 질문</p>
+          {FAQ.map((f) => (
+            <details key={f.q} className="rounded-2xl bg-fill p-3">
+              <summary className="cursor-pointer font-bold">{f.q}</summary>
+              <p className="mt-2 text-[0.95rem] text-ink-2">{f.a}</p>
+            </details>
+          ))}
+        </section>
+      </div>
+    </>
+  )
+}

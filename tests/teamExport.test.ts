@@ -27,6 +27,10 @@ describe('전술 보드 명단 파일', () => {
     expect(j.roster[0]).toEqual({ id: 'r-pe-1', name: '1번', number: 1, position: '', group: '1-3반' })
     expect(JSON.stringify(j)).not.toContain('김민수')
   })
+  it('팀 나누기 결과는 학생마다 팀을 소속으로', () => {
+    const j = JSON.parse(tacticBoardJson([{ number: 1, name: '가', gender: 'M', group: '1팀' }, { number: 2, name: '나', gender: 'F' }], { includeName: false, group: '1-3반' }))
+    expect(j.roster.map((r: { group: string }) => r.group)).toEqual(['1팀', '1-3반'])
+  })
   it('이름 넣기 선택 시 이름 포함', () => {
     expect(JSON.parse(tacticBoardJson(list, { includeName: true, group: '' })).roster[0].name).toBe('김민수')
   })

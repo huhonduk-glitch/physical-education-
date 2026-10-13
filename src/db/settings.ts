@@ -71,8 +71,8 @@ export interface TimetableEntry {
 }
 
 /** 홈에서 켜고 끄는 기능 */
-export type FeatureId = 'records' | 'paps' | 'assess' | 'tools' | 'absences' | 'captains' | 'seteuk'
-export const FEATURE_IDS: FeatureId[] = ['records', 'paps', 'assess', 'tools', 'absences', 'captains', 'seteuk']
+export type FeatureId = 'records' | 'paps' | 'assess' | 'tools' | 'apps' | 'absences' | 'captains' | 'seteuk'
+export const FEATURE_IDS: FeatureId[] = ['records', 'paps', 'assess', 'tools', 'apps', 'absences', 'captains', 'seteuk']
 
 /** 버튼 기본값 (CLAUDE.md 4-2, 4-3). '기타'는 누르면 메모를 받는다 */
 export const DEFAULT_RECORD_BUTTONS: RecordButtons = {
@@ -107,7 +107,7 @@ export function defaultSettings(): AppSettings {
     neisRanges: structuredClone((neisRanges as { ranges: Ranges }).ranges),
     neisTemplates: {},
     lastBackupAt: 0,
-    features: { records: true, paps: true, assess: true, tools: true, absences: true, captains: true, seteuk: true },
+    features: { records: true, paps: true, assess: true, tools: true, apps: true, absences: true, captains: true, seteuk: true },
     neisSchool: null,
     neisApiKey: '',
     neisSchedule: null,
