@@ -7,6 +7,7 @@ import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import { KEYWORD_CATEGORIES } from '../data/keywordSeed'
 import { db, newId } from '../db/db'
+import { addMissingSeedKeywords, missingSeedKeywords } from '../db/recordsRepo'
 import type { Keyword } from '../db/types'
 import { saveXlsx } from '../lib/download'
 import { readLastGroup } from '../lib/groups'
@@ -47,6 +48,8 @@ function Dictionary() {
   const [cat, setCat] = useState(KEYWORD_CATEGORIES[0])
   const [newCat, setNewCat] = useState('')
   const [editing, setEditing] = useState<{ id: string; label: string } | null>(null)
+  const missing = useMemo(() => missingSeedKeywords(keywords ?? []), [keywords])
+  const [added, setAdded] = useState(0)
 
   const add = async () => {
     const l = label.trim()
@@ -70,6 +73,20 @@ function Dictionary() {
 
   return (
     <>
+      {keywords && missing.length > 0 && (
+        <section className="card space-y-2">
+          <p className="card-title">기본 키워드 {missing.length}개가 사전에 없어요</p>
+          <p className="hint">
+            {missing.slice(0, 8).map((m) => m.label).join(' · ')}
+            {missing.length > 8 && ` 외 ${missing.length - 8}개`}
+          </p>
+          <button type="button" className="btn btn-soft w-full" onClick={async () => setAdded(await addMissingSeedKeywords(db))}>
+            기본 키워드 넣기
+          </button>
+        </section>
+      )}
+      {added > 0 && missing.length === 0 && <p className="hint px-1">기본 키워드 {added}개를 넣었어요. 필요 없는 건 [끄기]를 누르세요.</p>}
+      <p className="hint px-1">키워드 {(keywords ?? []).filter((k) => k.isActive).length}개 사용 중 · 안 쓰는 키워드는 [끄기]로 숨겨요 (붙인 기록은 그대로).</p>
       <section className="card space-y-3">
         <p className="card-title">키워드 추가</p>
         <div className="grid grid-cols-2 gap-2">

@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { KEYWORD_SEED } from '../src/data/keywordSeed'
 import { PeDatabase } from '../src/db/db'
-import { addAbsences, addRecords, applyCaptainChange, ensureKeywordSeed, undo } from '../src/db/recordsRepo'
+import { addAbsences, addRecords, applyCaptainChange, ensureKeywordSeed, missingSeedKeywords, undo } from '../src/db/recordsRepo'
 import type { Captain, ClassRecord, Keyword } from '../src/db/types'
 import { planCaptainChange, captainOn } from '../src/lib/captains'
 import { dayBefore, monthLabel, shortDateLabel, toDateStr } from '../src/lib/dates'
@@ -151,10 +151,37 @@ describe('기록 저장·되돌리기 (기기 안 저장소)', () => {
   it('기본 키워드는 처음 한 번만 들어간다', async () => {
     await ensureKeywordSeed(db)
     await ensureKeywordSeed(db)
-    const n = Object.values(KEYWORD_SEED).flat().length
+    const all = Object.values(KEYWORD_SEED).flat()
+    expect(await db.keywords.count()).toBe(all.length)
+    expect(all.length).toBeGreaterThanOrEqual(100)
+    expect(new Set(all).size).toBe(all.length) // 이름이 겹치지 않음
+    expect(Object.keys(KEYWORD_SEED)).toEqual(expect.arrayContaining(['태도', '리더십', '협동', '기능 향상', '탐구', '배려', '규칙 준수']))
+  })
+
+  it('이미 쓰던 기기: 없는 기본 키워드만 한 번 더하고, 바꾼 이름·끈 키워드는 그대로', async () => {
+    // 예전(1판) 사전을 쓰던 기기 흉내: 판 기록 없음, 교사가 하나 끄고 하나 이름을 바꿈, 직접 만든 키워드 하나
+    await db.keywords.bulkAdd([
+      { id: 'k1', label: '성실함', category: '태도', isActive: false, sortOrder: 0 },
+      { id: 'k2', label: '끈기 있음', category: '태도', isActive: true, sortOrder: 1 },
+      { id: 'k3', label: '공정한 판정', category: '규칙 준수', isActive: true, sortOrder: 2 },
+    ])
+    await ensureKeywordSeed(db)
+    const rows = await db.keywords.toArray()
+    const labels = rows.map((k) => k.label)
+    expect(labels.filter((l) => l === '성실함')).toHaveLength(1)
+    expect(rows.find((k) => k.id === 'k1')!.isActive).toBe(false)
+    expect(labels).toContain('끈기 있음')
+    expect(labels).toContain('공정한 판정')
+    expect(labels).toContain('스포츠맨십')
+    expect(Math.min(...rows.filter((k) => !k.id.startsWith('k')).map((k) => k.sortOrder))).toBeGreaterThan(2)
+    expect(missingSeedKeywords(rows)).toEqual([])
+    // 판이 올랐으니, 교사가 기본 키워드 이름을 바꿔도 다시 열 때 또 더하지 않음
+    await db.keywords.update('k3', { label: '공정' })
+    await db.keywords.filter((k) => k.label === '스포츠맨십').modify({ label: '스포츠 정신' })
+    const n = await db.keywords.count()
+    await ensureKeywordSeed(db)
     expect(await db.keywords.count()).toBe(n)
-    expect(n).toBeGreaterThanOrEqual(20)
-    expect(n).toBeLessThanOrEqual(30)
+    expect(missingSeedKeywords(await db.keywords.toArray()).map((m) => m.label)).toEqual(['스포츠맨십'])
   })
 
   it('여러 명 한꺼번에 기록 → 되돌리기', async () => {
