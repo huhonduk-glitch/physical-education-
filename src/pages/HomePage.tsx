@@ -4,6 +4,7 @@ import BackupWarning from '../components/BackupWarning'
 import { Logo } from '../components/Brand'
 import FeatureSheet from '../components/FeatureSheet'
 import Icon from '../components/Icon'
+import InstallGuide from '../components/InstallGuide'
 import { longDateLabel, shortDateLabel, todayStr } from '../lib/dates'
 import { dday as ddayOf, upcomingEvents } from '../lib/neisOpenApi'
 import { FEATURES, featureOn } from '../lib/features'
@@ -47,6 +48,7 @@ export default function HomePage() {
       </header>
 
       <div className="page space-y-6 pt-2 pb-8">
+        <InstallGuide place="home" />
         <BackupWarning hasData={(students?.length ?? 0) > 0} />
 
         {noRoster && (

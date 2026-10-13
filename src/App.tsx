@@ -7,6 +7,8 @@ import { TimerProvider } from './state/TimerContext'
 import { db } from './db/db'
 import { loadSettings, saveSettings, type AppSettings } from './db/settings'
 import { ensureKeywordSeed } from './db/recordsRepo'
+import { requestPersistentStorage } from './lib/school'
+import { termsAccepted } from './lib/terms'
 import { DEFAULT_STANDARDS, type PapsStandards } from './lib/paps'
 import { PIN_SETTING_KEY, type StoredPin } from './lib/pin'
 import HomePage from './pages/HomePage'
@@ -24,6 +26,8 @@ const ReportPage = lazy(() => import('./pages/ReportPage'))
 const RubricPage = lazy(() => import('./pages/RubricPage'))
 const TeamAppsPage = lazy(() => import('./pages/tools/TeamAppsPage'))
 const HelpPage = lazy(() => import('./pages/HelpPage'))
+const TermsPage = lazy(() => import('./pages/TermsPage'))
+const TermsGate = lazy(() => import('./pages/TermsPage').then((m) => ({ default: m.TermsGate })))
 const ToolsPage = lazy(() => import('./pages/ToolsPage'))
 const PickPage = lazy(() => import('./pages/tools/PickPage'))
 const TeamsPage = lazy(() => import('./pages/tools/TeamsPage'))
@@ -76,8 +80,10 @@ export default function App() {
   }, [])
 
   // 세특 키워드 기본 사전 (처음 한 번만)
+  // 저장 공간 보호 요청: 브라우저가 공간이 모자랄 때 이 앱 자료를 지우지 않게 (켤 때마다 확인, 이미 켜져 있으면 그대로)
   useEffect(() => {
     void ensureKeywordSeed(db)
+    void requestPersistentStorage()
   }, [])
 
   const updateSettings = useCallback((patch: Partial<AppSettings>) => saveSettings(db, patch), [])
@@ -90,6 +96,17 @@ export default function App() {
 
   if (settings === undefined || pinRow === undefined || !ctx) {
     return <div className="p-6 text-lg">불러오는 중…</div>
+  }
+
+  // 이용 안내를 아직 안 읽었으면 먼저 (처음 쓰는 사람도, 이미 쓰던 사람도 한 번)
+  if (!termsAccepted(settings.termsAgreed)) {
+    return (
+      <AppContext.Provider value={ctx}>
+        <Suspense fallback={null}>
+          <TermsGate />
+        </Suspense>
+      </AppContext.Provider>
+    )
   }
 
   if (pinRow === null) {
@@ -141,6 +158,7 @@ export default function App() {
           <Route path="/students/import" element={<RosterImportPage />} />
           <Route path="/more" element={<MorePage />} />
           <Route path="/help" element={<HelpPage />} />
+          <Route path="/more/terms" element={<TermsPage />} />
           <Route path="/students/summary" element={<ClassSummaryPage />} />
           <Route path="/students/:id" element={<StudentDetailPage />} />
           <Route path="/students/:id/report" element={<ReportPage scope="student" />} />
