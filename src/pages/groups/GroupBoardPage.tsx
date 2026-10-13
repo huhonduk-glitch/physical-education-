@@ -1,7 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import BackupWarning from '../../components/BackupWarning'
 import DateBar from '../../components/DateBar'
 import GroupPicker from '../../components/GroupPicker'
 import Icon from '../../components/Icon'
@@ -168,7 +167,6 @@ export default function GroupBoardPage() {
         }
       />
       <div className="page space-y-3 pb-4">
-        <BackupWarning hasData={list.length > 0} />
         {groups && groups.length > 1 && <GroupPicker groups={groups} value={id} onChange={choose} />}
         <DateBar value={date} onChange={setDate} marked={marked} />
         <Link to={`/groups/${id}/journal?d=${date}`} className="flex min-h-[52px] items-center gap-3 rounded-2xl bg-white px-4 shadow-[var(--shadow-card)]">

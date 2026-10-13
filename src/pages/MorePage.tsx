@@ -1,93 +1,142 @@
 import { useState } from 'react'
-import { MakerCredit } from '../components/Brand'
 import { Link } from 'react-router-dom'
+import { Logo, MakerCredit } from '../components/Brand'
 import FeatureSheet from '../components/FeatureSheet'
 import Icon, { type IconName } from '../components/Icon'
 import PageHeader from '../components/PageHeader'
+import { backupOverdue } from '../db/backup'
 import type { FeatureId } from '../db/settings'
 import { featureOn } from '../lib/features'
 import { useApp } from '../state/AppContext'
 
-const GROUPS: { title: string; items: { to: string; label: string; desc: string; icon: IconName; tone: string; feature?: FeatureId }[] }[] = [
+interface MenuItem {
+  to: string
+  label: string
+  desc?: string
+  icon: IconName
+  tone: string
+  feature?: FeatureId
+}
+
+/** 더보기 메뉴: 하는 일 순서대로 묶는다 (수업 → 학생 → 앱 설정 → 도움) */
+const GROUPS: { title: string; items: MenuItem[] }[] = [
   {
-    title: '수업 관리',
+    title: '수업',
     items: [
-      { to: '/more/assessments', label: '수행평가 채점표', desc: '평가 만들기 · 반별 채점 · 엑셀', icon: 'clipboard', tone: 'bg-brand-light text-brand', feature: 'assess' },
-      { to: '/more/keywords', label: '세특 키워드', desc: '학생별 근거 모아보기 · 사전 · 엑셀', icon: 'tag', tone: 'bg-ok-light text-ok', feature: 'seteuk' },
-      { to: '/tools/apps', label: '팀 편성 · 전술 보드', desc: '반 명단을 두 앱으로 보내기', icon: 'share', tone: 'bg-brand-light text-brand', feature: 'apps' },
-      { to: '/more/captains', label: '체육부장', desc: '지정 · 교체 이력 · 활동 체크', icon: 'medal', tone: 'bg-caution-light text-caution', feature: 'captains' },
+      { to: '/more/assessments', label: '수행평가', desc: '평가 만들기 · 채점 · 나이스 파일', icon: 'clipboard', tone: 'bg-caution-light text-caution', feature: 'assess' },
+      { to: '/more/keywords', label: '세특 키워드', desc: '근거 모아보기 · 키워드 사전', icon: 'tag', tone: 'bg-ok-light text-ok', feature: 'seteuk' },
+      { to: '/tools/apps', label: '팀 편성 · 전술 보드', desc: '반 명단 보내기', icon: 'share', tone: 'bg-brand-light text-brand', feature: 'apps' },
+      { to: '/more/captains', label: '체육부장', desc: '지정 · 활동 체크', icon: 'medal', tone: 'bg-caution-light text-caution', feature: 'captains' },
       { to: '/more/absences', label: '견학 · 열외', desc: '견학 목록 · 대체 과제', icon: 'bandage', tone: 'bg-fill-2 text-ink-2', feature: 'absences' },
-      { to: '/students/summary', label: '반 요약', desc: '미준비·솔선수범 상위 · 미측정자', icon: 'list', tone: 'bg-brand-light text-brand', feature: 'records' },
     ],
   },
   {
-    title: '앱',
+    title: '학생',
     items: [
-      { to: '/more/data', label: '백업 · 학년도', desc: '백업 · 복원 · 새 학년도 · 전체 삭제', icon: 'database', tone: 'bg-danger-light text-danger' },
-      { to: '/more/settings', label: '설정', desc: '학교 · 시간표 · 버튼 · PIN · 연동 앱', icon: 'settings', tone: 'bg-fill-2 text-ink-2' },
-      { to: '/more/terms', label: '이용 안내', desc: '자료 보관 · 홈 화면 추가 · 개인정보 · 책임 범위', icon: 'lock', tone: 'bg-fill-2 text-ink-2' },
+      { to: '/students', label: '전체 학생 명렬', desc: '학적반별 명단 · 학생별 기록', icon: 'students', tone: 'bg-brand-light text-brand' },
+      { to: '/students/import', label: '명렬 올리기', desc: '나이스 파일 · 붙여넣기', icon: 'upload', tone: 'bg-brand-light text-brand' },
+      { to: '/students/summary', label: '반 요약', desc: '미준비 · 칭찬 상위 · 미측정', icon: 'list', tone: 'bg-fill-2 text-ink-2', feature: 'records' },
+    ],
+  },
+  {
+    title: '앱 설정',
+    items: [
+      { to: '/more/settings', label: '설정', desc: '학교 · 버튼 · PIN · 연동 앱', icon: 'settings', tone: 'bg-fill-2 text-ink-2' },
+      { to: '/more/settings/timetable', label: '수업 시간표', icon: 'calendar', tone: 'bg-fill-2 text-ink-2' },
+      { to: '/more/settings/neis', label: '나이스에서 불러오기', desc: '학급 · 시간표 · 학사일정', icon: 'download', tone: 'bg-ok-light text-ok' },
+      { to: '/more/data', label: '백업 · 학년도', desc: '백업 · 복원 · 새 학년도', icon: 'database', tone: 'bg-danger-light text-danger' },
+    ],
+  },
+  {
+    title: '도움',
+    items: [
+      { to: '/help', label: '사용법', desc: '하루 수업 흐름 · 자주 묻는 질문', icon: 'info', tone: 'bg-ok-light text-ok' },
+      { to: '/more/terms', label: '이용 안내', desc: '자료 보관 · 개인정보', icon: 'lock', tone: 'bg-fill-2 text-ink-2' },
     ],
   },
 ]
 
+function backupLabel(at: number): { text: string; warn: boolean } {
+  if (!at) return { text: '아직 백업 안 함', warn: true }
+  const days = Math.floor((Date.now() - at) / 86400000)
+  return { text: days === 0 ? '오늘 백업함' : `${days}일 전 백업`, warn: backupOverdue(at) }
+}
+
 export default function MorePage() {
   const { lock, settings } = useApp()
   const [pick, setPick] = useState(false)
+  const backup = backupLabel(settings.lastBackupAt)
+
   return (
     <>
       <PageHeader title="더보기" />
       <div className="page space-y-5 pb-8">
-        <Link to="/help" className="card flex min-h-[64px] w-full items-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-ok text-white">
-            <Icon name="info" size={20} />
-          </span>
-          <span className="flex-1">
-            <b className="block">사용법</b>
-            <span className="hint">처음 시작하기 · 기능별 쓰는 법 · 자주 묻는 질문</span>
+        {/* 내 정보: 학교 · 학년도 · 백업 상태를 한눈에 */}
+        <Link to="/more/settings" className="card flex items-center gap-3 transition-transform active:scale-[0.99]">
+          <Logo size={48} />
+          <span className="min-w-0 flex-1">
+            <b className="block truncate text-[1.1rem]">{settings.schoolName || '학교 이름을 넣어 주세요'}</b>
+            <span className="hint block">
+              {settings.schoolYear}학년도 · {settings.schoolLevel === '고' ? '고등학교' : settings.schoolLevel === '중' ? '중학교' : '초등학교'}
+            </span>
           </span>
           <Icon name="chevronRight" className="text-ink-3" />
         </Link>
-        <button type="button" className="card flex min-h-[64px] w-full items-center gap-3 text-left" onClick={() => setPick(true)}>
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand text-white">
-            <Icon name="grid" size={20} />
-          </span>
-          <span className="flex-1">
-            <b className="block">쓸 기능 고르기</b>
-            <span className="hint">필요한 기능만 켜서 화면을 단순하게</span>
-          </span>
-          <Icon name="chevronRight" className="text-ink-3" />
-        </button>
+
+        {/* 자주 쓰는 4가지 */}
+        <div className="grid grid-cols-4 gap-2">
+          <QuickTile to="/help" icon="info" label="사용법" tone="bg-ok-light text-ok" />
+          <QuickTile onClick={() => setPick(true)} icon="grid" label="기능 고르기" tone="bg-brand-light text-brand" />
+          <QuickTile to="/more/data" icon="database" label={backup.warn ? '백업 필요' : '백업'} tone={backup.warn ? 'bg-danger text-white' : 'bg-fill-2 text-ink-2'} />
+          <QuickTile onClick={lock} icon="lock" label="지금 잠그기" tone="bg-ink text-white" />
+        </div>
+        <p className={`-mt-2 px-1 text-sm font-bold ${backup.warn ? 'text-danger' : 'text-ink-3'}`}>💾 {backup.text}</p>
+
         {GROUPS.map((g) => ({ ...g, items: g.items.filter((m) => !m.feature || featureOn(settings.features, m.feature)) }))
           .filter((g) => g.items.length > 0)
           .map((g) => (
-          <section key={g.title}>
-            <p className="mb-2 px-1 text-sm font-bold text-ink-3">{g.title}</p>
-            <div className="card overflow-hidden p-0">
-              {g.items.map((m) => (
-                <Link key={m.to} to={m.to} className="list-row min-h-[68px] hover:bg-fill">
-                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${m.tone}`}>
-                    <Icon name={m.icon} size={20} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block font-bold">{m.label}</span>
-                    <span className="hint block truncate">{m.desc}</span>
-                  </span>
-                  <Icon name="chevronRight" className="text-ink-3" />
-                </Link>
-              ))}
-            </div>
-          </section>
-        ))}
-        <button type="button" className="card flex min-h-[60px] w-full items-center gap-3 font-bold" onClick={lock}>
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-ink text-white">
-            <Icon name="lock" size={20} />
-          </span>
-          지금 잠그기
-        </button>
+            <section key={g.title}>
+              <p className="mb-1.5 px-1 text-sm font-bold text-ink-3">{g.title}</p>
+              <div className="card overflow-hidden p-0">
+                {g.items.map((m) => (
+                  <Link key={m.to} to={m.to} className="list-row min-h-[58px] hover:bg-fill">
+                    <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${m.tone}`}>
+                      <Icon name={m.icon} size={18} />
+                    </span>
+                    <span className="min-w-0 flex-1 font-bold">{m.label}</span>
+                    {m.desc && <span className="hidden max-w-[45%] truncate text-sm text-ink-3 sm:block">{m.desc}</span>}
+                    <Icon name="chevronRight" size={18} className="text-ink-3" />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ))}
+
         <p className="hint text-center">학생 정보는 이 기기 안에만 저장돼요 · 인터넷으로 보내지 않아요</p>
-        <MakerCredit className="pt-4 pb-2" />
+        <MakerCredit className="pt-2 pb-2" />
       </div>
       {pick && <FeatureSheet onClose={() => setPick(false)} />}
     </>
+  )
+}
+
+function QuickTile({ to, onClick, icon, label, tone }: { to?: string; onClick?: () => void; icon: IconName; label: string; tone: string }) {
+  const inner = (
+    <>
+      <span className={`grid h-11 w-11 place-items-center rounded-2xl ${tone}`}>
+        <Icon name={icon} size={20} />
+      </span>
+      <span className="text-[0.78rem] leading-tight font-bold text-ink-2">{label}</span>
+    </>
+  )
+  const cls = 'card flex min-h-[88px] flex-col items-center justify-center gap-1.5 px-1 py-3 text-center transition-transform active:scale-[0.97]'
+  return to ? (
+    <Link to={to} className={cls}>
+      {inner}
+    </Link>
+  ) : (
+    <button type="button" className={cls} onClick={onClick}>
+      {inner}
+    </button>
   )
 }

@@ -8,12 +8,13 @@ import InstallGuide from '../components/InstallGuide'
 import { longDateLabel, shortDateLabel, todayStr } from '../lib/dates'
 import { dday as ddayOf, upcomingEvents } from '../lib/neisOpenApi'
 import { FEATURES, featureOn } from '../lib/features'
-import { GROUP_COLORS, SEMESTER_LABEL } from '../lib/groups'
+import { GROUP_COLORS, readLastGroup, SEMESTER_LABEL } from '../lib/groups'
+import { lessonFocus, setupProgress, setupSteps } from '../lib/home'
 import { currentPeriod, todaysLessons } from '../lib/timetable'
 import { useApp } from '../state/AppContext'
 import { useGroups } from '../state/useGroups'
 
-/** 홈: 오늘 수업 · 내 수업반 · 내가 고른 기능 */
+/** 홈: 시작 준비 → 지금 수업 → 오늘 시간표 → 내 수업반 → 바로가기 → 학사일정 (위에서 아래로 자주 쓰는 순서) */
 export default function HomePage() {
   const { settings } = useApp()
   const { groups, students, membersOf } = useGroups()
@@ -23,20 +24,44 @@ export default function HomePage() {
   const period = currentPeriod(now, settings.periodStarts, settings.periodMinutes)
   const groupById = new Map((groups ?? []).map((g) => [g.id, g]))
   const features = FEATURES.filter((f) => featureOn(settings.features, f.id))
-  const noRoster = students !== undefined && students.length === 0
   const recordsOn = featureOn(settings.features, 'records')
   const today = todayStr()
   const upcoming = upcomingEvents(settings.neisSchedule?.events ?? [], today)
   const dday = (d: string) => ddayOf(d, today)
 
+  const setup = setupSteps({
+    students: students?.length ?? 0,
+    groups: groups?.length ?? 0,
+    timetable: settings.timetable.length,
+    lastBackupAt: settings.lastBackupAt,
+  })
+  const progress = setupProgress(setup)
+  const [setupHidden, setSetupHidden] = useState(readSetupHidden)
+  const requiredDone = setup.filter((s) => !s.optional && s.id !== 'backup').every((s) => s.done)
+  const showSetup = students !== undefined && groups !== undefined && progress.done < progress.total && !(requiredDone && setupHidden)
+  const focus = recordsOn ? lessonFocus(now, settings.timetable, settings.periodStarts, settings.periodMinutes) : null
+  const focusGroup = focus ? groupById.get(focus.entry.groupId) : undefined
+  const lastGroup = (() => {
+    const id = readLastGroup()
+    return (id && groupById.get(id)) || groups?.[0]
+  })()
+  const hideSetup = () => {
+    try {
+      localStorage.setItem(SETUP_HIDE_KEY, '1')
+    } catch {
+      /* 저장이 막힌 브라우저: 이번만 숨긴다 */
+    }
+    setSetupHidden(true)
+  }
+
   return (
     <>
       <header className="pt-[env(safe-area-inset-top)]">
-        <div className="page flex items-center gap-3 pt-5 pb-2">
-          <Logo size={44} />
+        <div className="page flex items-center gap-3 pt-5 pb-1">
+          <Logo size={40} />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-ink-3">{longDateLabel(todayStr())}</p>
-            <h1 className="truncate text-[1.5rem] leading-tight font-black tracking-tight">{settings.schoolName || '오늘의 체육 수업'}</h1>
+            <p className="text-sm font-bold text-ink-3">{longDateLabel(today)}</p>
+            <h1 className="truncate text-[1.4rem] leading-tight font-black tracking-tight">{settings.schoolName || 'PE LOG'}</h1>
           </div>
           <Link to="/help" className="btn btn-ghost px-2 text-ink-3" aria-label="사용법">
             <Icon name="info" />
@@ -47,78 +72,124 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="page space-y-6 pt-2 pb-8">
+      <div className="page space-y-5 pt-3 pb-8">
         <InstallGuide place="home" />
-        <BackupWarning hasData={(students?.length ?? 0) > 0} />
+        {/* 시작 준비에 '첫 백업'이 이미 보이면 겹치지 않게 */}
+        {!showSetup && <BackupWarning hasData={(students?.length ?? 0) > 0} />}
 
-        {noRoster && (
-          <section className="card space-y-4">
-            <div>
-              <p className="text-lg font-extrabold">시작해 볼까요?</p>
-              <p className="hint">
-                쓰고 싶은 기능만 골라 쓰면 돼요. 타이머처럼 명렬 없이 바로 되는 기능도 있어요.{' '}
-                <Link to="/help" className="font-bold text-brand underline">
-                  사용법 보기
-                </Link>
-              </p>
+        {/* ① 지금 수업 — 가장 자주 하는 일을 한 번에 */}
+        {recordsOn && focus && focusGroup ? (
+          <Link
+            to={`/groups/${focusGroup.id}`}
+            className="anim-pop block rounded-3xl bg-brand p-5 text-white shadow-[var(--shadow-float)] transition-transform active:scale-[0.99]"
+          >
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-sm font-bold">
+              {focus.status === 'now' ? '● 지금 수업' : '다음 수업'} · {focus.entry.period}교시 {focus.start}
+            </span>
+            <b className="mt-3 block text-[1.6rem] leading-tight font-black">{focusGroup.name}</b>
+            <span className="mt-1 block font-semibold text-white/85">{membersOf(focusGroup).length}명</span>
+            <span className="mt-4 flex items-center justify-between rounded-2xl bg-white px-4 py-3 font-extrabold text-brand">
+              누가기록 시작
+              <Icon name="chevronRight" />
+            </span>
+          </Link>
+        ) : (
+          recordsOn &&
+          lastGroup && (
+            <Link to={`/groups/${lastGroup.id}`} className="card flex min-h-[72px] items-center gap-3 transition-transform active:scale-[0.99]">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand text-white">
+                <Icon name="class" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="hint block">이어서 기록하기</span>
+                <b className="block truncate text-[1.1rem]">{lastGroup.name}</b>
+              </span>
+              <Icon name="chevronRight" className="text-ink-3" />
+            </Link>
+          )
+        )}
+
+        {/* ② 시작 준비 — 처음 쓰는 사람이 순서대로 따라 하게 */}
+        {showSetup && (
+          <section className="card space-y-3" aria-label="시작 준비">
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <p className="text-lg font-extrabold">시작 준비</p>
+                <p className="hint">순서대로 하면 바로 수업에 쓸 수 있어요</p>
+              </div>
+              <span className="text-lg font-black text-brand tabular-nums">
+                {progress.done}/{progress.total}
+              </span>
             </div>
-            <ol className="space-y-2">
-              <li>
-                <Link to="/students/import" className="list-row rounded-2xl bg-fill">
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-brand font-black text-white">1</span>
-                  <span className="flex-1">
-                    <b className="block">학생 명렬 올리기</b>
-                    <span className="hint">나이스 명렬 파일 또는 복사·붙여넣기</span>
-                  </span>
-                  <Icon name="chevronRight" className="text-ink-3" />
-                </Link>
-              </li>
-              <li>
-                <Link to="/groups" className="list-row rounded-2xl bg-fill">
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-brand font-black text-white">2</span>
-                  <span className="flex-1">
-                    <b className="block">수업반 만들기</b>
-                    <span className="hint">학적반 그대로 · 수강반(여러 반 학생)</span>
-                  </span>
-                  <Icon name="chevronRight" className="text-ink-3" />
-                </Link>
-              </li>
-              <li>
-                <Link to="/more/settings/neis" className="list-row rounded-2xl bg-fill">
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-ok font-black text-white">+</span>
-                  <span className="flex-1">
-                    <b className="block">나이스에서 학급·시간표 불러오기</b>
-                    <span className="hint">선택 · 학교 이름만 넣으면 내 체육 시간표가 채워져요</span>
-                  </span>
-                  <Icon name="chevronRight" className="text-ink-3" />
-                </Link>
-              </li>
+            <div className="h-2 overflow-hidden rounded-full bg-fill-2" aria-hidden>
+              <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
+            </div>
+            {progress.done > 0 && (
+              <p className="flex items-center gap-1.5 text-sm font-bold text-ok">
+                <Icon name="check" size={16} /> {setup.filter((x) => x.done).map((x) => x.label).join(' · ')}
+              </p>
+            )}
+            <ol className="-mx-1">
+              {setup.map((st, i) => {
+                if (st.done) return null
+                const isNext = progress.next?.id === st.id
+                return (
+                  <li key={st.id}>
+                    <Link to={st.to} className={`flex min-h-[56px] items-center gap-3 rounded-xl px-1 py-1.5 ${isNext ? 'bg-brand-light' : ''}`}>
+                      <span
+                        className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-black ${
+                          st.done ? 'bg-ok text-white' : isNext ? 'bg-brand text-white' : 'bg-fill-2 text-ink-3'
+                        }`}
+                      >
+                        {st.done ? <Icon name="check" size={16} /> : i + 1}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <b className={`block ${st.done ? 'text-ink-3 line-through decoration-ink-3/40' : ''}`}>
+                          {st.label}
+                          {st.optional && <span className="ml-1 text-xs font-bold text-ink-3">선택</span>}
+                        </b>
+                        {!st.done && <span className="hint block">{st.desc}</span>}
+                      </span>
+                      {!st.done && <Icon name="chevronRight" className="text-ink-3" />}
+                    </Link>
+                  </li>
+                )
+              })}
             </ol>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Link to="/more/settings/neis" className="text-sm font-bold text-ok">
+                + 나이스에서 학급·시간표 불러오기
+              </Link>
+              {requiredDone && (
+                <button type="button" className="text-sm font-bold text-ink-3" onClick={hideSetup}>
+                  숨기기
+                </button>
+              )}
+            </div>
           </section>
         )}
 
+        {/* 오늘 시간표 — 짧은 줄 */}
         {recordsOn && lessons.length > 0 && (
           <section className="space-y-2">
-            <h2 className="px-1 text-lg font-extrabold">오늘 수업</h2>
-            <div className="card overflow-hidden p-0">
+            <SectionTitle title="오늘 수업" action={{ to: '/more/settings/timetable', label: '시간표' }} />
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
               {lessons.map((l) => {
                 const g = groupById.get(l.groupId)
                 if (!g) return null
                 const c = GROUP_COLORS[g.color] ?? GROUP_COLORS.blue
                 const live = period === l.period
                 return (
-                  <Link key={`${l.day}-${l.period}`} to={`/groups/${g.id}`} className={`list-row min-h-[64px] hover:bg-fill ${live ? 'bg-brand-light' : ''}`}>
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl font-black tabular-nums" style={{ background: c.bg, color: c.fg }}>
-                      {l.period}
+                  <Link
+                    key={`${l.day}-${l.period}`}
+                    to={`/groups/${g.id}`}
+                    className={`flex min-h-[64px] w-36 shrink-0 flex-col justify-center rounded-2xl px-3 py-2 ${live ? 'ring-2 ring-brand' : ''}`}
+                    style={{ background: c.bg, color: c.fg }}
+                  >
+                    <span className="text-xs font-black">
+                      {l.period}교시 {live && '· 지금'}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <b className="block truncate">{g.name}</b>
-                      <span className="hint">
-                        {l.period}교시 · {settings.periodStarts[l.period - 1] ?? ''}
-                      </span>
-                    </span>
-                    {live && <span className="badge bg-brand text-white">지금</span>}
-                    <Icon name="chevronRight" className="text-ink-3" />
+                    <b className="truncate text-[0.95rem] text-ink">{g.name}</b>
                   </Link>
                 )
               })}
@@ -126,9 +197,56 @@ export default function HomePage() {
           </section>
         )}
 
+        {/* ③ 내 수업반 — 가로로 넘겨 보기 */}
+        {recordsOn && groups && groups.length > 0 && (
+          <section className="space-y-2">
+            <SectionTitle title={`내 수업반 ${groups.length}`} action={{ to: '/groups', label: '전체' }} />
+            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+              {groups.map((g) => {
+                const c = GROUP_COLORS[g.color] ?? GROUP_COLORS.blue
+                return (
+                  <Link key={g.id} to={`/groups/${g.id}`} className="card flex min-h-[84px] w-40 shrink-0 flex-col justify-between gap-1 p-3.5 transition-transform active:scale-[0.98]">
+                    <span className="flex items-center gap-1.5">
+                      <i className="h-2.5 w-2.5 rounded-full" style={{ background: c.fg }} aria-hidden />
+                      <span className="truncate text-xs font-bold text-ink-3">{g.kind === 'elective' ? '수강반' : '학적반'} · {SEMESTER_LABEL[g.semester]}</span>
+                    </span>
+                    <b className="line-clamp-2 leading-snug">{g.name}</b>
+                    <span className="text-xs font-semibold text-ink-3">{membersOf(g).length}명</span>
+                  </Link>
+                )
+              })}
+              <Link to="/groups/new" className="flex min-h-[84px] w-28 shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border-2 border-dashed border-line text-sm font-bold text-ink-3">
+                <Icon name="plus" size={20} />
+                수강반
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {/* ④ 바로가기 — 앱 아이콘처럼 4칸 */}
+        <section className="space-y-2">
+          <SectionTitle title="바로가기" button={{ label: '편집', onClick: () => setPick(true) }} />
+          {features.length === 0 ? (
+            <button type="button" className="card w-full text-center font-bold text-brand" onClick={() => setPick(true)}>
+              쓸 기능을 골라 주세요
+            </button>
+          ) : (
+          <div className="card grid grid-cols-4 gap-y-3 px-2 py-4">
+            {features.map((f) => (
+              <Link key={f.id} to={f.to} className="flex flex-col items-center gap-1.5 rounded-xl py-1 text-center active:bg-fill">
+                <span className={`grid h-12 w-12 place-items-center rounded-2xl ${f.tone}`}>
+                  <Icon name={f.icon} size={22} />
+                </span>
+                <span className="text-[0.8rem] leading-tight font-bold text-ink-2">{f.short}</span>
+              </Link>
+            ))}
+          </div>
+          )}
+        </section>
+
         {upcoming.length > 0 && (
           <section className="space-y-2">
-            <h2 className="px-1 text-lg font-extrabold">다가오는 학사일정</h2>
+            <SectionTitle title="다가오는 학사일정" />
             <div className="card overflow-hidden p-0">
               {upcoming.map((e) => (
                 <div key={`${e.date}-${e.name}`} className="list-row min-h-[52px]">
@@ -142,61 +260,42 @@ export default function HomePage() {
           </section>
         )}
 
-        {recordsOn && groups && groups.length > 0 && (
-          <section className="space-y-2">
-            <div className="flex items-end justify-between px-1">
-              <h2 className="text-lg font-extrabold">내 수업반</h2>
-              <Link to="/groups" className="text-sm font-bold text-brand">
-                전체 보기
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {groups.slice(0, 8).map((g) => {
-                const c = GROUP_COLORS[g.color] ?? GROUP_COLORS.blue
-                return (
-                  <Link key={g.id} to={`/groups/${g.id}`} className="card flex min-h-[96px] flex-col justify-between gap-2 p-4 transition-transform active:scale-[0.98]">
-                    <span className="flex items-center gap-2">
-                      <i className="h-3 w-3 rounded-full" style={{ background: c.fg }} aria-hidden />
-                      <span className="truncate text-xs font-bold text-ink-3">
-                        {g.kind === 'elective' ? '수강반' : '학적반'} · {SEMESTER_LABEL[g.semester]}
-                      </span>
-                    </span>
-                    <b className="line-clamp-2 text-[1.05rem] leading-snug">{g.name}</b>
-                    <span className="text-sm font-semibold text-ink-3">{membersOf(g).length}명</span>
-                  </Link>
-                )
-              })}
-            </div>
-          </section>
-        )}
-
-        <section className="space-y-2">
-          <div className="flex items-end justify-between px-1">
-            <h2 className="text-lg font-extrabold">내 기능</h2>
-            <button type="button" className="text-sm font-bold text-brand" onClick={() => setPick(true)}>
-              기능 고르기
-            </button>
-          </div>
-          {features.length === 0 ? (
-            <button type="button" className="card w-full text-center font-bold text-brand" onClick={() => setPick(true)}>
-              쓸 기능을 골라 주세요
-            </button>
-          ) : (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {features.map((f) => (
-                <Link key={f.id} to={f.to} className="card flex min-h-[112px] flex-col gap-2 p-4 transition-transform active:scale-[0.98]">
-                  <span className={`grid h-10 w-10 place-items-center rounded-xl ${f.tone}`}>
-                    <Icon name={f.icon} size={21} />
-                  </span>
-                  <b className="text-[1.02rem]">{f.label}</b>
-                  <span className="line-clamp-2 text-xs font-semibold text-ink-3">{f.desc}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
+        <p className="hint text-center">
+          처음이라면{' '}
+          <Link to="/help" className="font-bold text-brand">
+            사용법
+          </Link>
+          부터 보세요 · 학생 정보는 이 기기에만 저장돼요
+        </p>
       </div>
       {pick && <FeatureSheet onClose={() => setPick(false)} />}
     </>
+  )
+}
+
+const SETUP_HIDE_KEY = 'pelog.setupHidden'
+function readSetupHidden(): boolean {
+  try {
+    return localStorage.getItem(SETUP_HIDE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function SectionTitle({ title, action, button }: { title: string; action?: { to: string; label: string }; button?: { label: string; onClick: () => void } }) {
+  return (
+    <div className="flex items-end justify-between px-1">
+      <h2 className="text-[1.05rem] font-extrabold">{title}</h2>
+      {action && (
+        <Link to={action.to} className="text-sm font-bold text-ink-3">
+          {action.label} ›
+        </Link>
+      )}
+      {button && (
+        <button type="button" className="text-sm font-bold text-ink-3" onClick={button.onClick}>
+          {button.label}
+        </button>
+      )}
+    </div>
   )
 }

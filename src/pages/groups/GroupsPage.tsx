@@ -46,15 +46,17 @@ export default function GroupsPage() {
         right={
           !readOnly && (
             <Link to="/groups/new" className="btn btn-primary px-4">
-              <Icon name="plus" size={20} /> 수강반
+              <Icon name="plus" size={20} /> 수강반 만들기
             </Link>
           )
         }
       />
       <div className="page space-y-5 pb-8">
+        {(groups?.length ?? 0) === 0 && (
         <p className="hint px-1">
           <b className="text-ink-2">학적반</b>은 명렬의 반 그대로, <b className="text-ink-2">수강반</b>은 여러 반 학생을 모은 수업 반이에요(고교학점제 선택과목·합반).
         </p>
+        )}
 
         {students?.length === 0 && (
           <div className="card space-y-3">
