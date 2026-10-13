@@ -14,6 +14,7 @@ const GROUPS: { title: string; items: { to: string; label: string; desc: string;
     items: [
       { to: '/more/assessments', label: '수행평가 채점표', desc: '평가 만들기 · 반별 채점 · 엑셀', icon: 'clipboard', tone: 'bg-brand-light text-brand', feature: 'assess' },
       { to: '/more/keywords', label: '세특 키워드', desc: '학생별 근거 모아보기 · 사전 · 엑셀', icon: 'tag', tone: 'bg-ok-light text-ok', feature: 'seteuk' },
+      { to: '/tools/apps', label: '팀 편성 · 전술 보드', desc: '반 명단을 두 앱으로 보내기', icon: 'share', tone: 'bg-brand-light text-brand', feature: 'apps' },
       { to: '/more/captains', label: '체육부장', desc: '지정 · 교체 이력 · 활동 체크', icon: 'medal', tone: 'bg-caution-light text-caution', feature: 'captains' },
       { to: '/more/absences', label: '견학 · 열외', desc: '견학 목록 · 대체 과제', icon: 'bandage', tone: 'bg-fill-2 text-ink-2', feature: 'absences' },
       { to: '/students/summary', label: '반 요약', desc: '미준비·솔선수범 상위 · 미측정자', icon: 'list', tone: 'bg-brand-light text-brand', feature: 'records' },
@@ -35,6 +36,16 @@ export default function MorePage() {
     <>
       <PageHeader title="더보기" />
       <div className="page space-y-5 pb-8">
+        <Link to="/help" className="card flex min-h-[64px] w-full items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-ok text-white">
+            <Icon name="info" size={20} />
+          </span>
+          <span className="flex-1">
+            <b className="block">사용법</b>
+            <span className="hint">처음 시작하기 · 기능별 쓰는 법 · 자주 묻는 질문</span>
+          </span>
+          <Icon name="chevronRight" className="text-ink-3" />
+        </Link>
         <button type="button" className="card flex min-h-[64px] w-full items-center gap-3 text-left" onClick={() => setPick(true)}>
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand text-white">
             <Icon name="grid" size={20} />

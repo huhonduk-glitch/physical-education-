@@ -7,6 +7,7 @@ const TOOLS: { to: string; icon: IconName; title: string; desc: string; tone: st
   { to: '/timer', icon: 'timer', title: '타이머 · 스톱워치', desc: '카운트다운 · 인터벌 · 랩 기록 → PAPS·수행평가', tone: 'bg-brand-light text-brand' },
   { to: '/tools/pick', icon: 'dice', title: '뽑기', desc: '발표 · 시범 · 순서 정하기', tone: 'bg-caution-light text-caution' },
   { to: '/tools/teams', icon: 'team', title: '팀 나누기', desc: '무작위 · 남녀 고르게 · 실력 고르게', tone: 'bg-ok-light text-ok' },
+  { to: '/tools/apps', icon: 'share', title: '팀 편성 · 전술 보드', desc: '반 명단을 팀 편성 앱 · 전술 보드로 보내기', tone: 'bg-brand-light text-brand' },
   { to: '/timer?tab=paps', icon: 'volume', title: 'PAPS 신호음', desc: '윗몸말아올리기 · 스텝검사 · 왕복오래달리기', tone: 'bg-fill-2 text-ink-2' },
 ]
 

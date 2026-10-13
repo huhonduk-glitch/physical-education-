@@ -22,6 +22,8 @@ const JournalPage = lazy(() => import('./pages/groups/JournalPage'))
 const NeisSyncPage = lazy(() => import('./pages/NeisSyncPage'))
 const ReportPage = lazy(() => import('./pages/ReportPage'))
 const RubricPage = lazy(() => import('./pages/RubricPage'))
+const TeamAppsPage = lazy(() => import('./pages/tools/TeamAppsPage'))
+const HelpPage = lazy(() => import('./pages/HelpPage'))
 const ToolsPage = lazy(() => import('./pages/ToolsPage'))
 const PickPage = lazy(() => import('./pages/tools/PickPage'))
 const TeamsPage = lazy(() => import('./pages/tools/TeamsPage'))
@@ -128,6 +130,7 @@ export default function App() {
           <Route path="/tools" element={<ToolsPage />} />
           <Route path="/tools/pick" element={<PickPage />} />
           <Route path="/tools/teams" element={<TeamsPage />} />
+          <Route path="/tools/apps" element={<TeamAppsPage />} />
           <Route path="/paps" element={<PapsPage />} />
           <Route path="/paps/input/:key" element={<PapsInputPage />} />
           <Route path="/paps/paste" element={<PapsPastePage />} />
@@ -137,6 +140,7 @@ export default function App() {
           <Route path="/students" element={<StudentsPage />} />
           <Route path="/students/import" element={<RosterImportPage />} />
           <Route path="/more" element={<MorePage />} />
+          <Route path="/help" element={<HelpPage />} />
           <Route path="/students/summary" element={<ClassSummaryPage />} />
           <Route path="/students/:id" element={<StudentDetailPage />} />
           <Route path="/students/:id/report" element={<ReportPage scope="student" />} />

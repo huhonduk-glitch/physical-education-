@@ -3,7 +3,9 @@ import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
 import { copyText } from '../../lib/download'
 import { GROUP_COLORS } from '../../lib/groups'
+import { tacticBoardJson, tacticBoardLink } from '../../lib/teamExport'
 import { makeTeams, teamName, teamsForSize, teamsText } from '../../lib/teams'
+import { useApp } from '../../state/AppContext'
 import { useTeamLevels } from '../../state/useClassTools'
 import { NumberField } from '../timer/common'
 import { SourceCard, useToolPeople, type ToolPerson } from './common'
@@ -13,6 +15,7 @@ const colorOf = (i: number) => COLORS[i % COLORS.length]
 
 /** 팀 나누기: 무작위 · 남녀 고르게 · 실력(PAPS) 고르게. 실력은 평가 정보라 기본으로 끈다 */
 export default function TeamsPage() {
+  const { settings } = useApp()
   const t = useToolPeople()
   const [by, setBy] = useState<'count' | 'size'>('count')
   const [num, setNum] = useState(2)
@@ -35,6 +38,16 @@ export default function TeamsPage() {
     const ppl = t.people.map((p) => ({ ...p, level: levels?.get(p.id) ?? null }))
     setTeams(makeTeams(ppl, { teams: teamCount, balanceGender: byGroup && gender, balanceLevel: byGroup && level }))
     setMsg('')
+  }
+  const [tacticNames, setTacticNames] = useState(false)
+  /** 나눈 팀을 그대로 전술 보드 선수 명단으로 (소속 = 1팀·2팀…). 명단은 기기 안에서만 링크로 넘어간다 */
+  const sendToTactic = () => {
+    if (!teams) return
+    const list = teams.flatMap((team, i) =>
+      team.map((p, k) => ({ number: Number(p.no) || Number(p.name.replace(/\D/g, '')) || k + 1, name: p.name, gender: p.gender, group: teamName(i) })),
+    )
+    window.open(tacticBoardLink(settings.tacticUrl, tacticBoardJson(list, { includeName: tacticNames, group: '' })), '_blank', 'noopener')
+    setMsg(`전술 보드를 열었어요. [선수 명단]에 ${list.length}명이 팀별로 들어가 있어요.`)
   }
   /** 학생을 누르면 다음 팀으로 옮긴다 */
   const move = (ti: number, id: string) =>
@@ -135,13 +148,22 @@ export default function TeamsPage() {
           <section className="space-y-3">
             <p className="hint px-1">학생을 누르면 다음 팀으로 옮겨요.</p>
             {board(false)}
-            <button
-              type="button"
-              className="btn btn-soft w-full"
-              onClick={async () => setMsg((await copyText(teamsText(teams))) ? '복사했어요. 메신저나 칠판 앱에 붙여넣으세요.' : '복사하지 못했어요.')}
-            >
-              <Icon name="copy" /> 팀 명단 글자로 복사
-            </button>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <button
+                type="button"
+                className="btn btn-soft w-full"
+                onClick={async () => setMsg((await copyText(teamsText(teams))) ? '복사했어요. 메신저나 칠판 앱에 붙여넣으세요.' : '복사하지 못했어요.')}
+              >
+                <Icon name="copy" /> 팀 명단 글자로 복사
+              </button>
+              <button type="button" className="btn btn-soft w-full" onClick={sendToTactic}>
+                <Icon name="share" /> 팀별로 전술 보드 열기
+              </button>
+            </div>
+            <label className="flex min-h-[44px] items-center gap-3 px-1">
+              <input type="checkbox" className="h-5 w-5 accent-[var(--color-brand)]" checked={tacticNames} onChange={(e) => setTacticNames(e.target.checked)} />
+              <span className="text-sm font-bold text-ink-2">전술 보드에 이름도 넣기 (기본은 번호만)</span>
+            </label>
             {msg && (
               <p className="rounded-xl bg-ok-light p-3 font-bold text-ok" role="status">
                 {msg}

@@ -37,6 +37,9 @@ export default function HomePage() {
             <p className="text-sm font-bold text-ink-3">{longDateLabel(todayStr())}</p>
             <h1 className="truncate text-[1.5rem] leading-tight font-black tracking-tight">{settings.schoolName || '오늘의 체육 수업'}</h1>
           </div>
+          <Link to="/help" className="btn btn-ghost px-2 text-ink-3" aria-label="사용법">
+            <Icon name="info" />
+          </Link>
           <Link to="/more/settings" className="btn btn-ghost px-2 text-ink-3" aria-label="설정">
             <Icon name="settings" />
           </Link>
@@ -50,7 +53,12 @@ export default function HomePage() {
           <section className="card space-y-4">
             <div>
               <p className="text-lg font-extrabold">시작해 볼까요?</p>
-              <p className="hint">쓰고 싶은 기능만 골라 쓰면 돼요. 타이머처럼 명렬 없이 바로 되는 기능도 있어요.</p>
+              <p className="hint">
+                쓰고 싶은 기능만 골라 쓰면 돼요. 타이머처럼 명렬 없이 바로 되는 기능도 있어요.{' '}
+                <Link to="/help" className="font-bold text-brand underline">
+                  사용법 보기
+                </Link>
+              </p>
             </div>
             <ol className="space-y-2">
               <li>
