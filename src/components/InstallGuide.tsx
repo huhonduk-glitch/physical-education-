@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import Icon from './Icon'
 import { canPromptInstall, currentInstallInfo, kakaoOpenExternal, onInstallPromptChange, promptInstall } from '../lib/install'
 
 const HIDE_KEY = 'pelog.installHint.hiddenAt'
@@ -25,6 +27,7 @@ export default function InstallGuide({ place }: { place: 'home' | 'terms' | 'hel
   const [canInstall, setCanInstall] = useState(canPromptInstall)
   const [hidden, setHidden] = useState(hiddenRecently)
   const [copied, setCopied] = useState(false)
+  const [openSteps, setOpenSteps] = useState(false)
   useEffect(() => onInstallPromptChange(() => setCanInstall(canPromptInstall())), [])
 
   const url = typeof location !== 'undefined' ? location.href.split('#')[0] : ''
@@ -71,6 +74,17 @@ export default function InstallGuide({ place }: { place: 'home' | 'terms' | 'hel
   }
 
   if (info.platform === 'ios') {
+    if (place === 'home' && !openSteps) {
+      return (
+        <button type="button" className="flex w-full items-center gap-3 rounded-2xl bg-danger-light px-4 py-3 text-left text-danger" onClick={() => setOpenSteps(true)}>
+          <span className="flex-1">
+            <b className="block">홈 화면에 추가해 주세요</b>
+            <span className="text-sm font-semibold">사파리로만 쓰면 자료가 지워질 수 있어요</span>
+          </span>
+          <span className="shrink-0 text-sm font-extrabold">방법 보기 ›</span>
+        </button>
+      )
+    }
     return (
       <section className="space-y-2 rounded-2xl bg-danger-light px-4 py-3 text-danger" role="alert">
         <p className="font-extrabold">아이폰·아이패드는 홈 화면에 추가해 주세요</p>
@@ -103,6 +117,29 @@ export default function InstallGuide({ place }: { place: 'home' | 'terms' | 'hel
     setHidden(true)
   }
 
+  if (place === 'home') {
+    return (
+      <div className="flex items-center gap-3 rounded-2xl bg-brand-light py-2 pr-1 pl-4">
+        <Icon name="download" size={20} className="shrink-0 text-brand" />
+        <span className="min-w-0 flex-1 text-[0.95rem] font-bold text-brand-ink">
+          {info.platform === 'android' ? '홈 화면에 앱으로 설치하면 더 안전해요' : '이 PC에 앱으로 설치할 수 있어요'}
+        </span>
+        {canInstall ? (
+          <button type="button" className="btn btn-primary min-h-[40px] px-3 text-sm" onClick={() => void promptInstall()}>
+            설치
+          </button>
+        ) : (
+          <Link to="/more/terms" className="btn btn-ghost min-h-[40px] px-2 text-sm text-brand">
+            방법
+          </Link>
+        )}
+        <button type="button" className="btn btn-ghost min-h-[40px] px-2 text-ink-3" aria-label="2주 동안 안 보기" onClick={hide}>
+          <Icon name="close" size={18} />
+        </button>
+      </div>
+    )
+  }
+
   return (
     <section className="space-y-2 rounded-2xl bg-brand-light px-4 py-3">
       <p className="font-extrabold text-brand-ink">{info.platform === 'android' ? '홈 화면에 앱으로 설치하세요' : '이 PC에 앱으로 설치할 수 있어요'}</p>
@@ -121,11 +158,6 @@ export default function InstallGuide({ place }: { place: 'home' | 'terms' | 'hel
             ? "크롬 오른쪽 위 ⋮ 메뉴 → '앱 설치' 또는 '홈 화면에 추가'를 누르세요."
             : '주소창 오른쪽의 설치 아이콘(⊕)이나 브라우저 메뉴 → \'앱 설치\'를 누르세요.'}
         </p>
-      )}
-      {place === 'home' && (
-        <button type="button" className="btn btn-ghost -ml-2 min-h-[40px] px-2 text-sm text-ink-3" onClick={hide}>
-          2주 동안 안 보기
-        </button>
       )}
     </section>
   )
