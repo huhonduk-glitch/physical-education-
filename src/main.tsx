@@ -5,6 +5,10 @@ import App from './App'
 import UpdateBanner from './components/UpdateBanner'
 import 'pretendard/dist/web/variable/pretendardvariable.css'
 import './index.css'
+import { listenInstallPrompt } from './lib/install'
+
+// 크롬의 [앱 설치] 신호는 한 번만 오므로 앱이 켜질 때부터 받아 둔다
+listenInstallPrompt()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

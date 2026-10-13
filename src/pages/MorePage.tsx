@@ -25,6 +25,7 @@ const GROUPS: { title: string; items: { to: string; label: string; desc: string;
     items: [
       { to: '/more/data', label: '백업 · 학년도', desc: '백업 · 복원 · 새 학년도 · 전체 삭제', icon: 'database', tone: 'bg-danger-light text-danger' },
       { to: '/more/settings', label: '설정', desc: '학교 · 시간표 · 버튼 · PIN · 연동 앱', icon: 'settings', tone: 'bg-fill-2 text-ink-2' },
+      { to: '/more/terms', label: '이용 안내', desc: '자료 보관 · 홈 화면 추가 · 개인정보 · 책임 범위', icon: 'lock', tone: 'bg-fill-2 text-ink-2' },
     ],
   },
 ]
