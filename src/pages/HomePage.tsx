@@ -4,7 +4,8 @@ import BackupWarning from '../components/BackupWarning'
 import { Logo } from '../components/Brand'
 import FeatureSheet from '../components/FeatureSheet'
 import Icon from '../components/Icon'
-import { longDateLabel, todayStr } from '../lib/dates'
+import { longDateLabel, shortDateLabel, todayStr } from '../lib/dates'
+import { dday as ddayOf, upcomingEvents } from '../lib/neisOpenApi'
 import { FEATURES, featureOn } from '../lib/features'
 import { GROUP_COLORS, SEMESTER_LABEL } from '../lib/groups'
 import { currentPeriod, todaysLessons } from '../lib/timetable'
@@ -23,6 +24,9 @@ export default function HomePage() {
   const features = FEATURES.filter((f) => featureOn(settings.features, f.id))
   const noRoster = students !== undefined && students.length === 0
   const recordsOn = featureOn(settings.features, 'records')
+  const today = todayStr()
+  const upcoming = upcomingEvents(settings.neisSchedule?.events ?? [], today)
+  const dday = (d: string) => ddayOf(d, today)
 
   return (
     <>
@@ -69,6 +73,16 @@ export default function HomePage() {
                   <Icon name="chevronRight" className="text-ink-3" />
                 </Link>
               </li>
+              <li>
+                <Link to="/more/settings/neis" className="list-row rounded-2xl bg-fill">
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-ok font-black text-white">+</span>
+                  <span className="flex-1">
+                    <b className="block">나이스에서 학급·시간표 불러오기</b>
+                    <span className="hint">선택 · 학교 이름만 넣으면 내 체육 시간표가 채워져요</span>
+                  </span>
+                  <Icon name="chevronRight" className="text-ink-3" />
+                </Link>
+              </li>
             </ol>
           </section>
         )}
@@ -98,6 +112,22 @@ export default function HomePage() {
                   </Link>
                 )
               })}
+            </div>
+          </section>
+        )}
+
+        {upcoming.length > 0 && (
+          <section className="space-y-2">
+            <h2 className="px-1 text-lg font-extrabold">다가오는 학사일정</h2>
+            <div className="card overflow-hidden p-0">
+              {upcoming.map((e) => (
+                <div key={`${e.date}-${e.name}`} className="list-row min-h-[52px]">
+                  <span className="w-20 shrink-0 font-bold text-ink-2 tabular-nums">{shortDateLabel(e.date)}</span>
+                  <span className="min-w-0 flex-1 truncate font-semibold">{e.name}</span>
+                  {e.grades.length > 0 && e.grades.length < 3 && <span className="hint">{e.grades.join('·')}학년</span>}
+                  <span className="badge bg-fill text-ink-3">{dday(e.date)}</span>
+                </div>
+              ))}
             </div>
           </section>
         )}

@@ -13,7 +13,7 @@ const GROUPS: { title: string; items: { to: string; label: string; desc: string;
     title: '수업 관리',
     items: [
       { to: '/more/assessments', label: '수행평가 채점표', desc: '평가 만들기 · 반별 채점 · 엑셀', icon: 'clipboard', tone: 'bg-brand-light text-brand', feature: 'assess' },
-      { to: '/more/keywords', label: '세특 키워드', desc: '키워드 사전 · 근거 엑셀', icon: 'tag', tone: 'bg-ok-light text-ok', feature: 'seteuk' },
+      { to: '/more/keywords', label: '세특 키워드', desc: '학생별 근거 모아보기 · 사전 · 엑셀', icon: 'tag', tone: 'bg-ok-light text-ok', feature: 'seteuk' },
       { to: '/more/captains', label: '체육부장', desc: '지정 · 교체 이력 · 활동 체크', icon: 'medal', tone: 'bg-caution-light text-caution', feature: 'captains' },
       { to: '/more/absences', label: '견학 · 열외', desc: '견학 목록 · 대체 과제', icon: 'bandage', tone: 'bg-fill-2 text-ink-2', feature: 'absences' },
       { to: '/students/summary', label: '반 요약', desc: '미준비·솔선수범 상위 · 미측정자', icon: 'list', tone: 'bg-brand-light text-brand', feature: 'records' },

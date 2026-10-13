@@ -18,6 +18,10 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const SetupPage = lazy(() => import('./pages/SetupPage'))
 const StudentsPage = lazy(() => import('./pages/StudentsPage'))
 const TimerPage = lazy(() => import('./pages/TimerPage'))
+const JournalPage = lazy(() => import('./pages/groups/JournalPage'))
+const NeisSyncPage = lazy(() => import('./pages/NeisSyncPage'))
+const ReportPage = lazy(() => import('./pages/ReportPage'))
+const RubricPage = lazy(() => import('./pages/RubricPage'))
 const ToolsPage = lazy(() => import('./pages/ToolsPage'))
 const PickPage = lazy(() => import('./pages/tools/PickPage'))
 const TeamsPage = lazy(() => import('./pages/tools/TeamsPage'))
@@ -108,7 +112,7 @@ export default function App() {
     <AppContext.Provider value={ctx}>
       <TimerProvider>
       <MiniTimer />
-      <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-60">
+      <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-60 print:p-0">
         <Suspense fallback={<div className="p-6 text-ink-3">불러오는 중…</div>}>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -117,6 +121,8 @@ export default function App() {
           <Route path="/groups/:id" element={<GroupBoardPage />} />
           <Route path="/groups/:id/edit" element={<GroupEditPage />} />
           <Route path="/groups/:id/stats" element={<GroupStatsPage />} />
+          <Route path="/groups/:id/journal" element={<JournalPage />} />
+          <Route path="/groups/:id/report" element={<ReportPage scope="group" />} />
           <Route path="/eval" element={<EvalPage />} />
           <Route path="/timer" element={<TimerPage />} />
           <Route path="/tools" element={<ToolsPage />} />
@@ -133,10 +139,12 @@ export default function App() {
           <Route path="/more" element={<MorePage />} />
           <Route path="/students/summary" element={<ClassSummaryPage />} />
           <Route path="/students/:id" element={<StudentDetailPage />} />
+          <Route path="/students/:id/report" element={<ReportPage scope="student" />} />
           <Route path="/more/keywords" element={<KeywordsPage />} />
           <Route path="/more/data" element={<DataPage />} />
           <Route path="/more/assessments" element={<AssessmentsPage />} />
           <Route path="/more/assessments/new" element={<AssessmentEditPage />} />
+          <Route path="/more/assessments/rubric" element={<RubricPage />} />
           <Route path="/more/assessments/export" element={<AssessExportPage />} />
           <Route path="/more/assessments/:id/edit" element={<AssessmentEditPage />} />
           <Route path="/more/assessments/:id" element={<AssessmentGradePage />} />
@@ -145,6 +153,7 @@ export default function App() {
           <Route path="/more/settings" element={<SettingsPage />} />
           <Route path="/more/settings/buttons" element={<RecordButtonsPage />} />
           <Route path="/more/settings/timetable" element={<TimetablePage />} />
+          <Route path="/more/settings/neis" element={<NeisSyncPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>

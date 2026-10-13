@@ -90,6 +90,10 @@ export default function SettingsPage() {
             <span>수업 시간표 · 교시 시각</span>
             <span aria-hidden>›</span>
           </Link>
+          <Link to="/more/settings/neis" className="btn btn-outline w-full justify-between">
+            <span>나이스에서 불러오기 (학급 · 시간표 · 학사일정)</span>
+            <span aria-hidden>›</span>
+          </Link>
           <Link to="/more/keywords" className="btn btn-outline w-full justify-between">
             <span>세특 키워드 사전</span>
             <span aria-hidden>›</span>

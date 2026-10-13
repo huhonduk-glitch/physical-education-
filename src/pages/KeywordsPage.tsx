@@ -1,31 +1,39 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
-import ClassPicker, { classesOf, type ClassKey } from '../components/ClassPicker'
+import { useSearchParams } from 'react-router-dom'
+import SeteukCollect from './SeteukCollect'
+import GroupPicker from '../components/GroupPicker'
 import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import { KEYWORD_CATEGORIES } from '../data/keywordSeed'
 import { db, newId } from '../db/db'
 import type { Keyword } from '../db/types'
 import { saveXlsx } from '../lib/download'
+import { readLastGroup } from '../lib/groups'
 import { seteukRows } from '../lib/seteuk'
+import { useGroups } from '../state/useGroups'
 import { useApp } from '../state/AppContext'
 
 /** 세특 키워드 (CLAUDE.md 4-7): 사전 관리 + 학생별 키워드·근거 엑셀. 문장은 만들지 않는다 */
 export default function KeywordsPage() {
-  const [tab, setTab] = useState<'dict' | 'export'>('dict')
+  const [sp] = useSearchParams()
+  const [tab, setTab] = useState<'collect' | 'dict' | 'export'>(sp.get('tab') === 'dict' ? 'dict' : 'collect')
   return (
     <>
       <PageHeader title="세특 키워드" back />
       <div className="page space-y-4 pb-8">
         <div className="segment" role="tablist">
+          <button type="button" role="tab" aria-selected={tab === 'collect'} onClick={() => setTab('collect')}>
+            모아보기
+          </button>
           <button type="button" role="tab" aria-selected={tab === 'dict'} onClick={() => setTab('dict')}>
             키워드 사전
           </button>
           <button type="button" role="tab" aria-selected={tab === 'export'} onClick={() => setTab('export')}>
-            엑셀 내보내기
+            엑셀
           </button>
         </div>
-        {tab === 'dict' ? <Dictionary /> : <Export />}
+        {tab === 'collect' ? <SeteukCollect /> : tab === 'dict' ? <Dictionary /> : <Export />}
         <p className="hint px-1">이 앱은 세특 문장을 만들지 않아요. 키워드와 근거 기록만 정리해 드려요.</p>
       </div>
     </>
@@ -138,17 +146,18 @@ function Dictionary() {
 
 function Export() {
   const { settings } = useApp()
-  const students = useLiveQuery(() => db.students.where('schoolYear').equals(settings.schoolYear).filter((s) => s.status !== '전출').toArray(), [settings.schoolYear])
-  const classes = useMemo(() => classesOf(students ?? []), [students])
-  const [cls, setCls] = useState<ClassKey | null>(null)
+  const { groups, students, membersOf } = useGroups()
+  const [gid, setGid] = useState<string | null>(readLastGroup)
+  const [all, setAll] = useState(false)
+  const group = groups?.find((g) => g.id === gid) ?? groups?.[0] ?? null
   const [neg, setNeg] = useState(false)
   const [msg, setMsg] = useState('')
   const run = async () => {
-    const list = (students ?? []).filter((s) => !cls || (s.grade === cls.grade && s.classNo === cls.classNo))
+    const list = all || !group ? (students ?? []).filter((s) => s.status !== '전출') : membersOf(group)
     const ids = list.map((s) => s.id)
     const [records, keywords] = await Promise.all([db.records.where('studentId').anyOf(ids).toArray(), db.keywords.toArray()])
     const rows = seteukRows(list, records, keywords, { includeNegative: neg })
-    await saveXlsx(`세특키워드_${settings.schoolYear}_${cls ? `${cls.grade}-${cls.classNo}반` : '전체'}.xlsx`, [
+    await saveXlsx(`세특키워드_${settings.schoolYear}_${all || !group ? '전체' : group.name.replace(/\s+/g, '')}.xlsx`, [
       { name: '세특 키워드', rows: [['학번', '이름', '키워드(빈도순)', '근거 기록'], ...rows.map((r) => [r.studentCode, r.name, r.keywords, r.evidence])], widths: [8, 10, 40, 90] },
     ])
     setMsg(`${rows.length}명의 키워드를 엑셀로 저장했어요.`)
@@ -157,7 +166,11 @@ function Export() {
     <section className="card space-y-3">
       <p className="card-title">학생별 키워드 · 근거 엑셀</p>
       <p className="hint">학생 1명당 1줄: 학번 · 이름 · 키워드(빈도순) · 근거 기록(날짜와 메모).</p>
-      <ClassPicker classes={classes} value={cls} onChange={setCls} allLabel="전체 반" />
+      {groups && groups.length > 0 && !all && <GroupPicker groups={groups} value={group?.id ?? null} onChange={setGid} />}
+      <label className="flex min-h-[48px] items-center gap-3">
+        <input type="checkbox" className="h-6 w-6 accent-[var(--color-brand)]" checked={all || !group} disabled={!group} onChange={(e) => setAll(e.target.checked)} />
+        <span className="font-bold">전체 학생 한 파일로</span>
+      </label>
       <label className="flex min-h-[48px] items-center gap-3">
         <input type="checkbox" className="h-6 w-6 accent-[var(--color-brand)]" checked={neg} onChange={(e) => setNeg(e.target.checked)} />
         <span>

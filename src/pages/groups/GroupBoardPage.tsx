@@ -48,11 +48,12 @@ export default function GroupBoardPage() {
   const list: Student[] = useMemo(() => (group ? membersOf(group) : []), [group, membersOf])
 
   const dayData = useLiveQuery(async () => {
-    const [records, absences] = await Promise.all([
+    const [records, absences, lesson] = await Promise.all([
       db.records.where('[groupId+date]').equals([id, date]).toArray(),
       db.absences.where('[groupId+date]').equals([id, date]).toArray(),
+      db.lessons.where('[groupId+date]').equals([id, date]).first(),
     ])
-    return { summary: summarizeDay(records, absences), counts: cellCounts(records), absentIds: new Set(absences.map((a) => a.studentId)) }
+    return { summary: summarizeDay(records, absences), counts: cellCounts(records), absentIds: new Set(absences.map((a) => a.studentId)), lesson }
   }, [date, id])
   const day = dayData?.summary
   const items = useMemo(() => checkItems(settings.recordButtons), [settings.recordButtons])
@@ -170,6 +171,20 @@ export default function GroupBoardPage() {
         <BackupWarning hasData={list.length > 0} />
         {groups && groups.length > 1 && <GroupPicker groups={groups} value={id} onChange={choose} />}
         <DateBar value={date} onChange={setDate} marked={marked} />
+        <Link to={`/groups/${id}/journal?d=${date}`} className="flex min-h-[52px] items-center gap-3 rounded-2xl bg-white px-4 shadow-[var(--shadow-card)]">
+          <Icon name="book" className="text-brand" />
+          <span className="min-w-0 flex-1 truncate">
+            {dayData?.lesson ? (
+              <>
+                <b>{dayData.lesson.unit || '수업 일지'}</b>
+                <span className="hint ml-2">{dayData.lesson.activity}</span>
+              </>
+            ) : (
+              <span className="font-bold text-ink-2">수업 일지 쓰기</span>
+            )}
+          </span>
+          <Icon name="chevronRight" className="text-ink-3" />
+        </Link>
         <div className="segment" role="tablist" aria-label="기록 방법">
           {(
             [

@@ -5,7 +5,7 @@ import BottomSheet from '../components/BottomSheet'
 import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import PinPad from '../components/PinPad'
-import { backupFileName, checkBackup, exportAll, restoreAll, type BackupFile } from '../db/backup'
+import { backupFileName, checkBackup, compareCounts, countAll, exportAll, restoreAll, TABLE_LABELS, type BackupFile } from '../db/backup'
 import { db } from '../db/db'
 import { saveText } from '../lib/download'
 import { PIN_SETTING_KEY, verifyPin, type StoredPin } from '../lib/pin'
@@ -17,6 +17,7 @@ export default function DataPage() {
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
   const [pending, setPending] = useState<BackupFile | null>(null)
+  const nowCounts = useLiveQuery(() => countAll(db), [])
   const [wipe, setWipe] = useState(false)
   const years = useLiveQuery(async () => {
     const ys = new Set<number>()
@@ -65,6 +66,20 @@ export default function DataPage() {
       <div className="page space-y-4 pb-8">
         {msg && <p className="card bg-ok-light font-bold text-ok shadow-none">{msg}</p>}
 
+        {nowCounts && (
+          <section className="card space-y-2">
+            <p className="card-title">이 기기에 있는 자료 ({settings.schoolYear}학년도 포함 전체)</p>
+            <div className="grid grid-cols-3 gap-2 text-center sm:grid-cols-5">
+              {Object.entries(TABLE_LABELS).map(([t, label]) => (
+                <div key={t} className="rounded-2xl bg-fill py-2">
+                  <p className="text-lg font-extrabold tabular-nums">{nowCounts[t as keyof typeof nowCounts] ?? 0}</p>
+                  <p className="text-[0.72rem] font-bold text-ink-3">{label}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         <section className="card space-y-3">
           <div className="flex items-center justify-between">
             <p className="card-title">전체 백업</p>
@@ -87,9 +102,30 @@ export default function DataPage() {
           {pending && (
             <div className="space-y-2 rounded-2xl bg-caution-light p-4 text-caution">
               <p className="font-extrabold">이 백업으로 바꿀까요?</p>
-              <p className="text-sm font-semibold">
-                {new Date(pending.createdAt).toLocaleString('ko-KR')} 백업 · 학생 {pending.counts?.students ?? pending.tables.students?.length ?? 0}명 · 기록 {pending.counts?.records ?? pending.tables.records?.length ?? 0}개
-              </p>
+              <p className="text-sm font-semibold">{new Date(pending.createdAt).toLocaleString('ko-KR')}에 만든 백업</p>
+              {nowCounts && (
+                <table className="w-full rounded-xl bg-white text-sm text-ink">
+                  <thead>
+                    <tr className="text-ink-3">
+                      <th className="px-2 py-1 text-left">자료</th>
+                      <th className="px-2 py-1 text-right">지금</th>
+                      <th className="px-2 py-1 text-right">백업 파일</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {compareCounts(nowCounts, pending).map((r) => (
+                      <tr key={r.label} className={`border-t border-line ${r.fewer ? 'bg-danger-light font-bold text-danger' : ''}`}>
+                        <td className="px-2 py-1">{r.label}</td>
+                        <td className="px-2 py-1 text-right tabular-nums">{r.now}</td>
+                        <td className="px-2 py-1 text-right tabular-nums">{r.file}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {nowCounts && compareCounts(nowCounts, pending).some((r) => r.fewer) && (
+                <p className="text-sm font-bold text-danger">빨간 줄은 백업 파일 쪽이 더 적어요. 더 오래된 백업일 수 있으니 날짜를 확인하세요.</p>
+              )}
               <div className="flex gap-2">
                 <button type="button" className="btn btn-soft flex-1 bg-white" onClick={() => setPending(null)}>
                   취소

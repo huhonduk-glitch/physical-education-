@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import { db, newId } from '../db/db'
@@ -30,6 +30,7 @@ const newItem = (method: AssessMethod = 'level'): AssessItem => ({
 export default function AssessmentEditPage() {
   const { id } = useParams()
   const nav = useNavigate()
+  const fromRubric = new URLSearchParams(useLocation().search).get('from') === 'rubric'
   const { settings, readOnly } = useApp()
   const { groups } = useGroups()
   const existing = useLiveQuery(async () => (id ? db.assessments.get(id) : undefined), [id])
@@ -70,6 +71,7 @@ export default function AssessmentEditPage() {
       groupIds,
       items: items.map((it) => ({ ...it, label: it.label.trim() })),
       semester,
+      ...(existing?.standards ? { standards: existing.standards } : {}),
     }
     await db.assessments.put(a)
     nav(`/more/assessments/${a.id}`, { replace: true })
@@ -89,6 +91,19 @@ export default function AssessmentEditPage() {
     <>
       <PageHeader title={id ? '평가 고치기' : '새 수행평가'} back />
       <div className="page space-y-4 pb-36">
+        {fromRubric && errors.length === 0 && (
+          <p className="rounded-2xl bg-ok-light p-4 font-bold text-ok">루브릭으로 평가를 만들었어요. 이 평가를 하는 수업반을 고르고 [저장]을 눌러 주세요.</p>
+        )}
+        {existing?.standards && existing.standards.length > 0 && (
+          <section className="card space-y-1">
+            <p className="text-sm font-bold text-ink-3">성취기준</p>
+            {existing.standards.map((st, i) => (
+              <p key={i} className="text-[0.95rem]">
+                {st.code} {st.text}
+              </p>
+            ))}
+          </section>
+        )}
         {errors.length > 0 && (
           <ul className="card space-y-1 border-danger bg-danger-light text-danger" role="alert">
             {errors.map((e) => (
@@ -215,6 +230,7 @@ function ItemEditor({
   onMove: (d: -1 | 1) => void
 }) {
   const [presetMax, setPresetMax] = useState(String(itemMax(item) || 20))
+  const hasDesc = (item.levels ?? []).some((l) => l.desc !== undefined)
   const num = (v: string) => (v.trim() === '' || !Number.isFinite(Number(v)) ? 0 : Number(v))
   const setMethod = (m: AssessMethod) => {
     const n = newItem(m)
@@ -239,7 +255,8 @@ function ItemEditor({
       {item.method === 'level' && (
         <div className="space-y-2">
           {(item.levels ?? []).map((l, k) => (
-            <div key={k} className="flex items-center gap-2">
+            <div key={k} className="space-y-1">
+            <div className="flex items-center gap-2">
               <input className="field w-24 text-center font-bold" value={l.label} aria-label="등급 이름" disabled={readOnly} onChange={(e) => onChange({ levels: item.levels!.map((x, j) => (j === k ? { ...x, label: e.target.value } : x)) })} />
               <NumInput className="field flex-1 text-right tabular-nums" value={l.points} aria-label={`${l.label} 점수`} disabled={readOnly} onValue={(v) => onChange({ levels: item.levels!.map((x, j) => (j === k ? { ...x, points: v } : x)) })} />
               <span className="text-ink-3">점</span>
@@ -247,7 +264,23 @@ function ItemEditor({
                 <Icon name="close" size={18} />
               </button>
             </div>
+            {hasDesc && (
+              <textarea
+                className="field min-h-[48px] py-2 text-[0.92rem]"
+                placeholder={`${l.label} 기준 (예: 동작을 정확하게 수행한다)`}
+                aria-label={`${l.label} 기준`}
+                value={l.desc ?? ''}
+                disabled={readOnly}
+                onChange={(e) => onChange({ levels: item.levels!.map((x, j) => (j === k ? { ...x, desc: e.target.value } : x)) })}
+              />
+            )}
+            </div>
           ))}
+          {!hasDesc && !readOnly && (
+            <button type="button" className="btn btn-ghost px-1 text-sm text-brand" onClick={() => onChange({ levels: item.levels!.map((x) => ({ ...x, desc: '' })) })}>
+              + 등급별 기준(루브릭) 적기
+            </button>
+          )}
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" className="btn btn-soft" disabled={readOnly} onClick={() => onChange({ levels: [...(item.levels ?? []), { label: String.fromCharCode(65 + (item.levels?.length ?? 0)), points: 0 }] })}>
               <Icon name="plus" size={18} /> 등급
@@ -255,7 +288,7 @@ function ItemEditor({
             <span className="ml-auto flex items-center gap-1 text-sm text-ink-3">
               만점
               <input className="field w-20 text-center" inputMode="decimal" value={presetMax} onChange={(e) => setPresetMax(e.target.value)} aria-label="고르게 나눌 만점" disabled={readOnly} />
-              <button type="button" className="btn btn-soft text-sm" disabled={readOnly} onClick={() => onChange({ levels: levelPreset((item.levels ?? []).map((l) => l.label), num(presetMax)) })}>
+              <button type="button" className="btn btn-soft text-sm" disabled={readOnly} onClick={() => onChange({ levels: levelPreset((item.levels ?? []).map((l) => l.label), num(presetMax)).map((x, j) => ({ ...x, desc: item.levels?.[j]?.desc })) })}>
                 고르게 채우기
               </button>
             </span>

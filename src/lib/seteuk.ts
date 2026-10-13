@@ -58,3 +58,34 @@ export function scoreTotal(items: readonly { id: string; scale: 'AE' | 'score' }
   const nums = items.filter((i) => i.scale === 'score').map((i) => scores[i.id]).filter((v) => v !== undefined && v !== '' && Number.isFinite(Number(v)))
   return nums.length ? nums.reduce((a: number, v) => a + Number(v), 0) : null
 }
+
+export interface EvidenceItem {
+  date: string
+  kind: 'record' | 'assess'
+  text: string
+  keywordIds: string[]
+}
+
+/**
+ * 세특 모아보기 (재설계 5단계): 학생 한 명의 근거 기록을 날짜순으로. 문장을 만들지 않고 있는 그대로 나열한다.
+ * 수업 기록(솔선수범·관찰·부장 활동 중 메모나 키워드가 있는 것) + 수행평가에 적은 메모.
+ */
+export function studentEvidence(
+  records: readonly ClassRecord[],
+  keywords: readonly Keyword[],
+  assessNotes: readonly { title: string; note: string }[],
+  opts: { includeNegative: boolean },
+): EvidenceItem[] {
+  const kwMap = new Map(keywords.map((k) => [k.id, k]))
+  const items: EvidenceItem[] = records
+    .filter((r) => (r.type === 'unprepared' ? opts.includeNegative : r.keywordIds.length > 0 || !!r.note || r.type === 'captain'))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt)
+    .map((r) => ({ date: r.date, kind: 'record', text: evidenceLine(r, kwMap), keywordIds: r.keywordIds }))
+  for (const n of assessNotes) if (n.note.trim()) items.push({ date: '', kind: 'assess', text: `수행평가 「${n.title}」 — ${n.note.trim()}`, keywordIds: [] })
+  return items
+}
+
+/** 복사용 글자: 키워드 줄 + 근거 목록 (문장으로 바꾸지 않는다) */
+export function evidenceText(name: string, kw: { label: string; count: number }[], items: readonly EvidenceItem[]): string {
+  return [`[${name}]`, kw.length ? `키워드: ${kw.map((k) => `${k.label}(${k.count})`).join(', ')}` : '키워드: 없음', ...items.map((i) => `- ${i.text}`)].join('\n')
+}

@@ -144,6 +144,18 @@ export default function GroupsPage() {
             </span>
             <Icon name="chevronRight" className="text-ink-3" />
           </Link>
+          {!readOnly && (
+            <Link to="/more/settings/neis" className="list-row min-h-[60px] hover:bg-fill">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-ok-light text-ok">
+                <Icon name="download" size={20} />
+              </span>
+              <span className="flex-1">
+                <b className="block">나이스에서 불러오기</b>
+                <span className="hint">학급 · 내 체육 시간표 · 학사일정 자동</span>
+              </span>
+              <Icon name="chevronRight" className="text-ink-3" />
+            </Link>
+          )}
         </section>
       </div>
     </>

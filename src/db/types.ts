@@ -144,6 +144,8 @@ export type AssessMethod = 'level' | 'record' | 'direct'
 export interface AssessLevel {
   label: string
   points: number
+  /** 루브릭: 이 등급의 판단 기준 (예: 패스·드리블을 정확하고 일관되게 수행한다) */
+  desc?: string
 }
 export interface RecordBand {
   /** 높을수록: 이 기록 '이상'이면 / 낮을수록: 이 기록 '이하'면 */
@@ -179,6 +181,8 @@ export interface Assessment {
   /** 재설계: 채점 요소 */
   items?: AssessItem[]
   semester?: 0 | 1 | 2
+  /** 5단계: 이 평가가 근거로 삼은 성취기준 (루브릭 만들기에서 고른 것) */
+  standards?: { code: string; text: string }[]
 }
 
 export interface AssessmentScore {
@@ -201,4 +205,21 @@ export interface AudioFile {
   name: string
   blob: Blob
   addedAt: number
+}
+
+/** 수업 일지 (재설계 5단계): 수업반 · 날짜마다 한 줄 */
+export interface Lesson {
+  id: string
+  schoolYear: number
+  groupId: string
+  date: string
+  period?: number
+  /** 단원 · 주제 */
+  unit?: string
+  /** 한 일 (활동 내용) */
+  activity: string
+  /** 다음 시간 · 준비물 · 메모 */
+  note?: string
+  createdAt: number
+  updatedAt: number
 }

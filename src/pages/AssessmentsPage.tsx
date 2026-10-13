@@ -39,6 +39,18 @@ export default function AssessmentsPage() {
           </span>
           <Icon name="chevronRight" />
         </Link>
+        {!readOnly && (
+          <Link to="/more/assessments/rubric" className="card flex min-h-[72px] items-center gap-3 transition-transform active:scale-[0.99]">
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-ok-light text-ok">
+              <Icon name="bolt" size={22} />
+            </span>
+            <span className="flex-1">
+              <b className="block text-lg">루브릭 만들기</b>
+              <span className="hint">성취기준을 고르면 채점 요소와 등급별 기준을 추천해요</span>
+            </span>
+            <Icon name="chevronRight" className="text-ink-3" />
+          </Link>
+        )}
 
         {list && list.length === 0 && (
           <div className="card flex flex-col items-center gap-3 py-10 text-center">
