@@ -18,7 +18,15 @@ export default function RubricPage() {
   const nav = useNavigate()
   const hasList = STANDARDS.subjects.length > 0
   const [school, setSchool] = useState(settings.schoolLevel === '중' ? '중' : '고')
-  const subjects = useMemo(() => [...new Set(STANDARDS.subjects.filter((s) => s.school === school).map((s) => s.subject))], [school])
+  // 과목 구분(공통·일반 선택·진로 선택…)별로 묶어서 보여 준다
+  const subjectGroups = useMemo(() => {
+    const m = new Map<string, string[]>()
+    for (const s of STANDARDS.subjects.filter((x) => x.school === school)) {
+      const k = s.kind ?? '과목'
+      m.set(k, [...(m.get(k) ?? []), s.subject])
+    }
+    return [...m.entries()]
+  }, [school])
   const [subject, setSubject] = useState('')
   const [q, setQ] = useState('')
   const [chosen, setChosen] = useState<Standard[]>([])
@@ -30,7 +38,8 @@ export default function RubricPage() {
   const [rows, setRows] = useState<RubricRow[] | null>(null)
   const [msg, setMsg] = useState('')
 
-  const hits = useMemo(() => (hasList ? findStandards(STANDARDS, { school, subject: subject || undefined, text: q }).slice(0, 40) : []), [hasList, school, subject, q])
+  const allHits = useMemo(() => (hasList ? findStandards(STANDARDS, { school, subject: subject || undefined, text: q }) : []), [hasList, school, subject, q])
+  const hits = allHits.slice(0, 60)
   const standardText = [...chosen.map((s) => s.text), typed].join(' ')
   const recs = useMemo(() => (standardText.trim() ? recommendMethods(standardText) : []), [standardText])
   const methodNow: RubricMethod = method ?? recs[0]?.method ?? 'skill'
@@ -103,10 +112,14 @@ export default function RubricPage() {
               </div>
               <select className="field" aria-label="과목" value={subject} onChange={(e) => setSubject(e.target.value)}>
                 <option value="">과목 전체</option>
-                {subjects.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
+                {subjectGroups.map(([kind, list]) => (
+                  <optgroup key={kind} label={kind}>
+                    {list.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
               <input className="field" placeholder="찾을 말 (예: 경기, 표현, 체력)" aria-label="성취기준 찾기" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -120,12 +133,29 @@ export default function RubricPage() {
                           {s.code} · {s.subject} · {s.area}
                         </span>
                         <span className="block font-semibold">{s.text}</span>
+                        {s.note && <span className="mt-1 block text-xs text-ink-3">※ {s.note}</span>}
                       </button>
                     </li>
                   )
                 })}
                 {hits.length === 0 && <li className="hint">맞는 성취기준이 없어요.</li>}
+                {allHits.length > hits.length && <li className="hint">{allHits.length}개 중 {hits.length}개만 보여요. 과목을 고르거나 찾을 말을 적어 주세요.</li>}
               </ul>
+              {chosen.length > 0 && (
+                <div className="space-y-1.5 rounded-2xl bg-brand-light p-3">
+                  <p className="text-sm font-bold text-brand">고른 성취기준 {chosen.length}/3</p>
+                  {chosen.map((c) => (
+                    <div key={c.code} className="flex items-start gap-2 text-sm">
+                      <span className="min-w-0 flex-1">
+                        <b>{c.code}</b> {c.text}
+                      </span>
+                      <button type="button" className="btn btn-ghost min-h-[36px] px-2 text-ink-3" aria-label={`${c.code} 빼기`} onClick={() => toggle(c)}>
+                        <Icon name="close" size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               <p className="hint">최대 3개까지 고를 수 있어요. 출처: {STANDARDS.source}</p>
             </>
           ) : (

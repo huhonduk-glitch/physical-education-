@@ -7,6 +7,8 @@ import raw from '../data/achievement-standards.json'
 export interface Standard {
   code: string
   text: string
+  /** 원문에 대한 메모 (예: 원문 코드 오기) */
+  note?: string
 }
 export interface StandardArea {
   area: string
@@ -19,6 +21,8 @@ export interface StandardSubject {
   curriculum: string
   /** 과목 이름 (예: 체육, 운동과 건강, 스포츠 생활1) */
   subject: string
+  /** 과목 구분 (공통 / 일반 선택 / 진로 선택 / 융합 선택 / 체육 계열 진로 선택 …) */
+  kind?: string
   areas: StandardArea[]
 }
 export interface StandardsData {
@@ -29,6 +33,7 @@ export interface StandardsData {
 export const STANDARDS = raw as unknown as StandardsData
 
 export interface StandardHit extends Standard {
+  kind?: string
   school: string
   curriculum: string
   subject: string
@@ -46,7 +51,7 @@ export function findStandards(data: StandardsData, q: { school?: string; subject
     for (const a of sub.areas)
       for (const s of a.standards) {
         if (t && !norm(`${s.code}${s.text}${a.area}`).includes(t)) continue
-        out.push({ ...s, school: sub.school, curriculum: sub.curriculum, subject: sub.subject, area: a.area })
+        out.push({ ...s, school: sub.school, curriculum: sub.curriculum, subject: sub.subject, kind: sub.kind, area: a.area })
       }
   }
   return out
