@@ -7,7 +7,7 @@ const TOOLS: { to: string; icon: IconName; title: string; desc: string; tone: st
   { to: '/tools/pick', icon: 'dice', title: '뽑기', desc: '발표 · 시범 · 순서', tone: 'bg-brand-light text-brand' },
   { to: '/tools/teams', icon: 'team', title: '팀 나누기', desc: '남녀 · 실력 고르게', tone: 'bg-brand-light text-brand' },
   { to: '/tools/apps', icon: 'share', title: '팀 편성 · 전술 보드', desc: '반 명단 보내기', tone: 'bg-brand-light text-brand' },
-  { to: '/timer?tab=paps', icon: 'volume', title: 'PAPS 신호음', desc: '윗몸 · 스텝 · 왕복', tone: 'bg-brand-light text-brand' },
+  { to: '/timer?tab=paps', icon: 'volume', title: 'PAPS 신호음', desc: '윗몸말아올리기 · 스텝검사', tone: 'bg-brand-light text-brand' },
 ]
 
 /** 도구 탭: 가장 많이 쓰는 타이머를 크게, 나머지는 두 칸씩 */
@@ -38,6 +38,17 @@ export default function ToolsPage() {
             </Link>
           ))}
         </div>
+        {/* PAPS 신호음 → 왕복 탭 2단을 거치지 않고 바로 */}
+        <Link to="/timer?tab=paps&aid=shuttle" className="card flex min-h-[72px] items-center gap-3 p-4 transition-transform active:scale-[0.99]">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">
+            <Icon name="flag" size={22} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <b className="block">왕복오래달리기</b>
+            <span className="text-xs font-semibold text-ink-3">내 mp3 재생 · 신호마다 한 번 누르기 · 늦은 학생만 → PAPS 저장</span>
+          </span>
+          <Icon name="chevronRight" className="text-ink-3" />
+        </Link>
       </div>
     </>
   )
