@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import ActionBar from '../../components/ActionBar'
 import ClassPicker, { classKeyStr } from '../../components/ClassPicker'
 import PageHeader from '../../components/PageHeader'
 import { db } from '../../db/db'
@@ -156,9 +157,11 @@ export default function PapsPastePage() {
               </table>
             </div>
             <div className="px-4 pb-4">
-              <button type="button" className="btn btn-primary w-full" disabled={readOnly || stats.ok === 0} onClick={save}>
-                오류 없는 {stats.ok}줄 저장{stats.overwrite ? ` (덮어쓰기 ${stats.overwrite}칸)` : ''}
-              </button>
+              <ActionBar>
+                <button type="button" className="btn btn-primary w-full" disabled={readOnly || stats.ok === 0} onClick={save}>
+                  오류 없는 {stats.ok}줄 저장{stats.overwrite ? ` (덮어쓰기 ${stats.overwrite}칸)` : ''}
+                </button>
+              </ActionBar>
               {cls && (
                 <button type="button" className="btn btn-ghost mt-2 w-full text-ink-3" onClick={() => nav(`/paps?c=${classKeyStr(cls)}`)}>
                   PAPS 첫 화면으로

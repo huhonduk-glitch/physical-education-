@@ -140,6 +140,9 @@ export default function InstallGuide({ place }: { place: 'home' | 'terms' | 'hel
     )
   }
 
+  // 안드로이드·PC 설치 안내는 동의한 뒤 홈에서 한 줄로 보여 준다 (처음 화면은 동의 버튼에 집중)
+  if (place === 'terms') return null
+
   return (
     <section className="space-y-2 rounded-2xl bg-brand-light px-4 py-3">
       <p className="font-extrabold text-brand-ink">{info.platform === 'android' ? '홈 화면에 앱으로 설치하세요' : '이 PC에 앱으로 설치할 수 있어요'}</p>

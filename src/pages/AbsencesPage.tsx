@@ -51,7 +51,7 @@ export default function AbsencesPage() {
 
   return (
     <>
-      <PageHeader title="견학 · 열외" back />
+      <PageHeader title="견학" back />
       <div className="page space-y-4 py-4">
         <p className="hint">견학 등록은 [수업반] → 반을 열고 학생 카드를 눌러서 해요. 사유는 눌러야 보여요.</p>
         <div className="flex flex-wrap gap-2">

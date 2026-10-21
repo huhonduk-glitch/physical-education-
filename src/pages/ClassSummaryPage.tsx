@@ -44,8 +44,8 @@ export default function ClassSummaryPage() {
       <div className="page space-y-4 pb-8">
         <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Rank title="준비물 미준비 누적 상위" tone="text-danger" rows={top(data?.unprepared)} unit="회" />
-          <Rank title="솔선수범 누적 상위" tone="text-brand" rows={top(data?.exemplary)} unit="회" />
+          <Rank title="지도(준비물) 누적 상위" tone="text-danger" rows={top(data?.unprepared)} unit="회" />
+          <Rank title="칭찬 누적 상위" tone="text-brand" rows={top(data?.exemplary)} unit="회" />
           <Rank title="체육부장 활동" tone="text-ok" rows={top(data?.captain, 5)} unit="회" />
           <Rank title="견학 횟수" tone="text-ink-2" rows={top(data?.abs, 5)} unit="회" />
         </div>

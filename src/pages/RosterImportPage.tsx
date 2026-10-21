@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import ActionBar from '../components/ActionBar'
 import NeisGuide from '../components/NeisGuide'
 import PageHeader from '../components/PageHeader'
 import { db } from '../db/db'
@@ -208,9 +209,11 @@ export default function RosterImportPage() {
                 desc="올린 반은 이 명단대로 바꿔요. 명단에서 빠진 학생은 기록이 있으면 '전출'로 남기고, 없으면 지워요."
               />
             </fieldset>
-            <button type="button" className="btn btn-primary w-full text-lg" disabled={readOnly || blocked || busy || rows.length === 0} onClick={toConfirm}>
-              {blocked ? '빨간 칸을 먼저 고쳐 주세요' : '다음: 저장 확인'}
-            </button>
+            <ActionBar>
+              <button type="button" className="btn btn-primary w-full text-lg" disabled={readOnly || blocked || busy || rows.length === 0} onClick={toConfirm}>
+                {blocked ? '빨간 칸을 먼저 고쳐 주세요' : '다음: 저장 확인'}
+              </button>
+            </ActionBar>
           </Preview>
         )}
 
@@ -283,7 +286,15 @@ function Preview({
   const [onlyProblems, setOnlyProblems] = useState(false)
   const errorCount = validated.filter((v) => v.issues.some((i) => i.level === 'error')).length
   const yearIssue = validated.some((v) => v.issues.some((i) => i.field === 'schoolYear'))
-  const shown = onlyProblems ? validated.filter((v) => v.issues.length > 0) : validated
+  // 여러 줄에 똑같이 붙는 안내(예: "학교 설정대로 '남'으로 넣어요")는 줄마다 반복하지 않고 위에 한 번만 보여 준다
+  const commonInfo = useMemo(() => {
+    const count = new Map<string, number>()
+    for (const v of validated) for (const i of v.issues) if (i.level !== 'error') count.set(i.message, (count.get(i.message) ?? 0) + 1)
+    return [...count].filter(([, n]) => n > 1)
+  }, [validated])
+  const hideInfo = useMemo(() => new Set(commonInfo.map(([m]) => m)), [commonInfo])
+  const rowIssues = (v: ValidatedRow) => v.issues.filter((i) => i.level === 'error' || !hideInfo.has(i.message))
+  const shown = onlyProblems ? validated.filter((v) => rowIssues(v).length > 0) : validated
 
   return (
     <div className="space-y-4">
@@ -293,6 +304,11 @@ function Preview({
           전체 <b>{validated.length}</b>명 ·{' '}
           {errorCount > 0 ? <b className="text-danger">고칠 줄 {errorCount}개</b> : <b className="text-ok">문제 없음</b>}
         </p>
+        {commonInfo.map(([m, n]) => (
+          <p key={m} className="mt-1 text-sm font-bold text-caution">
+            ℹ️ {m} ({n}명)
+          </p>
+        ))}
         <p className="hint mt-1">칸을 눌러 바로 고칠 수 있어요. 과정·계열·학과·반코드도 함께 저장해요 (생년월일은 저장하지 않아요).</p>
         <div className="mt-3 flex flex-wrap gap-2">
           <button type="button" className="btn btn-outline" onClick={onBack}>
@@ -326,7 +342,7 @@ function Preview({
           </thead>
           <tbody>
             {shown.map((v) => (
-              <PreviewRow key={v.row.key} v={v} onUpdate={onUpdate} onRemove={onRemove} />
+              <PreviewRow key={v.row.key} v={{ ...v, issues: rowIssues(v) }} onUpdate={onUpdate} onRemove={onRemove} />
             ))}
           </tbody>
         </table>
@@ -484,14 +500,16 @@ function Confirm({
         </section>
       )}
 
-      <div className="flex gap-2">
-        <button type="button" className="btn btn-outline flex-1" onClick={onBack} disabled={busy}>
-          뒤로
-        </button>
-        <button type="button" className="btn btn-primary flex-[2] text-lg" onClick={onSave} disabled={busy || nothing}>
-          {nothing ? '바뀌는 것이 없어요' : busy ? '저장 중…' : '저장하기'}
-        </button>
-      </div>
+      <ActionBar>
+        <div className="flex gap-2">
+          <button type="button" className="btn btn-outline flex-1" onClick={onBack} disabled={busy}>
+            뒤로
+          </button>
+          <button type="button" className="btn btn-primary flex-[2] text-lg" onClick={onSave} disabled={busy || nothing}>
+            {nothing ? '바뀌는 것이 없어요' : busy ? '저장 중…' : '저장하기'}
+          </button>
+        </div>
+      </ActionBar>
     </div>
   )
 }

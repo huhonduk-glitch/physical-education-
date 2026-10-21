@@ -144,12 +144,10 @@ export default function GroupBoardPage() {
         back
         right={
           <>
-            <button type="button" className="btn btn-soft px-3" aria-label="수업 도구" onClick={() => setToolsOpen(true)} disabled={list.length === 0}>
-              <Icon name="team" />
+            {/* 아이콘 두 개(뜻을 알기 어려움)를 ⋯ 하나로: 누적 기록 · 수업 도구가 그 안에 */}
+            <button type="button" className="btn btn-soft px-3" aria-label="누적 기록 · 수업 도구" onClick={() => setToolsOpen(true)}>
+              <Icon name="dots" strokeWidth={3.5} />
             </button>
-            <Link to={`/groups/${id}/stats`} className="btn btn-soft px-3" aria-label="누적 기록 보기">
-              <Icon name="list" />
-            </Link>
             <button
               type="button"
               aria-pressed={multi}
@@ -241,7 +239,7 @@ export default function GroupBoardPage() {
           </>
         )}
         {mode === 'cards' && (<>
-        <ul className="grid grid-cols-5 gap-1.5 sm:gap-2" aria-label="번호 카드">
+        <ul className="grid grid-cols-5 gap-1.5 sm:gap-2 md:grid-cols-7" aria-label="번호 카드">
           {list.map((s) => {
             const d = day?.get(s.id)
             const on = selected.includes(s.id)
@@ -280,10 +278,10 @@ export default function GroupBoardPage() {
         </ul>
         <div className="flex flex-wrap gap-x-4 gap-y-1 px-1 text-[0.8rem] font-semibold text-ink-3">
           <span className="flex items-center gap-1.5">
-            <i className="h-2 w-2 rounded-full bg-danger" /> 지도(미준비)
+            <i className="h-2 w-2 rounded-full bg-danger" /> 지도
           </span>
           <span className="flex items-center gap-1.5">
-            <i className="h-2 w-2 rounded-full bg-brand" /> 칭찬(솔선수범)
+            <i className="h-2 w-2 rounded-full bg-brand" /> 칭찬
           </span>
           <span className="flex items-center gap-1.5">
             <i className="h-2 w-2 rounded-full bg-ok" /> 관찰·부장

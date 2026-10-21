@@ -41,7 +41,7 @@ export default function TimerPage() {
   return (
     <>
       <PageHeader
-        title="타이머"
+        title={tab === 'paps' ? 'PAPS 신호음' : '타이머'}
         back
         sub={t.running ? '다른 화면으로 가도 계속 돌아요' : undefined}
         right={

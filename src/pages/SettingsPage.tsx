@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import Collapse from '../components/Collapse'
 import PageHeader from '../components/PageHeader'
 import { db } from '../db/db'
 import type { AppSettings } from '../db/settings'
@@ -72,13 +73,6 @@ export default function SettingsPage() {
           </Link>
         </Section>
 
-        <Section title="나이스 기본값">
-          <p className="hint">명렬표에 과정명·계열명·학과명이 비어 있을 때만 이 값을 써요.</p>
-          <TextSetting id="course" label="과정명" k="defaultCourse" />
-          <TextSetting id="track" label="계열명" k="defaultTrack" />
-          <TextSetting id="dept" label="학과명" k="defaultDept" />
-        </Section>
-
         <PinChange />
 
         <Section title="수업 기록">
@@ -104,10 +98,26 @@ export default function SettingsPage() {
           </Link>
         </Section>
 
+        <Section title="이 앱의 저장 방식">
+          <p>
+            학생 명렬과 기록은 <b>이 기기의 브라우저 안에만</b> 저장돼요. 인터넷으로 보내지 않아요.
+            다른 기기에서는 보이지 않으니 [더보기 → 백업 · 학년도]에서 백업 파일을 꼭 받아 두세요.
+          </p>
+        </Section>
+
+        {/* 거의 바꿀 일이 없는 값은 접어 둔다 */}
+        <Collapse title="고급 설정" sub="나이스 기본값 · 연동 앱 주소 · PAPS 기준표 버전">
+        <div className="space-y-4">
+        <Section title="나이스 기본값">
+          <p className="hint">명렬표에 과정명·계열명·학과명이 비어 있을 때만 이 값을 써요.</p>
+          <TextSetting id="course" label="과정명" k="defaultCourse" />
+          <TextSetting id="track" label="계열명" k="defaultTrack" />
+          <TextSetting id="dept" label="학과명" k="defaultDept" />
+        </Section>
+
         <Section title="연동 앱 주소">
           <TextSetting id="bracket" type="url" label="팀 편성 (SPORTS BRACKET)" k="bracketUrl" />
           <TextSetting id="tactic" type="url" label="전술 보드 (K-TacticBoard)" k="tacticUrl" />
-          <p className="hint">연동 기능은 6단계에서 만들어요.</p>
         </Section>
 
         <Section title="PAPS 기준표">
@@ -125,14 +135,12 @@ export default function SettingsPage() {
           ) : (
             <p>불러오는 중…</p>
           )}
+          <Link to="/paps/setup" className="text-sm font-bold text-brand">
+            기준표 JSON 교체 · 나이스 허용 범위는 PAPS 설정에서 ›
+          </Link>
         </Section>
-
-        <Section title="이 앱의 저장 방식">
-          <p>
-            학생 명렬과 기록은 <b>이 기기의 브라우저 안에만</b> 저장돼요. 인터넷으로 보내지 않아요.
-            다른 기기에서는 보이지 않으니 백업 기능(6단계)을 꼭 써 주세요.
-          </p>
-        </Section>
+        </div>
+        </Collapse>
       </div>
     </>
   )

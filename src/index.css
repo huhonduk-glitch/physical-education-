@@ -310,6 +310,12 @@ textarea {
 .anim-pop {
   animation: pop-in 0.2s ease-out;
 }
+/* 태블릿·PC에서는 아래 창이 오른쪽 패널로 열리므로 아래에서 올라오지 않고 나타난다 */
+@media (min-width: 768px) {
+  .anim-sheet {
+    animation: fade-in 0.18s ease-out;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .anim-sheet,
   .anim-fade,

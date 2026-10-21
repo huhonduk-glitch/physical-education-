@@ -11,6 +11,7 @@ export default function ClassToolsSheet({ group, onClose, onTeamSend }: { group:
   const tools = featureOn(settings.features, 'tools')
   const paps = featureOn(settings.features, 'paps') && group.kind === 'homeroom'
   const links: { to: string; icon: IconName; title: string; desc: string; show: boolean }[] = [
+    { to: `/groups/${group.id}/stats`, icon: 'list', title: '누적 기록', desc: '학생별 칭찬 · 지도 · 견학 합계 · 엑셀', show: true },
     { to: `/tools/pick?g=${group.id}`, icon: 'dice', title: '뽑기', desc: '오늘 참여 학생 중에서', show: tools },
     { to: `/tools/teams?g=${group.id}`, icon: 'shuffle', title: '팀 나누기', desc: '무작위 · 남녀 고르게 · 실력 고르게', show: tools },
     { to: `/paps?c=${group.grade}-${group.classNo}`, icon: 'paps', title: 'PAPS', desc: '이 반 측정 입력 · 등급', show: paps },
@@ -19,7 +20,7 @@ export default function ClassToolsSheet({ group, onClose, onTeamSend }: { group:
     { to: `/groups/${group.id}/report`, icon: 'file', title: '학생 리포트 인쇄', desc: '한 장에 한 명 · 상담·피드백용', show: true },
   ]
   return (
-    <BottomSheet title="수업 도구" sub={group.name} onClose={onClose}>
+    <BottomSheet title="이 반 메뉴" sub={group.name} onClose={onClose}>
       <div className="space-y-2">
         {links
           .filter((l) => l.show)

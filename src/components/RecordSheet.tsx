@@ -10,8 +10,8 @@ import Icon, { type IconName } from './Icon'
 import KeywordPicker from './KeywordPicker'
 
 export const TYPE_LABEL: Record<RecordType, string> = {
-  unprepared: '준비물 미준비',
-  exemplary: '솔선수범',
+  unprepared: '지도 (준비물)',
+  exemplary: '칭찬',
   observation: '관찰 메모',
   captain: '체육부장 활동',
 }
@@ -58,7 +58,7 @@ export default function RecordSheet({ students, date, period, groupId, numberOf 
       groupId,
       ...extra,
     })
-    const what = type === 'unprepared' ? `${category} 미준비` : type === 'exemplary' ? `솔선수범(${category})` : '관찰 메모'
+    const what = type === 'unprepared' ? `${category} 미준비` : type === 'exemplary' ? `칭찬(${category})` : '관찰 메모'
     onRecorded({ recordIds, absenceIds: [], absenceBefore: [] }, `${who}: ${what}`)
   }
 
@@ -107,7 +107,7 @@ export default function RecordSheet({ students, date, period, groupId, numberOf 
         ) : (
           <>
             <section>
-              <SectionTitle icon="alert" tone="bg-danger-light text-danger">준비물 미준비</SectionTitle>
+              <SectionTitle icon="alert" tone="bg-danger-light text-danger">지도 · 준비물 미준비</SectionTitle>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {settings.recordButtons.unprepared.map((c) => (
                   <button key={c} type="button" className={btn} disabled={busy} onClick={() => tapCategory('unprepared', c)}>
@@ -118,7 +118,7 @@ export default function RecordSheet({ students, date, period, groupId, numberOf 
             </section>
 
             <section>
-              <SectionTitle icon="star" tone="bg-brand-light text-brand">솔선수범</SectionTitle>
+              <SectionTitle icon="star" tone="bg-brand-light text-brand">칭찬</SectionTitle>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {settings.recordButtons.exemplary.map((c) => (
                   <button key={c} type="button" className={btn} disabled={busy} onClick={() => tapCategory('exemplary', c)}>

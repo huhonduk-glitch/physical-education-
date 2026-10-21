@@ -138,7 +138,7 @@ export default function StudentDetailPage() {
           )}
         </Card>
 
-        <Card title={`❗ 준비물 미준비 ${unprepared.length}회`}>
+        <Card title={`❗ 지도(준비물) ${unprepared.length}회`}>
           {unprepared.length === 0 ? (
             <p className="hint">없어요</p>
           ) : (
@@ -151,7 +151,7 @@ export default function StudentDetailPage() {
           )}
         </Card>
 
-        <Card title={`⭐ 솔선수범 ${exemplary.length}회`}>
+        <Card title={`⭐ 칭찬 ${exemplary.length}회`}>
           {exemplary.length === 0 ? (
             <p className="hint">없어요</p>
           ) : (

@@ -4,10 +4,10 @@ import PageHeader from '../components/PageHeader'
 import { useTimer } from '../state/TimerContext'
 
 const TOOLS: { to: string; icon: IconName; title: string; desc: string; tone: string }[] = [
-  { to: '/tools/pick', icon: 'dice', title: '뽑기', desc: '발표 · 시범 · 순서', tone: 'bg-caution-light text-caution' },
-  { to: '/tools/teams', icon: 'team', title: '팀 나누기', desc: '남녀 · 실력 고르게', tone: 'bg-ok-light text-ok' },
+  { to: '/tools/pick', icon: 'dice', title: '뽑기', desc: '발표 · 시범 · 순서', tone: 'bg-brand-light text-brand' },
+  { to: '/tools/teams', icon: 'team', title: '팀 나누기', desc: '남녀 · 실력 고르게', tone: 'bg-brand-light text-brand' },
   { to: '/tools/apps', icon: 'share', title: '팀 편성 · 전술 보드', desc: '반 명단 보내기', tone: 'bg-brand-light text-brand' },
-  { to: '/timer?tab=paps', icon: 'volume', title: 'PAPS 신호음', desc: '윗몸 · 스텝 · 왕복', tone: 'bg-fill-2 text-ink-2' },
+  { to: '/timer?tab=paps', icon: 'volume', title: 'PAPS 신호음', desc: '윗몸 · 스텝 · 왕복', tone: 'bg-brand-light text-brand' },
 ]
 
 /** 도구 탭: 가장 많이 쓰는 타이머를 크게, 나머지는 두 칸씩 */

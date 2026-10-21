@@ -23,11 +23,11 @@ const GROUPS: { title: string; items: MenuItem[] }[] = [
   {
     title: '수업',
     items: [
-      { to: '/more/assessments', label: '수행평가', desc: '평가 만들기 · 채점 · 나이스 파일', icon: 'clipboard', tone: 'bg-caution-light text-caution', feature: 'assess' },
-      { to: '/more/keywords', label: '세특 키워드', desc: '근거 모아보기 · 키워드 사전', icon: 'tag', tone: 'bg-ok-light text-ok', feature: 'seteuk' },
+      { to: '/more/assessments', label: '수행평가', desc: '평가 만들기 · 채점 · 나이스 파일', icon: 'clipboard', tone: 'bg-brand-light text-brand', feature: 'assess' },
+      { to: '/more/keywords', label: '세특 키워드', desc: '근거 모아보기 · 키워드 사전', icon: 'tag', tone: 'bg-brand-light text-brand', feature: 'seteuk' },
       { to: '/tools/apps', label: '팀 편성 · 전술 보드', desc: '반 명단 보내기', icon: 'share', tone: 'bg-brand-light text-brand', feature: 'apps' },
-      { to: '/more/captains', label: '체육부장', desc: '지정 · 활동 체크', icon: 'medal', tone: 'bg-caution-light text-caution', feature: 'captains' },
-      { to: '/more/absences', label: '견학 · 열외', desc: '견학 목록 · 대체 과제', icon: 'bandage', tone: 'bg-fill-2 text-ink-2', feature: 'absences' },
+      { to: '/more/captains', label: '체육부장', desc: '지정 · 활동 체크', icon: 'medal', tone: 'bg-brand-light text-brand', feature: 'captains' },
+      { to: '/more/absences', label: '견학', desc: '견학 목록 · 대체 과제', icon: 'bandage', tone: 'bg-brand-light text-brand', feature: 'absences' },
     ],
   },
   {
@@ -35,23 +35,23 @@ const GROUPS: { title: string; items: MenuItem[] }[] = [
     items: [
       { to: '/students', label: '전체 학생 명렬', desc: '학적반별 명단 · 학생별 기록', icon: 'students', tone: 'bg-brand-light text-brand' },
       { to: '/students/import', label: '명렬 올리기', desc: '나이스 파일 · 붙여넣기', icon: 'upload', tone: 'bg-brand-light text-brand' },
-      { to: '/students/summary', label: '반 요약', desc: '미준비 · 칭찬 상위 · 미측정', icon: 'list', tone: 'bg-fill-2 text-ink-2', feature: 'records' },
+      { to: '/students/summary', label: '반 요약', desc: '미준비 · 칭찬 상위 · 미측정', icon: 'list', tone: 'bg-brand-light text-brand', feature: 'records' },
     ],
   },
   {
     title: '앱 설정',
     items: [
-      { to: '/more/settings', label: '설정', desc: '학교 · 버튼 · PIN · 연동 앱', icon: 'settings', tone: 'bg-fill-2 text-ink-2' },
-      { to: '/more/settings/timetable', label: '수업 시간표', icon: 'calendar', tone: 'bg-fill-2 text-ink-2' },
-      { to: '/more/settings/neis', label: '나이스에서 불러오기', desc: '학급 · 시간표 · 학사일정', icon: 'download', tone: 'bg-ok-light text-ok' },
-      { to: '/more/data', label: '백업 · 학년도', desc: '백업 · 복원 · 새 학년도', icon: 'database', tone: 'bg-danger-light text-danger' },
+      { to: '/more/settings', label: '설정', desc: '학교 · 버튼 · PIN · 연동 앱', icon: 'settings', tone: 'bg-brand-light text-brand' },
+      { to: '/more/settings/timetable', label: '수업 시간표', icon: 'calendar', tone: 'bg-brand-light text-brand' },
+      { to: '/more/settings/neis', label: '나이스에서 불러오기', desc: '학급 · 시간표 · 학사일정', icon: 'download', tone: 'bg-brand-light text-brand' },
+      { to: '/more/data', label: '백업 · 학년도', desc: '백업 · 복원 · 새 학년도', icon: 'database', tone: 'bg-brand-light text-brand' },
     ],
   },
   {
     title: '도움',
     items: [
-      { to: '/help', label: '사용법', desc: '하루 수업 흐름 · 자주 묻는 질문', icon: 'info', tone: 'bg-ok-light text-ok' },
-      { to: '/more/terms', label: '이용 안내', desc: '자료 보관 · 개인정보', icon: 'lock', tone: 'bg-fill-2 text-ink-2' },
+      { to: '/help', label: '사용법', desc: '하루 수업 흐름 · 자주 묻는 질문', icon: 'info', tone: 'bg-brand-light text-brand' },
+      { to: '/more/terms', label: '이용 안내', desc: '자료 보관 · 개인정보', icon: 'lock', tone: 'bg-brand-light text-brand' },
     ],
   },
 ]
@@ -85,10 +85,10 @@ export default function MorePage() {
 
         {/* 자주 쓰는 4가지 */}
         <div className="grid grid-cols-4 gap-2">
-          <QuickTile to="/help" icon="info" label="사용법" tone="bg-ok-light text-ok" />
+          <QuickTile to="/help" icon="info" label="사용법" tone="bg-brand-light text-brand" />
           <QuickTile onClick={() => setPick(true)} icon="grid" label="기능 고르기" tone="bg-brand-light text-brand" />
-          <QuickTile to="/more/data" icon="database" label={backup.warn ? '백업 필요' : '백업'} tone={backup.warn ? 'bg-danger text-white' : 'bg-fill-2 text-ink-2'} />
-          <QuickTile onClick={lock} icon="lock" label="지금 잠그기" tone="bg-ink text-white" />
+          <QuickTile to="/more/data" icon="database" label={backup.warn ? '백업 필요' : '백업'} tone={backup.warn ? 'bg-danger text-white' : 'bg-brand-light text-brand'} />
+          <QuickTile onClick={lock} icon="lock" label="지금 잠그기" tone="bg-brand-light text-brand" />
         </div>
         <p className={`-mt-2 px-1 text-sm font-bold ${backup.warn ? 'text-danger' : 'text-ink-3'}`}>💾 {backup.text}</p>
 
