@@ -596,6 +596,15 @@ lessons         { id, schoolYear, groupId, date, period?, unit?, activity, note?
 - 그리기 `src/pages/tools/DrawLayer.tsx`: 점은 0~1 비율 좌표, 각도는 영상의 실제 가로세로 비로 계산(화면에 늘어나 보여도 같은 값). 흰 선 + 검은 테두리, 저장 그림에도 같은 모양(`paintShapes`)
 - 아이폰 대비: 숨긴 `<video>`를 display:none으로 두면 장면이 검게 찍힐 수 있어 1px·투명으로 둠. 앞 카메라는 지연 화면만 거울처럼(다시 보기·저장은 원래 방향)
 - REA는 좌표를 찍어 누를 수 없어 그리기 동작은 화면으로 확인 못 함(각도 계산은 단위 테스트)
+- 배포됨: PR #19 → main 병합 `a0674e7` (2026-10-22), GitHub Pages 배포 성공, 배포 사이트에서 새 기능 확인
+
+### 6-2. 시연 모드 (2026-10-22 교사 요청: 다른 선생님들께 가상 학생으로 시연)
+- 주소 `…/physical-education-/?demo=1` (또는 더보기 → "시연 모드로 열기"). 탭을 닫을 때까지 유지(sessionStorage `pelog.demoMode`), `?demo=0`·[시연 끝내기]로 실제 앱
+- **실제 자료와 완전히 분리**: 저장소 이름 `pe-records-demo`(`src/lib/demo.ts` `dbName`, `db.ts`가 씀), localStorage·sessionStorage 키 앞에 `demo:`(`namespaceStorage`). 실제 앱의 자동 백업(`prepareUpgrade`)은 시연에서 돌지 않음
+- **별도 주소(/demo/)로 만들지 않은 까닭**: service worker의 navigateFallback이 `/physical-education-/` 아래 모든 주소를 실제 앱으로 열어, 앱을 설치한 기기에서는 시연 주소에서 실제 학생 자료가 보일 수 있다
+- 가상 자료 `src/db/demoSeed.ts`(테스트 `tests/demoSeed.test.ts`): 처음 열 때 한 번. 이름은 성 20 × 순우리말 이름 30 조합의 가명만, 같은 씨앗 → 같은 반. 날짜는 오늘 기준. "시연고등학교 (가상)" 공학 · 1-1·1-2·2-1 학적반 각 20명 + 수강반 "스포츠 생활 · 배드민턴"(10명) · 시간표 12칸 · 최근 4주 칭찬·지도·관찰·견학 · 체육부장 · 2주 일지 · PAPS(1-1 2회차, 1-2 1회차·측정 제외 1명, BMI는 대부분 정상) · 수행평가 "농구 레이업 슛 실기"(16명 채점). 이용 안내 동의·백업 시각을 넣어 경고 없이 바로 시연
+- PIN 잠금 없이 열림(시연 PIN 0000). 화면 맨 위 주황 띠 `DemoBanner` → 시연 주소 복사 · 가상 자료 처음 상태로(시연 저장소만 지우고 다시 넣음) · 시연 끝내기. 실제 앱에서는 띠가 없다
+- REA 확인: 실제 앱에 학생 '박본앱'(PIN 5678) → `?demo=1`(가상 20명, 박본앱 없음, 잠금 없음) → [시연 끝내기] → PIN 5678 잠금 · 박본앱만 그대로 · 띠 없음
 
 ---
 
