@@ -4,22 +4,26 @@ import ClassPicker, { classKeyStr } from '../../components/ClassPicker'
 import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
 import { db } from '../../db/db'
-import { indexResults, loadClassPaps } from '../../db/papsRepo'
+import { indexResults, loadClassPapsPicked, studentSummary } from '../../db/papsRepo'
 import { saveBlob } from '../../lib/download'
 import { buildRows, rowsToXlsx, validateExport, type ExportIssue } from '../../lib/neisExport'
 import { columnsFor, selectedFromColumns } from '../../lib/papsLayout'
 import type { EventId, Factor } from '../../lib/paps'
+import type { RoundPick } from '../../lib/papsRounds'
 import { useApp } from '../../state/AppContext'
 import { usePapsClass } from '../../state/usePapsClass'
 import { measureGroups, usePapsClassKey } from './common'
 
 interface Outcome {
-  issues: (ExportIssue & { cls: string })[]
+  /** round: 그 학생에게 고른 회차 (문제를 누르면 그 회차 입력 칸으로 간다) */
+  issues: (ExportIssue & { cls: string; round: { id: string | null; no: number } })[]
   excluded: string[]
   unknown: string[]
   fileName?: string
   rows?: number
   blocked?: string
+  /** 회차를 고른 결과 요약 (예: 2회차 18명 · 1회차 7명) */
+  picked?: string
 }
 
 /** 나이스 내보내기 (CLAUDE.md 4-5): 검사 → 문제 없을 때만 파일 */
@@ -28,6 +32,8 @@ export default function PapsExportPage() {
   const { classes, mine, cls, setCls } = usePapsClassKey()
   const pc = usePapsClass(cls)
   const [scope, setScope] = useState<'class' | 'grade'>('class')
+  // 여러 번 측정했을 때 학생마다 어느 회차를 내보낼지 (B-5 교사 결정: 회차 하나를 통째로, 섞지 않음)
+  const [pick, setPick] = useState<RoundPick>('latest')
   const [out, setOut] = useState<Outcome | null>(null)
   const [busy, setBusy] = useState(false)
   const [showN, setShowN] = useState(30)
@@ -46,14 +52,30 @@ export default function PapsExportPage() {
       let columns = null as ReturnType<typeof columnsFor> | null
       let headerKey = ''
       const rows: string[][] = []
+      const pickedCount = new Map<number, number>()
       for (const c of targets) {
         const students = (await db.students.where('[schoolYear+grade+classNo]').equals([year, c.grade, c.classNo]).toArray())
           .filter((s) => s.status === '재학')
           .sort((a, b) => a.number - b.number)
-        const data = await loadClassPaps(db, year, c.grade, c.classNo, students.map((s) => s.id))
-        const saved = (data.config?.selectedEvents ?? {}) as Partial<Record<Factor, EventId>>
         const tCols = template ? columnsFor(template, {}) : null
-        const selected = Object.keys(saved).length ? saved : tCols ? selectedFromColumns(tCols, standards.events) : {}
+        const selectedOf = (config: { selectedEvents?: Record<string, string> } | undefined): Partial<Record<Factor, EventId>> => {
+          const saved = (config?.selectedEvents ?? {}) as Partial<Record<Factor, EventId>>
+          return Object.keys(saved).length ? saved : tCols ? selectedFromColumns(tCols, standards.events) : {}
+        }
+        const byId = new Map(students.map((s) => [s.id, s]))
+        // 학생마다 회차 하나 → 그 회차의 칸만 (최고 회차는 종합점수로 비교)
+        const data = await loadClassPapsPicked(db, year, c.grade, c.classNo, students.map((s) => s.id), pick, (sid, rs, config) => {
+          const s = byId.get(sid)
+          if (!s) return null
+          const p = studentSummary(standards, s, settings.schoolLevel, selectedOf(config), indexResults(rs).values.get(sid), settings.papsFlexMode)
+          return p ? { complete: p.complete, total: p.complete ? (p.total ?? p.sum) : p.sum } : null
+        })
+        const roundNo = new Map(data.rounds.map((r) => [r.id, r.round]))
+        for (const s of students) {
+          const n = roundNo.get(data.pick.get(s.id) ?? null) ?? 1
+          pickedCount.set(n, (pickedCount.get(n) ?? 0) + 1)
+        }
+        const selected = selectedOf(data.config)
         const cols = tCols ?? columnsFor(null, selected)
         const key = cols.map((x) => x.header).join('\t')
         if (columns && key !== headerKey) {
@@ -64,13 +86,23 @@ export default function PapsExportPage() {
         headerKey = key
         const { values, excluded } = indexResults(data.results)
         const v = validateExport(cols, students, values, new Set(excluded.keys()), settings.neisRanges)
-        all.issues.push(...v.issues.map((i) => ({ ...i, cls: `${c.grade}-${c.classNo}` })))
+        all.issues.push(
+          ...v.issues.map((i) => {
+            const id = data.pick.get(i.studentId) ?? null
+            return { ...i, cls: `${c.grade}-${c.classNo}`, round: { id, no: roundNo.get(id) ?? 1 } }
+          }),
+        )
         all.excluded.push(...v.excluded.map((s) => `${c.grade}-${c.classNo} ${s.number}번 ${s.name}`))
         all.unknown = v.unknownColumns
         const r = buildRows(cols, v.included, values, defaults, settings.neisRanges)
         if (rows.length === 0) rows.push(r[0])
         rows.push(...r.slice(1))
       }
+      if ([...pickedCount.keys()].some((n) => n > 1))
+        all.picked = [...pickedCount]
+          .sort((a, b) => b[0] - a[0])
+          .map(([n, k]) => `${n}회차 ${k}명`)
+          .join(' · ')
       if (all.issues.length === 0 && all.unknown.length === 0 && rows.length > 1) {
         const name = `PAPS_나이스업로드_${year}_${scope === 'class' ? `${cls.grade}-${cls.classNo}반` : `${cls.grade}학년`}.xlsx`
         saveBlob(name, new Blob([await rowsToXlsx(rows)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
@@ -105,6 +137,19 @@ export default function PapsExportPage() {
               {cls ? `${cls.grade}학년 전체` : '학년 전체'}
             </button>
           </div>
+          <p className="label mb-0">여러 번 측정했으면</p>
+          <div className="segment">
+            <button type="button" aria-selected={pick === 'latest'} onClick={() => (setPick('latest'), setOut(null))}>
+              최근 회차
+            </button>
+            <button type="button" aria-selected={pick === 'best'} onClick={() => (setPick('best'), setOut(null))}>
+              최고 회차
+            </button>
+          </div>
+          <p className="hint">
+            학생마다 회차 <b>하나</b>의 칸(1차·2차·좌우)을 그대로 넣어요. 회차를 섞지 않아요.{' '}
+            {pick === 'latest' ? '최근 회차 = 그 학생 기록이 있는 가장 늦은 회차.' : '최고 회차 = 다 측정한 회차 중 종합점수가 가장 높은 회차(같으면 늦은 회차).'}
+          </p>
           <p className="hint">
             {template
               ? '등록한 나이스 양식과 같은 열 순서로 만들어요.'
@@ -125,6 +170,7 @@ export default function PapsExportPage() {
                 <p className="mt-1 font-semibold text-ok">
                   {out.fileName} ({out.rows}명)
                 </p>
+                {out.picked && <p className="mt-1 text-sm font-semibold text-ok">{pick === 'latest' ? '최근' : '최고'} 회차로 넣었어요: {out.picked}</p>}
               </section>
             ) : (
               <section className="card bg-danger-light shadow-none">
@@ -154,13 +200,14 @@ export default function PapsExportPage() {
                 <ul>
                   {out.issues.slice(0, showN).map((i, k) => (
                     <li key={k}>
-                      <Link to={`/paps/input/${groupOf(i.cell.split('|')[0])}?c=${i.cls}&s=${i.studentId}`} className="list-row hover:bg-fill">
+                      <Link to={`/paps/input/${groupOf(i.cell.split('|')[0])}?c=${i.cls}&s=${i.studentId}&r=${i.round.id ?? ''}`} className="list-row hover:bg-fill">
                         <span className={`badge ${i.kind === 'missing' ? 'bg-caution-light text-caution' : 'bg-danger-light text-danger'}`}>
                           {i.kind === 'missing' ? '누락' : i.kind === 'range' ? '범위' : '자릿수'}
                         </span>
                         <span className="flex-1">
                           <b>
                             {i.cls} {i.who}
+                            {pc.rounds.rounds.length > 1 || i.round.no > 1 ? ` (${i.round.no}회차)` : ''}
                           </b>{' '}
                           · {i.label}
                           {i.value !== undefined && (

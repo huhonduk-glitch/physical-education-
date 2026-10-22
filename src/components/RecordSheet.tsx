@@ -4,14 +4,16 @@ import { Link } from 'react-router-dom'
 import { db } from '../db/db'
 import { addAbsences, addRecords, type UndoToken } from '../db/recordsRepo'
 import type { Absence, RecordType, Student } from '../db/types'
+import type { Points } from '../lib/recordStats'
 import { useApp } from '../state/AppContext'
 import BottomSheet from './BottomSheet'
+import Collapse from './Collapse'
 import Icon, { type IconName } from './Icon'
 import KeywordPicker from './KeywordPicker'
 
 export const TYPE_LABEL: Record<RecordType, string> = {
-  unprepared: '준비물 미준비',
-  exemplary: '솔선수범',
+  unprepared: '지도 (준비물)',
+  exemplary: '칭찬',
   observation: '관찰 메모',
   captain: '체육부장 활동',
 }
@@ -27,12 +29,14 @@ interface Props {
   groupId?: string
   /** 카드 번호 표시 (수강반은 학번) */
   numberOf?: (s: Student) => string
+  /** 한 명일 때: 이 수업반 누적 칭찬·지도 횟수 (포인트) */
+  points?: Points
   onClose: () => void
   onRecorded: (token: UndoToken, message: string) => void
 }
 
 /** 번호 카드를 누르면 열리는 기록 창 (CLAUDE.md 4-2). 버튼 한 번에 저장한다. */
-export default function RecordSheet({ students, date, period, groupId, numberOf = (s) => String(s.number), onClose, onRecorded }: Props) {
+export default function RecordSheet({ students, date, period, groupId, numberOf = (s) => String(s.number), points, onClose, onRecorded }: Props) {
   const { settings } = useApp()
   const [keywordIds, setKeywordIds] = useState<string[]>([])
   const [pending, setPending] = useState<{ type: 'unprepared' | 'exemplary'; category: string } | null>(null)
@@ -58,7 +62,7 @@ export default function RecordSheet({ students, date, period, groupId, numberOf 
       groupId,
       ...extra,
     })
-    const what = type === 'unprepared' ? `${category} 미준비` : type === 'exemplary' ? `솔선수범(${category})` : '관찰 메모'
+    const what = type === 'unprepared' ? `${category} 미준비` : type === 'exemplary' ? `칭찬(${category})` : '관찰 메모'
     onRecorded({ recordIds, absenceIds: [], absenceBefore: [] }, `${who}: ${what}`)
   }
 
@@ -80,7 +84,11 @@ export default function RecordSheet({ students, date, period, groupId, numberOf 
 
   const btn = 'btn btn-soft min-h-[54px] w-full text-[1.02rem]'
   return (
-    <BottomSheet title={single ? <>{numberOf(single)}번 {single.name}</> : <>{students.length}명 한꺼번에 기록</>} onClose={onClose}>
+    <BottomSheet
+      title={single ? <>{numberOf(single)}번 {single.name}</> : <>{students.length}명 한꺼번에 기록</>}
+      sub={single && points ? `이 반 누적: 칭찬 ${points.praise} · 지도 ${points.guide}` : undefined}
+      onClose={onClose}
+    >
       <div className="space-y-5">
         {!single && <p className="hint">{students.map(numberOf).join(', ')}번</p>}
 
@@ -106,28 +114,31 @@ export default function RecordSheet({ students, date, period, groupId, numberOf 
           </section>
         ) : (
           <>
-            <section>
-              <SectionTitle icon="alert" tone="bg-danger-light text-danger">준비물 미준비</SectionTitle>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {settings.recordButtons.unprepared.map((c) => (
-                  <button key={c} type="button" className={btn} disabled={busy} onClick={() => tapCategory('unprepared', c)}>
-                    {c}
-                  </button>
-                ))}
+            {/* 원터치: 칭찬 | 지도 두 칸을 나란히. 버튼 한 번 = 기록 한 줄 (B-2) */}
+            <section className="space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
+                  <SectionTitle icon="star" tone="bg-brand-light text-brand">칭찬</SectionTitle>
+                  {settings.recordButtons.exemplary.map((c) => (
+                    <button key={c} type="button" className={`${btn} bg-brand-light text-brand`} disabled={busy} onClick={() => tapCategory('exemplary', c)}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  <SectionTitle icon="alert" tone="bg-danger-light text-danger">지도</SectionTitle>
+                  {settings.recordButtons.unprepared.map((c) => (
+                    <button key={c} type="button" className={`${btn} bg-danger-light text-danger`} disabled={busy} onClick={() => tapCategory('unprepared', c)}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </section>
-
-            <section>
-              <SectionTitle icon="star" tone="bg-brand-light text-brand">솔선수범</SectionTitle>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {settings.recordButtons.exemplary.map((c) => (
-                  <button key={c} type="button" className={btn} disabled={busy} onClick={() => tapCategory('exemplary', c)}>
-                    {c}
-                  </button>
-                ))}
-              </div>
-              <div className="mt-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <KeywordPicker value={keywordIds} onChange={setKeywordIds} />
+                <Link to="/more/settings/buttons" className="text-sm font-bold text-ink-3">
+                  항목 편집 ›
+                </Link>
               </div>
             </section>
 
@@ -149,8 +160,9 @@ export default function RecordSheet({ students, date, period, groupId, numberOf 
               />
             </section>
 
+            {/* 관찰 메모는 글을 쓰는 일이라 접어 둔다 (원터치 버튼이 먼저 보이게) */}
+            <Collapse title="관찰 메모 쓰기" sub="자유 메모 · 세특 키워드">
             <section className="space-y-2">
-              <SectionTitle icon="note" tone="bg-ok-light text-ok">관찰 메모</SectionTitle>
               <textarea className="field min-h-[5rem] py-2" value={obsNote} onChange={(e) => setObsNote(e.target.value)} placeholder="예: 모둠 활동에서 역할을 나눠 줌" aria-label="관찰 메모" />
               <KeywordPicker value={obsKeywords} onChange={setObsKeywords} />
               <button
@@ -162,6 +174,7 @@ export default function RecordSheet({ students, date, period, groupId, numberOf 
                 관찰 메모 저장
               </button>
             </section>
+            </Collapse>
 
             {single && <TodayList student={single} date={date} />}
           </>

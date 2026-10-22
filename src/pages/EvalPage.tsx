@@ -12,12 +12,12 @@ const FLOWS: { id: FeatureId; title: string; sub: string; icon: IconName; tone: 
     title: '학생건강체력평가 (PAPS)',
     sub: '측정 입력 → 자동 등급 → 나이스 업로드 파일',
     icon: 'paps',
-    tone: 'bg-ok-light text-ok',
+    tone: 'bg-brand-light text-brand',
     to: '/paps',
     steps: [
       { label: '측정 종목', to: '/paps/setup' },
       { label: '기록 입력', to: '/paps' },
-      { label: '결과 보기', to: '/paps/results' },
+      { label: '결과·통계', to: '/paps/stats' },
       { label: '나이스 파일', to: '/paps/export' },
     ],
   },
@@ -26,7 +26,7 @@ const FLOWS: { id: FeatureId; title: string; sub: string; icon: IconName; tone: 
     title: '수행평가',
     sub: '평가 만들기 → 수업반 채점 → 나이스 일괄입력',
     icon: 'clipboard',
-    tone: 'bg-caution-light text-caution',
+    tone: 'bg-brand-light text-brand',
     to: '/more/assessments',
     steps: [
       { label: '루브릭', to: '/more/assessments/rubric' },

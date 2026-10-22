@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import AutoBackupNotice from '../components/AutoBackupNotice'
 import BackupWarning from '../components/BackupWarning'
 import { Logo } from '../components/Brand'
 import FeatureSheet from '../components/FeatureSheet'
@@ -23,7 +24,8 @@ export default function HomePage() {
   const lessons = todaysLessons(now, settings.timetable)
   const period = currentPeriod(now, settings.periodStarts, settings.periodMinutes)
   const groupById = new Map((groups ?? []).map((g) => [g.id, g]))
-  const features = FEATURES.filter((f) => featureOn(settings.features, f.id))
+  // 아래 탭(수업반·평가·도구)과 겹치는 기능은 빼고, 탭에 없는 기능만 바로가기에 둔다
+  const features = FEATURES.filter((f) => featureOn(settings.features, f.id) && !TAB_FEATURES.includes(f.id))
   const recordsOn = featureOn(settings.features, 'records')
   const today = todayStr()
   const upcoming = upcomingEvents(settings.neisSchedule?.events ?? [], today)
@@ -73,6 +75,7 @@ export default function HomePage() {
       </header>
 
       <div className="page space-y-5 pt-3 pb-8">
+        <AutoBackupNotice />
         <InstallGuide place="home" />
         {/* 시작 준비에 '첫 백업'이 이미 보이면 겹치지 않게 */}
         {!showSetup && <BackupWarning hasData={(students?.length ?? 0) > 0} />}
@@ -228,7 +231,7 @@ export default function HomePage() {
           <SectionTitle title="바로가기" button={{ label: '편집', onClick: () => setPick(true) }} />
           {features.length === 0 ? (
             <button type="button" className="card w-full text-center font-bold text-brand" onClick={() => setPick(true)}>
-              쓸 기능을 골라 주세요
+              견학 · 체육부장 · 세특 · 팀 편성을 쓰려면 [편집]에서 켜세요
             </button>
           ) : (
           <div className="card grid grid-cols-4 gap-y-3 px-2 py-4">
@@ -272,6 +275,9 @@ export default function HomePage() {
     </>
   )
 }
+
+/** 아래 탭에 이미 있는 기능 (홈 바로가기에서 뺀다) */
+const TAB_FEATURES: readonly string[] = ['records', 'paps', 'assess', 'tools']
 
 const SETUP_HIDE_KEY = 'pelog.setupHidden'
 function readSetupHidden(): boolean {

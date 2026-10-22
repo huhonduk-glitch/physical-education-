@@ -1,5 +1,5 @@
 import type { PeDatabase } from './db'
-import { indexResults, loadClassPaps, studentSummary } from './papsRepo'
+import { indexResults, loadClassPapsPicked, studentSummary } from './papsRepo'
 import type { Student } from './types'
 import type { EventId, Factor, FlexMode, PapsStandards } from '../lib/paps'
 import { buildReport, type StudentReport } from '../lib/report'
@@ -25,7 +25,8 @@ export async function loadReports(
   for (const s of students) byClass.set(`${s.grade}-${s.classNo}`, [...(byClass.get(`${s.grade}-${s.classNo}`) ?? []), s])
   const papsOf = new Map<string, { paps: ReturnType<typeof studentSummary>; excluded: boolean }>()
   for (const list of byClass.values()) {
-    const d = await loadClassPaps(db, ctx.schoolYear, list[0].grade, list[0].classNo, list.map((s) => s.id))
+    // 여러 번 측정했으면 학생마다 가장 최근 회차 (B-5)
+    const d = await loadClassPapsPicked(db, ctx.schoolYear, list[0].grade, list[0].classNo, list.map((s) => s.id), 'latest')
     const { values, excluded } = indexResults(d.results)
     const selected = (d.config?.selectedEvents ?? {}) as Partial<Record<Factor, EventId>>
     for (const s of list) papsOf.set(s.id, { paps: studentSummary(ctx.standards, s, ctx.schoolLevel, selected, values.get(s.id), ctx.flexMode), excluded: excluded.has(s.id) })

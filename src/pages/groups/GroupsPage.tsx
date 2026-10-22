@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Collapse from '../../components/Collapse'
 import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
 import { db } from '../../db/db'
@@ -113,9 +114,11 @@ export default function GroupsPage() {
           </button>
         )}
 
-        <section className="card overflow-hidden p-0">
+        {/* 명렬·시간표는 처음 한 번 쓰는 메뉴라 접어 둔다 (명렬이 없으면 위 큰 카드가 대신 안내) */}
+        <Collapse title="⋯ 명렬 · 시간표 관리" sub="전체 명렬 · 명렬 올리기 · 시간표 · 나이스 불러오기">
+        <div className="card overflow-hidden p-0">
           <Link to="/students" className="list-row min-h-[60px] hover:bg-fill">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-fill-2 text-ink-2">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-light text-brand">
               <Icon name="students" size={20} />
             </span>
             <span className="flex-1">
@@ -137,7 +140,7 @@ export default function GroupsPage() {
             </Link>
           )}
           <Link to="/more/settings/timetable" className="list-row min-h-[60px] hover:bg-fill">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-fill-2 text-ink-2">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-light text-brand">
               <Icon name="calendar" size={20} />
             </span>
             <span className="flex-1">
@@ -148,7 +151,7 @@ export default function GroupsPage() {
           </Link>
           {!readOnly && (
             <Link to="/more/settings/neis" className="list-row min-h-[60px] hover:bg-fill">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-ok-light text-ok">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-light text-brand">
                 <Icon name="download" size={20} />
               </span>
               <span className="flex-1">
@@ -158,7 +161,8 @@ export default function GroupsPage() {
               <Icon name="chevronRight" className="text-ink-3" />
             </Link>
           )}
-        </section>
+        </div>
+        </Collapse>
       </div>
     </>
   )

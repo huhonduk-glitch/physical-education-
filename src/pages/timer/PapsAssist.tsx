@@ -1,11 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import ClassPicker, { classesOf, type ClassKey } from '../../components/ClassPicker'
+import { useSearchParams } from 'react-router-dom'
+import ActionBar from '../../components/ActionBar'
+import ClassPicker, { classesOf, classKeyStr, type ClassKey } from '../../components/ClassPicker'
 import Icon from '../../components/Icon'
 import { db, newId } from '../../db/db'
 import { setCells } from '../../db/papsRepo'
 import { cellId, cellsForKey } from '../../lib/papsLayout'
-import { pei } from '../../lib/paps'
+import { levelKey, lookup, pei } from '../../lib/paps'
+import { canMiss, pushShuttle, replayShuttle, runnerOf, undoShuttle, type ShuttleAction } from '../../lib/shuttle'
+import { GradeBadge, usePapsClassKey } from '../paps/common'
+import { RoundNote } from '../paps/RoundBar'
 import { HEART_WINDOWS, STEP_DURATION_SEC, STEP_WORDS, cadenceCount, formatCountdown, heartWindowAt, stepBeatAt, stepBpm } from '../../lib/timerMath'
 import { useApp } from '../../state/AppContext'
 import { useTimer } from '../../state/TimerContext'
@@ -16,7 +21,11 @@ type Aid = 'curlUp' | 'step' | 'shuttle'
 
 export default function PapsAssist() {
   const t = useTimer()
-  const [aid, setAid] = useState<Aid>(t.mode === 'curlUp' ? 'curlUp' : t.mode === 'step' || t.mode === 'stepHeart' ? 'step' : 'curlUp')
+  // 도구 탭의 [왕복오래달리기] 카드는 ?aid=shuttle로 바로 연다 (탭 2단을 거치지 않게)
+  const [sp] = useSearchParams()
+  const [aid, setAid] = useState<Aid>(
+    sp.get('aid') === 'shuttle' && !t.running ? 'shuttle' : t.mode === 'curlUp' ? 'curlUp' : t.mode === 'step' || t.mode === 'stepHeart' ? 'step' : 'curlUp',
+  )
   const pick = (a: Aid) => {
     if (t.running) return
     setAid(a)
@@ -150,7 +159,7 @@ function PeiCalc({ method }: { method: 'palpation' | 'monitor' }) {
     }
     const exists = pc.values.get(st.id)?.has(cellId(items[0].cell))
     if (exists && !confirm('이미 기록이 있어요. 덮어쓸까요?')) return
-    await setCells(db, settings.schoolYear, items)
+    await setCells(db, settings.schoolYear, items, pc.roundId)
     setMsg(`${st.number}번 ${st.name}: PEI ${value} 저장`)
     setHr(['', '', ''])
   }
@@ -186,6 +195,7 @@ function PeiCalc({ method }: { method: 'palpation' | 'monitor' }) {
       </div>
       {st && <p className="hint">{highMale ? '고등학교 남학생 공식 (첫 번째 심박만 사용)' : '여학생·중학생 공식 (심박 3회 합)'}</p>}
       <p className="text-center text-3xl font-extrabold tabular-nums">{value === null ? '—' : `PEI ${value}`}</p>
+      {cls && <RoundNote round={pc.round} />}
       <button type="button" className="btn btn-primary w-full" disabled={!st || value === null || readOnly} onClick={save}>
         PAPS 스텝검사에 저장
       </button>
@@ -194,15 +204,12 @@ function PeiCalc({ method }: { method: 'palpation' | 'monitor' }) {
   )
 }
 
-interface Counter {
-  count: number
-  warned: boolean
-  done: boolean
-}
-
-/** 왕복오래달리기: 교사가 올린 음원 재생 + 학생별 횟수 세기 (공식 음원은 앱에 넣지 않는다) */
+/**
+ * 왕복오래달리기: 교사가 올린 음원 재생 + 반 전체 세기 (공식 음원·신호 간격은 앱에 넣지 않는다).
+ * 신호가 울리면 [신호 +1] 한 번, 신호 전에 못 들어온 학생만 카드를 누른다 (계산: src/lib/shuttle.ts).
+ */
 function Shuttle() {
-  const { settings, readOnly } = useApp()
+  const { settings, readOnly, standards } = useApp()
   const files = useLiveQuery(() => db.audioFiles.toArray(), [])
   const [fileId, setFileId] = useState<string>('')
   const [url, setUrl] = useState<string | null>(null)
@@ -216,12 +223,14 @@ function Shuttle() {
     return () => URL.revokeObjectURL(u)
   }, [files, fileId])
 
-  const students = useLiveQuery(() => db.students.where('schoolYear').equals(settings.schoolYear).filter((s) => s.status === '재학').toArray(), [settings.schoolYear])
-  const classes = useMemo(() => classesOf(students ?? []), [students])
-  const [cls, setCls] = useState<ClassKey | null>(null)
+  // 반 고르기: 내 학적반 수업반을 먼저 (PAPS 화면들과 같은 반을 기억)
+  const { classes, mine, cls, setCls } = usePapsClassKey()
   const pc = usePapsClass(cls)
-  const KEY = 'pe.shuttleCounters'
-  const [counters, setCounters] = useState<Record<string, Counter>>(() => {
+  // 반 + 회차마다 따로 센다 (새 회차를 만들면 0회부터. 예전 키 '1-3'은 1회차로 그대로 이어진다)
+  const clsKey = cls ? `${classKeyStr(cls)}${pc.roundId ? `|${pc.roundId}` : ''}` : ''
+  // 누른 순서만 반별로 남긴다 (다른 화면에 다녀와도 그대로, 탭을 닫으면 사라짐)
+  const KEY = 'pe.shuttleRun.v2'
+  const [all, setAll] = useState<Record<string, ShuttleAction[]>>(() => {
     try {
       return JSON.parse(sessionStorage.getItem(KEY) ?? '{}')
     } catch {
@@ -230,22 +239,28 @@ function Shuttle() {
   })
   useEffect(() => {
     try {
-      sessionStorage.setItem(KEY, JSON.stringify(counters))
+      sessionStorage.setItem(KEY, JSON.stringify(all))
     } catch {
       /* 무시 */
     }
-  }, [counters])
-  const get = (id: string): Counter => counters[id] ?? { count: 0, warned: false, done: false }
-  const upd = (id: string, f: (c: Counter) => Counter) => setCounters((x) => ({ ...x, [id]: f(get(id)) }))
+  }, [all])
+  const actions = all[clsKey] ?? []
+  const setActions = (f: (a: ShuttleAction[]) => ShuttleAction[]) => setAll((x) => ({ ...x, [clsKey]: f(x[clsKey] ?? []) }))
+  const state = useMemo(() => replayShuttle(actions), [actions])
+  const [skip, setSkip] = useState<Set<string>>(new Set())
   const [msg, setMsg] = useState('')
+  const outCount = pc.students.filter((s) => !runnerOf(state, s.id).running).length
+
+  // 성별이 없는 학생은 기준을 고를 수 없어서 등급을 비워 둔다
+  const bandOf = (s: (typeof pc.students)[number], v: number) => (s.gender ? lookup(standards, 'shuttleRun', levelKey(settings.schoolLevel, s.grade), s.gender, v) : null)
+  const toSave = pc.students.filter((s) => !skip.has(s.id))
 
   const save = async () => {
     const cell = cellsForKey(pc.cells, 'shuttleRun')[0] ?? { key: 'shuttleRun' as const, attempt: null, side: null }
-    const list = pc.students.filter((s) => get(s.id).count > 0)
-    const over = list.filter((s) => pc.values.get(s.id)?.has(cellId(cell))).length
+    const over = toSave.filter((s) => pc.values.get(s.id)?.has(cellId(cell))).length
     if (over && !confirm(`${over}칸을 덮어씁니다. 계속할까요?`)) return
-    await setCells(db, settings.schoolYear, list.map((s) => ({ studentId: s.id, cell, value: get(s.id).count })))
-    setMsg(`${list.length}명의 왕복오래달리기 기록을 저장했어요.`)
+    await setCells(db, settings.schoolYear, toSave.map((s) => ({ studentId: s.id, cell, value: runnerOf(state, s.id).record })), pc.roundId)
+    setMsg(`${toSave.length}명의 왕복오래달리기 기록을 저장했어요.`)
   }
 
   return (
@@ -290,52 +305,135 @@ function Shuttle() {
 
       <Panel>
         <div className="flex items-center justify-between">
-          <p className="card-title">학생별 횟수</p>
-          <button type="button" className="btn btn-ghost min-h-[40px] text-sm text-ink-3" onClick={() => confirm('횟수를 모두 0으로 할까요?') && setCounters({})}>
-            모두 0으로
+          <p className="card-title">반 전체 세기</p>
+          <button
+            type="button"
+            className="btn btn-ghost min-h-[40px] text-sm text-ink-3"
+            disabled={actions.length === 0}
+            onClick={() => confirm('이 반의 세기를 처음부터 다시 할까요?') && (setActions(() => []), setSkip(new Set()), setMsg(''))}
+          >
+            처음부터
           </button>
         </div>
-        <p className="hint">카드를 누르면 +1. 신호 전에 못 들어오면 △(첫 번째), 두 번째면 ✕로 끝내요 — 끝난 학생은 더 세지 않아요.</p>
-        <ClassPicker classes={classes} value={cls} onChange={setCls} />
-        <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        <ol className="list-decimal space-y-0.5 pl-5 text-[0.95rem] text-ink-2">
+          <li>
+            신호가 울리면 아래 <b>[신호 +1]</b>을 한 번 눌러요 (반 전체가 1회 더해져요)
+          </li>
+          <li>
+            그 신호 전에 못 들어온 학생 카드를 눌러요. 첫 번째는 <b className="text-caution">△</b>(계속 달림), 두 번째는 <b>끝</b>(직전 횟수로 기록)
+          </li>
+        </ol>
+        <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
+        <ul className="grid grid-cols-4 gap-1.5 sm:grid-cols-5 md:grid-cols-7">
           {pc.students.map((s) => {
-            const c = get(s.id)
+            const r = runnerOf(state, s.id)
+            const can = canMiss(state, s.id)
             return (
-              <li key={s.id} className={`overflow-hidden rounded-2xl ${c.done ? 'bg-fill-2' : c.warned ? 'bg-caution-light' : 'bg-fill'}`}>
+              <li key={s.id}>
                 <button
                   type="button"
-                  className="flex w-full flex-col items-center py-2 active:scale-95 disabled:opacity-60"
-                  disabled={c.done}
-                  aria-label={`${s.number}번 ${s.name} ${c.count}회, 누르면 1 더하기`}
-                  onClick={() => upd(s.id, (x) => ({ ...x, count: x.count + 1 }))}
+                  className={`flex min-h-[76px] w-full flex-col items-center justify-center rounded-2xl px-1 py-1.5 active:scale-95 ${
+                    !r.running ? 'bg-fill-2 text-ink-3' : r.warnedAt !== null ? 'bg-caution-light ring-2 ring-caution/50' : 'bg-white shadow-[var(--shadow-card)]'
+                  }`}
+                  disabled={!can || readOnly}
+                  aria-label={`${s.number}번 ${s.name}: ${r.running ? (r.warnedAt !== null ? `△ ${r.warnedAt}회` : '달리는 중') : `끝 ${r.record}회`}. 누르면 이번 신호에 늦음`}
+                  onClick={() => setActions((a) => pushShuttle(a, { kind: 'miss', id: s.id }))}
                 >
-                  <span className="text-sm font-bold text-ink-3">
-                    {s.number}번 {s.name}
+                  <span className="text-lg leading-none font-extrabold tabular-nums">{s.number}</span>
+                  <span className="mt-0.5 max-w-full truncate text-xs font-bold">{s.name}</span>
+                  <span className={`mt-1 text-xs font-extrabold tabular-nums ${!r.running ? '' : r.warnedAt !== null ? 'text-caution' : 'text-ink-3'}`}>
+                    {!r.running ? `끝 ${r.record}회` : r.warnedAt !== null ? `△ ${r.warnedAt}회` : '달리는 중'}
                   </span>
-                  <span className="text-3xl font-extrabold tabular-nums">{c.count}</span>
                 </button>
-                <div className="grid grid-cols-3 border-t border-line/60">
-                  <button type="button" className="min-h-[44px] font-bold text-ink-3" aria-label={`${s.number}번 1 빼기`} onClick={() => upd(s.id, (x) => ({ ...x, count: Math.max(0, x.count - 1) }))}>
-                    −1
-                  </button>
-                  <button type="button" className={`min-h-[44px] font-bold ${c.warned ? 'text-caution' : 'text-ink-3'}`} aria-pressed={c.warned} onClick={() => upd(s.id, (x) => ({ ...x, warned: !x.warned }))}>
-                    △
-                  </button>
-                  <button type="button" className={`min-h-[44px] font-bold ${c.done ? 'text-danger' : 'text-ink-3'}`} aria-pressed={c.done} onClick={() => upd(s.id, (x) => ({ ...x, done: !x.done }))}>
-                    ✕
-                  </button>
-                </div>
               </li>
             )
           })}
         </ul>
         {cls && (
-          <button type="button" className="btn btn-primary w-full" disabled={readOnly || !pc.students.some((s) => get(s.id).count > 0)} onClick={save}>
-            PAPS 왕복오래달리기에 저장
-          </button>
+          <ActionBar>
+            <div className="flex items-stretch gap-2">
+              <button
+                type="button"
+                className="btn btn-soft flex-col gap-0 px-3 text-sm"
+                disabled={actions.length === 0}
+                onClick={() => setActions(undoShuttle)}
+                aria-label="방금 누른 것 되돌리기"
+              >
+                <Icon name="reset" size={20} />
+                되돌리기
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary min-h-[72px] flex-1 justify-between px-5"
+                disabled={readOnly || pc.students.length === 0}
+                onClick={() => setActions((a) => pushShuttle(a, { kind: 'lap' }))}
+              >
+                <span className="text-left leading-tight">
+                  <span className="block text-sm font-bold text-white/80">지금</span>
+                  <span className="text-3xl font-black whitespace-nowrap tabular-nums">{state.lap}회</span>
+                </span>
+                <span className="text-2xl font-black whitespace-nowrap">신호 +1</span>
+              </button>
+            </div>
+            <p className="text-center text-sm font-bold text-ink-3 tabular-nums">
+              달리는 중 {pc.students.length - outCount}명 · 끝 {outCount}명
+            </p>
+          </ActionBar>
         )}
-        {msg && <p className="font-bold text-ok">{msg}</p>}
       </Panel>
+
+      {cls && state.lap > 0 && (
+        <Panel>
+          <p className="card-title">기록과 등급</p>
+          <p className="hint">
+            기록 규칙: 학교건강검사규칙 별표3(신호 전 도착 못 한 첫 회 △ 계속, 두 번째 종료·직전 횟수). 등급·점수: 교육부 PAPS 기준표({standards.version}). 나이스 값과 다르면 나이스 값이 우선이에요.
+          </p>
+          <div className="overflow-x-auto rounded-xl border border-line">
+            <table className="w-full border-collapse text-left">
+              <thead className="bg-fill text-sm">
+                <tr>
+                  <th className="p-2">저장</th>
+                  <th className="p-2">학생</th>
+                  <th className="p-2 text-right">기록</th>
+                  <th className="p-2">등급 · 점수</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pc.students.map((s) => {
+                  const r = runnerOf(state, s.id)
+                  const band = bandOf(s, r.record)
+                  return (
+                    <tr key={s.id} className={`border-t border-line ${skip.has(s.id) ? 'text-ink-3' : ''}`}>
+                      <td className="p-1">
+                        <input
+                          type="checkbox"
+                          className="m-2 h-6 w-6 accent-[var(--color-brand)]"
+                          aria-label={`${s.number}번 ${s.name} 저장`}
+                          checked={!skip.has(s.id)}
+                          onChange={() => setSkip((x) => (x.has(s.id) ? (x.delete(s.id), new Set(x)) : new Set(x).add(s.id)))}
+                        />
+                      </td>
+                      <td className="p-2 whitespace-nowrap">
+                        <span className="tabular-nums">{s.number}</span> {s.name}
+                      </td>
+                      <td className="p-2 text-right font-bold whitespace-nowrap tabular-nums">{r.record}회</td>
+                      <td className="p-2 whitespace-nowrap">
+                        <GradeBadge band={band} points={band?.points} />
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <p className="hint">안 뛴 학생(견학·결석)은 [저장] 체크를 풀어 주세요. 저장한 뒤에도 [PAPS → 기록 입력]에서 고칠 수 있어요.</p>
+          <RoundNote round={pc.round} />
+          <button type="button" className="btn btn-primary w-full" disabled={readOnly || toSave.length === 0} onClick={save}>
+            {toSave.length}명 PAPS 왕복오래달리기에 저장
+          </button>
+          {msg && <p className="font-bold text-ok">{msg}</p>}
+        </Panel>
+      )}
     </div>
   )
 }

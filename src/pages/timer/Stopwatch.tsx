@@ -14,6 +14,7 @@ import { useApp } from '../../state/AppContext'
 import { useTimer } from '../../state/TimerContext'
 import { useGroups } from '../../state/useGroups'
 import { usePapsClass } from '../../state/usePapsClass'
+import { RoundNote } from '../paps/RoundBar'
 import { BigTime, Controls, Panel } from './common'
 
 type Dest = 'paps' | 'assess'
@@ -71,7 +72,7 @@ export default function Stopwatch() {
     const cell = targetCells[cellIdx] ?? { key: eventId, attempt: null, side: null }
     const overwrite = assigned.filter((l) => pc.values.get(l.studentId!)?.has(cellId(cell))).length
     if (overwrite && !confirm(`${overwrite}칸을 덮어씁니다. 계속할까요?`)) return
-    await setCells(db, settings.schoolYear, assigned.map((l) => ({ studentId: l.studentId!, cell, value: lapToValue(l.ms, eventId) })))
+    await setCells(db, settings.schoolYear, assigned.map((l) => ({ studentId: l.studentId!, cell, value: lapToValue(l.ms, eventId) })), pc.roundId)
     setMsg(`${assigned.length}명의 기록을 PAPS ${cellLabel(cell)} 칸에 넣었어요.`)
   }
 
@@ -183,6 +184,7 @@ export default function Stopwatch() {
                     </select>
                   )}
                   {targetCells.length === 0 && <p className="hint">이 반의 측정 종목에 이 종목이 없어요. [PAPS → 측정 설정]을 확인하세요. 그래도 보내면 기록은 저장돼요.</p>}
+                  <RoundNote round={pc.round} />
                   <button type="button" className="btn btn-primary w-full" disabled={assigned.length === 0 || readOnly} onClick={sendPaps}>
                     PAPS로 보내기
                   </button>

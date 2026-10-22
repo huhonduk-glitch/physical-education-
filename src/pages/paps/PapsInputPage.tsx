@@ -12,6 +12,7 @@ import { eventName, eventPoints, fixed, levelKey, longRunSeconds, lookup, offici
 import { useApp } from '../../state/AppContext'
 import { usePapsClass } from '../../state/usePapsClass'
 import { GradeBadge, measureGroups, usePapsClassKey } from './common'
+import RoundBar from './RoundBar'
 
 /** 번호순 연속 입력 (CLAUDE.md 4-5 입력 화면). 엔터 → 다음 칸/다음 학생 */
 export default function PapsInputPage() {
@@ -25,6 +26,13 @@ export default function PapsInputPage() {
   const inputs = useRef<(HTMLInputElement | null)[]>([])
   const [sp] = useSearchParams()
   const focusId = sp.get('s')
+  // 나이스 내보내기의 문제 목록에서 왔으면 그 학생에게 고른 회차로 바꾼다 (?r= 빈 값 = 1회차)
+  const wantRound = sp.get('r')
+  const setRound = pc.rounds.setCurrent
+  const clsStr = cls ? `${cls.grade}-${cls.classNo}` : ''
+  useEffect(() => {
+    if (wantRound !== null && clsStr) setRound(wantRound || null)
+  }, [wantRound, clsStr]) // eslint-disable-line react-hooks/exhaustive-deps -- 주소로 들어오거나 반이 정해질 때만
   useEffect(() => {
     if (!focusId || pc.loading) return
     const el = document.getElementById(`st-${focusId}`)
@@ -54,6 +62,7 @@ export default function PapsInputPage() {
       <PageHeader title={title} sub={cls ? `${cls.grade}학년 ${cls.classNo}반 · 엔터를 누르면 다음 칸` : undefined} back />
       <div className="page space-y-3 pb-8">
         <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
+        {cls && <RoundBar rounds={pc.rounds} readOnly={readOnly} />}
         {readOnly && <p className="rounded-2xl bg-caution-light px-4 py-2.5 font-bold text-caution">지난 학년도는 읽기 전용이에요.</p>}
         <p className="hint px-1">{standards.events[key as EventId] ? `기록 단위 ${standards.events[key as EventId].unit} · 칸마다 등급을 따로 보여주고, 대표 기록에는 ★를 붙여요.` : ''}</p>
         <ul className="space-y-2">
@@ -69,6 +78,7 @@ export default function PapsInputPage() {
               focusNext={focusNext}
               disabled={readOnly}
               year={settings.schoolYear}
+              roundId={pc.roundId}
             />
           ))}
         </ul>
@@ -92,6 +102,7 @@ function StudentRow({
   focusNext,
   disabled,
   year,
+  roundId,
 }: {
   s: Student
   cells: CellSpec[]
@@ -102,6 +113,8 @@ function StudentRow({
   focusNext: (el: HTMLInputElement) => void
   disabled: boolean
   year: number
+  /** 지금 고른 회차 (null = 1회차) */
+  roundId: string | null
 }) {
   const { settings, standards } = useApp()
   const excluded = excludedReason !== undefined
@@ -110,7 +123,7 @@ function StudentRow({
   const eventId = groupKey as EventId
   const byEvent = cellsByEvent(vals)
   const rep = standards.events[eventId] ? representative(standards, eventId, byEvent[eventId] ?? []) : null
-  const save = (c: CellSpec, v: number | undefined) => setCell(db, year, s.id, c, v)
+  const save = (c: CellSpec, v: number | undefined) => setCell(db, year, s.id, c, v, roundId)
 
   const toggleExclude = async () => {
     if (excluded) return setExcluded(db, year, s.id, false)

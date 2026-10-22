@@ -125,6 +125,24 @@ export interface PapsResult {
   excluded: boolean
   excludeReason?: string
   measuredAt: number
+  /**
+   * 측정 회차 (재설계 B-5). 없으면 1회차 — 예전 기록은 고치지 않고 그대로 1회차로 읽는다.
+   * 2회차부터는 papsRounds의 id. 측정 제외(EXCLUDED_KEY) 행은 회차와 상관없이 그 학년도 전체에 적용된다.
+   */
+  roundId?: string
+}
+
+/** PAPS 측정 회차 (반마다). 1회차는 행이 없어도 있는 것으로 본다(날짜만 적으려면 행을 만든다) */
+export interface PapsRound {
+  id: string
+  schoolYear: number
+  grade: number
+  classNo: number
+  /** 1, 2, 3 … */
+  round: number
+  /** 측정한 날 YYYY-MM-DD */
+  date: string
+  createdAt: number
 }
 
 export interface RubricItem {
