@@ -17,6 +17,7 @@ import type {
   PapsRound,
 } from './types'
 import { migrateToGroups } from './groupsRepo'
+import { dbName } from '../lib/demo'
 
 /**
  * 기기 안 저장소 (IndexedDB). 서버로 보내는 것은 없다.
@@ -80,7 +81,8 @@ export class PeDatabase extends Dexie {
   }
 }
 
-export const db = new PeDatabase()
+// 시연 모드(?demo=1)면 따로 된 저장소를 쓴다 → 실제 학생 자료와 섞이지 않는다 (src/lib/demo.ts)
+export const db = new PeDatabase(dbName())
 
 export function newId(): string {
   return crypto.randomUUID()

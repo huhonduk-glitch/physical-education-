@@ -2,7 +2,9 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import BottomNav from './components/BottomNav'
+import DemoBanner from './components/DemoBanner'
 import MiniTimer from './components/MiniTimer'
+import { IS_DEMO } from './lib/demo'
 import { TimerProvider } from './state/TimerContext'
 import { db } from './db/db'
 import { loadSettings, saveSettings, type AppSettings } from './db/settings'
@@ -64,7 +66,8 @@ export default function App() {
   const settings = useLiveQuery(() => loadSettings(db), [])
   const stdRow = useLiveQuery(() => db.settings.get('papsStandards').then((r) => r ?? null), [])
   const pinRow = useLiveQuery(() => db.settings.get(PIN_SETTING_KEY).then((r) => r ?? null), [])
-  const [unlocked, setUnlocked] = useState(false)
+  // 시연 모드는 잠금 없이 바로 연다 (가상 자료뿐)
+  const [unlocked, setUnlocked] = useState(IS_DEMO)
   const hiddenAt = useRef<number | null>(null)
 
   // 폰 분실 대비: 백그라운드에 오래 있다가 돌아오면 잠근다.
@@ -73,7 +76,7 @@ export default function App() {
       if (document.visibilityState === 'hidden') {
         hiddenAt.current = Date.now()
       } else if (hiddenAt.current !== null) {
-        if (Date.now() - hiddenAt.current > RELOCK_AFTER_MS) setUnlocked(false)
+        if (!IS_DEMO && Date.now() - hiddenAt.current > RELOCK_AFTER_MS) setUnlocked(false)
         hiddenAt.current = null
       }
     }
@@ -134,6 +137,7 @@ export default function App() {
       <TimerProvider>
       <MiniTimer />
       <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-60 print:p-0">
+        <DemoBanner />
         <Suspense fallback={<div className="p-6 text-ink-3">불러오는 중…</div>}>
         <Routes>
           <Route path="/" element={<HomePage />} />

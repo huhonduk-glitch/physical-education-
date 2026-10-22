@@ -5,6 +5,9 @@ import App from './App'
 import UpdateBanner from './components/UpdateBanner'
 import UpgradeBlocked from './components/UpgradeBlocked'
 import { AUTO_BACKUP_NOTICE_KEY, prepareUpgrade } from './db/autoBackup'
+import { db } from './db/db'
+import { seedDemo } from './db/demoSeed'
+import { IS_DEMO, namespaceStorage } from './lib/demo'
 import 'pretendard/dist/web/variable/pretendardvariable.css'
 import './index.css'
 import { listenInstallPrompt } from './lib/install'
@@ -26,8 +29,9 @@ function start() {
   )
 }
 
-// 저장 구조가 바뀌는 업데이트면, 새 버전으로 열기 전에 옛 자료를 기기 안에 통째로 복사해 둔다 (autoBackup.ts)
-void prepareUpgrade().then((r) => {
+/** 실제 앱: 저장 구조가 바뀌는 업데이트면, 새 버전으로 열기 전에 옛 자료를 기기 안에 통째로 복사해 둔다 (autoBackup.ts) */
+async function startReal() {
+  const r = await prepareUpgrade()
   if (r.status === 'saved') {
     try {
       localStorage.setItem(AUTO_BACKUP_NOTICE_KEY, String(Date.now()))
@@ -41,4 +45,15 @@ void prepareUpgrade().then((r) => {
     return
   }
   start()
-})
+}
+
+/** 시연 모드(?demo=1): 브라우저 저장 키를 나누고, 처음이면 가상 학생·수업 예시를 넣는다 (실제 자료는 건드리지 않음) */
+async function startDemo() {
+  namespaceStorage()
+  await seedDemo(db).catch(() => {
+    /* 가상 자료를 못 넣어도 빈 시연 앱으로 연다 */
+  })
+  start()
+}
+
+void (IS_DEMO ? startDemo() : startReal())

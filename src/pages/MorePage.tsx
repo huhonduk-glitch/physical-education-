@@ -1,3 +1,4 @@
+import { IS_DEMO } from '../lib/demo'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Logo, MakerCredit } from '../components/Brand'
@@ -111,6 +112,20 @@ export default function MorePage() {
               </div>
             </section>
           ))}
+
+        {/* 시연 모드: 다른 선생님께 가상 학생으로 보여 주기 (실제 자료와 따로 보관) */}
+        {!IS_DEMO && (
+          <a href={`${import.meta.env.BASE_URL}?demo=1`} className="card flex min-h-[64px] items-center gap-3">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-light text-brand">
+              <Icon name="play" size={18} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <b className="block">시연 모드로 열기</b>
+              <span className="hint">가상 학생·수업 예시로 다른 선생님께 보여 주기 · 내 자료는 그대로</span>
+            </span>
+            <Icon name="chevronRight" size={18} className="text-ink-3" />
+          </a>
+        )}
 
         <p className="hint text-center">학생 정보는 이 기기 안에만 저장돼요 · 인터넷으로 보내지 않아요</p>
         <MakerCredit className="pt-2 pb-2" />
