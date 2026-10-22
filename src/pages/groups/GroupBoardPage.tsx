@@ -14,7 +14,7 @@ import type { Student } from '../../db/types'
 import { cellCounts, checkItems, type CheckItem } from '../../lib/checkBoard'
 import { todayStr } from '../../lib/dates'
 import { memberNo, saveLastGroup, SEMESTER_LABEL } from '../../lib/groups'
-import { summarizeDay } from '../../lib/recordStats'
+import { pointTally, summarizeDay } from '../../lib/recordStats'
 import { classForNow } from '../../lib/timetable'
 import { useApp } from '../../state/AppContext'
 import { useGroups } from '../../state/useGroups'
@@ -71,11 +71,12 @@ export default function GroupBoardPage() {
     void toggleCheck(db, { schoolYear: settings.schoolYear, groupId: id, studentId: s.id, date, period: nowHere?.period, type: item.type, category: item.label })
   }
 
-  // 달력에 점 찍을 날짜: 이 수업반에서 기록한 날
-  const marked = useLiveQuery(async () => {
+  // 이 수업반의 모든 기록: 달력에 점 찍을 날짜 + 학생별 누적 칭찬·지도(포인트)
+  const history = useLiveQuery(async () => {
     const [r, a] = await Promise.all([db.records.where('groupId').equals(id).toArray(), db.absences.where('groupId').equals(id).toArray()])
-    return new Set([...r.map((x) => x.date), ...a.map((x) => x.date)])
+    return { marked: new Set([...r.map((x) => x.date), ...a.map((x) => x.date)]), points: pointTally(r) }
   }, [id])
+  const marked = history?.marked
 
   const choose = (gid: string) => {
     setSelected([])
@@ -262,6 +263,12 @@ export default function GroupBoardPage() {
                 >
                   <span className={`leading-none font-extrabold tabular-nums ${group?.kind === 'elective' ? 'text-[0.95rem]' : 'text-[1.3rem]'}`}>{group ? memberNo(group, s) : s.number}</span>
                   <span className="mt-1 w-full truncate text-center text-[0.74rem] leading-tight font-semibold">{s.name}</span>
+                  {/* 이 수업반 누적 칭찬 (포인트). 지도 횟수는 학생들이 볼 수 있는 화면이라 카드에 띄우지 않는다 */}
+                  {(history?.points.get(s.id)?.praise ?? 0) > 0 && (
+                    <span className={`mt-0.5 text-[0.7rem] leading-none font-extrabold tabular-nums ${on ? 'text-white' : 'text-brand'}`}>
+                      ★{history?.points.get(s.id)?.praise}
+                    </span>
+                  )}
                   <span className="mt-1 flex h-2 items-center gap-1" aria-hidden>
                     {d?.absent && <span className={`h-2 w-2 rounded-full ${on ? 'bg-white' : 'bg-ink-3'}`} />}
                     {d && d.unprepared > 0 && <span className={`h-2 w-2 rounded-full ${on ? 'bg-white' : 'bg-danger'}`} />}
@@ -282,6 +289,9 @@ export default function GroupBoardPage() {
           </span>
           <span className="flex items-center gap-1.5">
             <i className="h-2 w-2 rounded-full bg-brand" /> 칭찬
+          </span>
+          <span className="flex items-center gap-1.5">
+            <b className="text-brand">★</b> 이 반 누적 칭찬
           </span>
           <span className="flex items-center gap-1.5">
             <i className="h-2 w-2 rounded-full bg-ok" /> 관찰·부장
@@ -313,6 +323,7 @@ export default function GroupBoardPage() {
           period={nowHere?.period}
           groupId={id}
           numberOf={(s) => (group ? memberNo(group, s) : String(s.number))}
+          points={sheet.length === 1 ? history?.points.get(sheet[0].id) ?? { praise: 0, guide: 0 } : undefined}
           onClose={() => setSheet(null)}
           onRecorded={onRecorded}
         />

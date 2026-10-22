@@ -70,3 +70,24 @@ export function summarizeDay(records: readonly ClassRecord[], absences: readonly
   for (const a of absences) get(a.studentId).absent = true
   return m
 }
+
+/**
+ * 누가기록 포인트 (재설계 B-2): 학생별 칭찬·지도 횟수를 세기만 한다.
+ * 점수·등급으로 바꾸지 않는다 (평가 정보가 되지 않게). 견학·관찰·부장 활동은 세지 않는다.
+ */
+export interface Points {
+  praise: number
+  guide: number
+}
+
+export function pointTally(records: readonly Pick<ClassRecord, 'studentId' | 'type'>[]): Map<string, Points> {
+  const m = new Map<string, Points>()
+  for (const r of records) {
+    if (r.type !== 'exemplary' && r.type !== 'unprepared') continue
+    const p = m.get(r.studentId) ?? { praise: 0, guide: 0 }
+    if (r.type === 'exemplary') p.praise++
+    else p.guide++
+    m.set(r.studentId, p)
+  }
+  return m
+}
