@@ -14,6 +14,7 @@ import type {
   AudioFile,
   ClassGroup,
   Lesson,
+  PapsRound,
 } from './types'
 import { migrateToGroups } from './groupsRepo'
 
@@ -36,6 +37,7 @@ export class PeDatabase extends Dexie {
   audioFiles!: EntityTable<AudioFile, 'id'>
   groups!: EntityTable<ClassGroup, 'id'>
   lessons!: EntityTable<Lesson, 'id'>
+  papsRounds!: EntityTable<PapsRound, 'id'>
 
   constructor(name = 'pe-records') {
     super(name)
@@ -72,6 +74,9 @@ export class PeDatabase extends Dexie {
       )
     // v4: 수업 일지
     this.version(4).stores({ lessons: 'id, schoolYear, groupId, date, [groupId+date]' })
+    // v5: PAPS 측정 회차. 표 하나만 더한다 — 기존 표·기록은 건드리지 않는다(회차 없는 기록 = 1회차).
+    // 이 버전으로 처음 열기 전에 main.tsx가 옛 저장소를 통째로 자동 백업한다(autoBackup.ts)
+    this.version(5).stores({ papsRounds: 'id, schoolYear, [schoolYear+grade+classNo]' })
   }
 }
 

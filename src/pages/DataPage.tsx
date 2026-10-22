@@ -1,11 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import BottomSheet from '../components/BottomSheet'
 import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import PinPad from '../components/PinPad'
 import { backupFileName, checkBackup, compareCounts, countAll, exportAll, restoreAll, TABLE_LABELS, type BackupFile } from '../db/backup'
+import { listSnapshots, type AutoSnapshot } from '../db/autoBackup'
 import { db } from '../db/db'
 import { saveText } from '../lib/download'
 import { PIN_SETTING_KEY, verifyPin, type StoredPin } from '../lib/pin'
@@ -18,6 +19,12 @@ export default function DataPage() {
   const [err, setErr] = useState('')
   const [pending, setPending] = useState<BackupFile | null>(null)
   const nowCounts = useLiveQuery(() => countAll(db), [])
+  const [snapshots, setSnapshots] = useState<AutoSnapshot[] | null>(null)
+  useEffect(() => {
+    listSnapshots()
+      .then(setSnapshots)
+      .catch(() => setSnapshots([]))
+  }, [])
   const [wipe, setWipe] = useState(false)
   const years = useLiveQuery(async () => {
     const ys = new Set<number>()
@@ -90,6 +97,37 @@ export default function DataPage() {
             <Icon name="download" /> 지금 백업 파일 받기
           </button>
         </section>
+
+        {snapshots && snapshots.length > 0 && (
+          <section className="card space-y-3">
+            <p className="card-title">업데이트 전 자동 백업</p>
+            <p className="hint">저장 방식이 바뀌는 업데이트 때 앱이 바꾸기 전 자료를 이 기기 안에 복사해 둔 거예요. 파일로 받거나, 아래 [복원]과 같은 확인을 거쳐 되돌릴 수 있어요.</p>
+            <ul className="divide-y divide-line rounded-2xl bg-fill">
+              {snapshots.map((s) => (
+                <li key={s.id} className="space-y-2 px-4 py-3">
+                  <p className="font-bold">
+                    {new Date(s.createdAt).toLocaleString('ko-KR')} · {s.reason}
+                  </p>
+                  <p className="hint">
+                    학생 {s.file.counts.students ?? 0} · 누가기록 {s.file.counts.records ?? 0} · PAPS 기록 칸 {s.file.counts.papsResults ?? 0}
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      className="btn btn-soft flex-1 bg-white"
+                      onClick={() => saveText(backupFileName(new Date(s.createdAt)).replace('backup_', 'backup_업데이트전_'), JSON.stringify(s.file), 'application/json')}
+                    >
+                      <Icon name="download" /> 파일로 받기
+                    </button>
+                    <button type="button" className="btn btn-soft flex-1 bg-white" disabled={readOnly} onClick={() => (setErr(''), setPending(s.file))}>
+                      이걸로 되돌리기
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="card space-y-3">
           <p className="card-title">복원</p>

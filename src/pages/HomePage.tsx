@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import AutoBackupNotice from '../components/AutoBackupNotice'
 import BackupWarning from '../components/BackupWarning'
 import { Logo } from '../components/Brand'
 import FeatureSheet from '../components/FeatureSheet'
@@ -74,6 +75,7 @@ export default function HomePage() {
       </header>
 
       <div className="page space-y-5 pt-3 pb-8">
+        <AutoBackupNotice />
         <InstallGuide place="home" />
         {/* 시작 준비에 '첫 백업'이 이미 보이면 겹치지 않게 */}
         {!showSetup && <BackupWarning hasData={(students?.length ?? 0) > 0} />}
