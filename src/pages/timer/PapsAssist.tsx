@@ -10,6 +10,7 @@ import { cellId, cellsForKey } from '../../lib/papsLayout'
 import { levelKey, lookup, pei } from '../../lib/paps'
 import { canMiss, pushShuttle, replayShuttle, runnerOf, undoShuttle, type ShuttleAction } from '../../lib/shuttle'
 import { GradeBadge, usePapsClassKey } from '../paps/common'
+import { RoundNote } from '../paps/RoundBar'
 import { HEART_WINDOWS, STEP_DURATION_SEC, STEP_WORDS, cadenceCount, formatCountdown, heartWindowAt, stepBeatAt, stepBpm } from '../../lib/timerMath'
 import { useApp } from '../../state/AppContext'
 import { useTimer } from '../../state/TimerContext'
@@ -158,7 +159,7 @@ function PeiCalc({ method }: { method: 'palpation' | 'monitor' }) {
     }
     const exists = pc.values.get(st.id)?.has(cellId(items[0].cell))
     if (exists && !confirm('이미 기록이 있어요. 덮어쓸까요?')) return
-    await setCells(db, settings.schoolYear, items)
+    await setCells(db, settings.schoolYear, items, pc.roundId)
     setMsg(`${st.number}번 ${st.name}: PEI ${value} 저장`)
     setHr(['', '', ''])
   }
@@ -194,6 +195,7 @@ function PeiCalc({ method }: { method: 'palpation' | 'monitor' }) {
       </div>
       {st && <p className="hint">{highMale ? '고등학교 남학생 공식 (첫 번째 심박만 사용)' : '여학생·중학생 공식 (심박 3회 합)'}</p>}
       <p className="text-center text-3xl font-extrabold tabular-nums">{value === null ? '—' : `PEI ${value}`}</p>
+      {cls && <RoundNote round={pc.round} />}
       <button type="button" className="btn btn-primary w-full" disabled={!st || value === null || readOnly} onClick={save}>
         PAPS 스텝검사에 저장
       </button>
@@ -224,7 +226,8 @@ function Shuttle() {
   // 반 고르기: 내 학적반 수업반을 먼저 (PAPS 화면들과 같은 반을 기억)
   const { classes, mine, cls, setCls } = usePapsClassKey()
   const pc = usePapsClass(cls)
-  const clsKey = cls ? classKeyStr(cls) : ''
+  // 반 + 회차마다 따로 센다 (새 회차를 만들면 0회부터. 예전 키 '1-3'은 1회차로 그대로 이어진다)
+  const clsKey = cls ? `${classKeyStr(cls)}${pc.roundId ? `|${pc.roundId}` : ''}` : ''
   // 누른 순서만 반별로 남긴다 (다른 화면에 다녀와도 그대로, 탭을 닫으면 사라짐)
   const KEY = 'pe.shuttleRun.v2'
   const [all, setAll] = useState<Record<string, ShuttleAction[]>>(() => {
@@ -256,7 +259,7 @@ function Shuttle() {
     const cell = cellsForKey(pc.cells, 'shuttleRun')[0] ?? { key: 'shuttleRun' as const, attempt: null, side: null }
     const over = toSave.filter((s) => pc.values.get(s.id)?.has(cellId(cell))).length
     if (over && !confirm(`${over}칸을 덮어씁니다. 계속할까요?`)) return
-    await setCells(db, settings.schoolYear, toSave.map((s) => ({ studentId: s.id, cell, value: runnerOf(state, s.id).record })))
+    await setCells(db, settings.schoolYear, toSave.map((s) => ({ studentId: s.id, cell, value: runnerOf(state, s.id).record })), pc.roundId)
     setMsg(`${toSave.length}명의 왕복오래달리기 기록을 저장했어요.`)
   }
 
@@ -424,6 +427,7 @@ function Shuttle() {
             </table>
           </div>
           <p className="hint">안 뛴 학생(견학·결석)은 [저장] 체크를 풀어 주세요. 저장한 뒤에도 [PAPS → 기록 입력]에서 고칠 수 있어요.</p>
+          <RoundNote round={pc.round} />
           <button type="button" className="btn btn-primary w-full" disabled={readOnly || toSave.length === 0} onClick={save}>
             {toSave.length}명 PAPS 왕복오래달리기에 저장
           </button>

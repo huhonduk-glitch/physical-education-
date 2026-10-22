@@ -9,10 +9,11 @@ import { eventName, type EventId } from '../lib/paps'
 import { useApp } from '../state/AppContext'
 import { usePapsClass } from '../state/usePapsClass'
 import { ReadinessBadge, measureGroups, useReadiness, usePapsClassKey } from './paps/common'
+import RoundBar from './paps/RoundBar'
 
 /** PAPS 탭 첫 화면: 반 고르기 · 업로드 준비 상태 · 진행률 · 종목별 입력 (CLAUDE.md 4-5) */
 export default function PapsPage() {
-  const { standards } = useApp()
+  const { standards, readOnly } = useApp()
   const { classes, mine, cls, setCls } = usePapsClassKey()
   const pc = usePapsClass(cls)
   const ready = useReadiness(pc)
@@ -42,6 +43,7 @@ export default function PapsPage() {
         ) : (
           <>
             <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
+            {cls && <RoundBar rounds={pc.rounds} readOnly={readOnly} />}
 
             <section className="card space-y-3">
               <div className="flex items-center justify-between gap-2">

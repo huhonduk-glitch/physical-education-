@@ -4,10 +4,12 @@ import { eventName, fixed } from '../../lib/paps'
 import { useApp } from '../../state/AppContext'
 import { usePapsClass } from '../../state/usePapsClass'
 import { GradeBadge, usePapsClassKey } from './common'
+import RoundBar from './RoundBar'
+import RoundCompare from './RoundCompare'
 
 /** 반 전체 결과: 요인별 대표 기록·등급·점수, 종합점수·종합등급 (CLAUDE.md 4-5) */
 export default function PapsResultsPage() {
-  const { standards } = useApp()
+  const { standards, readOnly } = useApp()
   const { classes, mine, cls, setCls } = usePapsClassKey()
   const pc = usePapsClass(cls)
   const notMeasured = pc.students.filter((s) => !pc.excluded.has(s.id) && !pc.summaries.get(s.id)?.complete)
@@ -16,7 +18,10 @@ export default function PapsResultsPage() {
       <PageHeader title="결과 · 등급" back />
       <div className="page space-y-4 pb-8">
         <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
+        {cls && <RoundBar rounds={pc.rounds} readOnly={readOnly} />}
         <p className="rounded-2xl bg-fill px-4 py-2 text-[0.85rem] font-semibold text-ink-3">나이스 산출값과 다르면 나이스 값이 우선입니다.</p>
+        <RoundCompare cls={cls} pc={pc} />
+        {pc.rounds.rounds.length > 1 && <p className="px-1 font-extrabold">{pc.round.round}회차 자세히</p>}
         <ul className="space-y-2">
           {pc.students.map((s) => {
             const p = pc.summaries.get(s.id)

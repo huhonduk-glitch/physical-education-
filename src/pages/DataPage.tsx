@@ -114,12 +114,12 @@ export default function DataPage() {
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      className="btn btn-soft flex-1 bg-white"
+                      className="btn btn-soft flex-1 bg-white whitespace-nowrap"
                       onClick={() => saveText(backupFileName(new Date(s.createdAt)).replace('backup_', 'backup_업데이트전_'), JSON.stringify(s.file), 'application/json')}
                     >
                       <Icon name="download" /> 파일로 받기
                     </button>
-                    <button type="button" className="btn btn-soft flex-1 bg-white" disabled={readOnly} onClick={() => (setErr(''), setPending(s.file))}>
+                    <button type="button" className="btn btn-soft flex-1 bg-white whitespace-nowrap" disabled={readOnly} onClick={() => (setErr(''), setPending(s.file))}>
                       이걸로 되돌리기
                     </button>
                   </div>

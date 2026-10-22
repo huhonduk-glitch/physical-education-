@@ -13,6 +13,7 @@ import { fixed } from '../../lib/paps'
 import { useApp } from '../../state/AppContext'
 import { usePapsClass } from '../../state/usePapsClass'
 import { measureGroups, usePapsClassKey } from './common'
+import RoundBar from './RoundBar'
 
 /** 기록 붙여넣기 (파일 없이) — 헤더가 있으면 알아서 칸을 맞추고, 없으면 고른 종목 칸 순서대로 */
 export default function PapsPastePage() {
@@ -66,7 +67,7 @@ export default function PapsPastePage() {
           return { studentId: r.studentId!, cell: { key: key as CellSpec['key'], attempt: a ? Number(a) : null, side: (s || null) as CellSpec['side'] }, value }
         }),
       )
-    await setCells(db, settings.schoolYear, items)
+    await setCells(db, settings.schoolYear, items, pc.roundId)
     setSaved(`${items.length}칸을 저장했어요.`)
     setText('')
   }
@@ -76,6 +77,7 @@ export default function PapsPastePage() {
       <PageHeader title="붙여넣기 입력" back />
       <div className="page space-y-4 pb-8">
         <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
+        {cls && <RoundBar rounds={pc.rounds} readOnly={readOnly} />}
         <section className="card space-y-3">
           <p className="hint">
             엑셀에서 <b>헤더(제목 줄)까지</b> 복사해 붙여넣으면 칸을 알아서 맞춰요. 나이스 양식 전체를 붙여넣어도 돼요.

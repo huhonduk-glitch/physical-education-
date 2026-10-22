@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo } from 'react'
 import { db } from '../db/db'
-import { indexResults, loadClassPaps, studentSummary } from '../db/papsRepo'
+import { indexResults, loadClassPapsPicked, studentSummary } from '../db/papsRepo'
 import type { Student } from '../db/types'
 import { teamLevel, type EventId, type Factor } from '../lib/paps'
 import type { Level } from '../lib/teams'
@@ -33,7 +33,7 @@ export function useTeamLevels(students: readonly Student[], enabled: boolean): M
       byClass.set(k, [...(byClass.get(k) ?? []), s])
     }
     return Promise.all(
-      [...byClass.values()].map(async (list) => ({ list, paps: await loadClassPaps(db, year, list[0].grade, list[0].classNo, list.map((s) => s.id)) })),
+      [...byClass.values()].map(async (list) => ({ list, paps: await loadClassPapsPicked(db, year, list[0].grade, list[0].classNo, list.map((s) => s.id), 'latest') })),
     )
   }, [enabled, year, ids])
   return useMemo(() => {
