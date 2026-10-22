@@ -25,6 +25,7 @@ const NeisSyncPage = lazy(() => import('./pages/NeisSyncPage'))
 const ReportPage = lazy(() => import('./pages/ReportPage'))
 const RubricPage = lazy(() => import('./pages/RubricPage'))
 const TeamAppsPage = lazy(() => import('./pages/tools/TeamAppsPage'))
+const VideoPage = lazy(() => import('./pages/tools/VideoPage'))
 const HelpPage = lazy(() => import('./pages/HelpPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 const TermsGate = lazy(() => import('./pages/TermsPage').then((m) => ({ default: m.TermsGate })))
@@ -149,6 +150,7 @@ export default function App() {
           <Route path="/tools/pick" element={<PickPage />} />
           <Route path="/tools/teams" element={<TeamsPage />} />
           <Route path="/tools/apps" element={<TeamAppsPage />} />
+          <Route path="/tools/video" element={<VideoPage />} />
           <Route path="/paps" element={<PapsPage />} />
           <Route path="/paps/input/:key" element={<PapsInputPage />} />
           <Route path="/paps/paste" element={<PapsPastePage />} />

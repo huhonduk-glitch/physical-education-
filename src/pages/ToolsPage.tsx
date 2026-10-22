@@ -38,6 +38,17 @@ export default function ToolsPage() {
             </Link>
           ))}
         </div>
+        {/* 동작 영상 피드백 (B-3): 영상은 기기 메모리에만 */}
+        <Link to="/tools/video" className="card flex min-h-[72px] items-center gap-3 p-4 transition-transform active:scale-[0.99]">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">
+            <Icon name="eye" size={22} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <b className="block">동작 영상 피드백</b>
+            <span className="text-xs font-semibold text-ink-3">카메라 지연 재생 · 슬로모션 · 선·각도 그리기 (기기에만)</span>
+          </span>
+          <Icon name="chevronRight" className="text-ink-3" />
+        </Link>
         {/* PAPS 신호음 → 왕복 탭 2단을 거치지 않고 바로 */}
         <Link to="/timer?tab=paps&aid=shuttle" className="card flex min-h-[72px] items-center gap-3 p-4 transition-transform active:scale-[0.99]">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">
