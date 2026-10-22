@@ -39,6 +39,7 @@ const TimetablePage = lazy(() => import('./pages/TimetablePage'))
 const PapsInputPage = lazy(() => import('./pages/paps/PapsInputPage'))
 const PapsPastePage = lazy(() => import('./pages/paps/PapsPastePage'))
 const PapsResultsPage = lazy(() => import('./pages/paps/PapsResultsPage'))
+const PapsStatsPage = lazy(() => import('./pages/paps/PapsStatsPage'))
 const PapsExportPage = lazy(() => import('./pages/paps/PapsExportPage'))
 const PapsSetupPage = lazy(() => import('./pages/paps/PapsSetupPage'))
 const KeywordsPage = lazy(() => import('./pages/KeywordsPage'))
@@ -152,6 +153,7 @@ export default function App() {
           <Route path="/paps/input/:key" element={<PapsInputPage />} />
           <Route path="/paps/paste" element={<PapsPastePage />} />
           <Route path="/paps/results" element={<PapsResultsPage />} />
+          <Route path="/paps/stats" element={<PapsStatsPage />} />
           <Route path="/paps/export" element={<PapsExportPage />} />
           <Route path="/paps/setup" element={<PapsSetupPage />} />
           <Route path="/students" element={<StudentsPage />} />

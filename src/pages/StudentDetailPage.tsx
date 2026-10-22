@@ -280,7 +280,12 @@ function PapsCard({ student }: { student: Student }) {
           ))}
         </ul>
       )}
-      <p className="hint">나이스 산출값과 다르면 나이스 값이 우선입니다.</p>
+      <p className="hint">
+        {pc.rounds.rounds.length > 1 ? `${pc.round.round}회차 기준 · ` : ''}나이스 산출값과 다르면 나이스 값이 우선입니다.
+      </p>
+      <Link to={`/paps/stats?c=${student.grade}-${student.classNo}&s=${student.id}`} className="text-sm font-bold text-brand">
+        PAPS 회차별 변화 그래프 ›
+      </Link>
     </Card>
   )
 }

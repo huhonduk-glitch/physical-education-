@@ -17,7 +17,7 @@ const FLOWS: { id: FeatureId; title: string; sub: string; icon: IconName; tone: 
     steps: [
       { label: '측정 종목', to: '/paps/setup' },
       { label: '기록 입력', to: '/paps' },
-      { label: '결과 보기', to: '/paps/results' },
+      { label: '결과·통계', to: '/paps/stats' },
       { label: '나이스 파일', to: '/paps/export' },
     ],
   },

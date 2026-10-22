@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom'
 import ClassPicker from '../../components/ClassPicker'
+import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
 import { eventName, fixed } from '../../lib/paps'
 import { useApp } from '../../state/AppContext'
@@ -15,7 +17,15 @@ export default function PapsResultsPage() {
   const notMeasured = pc.students.filter((s) => !pc.excluded.has(s.id) && !pc.summaries.get(s.id)?.complete)
   return (
     <>
-      <PageHeader title="결과 · 등급" back />
+      <PageHeader
+        title="결과 · 등급"
+        back
+        right={
+          <Link to={`/paps/stats${cls ? `?c=${cls.grade}-${cls.classNo}` : ''}`} className="btn btn-soft">
+            <Icon name="paps" /> 통계
+          </Link>
+        }
+      />
       <div className="page space-y-4 pb-8">
         <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
         {cls && <RoundBar rounds={pc.rounds} readOnly={readOnly} />}

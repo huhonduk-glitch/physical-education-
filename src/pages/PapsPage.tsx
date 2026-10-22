@@ -99,6 +99,18 @@ export default function PapsPage() {
               </section>
             )}
 
+            {/* 반 결과를 자동으로 그래프·통계로 (B-4) */}
+            <Link to={`/paps/stats${q}`} className="flex min-h-[72px] items-center gap-3 rounded-3xl bg-brand p-4 text-white shadow-[var(--shadow-float)] transition-transform active:scale-[0.99]">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white/20">
+                <Icon name="paps" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <b className="block text-lg">PAPS 통계 · 그래프</b>
+                <span className="text-sm font-semibold text-white/85">등급 분포 · 요인별 평균 · 회차별 변화 · 기록 분포</span>
+              </span>
+              <Icon name="chevronRight" />
+            </Link>
+
             <div className="grid grid-cols-2 gap-3">
               {(
                 [
