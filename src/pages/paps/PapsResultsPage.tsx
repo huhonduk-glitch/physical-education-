@@ -21,9 +21,14 @@ export default function PapsResultsPage() {
         title="결과 · 등급"
         back
         right={
-          <Link to={`/paps/stats${cls ? `?c=${cls.grade}-${cls.classNo}` : ''}`} className="btn btn-soft">
-            <Icon name="paps" /> 통계
-          </Link>
+          <div className="flex gap-1.5">
+            <Link to={`/paps/stats${cls ? `?c=${cls.grade}-${cls.classNo}` : ''}`} className="btn btn-soft">
+              <Icon name="paps" /> 통계
+            </Link>
+            <Link to={`/paps/codes${cls ? `?c=${cls.grade}-${cls.classNo}` : ''}`} className="btn btn-soft" aria-label="튼튼몬 연동 코드">
+              <Icon name="grid" /> 코드
+            </Link>
+          </div>
         }
       />
       <div className="page space-y-4 pb-8">

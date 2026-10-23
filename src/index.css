@@ -343,4 +343,18 @@ textarea {
     size: A4;
     margin: 14mm;
   }
+  /* 튼튼몬 연동 코드 쪽지: A4 한 장에 3열 × 4행, 점선을 따라 자른다 */
+  .link-sheet {
+    grid-template-rows: repeat(4, 66mm);
+  }
+  .link-slip {
+    border: 1px dashed #777 !important;
+    justify-content: center;
+    padding: 3mm !important;
+    break-inside: avoid;
+  }
+  .link-qr {
+    width: 32mm !important;
+    height: 32mm !important;
+  }
 }

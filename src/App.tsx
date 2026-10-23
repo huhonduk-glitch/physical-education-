@@ -45,6 +45,7 @@ const PapsResultsPage = lazy(() => import('./pages/paps/PapsResultsPage'))
 const PapsStatsPage = lazy(() => import('./pages/paps/PapsStatsPage'))
 const PapsExportPage = lazy(() => import('./pages/paps/PapsExportPage'))
 const PapsSetupPage = lazy(() => import('./pages/paps/PapsSetupPage'))
+const PapsLinkCodesPage = lazy(() => import('./pages/paps/PapsLinkCodesPage'))
 const KeywordsPage = lazy(() => import('./pages/KeywordsPage'))
 const AssessmentsPage = lazy(() => import('./pages/AssessmentsPage'))
 const AssessmentGradePage = lazy(() => import('./pages/AssessmentGradePage'))
@@ -162,6 +163,7 @@ export default function App() {
           <Route path="/paps/stats" element={<PapsStatsPage />} />
           <Route path="/paps/export" element={<PapsExportPage />} />
           <Route path="/paps/setup" element={<PapsSetupPage />} />
+          <Route path="/paps/codes" element={<PapsLinkCodesPage />} />
           <Route path="/students" element={<StudentsPage />} />
           <Route path="/students/import" element={<RosterImportPage />} />
           <Route path="/more" element={<MorePage />} />

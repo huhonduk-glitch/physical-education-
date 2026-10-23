@@ -599,6 +599,14 @@ lessons         { id, schoolYear, groupId, date, period?, unit?, activity, note?
 - REA는 좌표를 찍어 누를 수 없어 그리기 동작은 화면으로 확인 못 함(각도 계산은 단위 테스트)
 - 배포됨: PR #19 → main 병합 `a0674e7` (2026-10-22), GitHub Pages 배포 성공, 배포 사이트에서 새 기능 확인
 
+### 6-3. 튼튼몬 연동 코드 (2026-10-23 교사 승인, 브랜치 `tuntun-link`)
+- 근거: `PELOG_LINK_FORMAT.md`(튼튼몬 쪽 약속, v1). 계산 `src/lib/linkCode.ts`(문서 참고 코드를 그대로 옮김), 테스트 `tests/linkCode.test.ts`(문서 예시 6개 · 막을 입력 · 1,295 조합 왕복)
+- 화면 `/paps/codes` (`src/pages/paps/PapsLinkCodesPage.tsx`): 반·회차 고르기 → 학생마다 7글자 코드 + QR. 들어가는 곳: PAPS 화면 칸, 결과 화면 [코드]
+- 코드에는 **체력요인 4개 숫자 등급 + 그 회차 측정일만**. 이름·학번·성별·측정값·BMI 없음. 기록 없는 요인은 빈칸. 측정 제외(학생 단위)·등급 0개·측정일 없음 → 코드 없음(목록으로 보여 줌)
+- **쪽지 인쇄에는 이름을 넣지 않는다**(코드 형식이 공개라 코드만으로 등급을 풀 수 있음). 쪽지 = 학년·반·번호, 코드, QR, 안내 한 줄. 이름은 화면에서만 번호 옆에(print:hidden). A4 한 장 3×4 = 12명, 점선, QR 32mm
+- 코드는 저장하지 않는다(볼 때마다 계산). 저장 구조는 바꾸지 않았다
+- QR 부품 `qrcode-generator` 1.4.4(MIT)를 npm으로 넣어 앱 빌드에 묶음(오프라인, CDN 안 씀). QR은 SVG 칸으로 직접 그림
+
 ### 6-2. 시연 모드 (2026-10-22 교사 요청: 다른 선생님들께 가상 학생으로 시연)
 - 주소 `…/physical-education-/?demo=1` (또는 더보기 → "시연 모드로 열기"). 탭을 닫을 때까지 유지(sessionStorage `pelog.demoMode`), `?demo=0`·[시연 끝내기]로 실제 앱
 - **실제 자료와 완전히 분리**: 저장소 이름 `pe-records-demo`(`src/lib/demo.ts` `dbName`, `db.ts`가 씀), localStorage·sessionStorage 키 앞에 `demo:`(`namespaceStorage`). 실제 앱의 자동 백업(`prepareUpgrade`)은 시연에서 돌지 않음
