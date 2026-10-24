@@ -58,3 +58,38 @@ describe('PAPS 회차 저장 (예전 기록은 그대로 1회차)', () => {
     expect((await loadRounds(db, 2026, 1, 2)).length).toBe(1)
   })
 })
+
+describe('요인별 최고 내보내기 (2026-10-24): 실제 기준표 점수로 요인마다 회차를 고른다', () => {
+  it('1회차 심폐 + 2회차 유연성, 신장·체중은 최근 회차', async () => {
+    const { DEFAULT_STANDARDS } = await import('../src/lib/paps')
+    const { indexResults, loadClassPapsFactorPicked, studentSummary } = await import('../src/db/papsRepo')
+    const db = fresh()
+    const r2 = await addRound(db, 2026, 1, 1, '2026-09-10')
+    const sar = (attempt: number) => ({ key: 'sitAndReach' as const, attempt, side: null })
+    const one = { key: 'height' as const, attempt: null, side: null }
+    const w = { key: 'weight' as const, attempt: null, side: null }
+    await setCell(db, 2026, 's1', cell, 60) // 1회차 왕복 60회
+    await setCell(db, 2026, 's1', sar(1), 3)
+    await setCell(db, 2026, 's1', sar(2), 4)
+    await setCell(db, 2026, 's1', one, 170)
+    await setCell(db, 2026, 's1', w, 60)
+    await setCell(db, 2026, 's1', cell, 40, r2) // 2회차 왕복은 낮고
+    await setCell(db, 2026, 's1', sar(1), 15, r2) // 유연성은 높다
+    await setCell(db, 2026, 's1', sar(2), 14, r2)
+    await setCell(db, 2026, 's1', one, 171, r2)
+    await setCell(db, 2026, 's1', w, 62, r2)
+    const selected = { 심폐지구력: 'shuttleRun', 유연성: 'sitAndReach' } as const
+    const groups = [
+      { key: '심폐지구력', events: ['shuttleRun'], mode: 'best' as const },
+      { key: '유연성', events: ['sitAndReach'], mode: 'best' as const },
+      { key: '비만', events: ['height', 'weight'], mode: 'latest' as const },
+    ]
+    const d = await loadClassPapsFactorPicked(db, 2026, 1, 1, ['s1'], () => groups, (sid, g, rs) => {
+      const p = studentSummary(DEFAULT_STANDARDS, { grade: 1, gender: 'M' }, '고', selected, indexResults(rs).values.get(sid), 'regulation')
+      return { complete: true, total: p?.factors.find((f) => f.factor === g)?.points ?? 0 }
+    })
+    expect(Object.fromEntries(d.pick.get('s1')!)).toMatchObject({ 심폐지구력: null, 유연성: r2, 비만: r2 })
+    const v = indexResults(d.results).values.get('s1')!
+    expect(Object.fromEntries(v)).toEqual({ 'shuttleRun||': 60, 'sitAndReach|1|': 15, 'sitAndReach|2|': 14, 'height||': 171, 'weight||': 62 })
+  })
+})

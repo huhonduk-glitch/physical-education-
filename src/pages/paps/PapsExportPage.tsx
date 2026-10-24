@@ -4,12 +4,13 @@ import ClassPicker, { classKeyStr } from '../../components/ClassPicker'
 import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
 import { db } from '../../db/db'
-import { indexResults, loadClassPapsPicked, studentSummary } from '../../db/papsRepo'
+import { indexResults, loadClassPapsFactorPicked, loadClassPapsPicked, studentSummary } from '../../db/papsRepo'
+import type { PapsConfig, PapsResult } from '../../db/types'
 import { saveBlob } from '../../lib/download'
 import { buildRows, rowsToXlsx, validateExport, type ExportIssue } from '../../lib/neisExport'
-import { columnsFor, selectedFromColumns } from '../../lib/papsLayout'
-import type { EventId, Factor } from '../../lib/paps'
-import type { RoundPick } from '../../lib/papsRounds'
+import { cellId, columnsFor, selectedFromColumns } from '../../lib/papsLayout'
+import { FACTORS, type EventId, type Factor } from '../../lib/paps'
+import { groupOfEvent, type PickGroup, type RoundPick } from '../../lib/papsRounds'
 import { useApp } from '../../state/AppContext'
 import { usePapsClass } from '../../state/usePapsClass'
 import { measureGroups, usePapsClassKey } from './common'
@@ -22,9 +23,26 @@ interface Outcome {
   fileName?: string
   rows?: number
   blocked?: string
-  /** 회차를 고른 결과 요약 (예: 2회차 18명 · 1회차 7명) */
-  picked?: string
+  /** 회차를 고른 결과 요약 (예: 2회차 18명 · 1회차 7명). 요인별 최고면 요인마다 한 줄 */
+  picked?: string[]
 }
+
+/** 내보낼 회차 고르기: 최근 회차 / 최고 회차(통째로) / 요인별 최고 */
+type ExportPick = RoundPick | 'factor'
+
+/** 요인별 최고의 묶음: 요인마다 선택 종목(스텝검사는 심박수 칸까지), 신장·체중·체지방은 최근 회차 (2026-10-24 교사 결정) */
+function factorGroups(selected: Partial<Record<Factor, EventId>>): PickGroup[] {
+  const out: PickGroup[] = []
+  for (const f of FACTORS) {
+    const e = selected[f]
+    if (f === '비만' || !e) continue
+    out.push({ key: f, events: e === 'stepTest' ? ['stepTest', 'heartRate'] : [e], mode: 'best' })
+  }
+  out.push({ key: '비만', events: ['height', 'weight', 'bodyFat'], mode: 'latest' })
+  return out
+}
+
+const GROUP_LABEL: Record<string, string> = { 비만: '신장·체중', '*': '기타' }
 
 /** 나이스 내보내기 (CLAUDE.md 4-5): 검사 → 문제 없을 때만 파일 */
 export default function PapsExportPage() {
@@ -33,7 +51,8 @@ export default function PapsExportPage() {
   const pc = usePapsClass(cls)
   const [scope, setScope] = useState<'class' | 'grade'>('class')
   // 여러 번 측정했을 때 학생마다 어느 회차를 내보낼지 (B-5 교사 결정: 회차 하나를 통째로, 섞지 않음)
-  const [pick, setPick] = useState<RoundPick>('latest')
+  // 2026-10-24: 요인마다 회차를 따로 고르는 '요인별 최고'도 (요인 안의 칸은 섞지 않음)
+  const [pick, setPick] = useState<ExportPick>('latest')
   const [out, setOut] = useState<Outcome | null>(null)
   const [busy, setBusy] = useState(false)
   const [showN, setShowN] = useState(30)
@@ -52,7 +71,13 @@ export default function PapsExportPage() {
       let columns = null as ReturnType<typeof columnsFor> | null
       let headerKey = ''
       const rows: string[][] = []
-      const pickedCount = new Map<number, number>()
+      // 묶음(요인, 통째로면 '') → 회차 번호 → 학생 수
+      const pickedCount = new Map<string, Map<number, number>>()
+      const countPick = (g: string, n: number) => {
+        let m = pickedCount.get(g)
+        if (!m) pickedCount.set(g, (m = new Map()))
+        m.set(n, (m.get(n) ?? 0) + 1)
+      }
       for (const c of targets) {
         const students = (await db.students.where('[schoolYear+grade+classNo]').equals([year, c.grade, c.classNo]).toArray())
           .filter((s) => s.status === '재학')
@@ -63,18 +88,52 @@ export default function PapsExportPage() {
           return Object.keys(saved).length ? saved : tCols ? selectedFromColumns(tCols, standards.events) : {}
         }
         const byId = new Map(students.map((s) => [s.id, s]))
-        // 학생마다 회차 하나 → 그 회차의 칸만 (최고 회차는 종합점수로 비교)
-        const data = await loadClassPapsPicked(db, year, c.grade, c.classNo, students.map((s) => s.id), pick, (sid, rs, config) => {
+        const summaryOf = (sid: string, rs: PapsResult[], config: PapsConfig | undefined) => {
           const s = byId.get(sid)
-          if (!s) return null
-          const p = studentSummary(standards, s, settings.schoolLevel, selectedOf(config), indexResults(rs).values.get(sid), settings.papsFlexMode)
-          return p ? { complete: p.complete, total: p.complete ? (p.total ?? p.sum) : p.sum } : null
-        })
-        const roundNo = new Map(data.rounds.map((r) => [r.id, r.round]))
-        for (const s of students) {
-          const n = roundNo.get(data.pick.get(s.id) ?? null) ?? 1
-          pickedCount.set(n, (pickedCount.get(n) ?? 0) + 1)
+          return s ? studentSummary(standards, s, settings.schoolLevel, selectedOf(config), indexResults(rs).values.get(sid), settings.papsFlexMode) : null
         }
+        const ids = students.map((s) => s.id)
+        // 학생·칸 → 고른 회차 (문제를 누르면 그 회차 입력 칸으로 간다)
+        let roundOfCell: (sid: string, cell: string) => string | null
+        let data: { config: PapsConfig | undefined; results: PapsResult[]; rounds: { id: string | null; round: number }[] }
+        if (pick === 'factor') {
+          // 요인마다: 그 요인 칸이 다 있는 회차 먼저 → 그 요인 점수 높은 회차 → 같으면 늦은 회차
+          const d = await loadClassPapsFactorPicked(
+            db,
+            year,
+            c.grade,
+            c.classNo,
+            ids,
+            (config) => factorGroups(selectedOf(config)),
+            (sid, g, rs, config) => {
+              const p = summaryOf(sid, rs, config)
+              if (!p) return null
+              const groupOf = groupOfEvent(factorGroups(selectedOf(config)))
+              const have = indexResults(rs).values.get(sid)
+              const need = (tCols ?? columnsFor(null, selectedOf(config))).filter((x) => x.kind === 'measure' && groupOf(x.key) === g)
+              return {
+                complete: need.every((x) => x.kind === 'measure' && have?.has(cellId(x))),
+                total: p.factors.find((f) => f.factor === g)?.points ?? 0,
+              }
+            },
+          )
+          const groupOf = groupOfEvent(d.groups)
+          roundOfCell = (sid, cell) => d.pick.get(sid)?.get(groupOf(cell.split('|')[0])) ?? null
+          const no = new Map(d.rounds.map((r) => [r.id, r.round]))
+          for (const s of students) for (const g of d.groups) countPick(g.key, no.get(d.pick.get(s.id)?.get(g.key) ?? null) ?? 1)
+          data = d
+        } else {
+          // 학생마다 회차 하나 → 그 회차의 칸만 (최고 회차는 종합점수로 비교)
+          const d = await loadClassPapsPicked(db, year, c.grade, c.classNo, ids, pick, (sid, rs, config) => {
+            const p = summaryOf(sid, rs, config)
+            return p ? { complete: p.complete, total: p.complete ? (p.total ?? p.sum) : p.sum } : null
+          })
+          roundOfCell = (sid) => d.pick.get(sid) ?? null
+          const no = new Map(d.rounds.map((r) => [r.id, r.round]))
+          for (const s of students) countPick('', no.get(d.pick.get(s.id) ?? null) ?? 1)
+          data = d
+        }
+        const roundNo = new Map(data.rounds.map((r) => [r.id, r.round]))
         const selected = selectedOf(data.config)
         const cols = tCols ?? columnsFor(null, selected)
         const key = cols.map((x) => x.header).join('\t')
@@ -88,7 +147,7 @@ export default function PapsExportPage() {
         const v = validateExport(cols, students, values, new Set(excluded.keys()), settings.neisRanges)
         all.issues.push(
           ...v.issues.map((i) => {
-            const id = data.pick.get(i.studentId) ?? null
+            const id = roundOfCell(i.studentId, i.cell)
             return { ...i, cls: `${c.grade}-${c.classNo}`, round: { id, no: roundNo.get(id) ?? 1 } }
           }),
         )
@@ -98,11 +157,15 @@ export default function PapsExportPage() {
         if (rows.length === 0) rows.push(r[0])
         rows.push(...r.slice(1))
       }
-      if ([...pickedCount.keys()].some((n) => n > 1))
-        all.picked = [...pickedCount]
-          .sort((a, b) => b[0] - a[0])
-          .map(([n, k]) => `${n}회차 ${k}명`)
-          .join(' · ')
+      if ([...pickedCount.values()].some((m) => [...m.keys()].some((n) => n > 1)))
+        all.picked = [...pickedCount].map(
+          ([g, m]) =>
+            (g ? `${GROUP_LABEL[g] ?? g}: ` : '') +
+            [...m]
+              .sort((a, b) => b[0] - a[0])
+              .map(([n, k]) => `${n}회차 ${k}명`)
+              .join(' · '),
+        )
       if (all.issues.length === 0 && all.unknown.length === 0 && rows.length > 1) {
         const name = `PAPS_나이스업로드_${year}_${scope === 'class' ? `${cls.grade}-${cls.classNo}반` : `${cls.grade}학년`}.xlsx`
         saveBlob(name, new Blob([await rowsToXlsx(rows)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
@@ -145,10 +208,21 @@ export default function PapsExportPage() {
             <button type="button" aria-selected={pick === 'best'} onClick={() => (setPick('best'), setOut(null))}>
               최고 회차
             </button>
+            <button type="button" aria-selected={pick === 'factor'} onClick={() => (setPick('factor'), setOut(null))}>
+              요인별 최고
+            </button>
           </div>
           <p className="hint">
-            학생마다 회차 <b>하나</b>의 칸(1차·2차·좌우)을 그대로 넣어요. 회차를 섞지 않아요.{' '}
-            {pick === 'latest' ? '최근 회차 = 그 학생 기록이 있는 가장 늦은 회차.' : '최고 회차 = 다 측정한 회차 중 종합점수가 가장 높은 회차(같으면 늦은 회차).'}
+            {pick === 'factor' ? (
+              <>
+                체력요인마다 점수가 가장 높은 회차를 <b>따로</b> 골라요(같으면 늦은 회차). 한 요인 안의 칸(1차·2차·좌우)은 그 회차 하나에서 그대로 넣어요. 신장·체중은 최근 회차.
+              </>
+            ) : (
+              <>
+                학생마다 회차 <b>하나</b>의 칸(1차·2차·좌우)을 그대로 넣어요. 회차를 섞지 않아요.{' '}
+                {pick === 'latest' ? '최근 회차 = 그 학생 기록이 있는 가장 늦은 회차.' : '최고 회차 = 다 측정한 회차 중 종합점수가 가장 높은 회차(같으면 늦은 회차).'}
+              </>
+            )}
           </p>
           <p className="hint">
             {template
@@ -170,7 +244,14 @@ export default function PapsExportPage() {
                 <p className="mt-1 font-semibold text-ok">
                   {out.fileName} ({out.rows}명)
                 </p>
-                {out.picked && <p className="mt-1 text-sm font-semibold text-ok">{pick === 'latest' ? '최근' : '최고'} 회차로 넣었어요: {out.picked}</p>}
+                {out.picked && (
+                  <div className="mt-1 text-sm font-semibold text-ok">
+                    <p>
+                      {pick === 'latest' ? '최근 회차' : pick === 'best' ? '최고 회차' : '요인별 최고 회차'}로 넣었어요{pick === 'factor' ? '' : `: ${out.picked[0]}`}
+                    </p>
+                    {pick === 'factor' && out.picked.map((t) => <p key={t}>{t}</p>)}
+                  </div>
+                )}
               </section>
             ) : (
               <section className="card bg-danger-light shadow-none">

@@ -8,6 +8,7 @@
  *   실제로 측정한 적 없는 조합이 되므로).
  *   · 최근 회차: 그 학생 기록이 있는 가장 늦은 회차
  *   · 최고 회차: 그 학생의 회차 중 ① 5개 요인이 다 측정된 회차를 먼저 ② 종합점수(합계)가 높은 회차 ③ 같으면 늦은 회차
+ *   · 요인별 최고 (2026-10-24 추가): 요인마다 회차를 따로 고른다 — pickFactorRounds
  */
 import type { PapsResult, PapsRound } from '../db/types'
 
@@ -101,6 +102,65 @@ export function pickRounds(
     out.set(sid, best!.id)
   }
   return out
+}
+
+/**
+ * 요인별 최고 (2026-10-24 교사 요청): 체력요인마다 회차를 따로 고른다.
+ * - 한 요인 안의 칸(1차·2차·좌우, 스텝검사 심박수)은 고른 회차 하나에서 통째로 — 요인 안에서는 섞지 않는다.
+ * - 'best' 묶음: ① 그 요인 칸이 다 있는 회차 먼저 ② 점수 높은 회차 ③ 같으면 늦은 회차
+ * - 'latest' 묶음(신장·체중): 기록 있는 가장 늦은 회차
+ * - 어느 묶음에도 없는 종목은 OTHER_GROUP(최근 회차)으로 다룬다.
+ */
+export interface PickGroup {
+  key: string
+  events: readonly string[]
+  mode: 'best' | 'latest'
+}
+
+export const OTHER_GROUP = '*'
+
+/** 종목 → 묶음 key */
+export function groupOfEvent(groups: readonly PickGroup[]): (eventId: string) => string {
+  const m = new Map<string, string>()
+  for (const g of groups) for (const e of g.events) m.set(e, g.key)
+  return (eventId) => m.get(eventId) ?? OTHER_GROUP
+}
+
+/** 학생 → 묶음 → 회차. 그 묶음 기록이 없으면 null(1회차) → 내보내기 검사에서 '누락' */
+export function pickFactorRounds(
+  studentIds: readonly string[],
+  byStudent: Map<string, Map<string | null, PapsResult[]>>,
+  rounds: readonly RoundInfo[],
+  groups: readonly PickGroup[],
+  scoreOf: (studentId: string, groupKey: string, rows: PapsResult[]) => RoundScore | null,
+): Map<string, Map<string, string | null>> {
+  const all: PickGroup[] = [...groups, { key: OTHER_GROUP, events: [], mode: 'latest' }]
+  const groupOf = groupOfEvent(groups)
+  const out = new Map<string, Map<string, string | null>>()
+  for (const sid of studentIds) {
+    const mine = byStudent.get(sid)
+    const per = new Map<string, string | null>()
+    for (const g of all) {
+      let best: { id: string | null; s: RoundScore } | null = null
+      for (const r of rounds) {
+        const rows = (mine?.get(r.id) ?? []).filter((x) => groupOf(x.eventId) === g.key)
+        if (rows.length === 0) continue
+        const s = g.mode === 'latest' ? { complete: true, total: 0 } : (scoreOf(sid, g.key, rows) ?? { complete: false, total: 0 })
+        // rounds는 회차 번호순이라 같으면 뒤(늦은 회차)가 이긴다
+        const better = !best || (s.complete && !best.s.complete) || (s.complete === best.s.complete && s.total >= best.s.total)
+        if (better) best = { id: r.id, s }
+      }
+      per.set(g.key, best?.id ?? null)
+    }
+    out.set(sid, per)
+  }
+  return out
+}
+
+/** 요인별로 고른 회차의 기록만 남긴다 (측정 제외 행은 늘 포함) */
+export function resultsForFactorPick(results: readonly PapsResult[], pick: Map<string, Map<string, string | null>>, groups: readonly PickGroup[], excludedKey: string): PapsResult[] {
+  const groupOf = groupOfEvent(groups)
+  return results.filter((r) => isExcludedRow(r, excludedKey) || roundKeyOf(r) === (pick.get(r.studentId)?.get(groupOf(r.eventId)) ?? null))
 }
 
 /** 고른 회차의 기록만 남긴다 (측정 제외 행은 늘 포함) */
