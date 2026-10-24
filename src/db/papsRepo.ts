@@ -4,7 +4,21 @@ import { cellId, type CellSpec } from '../lib/papsLayout'
 import { bmi, studentPaps, type Cell, type EventId, type Factor, type FlexMode, type PapsStandards, type StudentPaps } from '../lib/paps'
 import type { PeDatabase } from './db'
 import { newId } from './db'
-import { filterRound, groupByStudentRound, nextRoundNo, pickRounds, resultsForPick, roundKeyOf, roundsOf, type RoundInfo, type RoundPick, type RoundScore } from '../lib/papsRounds'
+import {
+  filterRound,
+  groupByStudentRound,
+  nextRoundNo,
+  pickFactorRounds,
+  pickRounds,
+  resultsForFactorPick,
+  resultsForPick,
+  roundKeyOf,
+  roundsOf,
+  type PickGroup,
+  type RoundInfo,
+  type RoundPick,
+  type RoundScore,
+} from '../lib/papsRounds'
 import type { PapsConfig, PapsResult, Student } from './types'
 
 /** 학생 한 명의 측정 제외 여부는 eventId 가 이 값인 행으로 보관한다 */
@@ -43,6 +57,25 @@ export async function loadClassPapsPicked(
   const [data, rounds] = await Promise.all([loadClassPaps(db, year, grade, classNo, studentIds, 'all'), loadRounds(db, year, grade, classNo)])
   const pick = pickRounds(studentIds, groupByStudentRound(data.results, EXCLUDED_KEY), rounds, mode, (sid, rows) => scoreOf(sid, rows, data.config))
   return { config: data.config, results: resultsForPick(data.results, pick, EXCLUDED_KEY), pick, rounds }
+}
+
+/**
+ * 요인별 최고 (2026-10-24): 학생마다 요인 묶음별로 회차를 골라 그 회차 칸만.
+ * groupsOf는 반 설정(선택 종목)으로 묶음을 만든다.
+ */
+export async function loadClassPapsFactorPicked(
+  db: PeDatabase,
+  year: number,
+  grade: number,
+  classNo: number,
+  studentIds: string[],
+  groupsOf: (config: PapsConfig | undefined) => PickGroup[],
+  scoreOf: (studentId: string, groupKey: string, rows: PapsResult[], config: PapsConfig | undefined) => RoundScore | null,
+): Promise<ClassPapsData & { pick: Map<string, Map<string, string | null>>; groups: PickGroup[]; rounds: RoundInfo[] }> {
+  const [data, rounds] = await Promise.all([loadClassPaps(db, year, grade, classNo, studentIds, 'all'), loadRounds(db, year, grade, classNo)])
+  const groups = groupsOf(data.config)
+  const pick = pickFactorRounds(studentIds, groupByStudentRound(data.results, EXCLUDED_KEY), rounds, groups, (sid, g, rows) => scoreOf(sid, g, rows, data.config))
+  return { config: data.config, results: resultsForFactorPick(data.results, pick, groups, EXCLUDED_KEY), pick, groups, rounds }
 }
 
 /** 반의 측정 회차 목록 (1회차는 늘 있다) */

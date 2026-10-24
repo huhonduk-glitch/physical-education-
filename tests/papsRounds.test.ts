@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import type { PapsResult, PapsRound } from '../src/db/types'
-import { filterRound, groupByStudentRound, nextRoundNo, pickRounds, resultsForPick, roundsOf, type RoundScore } from '../src/lib/papsRounds'
+import {
+  filterRound,
+  groupByStudentRound,
+  nextRoundNo,
+  OTHER_GROUP,
+  pickFactorRounds,
+  pickRounds,
+  resultsForFactorPick,
+  resultsForPick,
+  roundsOf,
+  type PickGroup,
+  type RoundScore,
+} from '../src/lib/papsRounds'
 
 const EX = '__excluded__'
 let n = 0
@@ -93,6 +105,66 @@ describe('나이스 내보내기: 학생마다 회차 하나를 통째로 고른
     expect(kept.map((r) => [r.eventId, r.value, r.roundId])).toEqual([
       ['shuttleRun', 40, 'R3'],
       ['grip', 1, 'R3'],
+    ])
+  })
+})
+
+describe('나이스 내보내기: 요인별 최고 — 요인마다 회차를 따로, 요인 안에서는 섞지 않는다', () => {
+  const rounds = roundsOf([round('R2', 2)])
+  const groups: PickGroup[] = [
+    { key: '심폐지구력', events: ['shuttleRun'], mode: 'best' },
+    { key: '근력·근지구력', events: ['gripStrength'], mode: 'best' },
+    { key: '비만', events: ['height', 'weight'], mode: 'latest' },
+  ]
+  // 점수: 묶음 안 값 중 최고값, complete: 악력은 2칸 다 있어야
+  const scoreOf = (_: string, g: string, rs: PapsResult[]): RoundScore => ({
+    complete: g !== '근력·근지구력' || rs.length >= 2,
+    total: Math.max(...rs.map((r) => r.value!)),
+  })
+  const results = [
+    row('s1', 'shuttleRun', 50), // 1회차 심폐가 더 좋음
+    row('s1', 'gripStrength', 30, undefined, 1),
+    row('s1', 'gripStrength', 31, undefined, 2),
+    row('s1', 'height', 160),
+    row('s1', 'weight', 50),
+    row('s1', 'shuttleRun', 40, 'R2'),
+    row('s1', 'gripStrength', 35, 'R2', 1), // 2회차 악력이 더 좋음
+    row('s1', 'gripStrength', 34, 'R2', 2),
+    row('s1', 'height', 162, 'R2'),
+    row('s1', 'weight', 49, 'R2'), // 신장·체중은 최근
+    row('s2', 'gripStrength', 30, undefined, 1),
+    row('s2', 'gripStrength', 30, undefined, 2),
+    row('s2', 'gripStrength', 40, 'R2', 1), // 2회차 악력은 1칸뿐 → 다 있는 1회차가 먼저
+    row('s2', 'shuttleRun', 30), // 동점 → 늦은 회차
+    row('s2', 'shuttleRun', 30, 'R2'),
+    row('s2', 'sitAndReach', 5), // 묶음에 없는 종목 → 최근 회차(여기선 1회차뿐)
+  ]
+  const by = groupByStudentRound(results, EX)
+  const p = pickFactorRounds(['s1', 's2', 's3'], by, rounds, groups, scoreOf)
+
+  it('요인마다 점수가 높은 회차를 따로 고른다', () => {
+    expect(Object.fromEntries(p.get('s1')!)).toEqual({ 심폐지구력: null, '근력·근지구력': 'R2', 비만: 'R2', [OTHER_GROUP]: null })
+  })
+  it('칸이 다 있는 회차 먼저, 같으면 늦은 회차, 기록 없으면 1회차', () => {
+    expect(p.get('s2')!.get('근력·근지구력')).toBe(null)
+    expect(p.get('s2')!.get('심폐지구력')).toBe('R2')
+    expect(p.get('s2')!.get(OTHER_GROUP)).toBe(null)
+    expect([...p.get('s3')!.values()].every((v) => v === null)).toBe(true)
+  })
+  it('요인 안의 칸(1차·2차)은 고른 회차 하나에서만 — 섞이지 않는다', () => {
+    const kept = resultsForFactorPick(results, p, groups, EX).filter((r) => r.studentId === 's1')
+    expect(kept.map((r) => [r.eventId, r.value])).toEqual([
+      ['shuttleRun', 50],
+      ['gripStrength', 35],
+      ['gripStrength', 34],
+      ['height', 162],
+      ['weight', 49],
+    ])
+    expect(resultsForFactorPick(results, p, groups, EX).filter((r) => r.studentId === 's2').map((r) => [r.eventId, r.value, r.roundId ?? null])).toEqual([
+      ['gripStrength', 30, null],
+      ['gripStrength', 30, null],
+      ['shuttleRun', 30, 'R2'],
+      ['sitAndReach', 5, null],
     ])
   })
 })
