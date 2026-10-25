@@ -616,6 +616,15 @@ lessons         { id, schoolYear, groupId, date, period?, unit?, activity, note?
 - PIN 잠금 없이 열림(시연 PIN 0000). 화면 맨 위 주황 띠 `DemoBanner` → 시연 주소 복사 · 가상 자료 처음 상태로(시연 저장소만 지우고 다시 넣음) · 시연 끝내기. 실제 앱에서는 띠가 없다
 - REA 확인: 실제 앱에 학생 '박본앱'(PIN 5678) → `?demo=1`(가상 20명, 박본앱 없음, 잠금 없음) → [시연 끝내기] → PIN 5678 잠금 · 박본앱만 그대로 · 띠 없음
 
+### 6-4. 지금 상태 · 인계 메모 (2026-10-25, 다음 세션은 다른 Claude 계정으로 이어 감)
+- **main = 배포본 최신** (`e4dcc60`, GitHub Pages 배포 성공). 튼튼몬 연동 코드(6-3, `tuntun-link`)와 PAPS **[요인별 최고]**(PR #21, B-5 끝의 설명)가 모두 main에 들어가 배포됨. 테스트 526개 통과
+- 열려 있는 브랜치는 모두 GitHub에 올라가 있음(`paps-factor-best`·`tuntun-link`·`claude/demo-mode`·`claude/rea-ui-cleanup`은 병합 끝). 이 메모는 `docs-handoff` 브랜치
+- **시연 영상 (2026-10-24~25 교사 요청, 소개용)**: 바탕화면 `PE_LOG_시연영상_PC.mp4`(최종, PC 화면 3:19, 기능별 장 · 왼쪽 큰 자막 · 아래 기능 띠 · 직접 합성한 배경음악)와 `PE_LOG_시연영상.mp4`(예전 폰 버전)
+  - 교사 요구: **앱 자체 기능 중심, "앱 하나로 체육 수업 필수 기능이 다 있다"(다른 앱과의 차별점) 강조**, 튼튼몬은 짧게, 자막 줄바꿈은 어절·문장 단위, 저작권 없는 배경음악, PC 화면, 팀 편성(SPORTS BRACKET)·전술 보드(K-TacticBoard) 연동 장면 포함
+  - 다시 만드는 도구: `C:\Users\user\Desktop\my-apps\pe-log-demo-video\` (저장소 밖, README에 순서). 시연 모드(가상 학생)만 촬영, 다른 앱 코드는 고치지 않고 배포 사이트를 열어 촬영만
+  - 튼튼몬 GO(학교를 돌아다니며 미션, 포켓몬 GO처럼)는 **아직 없는 구상**이라 영상에서 "구상 · 가상 화면"으로 표시함
+- **튼튼몬 키우기** 저장소: `C:\Users\user\Desktop\my-apps\PAPS-GROWTH-GAME` (Vercel 배포). PE LOG 코드 읽기 기능은 `upgrade` 브랜치에 있고 아직 배포 전. 그 저장소는 교사 허락 없이 고치지 않음
+
 ---
 
 ## 7. references/ 폴더 (교사가 준비)
