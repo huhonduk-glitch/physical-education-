@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { matchResult, roundRobin, setWinner, standings, type LeagueMatch, type LeagueRules, type SetRule } from '../src/lib/league'
+import { boardOver, boardTap, boardToMatch, matchResult, roundRobin, setWinner, standings, type Board, type LeagueMatch, type LeagueRules, type SetRule } from '../src/lib/league'
 
 const fiba: LeagueRules = { kind: 'goals', allowDraw: false, points: { win: 2, draw: 0, loss: 1, forfeit: 0 } }
 const games = (list: [string, string, number, number][]): LeagueMatch[] =>
@@ -91,5 +91,28 @@ describe('세트 경기', () => {
     // 풀세트 승 2 · 패 1
     const s = standings(['A', 'B'], [m([[25, 20], [20, 25], [25, 20], [18, 25], [13, 15]])], rules)
     expect(s.map((r) => [r.teamId, r.points, r.for, r.against])).toEqual([['B', 2, 3, 2], ['A', 1, 2, 3]])
+  })
+})
+
+describe('점수판', () => {
+  const vbRules: LeagueRules = { kind: 'sets', allowDraw: false, points: { win: 3, draw: 0, loss: 0, forfeit: 0 }, setRule: { target: 3, decider: 2, winBy: 2, setsToWin: 2 } }
+  it('세트가 끝나면 다음 세트로, 경기가 끝나면 더 누르지 않음', () => {
+    let b: Board = { sets: [], cur: [0, 0] }
+    for (let i = 0; i < 3; i++) b = boardTap(b, 0, 1, vbRules)
+    expect(b).toEqual({ sets: [[3, 0]], cur: [0, 0] })
+    for (let i = 0; i < 3; i++) b = boardTap(b, 1, 1, vbRules)
+    // 마지막 세트는 decider 점수(2)
+    b = boardTap(boardTap(b, 0, 1, vbRules), 0, 1, vbRules)
+    expect(b.sets).toEqual([[3, 0], [0, 3], [2, 0]])
+    expect(boardOver(b, vbRules)).toBe(true)
+    expect(boardTap(b, 1, 1, vbRules)).toBe(b)
+    const m = boardToMatch({ id: 'm', round: 1, home: 'A', away: 'B', done: false }, b, vbRules)
+    expect(matchResult(m, vbRules)).toMatchObject({ winner: 'home', homeFor: 2, awayFor: 1 })
+  })
+  it('득점 경기: 2 · 3점 더하기, 빼도 0 아래로 안 감', () => {
+    let b: Board = { sets: [], cur: [0, 0] }
+    b = boardTap(boardTap(b, 0, 3, fiba), 1, 2, fiba)
+    b = boardTap(boardTap(b, 1, -1, fiba), 1, -5, fiba)
+    expect(b.cur).toEqual([3, 0])
   })
 })

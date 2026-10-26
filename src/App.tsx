@@ -32,6 +32,10 @@ const RubricPage = lazy(() => import('./pages/RubricPage'))
 const AssessFromPlanPage = lazy(() => import('./pages/AssessFromPlanPage'))
 const TeamAppsPage = lazy(() => import('./pages/tools/TeamAppsPage'))
 const VideoPage = lazy(() => import('./pages/tools/VideoPage'))
+const SportsPage = lazy(() => import('./pages/sports/SportsPage'))
+const SportGuidePage = lazy(() => import('./pages/sports/SportGuidePage'))
+const LeagueSetupPage = lazy(() => import('./pages/sports/LeagueSetupPage'))
+const LeaguePage = lazy(() => import('./pages/sports/LeaguePage'))
 const HelpPage = lazy(() => import('./pages/HelpPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 const TermsGate = lazy(() => import('./pages/TermsPage').then((m) => ({ default: m.TermsGate })))
@@ -167,6 +171,10 @@ export default function App() {
           <Route path="/tools/teams" element={<TeamsPage />} />
           <Route path="/tools/apps" element={<TeamAppsPage />} />
           <Route path="/tools/video" element={<VideoPage />} />
+          <Route path="/sports" element={<SportsPage />} />
+          <Route path="/sports/:sport" element={<SportGuidePage />} />
+          <Route path="/leagues/new" element={<LeagueSetupPage />} />
+          <Route path="/leagues/:id" element={<LeaguePage />} />
           <Route path="/paps" element={<PapsPage />} />
           <Route path="/paps/input/:key" element={<PapsInputPage />} />
           <Route path="/paps/paste" element={<PapsPastePage />} />

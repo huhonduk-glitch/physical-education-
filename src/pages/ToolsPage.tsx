@@ -38,6 +38,17 @@ export default function ToolsPage() {
             </Link>
           ))}
         </div>
+        {/* 종목 수업자료 · 리그전 (6-5 ④) */}
+        <Link to="/sports" className="card flex min-h-[72px] items-center gap-3 p-4 transition-transform active:scale-[0.99]">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">
+            <Icon name="medal" size={22} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <b className="block">종목 · 리그전</b>
+            <span className="text-xs font-semibold text-ink-3">농구 · 배구 · 축구 · 풋살 · 배드민턴 규칙 요약 · 대진표 · 점수판 · 순위</span>
+          </span>
+          <Icon name="chevronRight" className="text-ink-3" />
+        </Link>
         {/* 동작 영상 피드백 (B-3): 영상은 기기 메모리에만 */}
         <Link to="/tools/video" className="card flex min-h-[72px] items-center gap-3 p-4 transition-transform active:scale-[0.99]">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">

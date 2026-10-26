@@ -212,3 +212,32 @@ export function standings(teamIds: readonly string[], matches: readonly LeagueMa
   }
   return out
 }
+
+/** 점수판 상태: 끝난 세트 + 지금 세트(득점 경기는 cur만) */
+export interface Board {
+  sets: [number, number][]
+  cur: [number, number]
+}
+
+/** 경기가 끝났는지 (세트 경기: 이긴 세트 수, 득점 경기: 언제든 끝낼 수 있음 → false) */
+export function boardOver(b: Board, rules: LeagueRules): boolean {
+  if (rules.kind !== 'sets' || !rules.setRule) return false
+  const won = (s: 'a' | 'b') => b.sets.filter(([x, y]) => (s === 'a' ? x > y : y > x)).length
+  return won('a') >= rules.setRule.setsToWin || won('b') >= rules.setRule.setsToWin
+}
+
+/** 점수판 한 번 누름. 세트가 끝나면 끝난 세트로 옮기고 0:0에서 다음 세트 */
+export function boardTap(b: Board, side: 0 | 1, step: number, rules: LeagueRules): Board {
+  if (boardOver(b, rules)) return b
+  const cur: [number, number] = [b.cur[0], b.cur[1]]
+  cur[side] = Math.max(0, cur[side] + step)
+  if (rules.kind !== 'sets' || !rules.setRule || step <= 0) return { sets: b.sets, cur }
+  const decider = b.sets.length === rules.setRule.setsToWin * 2 - 2
+  return setWinner(cur[0], cur[1], rules.setRule, decider) ? { sets: [...b.sets, cur], cur: [0, 0] } : { sets: b.sets, cur }
+}
+
+/** 점수판 → 경기 기록 */
+export function boardToMatch(m: LeagueMatch, b: Board, rules: LeagueRules): LeagueMatch {
+  if (rules.kind === 'sets') return { ...m, sets: b.sets, homeScore: undefined, awayScore: undefined, forfeit: undefined, done: boardOver(b, rules) }
+  return { ...m, homeScore: b.cur[0], awayScore: b.cur[1], sets: undefined, forfeit: undefined, done: true }
+}
