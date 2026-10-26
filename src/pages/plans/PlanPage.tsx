@@ -14,6 +14,7 @@ import { saveXlsx } from '../../lib/download'
 import { fitToTarget, groupProgress, itemsFromUnits, meetings, moveItem, newItemId, planRows, schedule, standardCoverage, unitBlocks } from '../../lib/progressPlan'
 import { useApp } from '../../state/AppContext'
 import { useGroups } from '../../state/useGroups'
+import DirectEdit from './DirectEdit'
 import ImportSheet from './ImportSheet'
 import ItemSheet, { subjectStandards } from './ItemSheet'
 
@@ -34,12 +35,16 @@ export default function PlanPage() {
   const [editing, setEditing] = useState<number | null>(null)
   const [quick, setQuick] = useState(false)
   const [importing, setImporting] = useState(false)
+  const viewParam = sp.get('v')
+  const setView = (v: 'list' | 'direct') => setSp((p) => (p.set('v', v), p), { replace: true })
   const today = todayStr()
 
   if (plan === undefined) return <PageHeader title="진도표" back />
   if (plan === null || !plan) return <PageHeader title="진도표를 찾을 수 없어요" back />
 
   const items = plan.items
+  // 처음(차시 없음)에는 바로 입력, 차시가 있으면 목록
+  const view: 'list' | 'direct' = viewParam === 'direct' || viewParam === 'list' ? viewParam : items.length ? 'list' : 'direct'
   const saveItems = (next: PlanItem[]) => updatePlan(db, plan.id, { items: next })
   const units = [...new Set(items.map((i) => i.unit).filter(Boolean))]
   const stdCodes = subjectStandards(plan.subject, settings.schoolLevel).map((s) => s.code)
@@ -107,10 +112,25 @@ export default function PlanPage() {
               </section>
             )}
             {!readOnly && (
+              <button type="button" className={`btn w-full ${items.length ? 'btn-soft' : 'btn-primary'}`} onClick={() => setImporting(true)}>
+                <Icon name="upload" /> 평가계획서 · 진도표 파일로 넣기
+              </button>
+            )}
+            <div className="segment" role="tablist" aria-label="보기">
+              <button type="button" role="tab" aria-selected={view === 'list'} onClick={() => setView('list')}>
+                목록
+              </button>
+              <button type="button" role="tab" aria-selected={view === 'direct'} onClick={() => setView('direct')}>
+                바로 입력
+              </button>
+            </div>
+
+            {view === 'direct' ? (
+              <DirectEdit items={items} target={plan.target} readOnly={readOnly} onSave={saveItems} />
+            ) : (
+              <>
+            {!readOnly && (
               <div className="grid grid-cols-2 gap-2">
-                <button type="button" className={`btn col-span-2 ${items.length ? 'btn-soft' : 'btn-primary'}`} onClick={() => setImporting(true)}>
-                  <Icon name="upload" /> 평가계획서 · 진도표 파일로 넣기
-                </button>
                 <button type="button" className="btn btn-soft" onClick={() => setQuick(true)}>
                   <Icon name="layers" /> 단원으로 만들기
                 </button>
@@ -128,7 +148,7 @@ export default function PlanPage() {
             )}
 
             {items.length === 0 ? (
-              <p className="hint px-1">아직 차시가 없어요. [단원으로 빨리 만들기]로 단원과 시수만 적으면 차시가 한 번에 생겨요.</p>
+              <p className="hint px-1">아직 차시가 없어요. [바로 입력]에서 표처럼 적거나, [단원으로 만들기]로 단원과 시수만 적으면 차시가 한 번에 생겨요.</p>
             ) : (
               <section className="card overflow-hidden p-0">
                 <ul>
@@ -164,6 +184,8 @@ export default function PlanPage() {
                   ))}
                 </ul>
               </section>
+            )}
+              </>
             )}
 
             {(plan.extras?.length ?? 0) > 0 && (
