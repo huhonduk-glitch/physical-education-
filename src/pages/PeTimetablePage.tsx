@@ -6,14 +6,39 @@ import { addDays, shortDateLabel, todayStr } from '../lib/dates'
 import { fetchWeekTimetable, looksLikePe, NeisError, slotGroups, weekOf } from '../lib/neisOpenApi'
 import { groupLabel, maxPeriod, peCells, peSummary } from '../lib/peTimetable'
 import { useApp } from '../state/AppContext'
+import ComciTimetable from './ComciTimetable'
 
 const DAYS = ['월', '화', '수', '목', '금']
 
 /**
- * 전체 체육 시간표: 학교 전체 시간표에서 체육 칸만 모아 겹침(같은 시각 체육 수업 2개 이상)을 본다.
- * 나이스 공개 자료(교사가 누를 때만, 학교 공개 정보만)를 쓰고, 받은 표는 이 기기에 둔다.
+ * 전체 체육 시간표: 같은 시각 체육 수업이 겹치는지 본다.
+ * - 컴시간(기본): 학교 + 내 이름 → 선생님 이름까지 (교사 계정 중계를 거침, 공개 시간표만)
+ * - 나이스(대신): 학교 공개 자료. 선생님 이름이 없어 수업 수로만 본다
+ * 교사가 누를 때만 받고, 받은 표는 이 기기에 둔다.
  */
 export default function PeTimetablePage() {
+  const { settings } = useApp()
+  const [src, setSrc] = useState<'comci' | 'neis'>(!settings.comciWeek && settings.neisPeWeek ? 'neis' : 'comci')
+  return (
+    <>
+      <PageHeader title="전체 체육 시간표" sub={src === 'comci' ? (settings.comciSchool?.name ?? '컴시간') : (settings.neisSchool?.name ?? '나이스')} back />
+      <div className="page space-y-4 pb-10">
+        <div className="segment" role="tablist">
+          <button type="button" role="tab" aria-selected={src === 'comci'} onClick={() => setSrc('comci')}>
+            컴시간 · 선생님 이름
+          </button>
+          <button type="button" role="tab" aria-selected={src === 'neis'} onClick={() => setSrc('neis')}>
+            나이스
+          </button>
+        </div>
+        {src === 'comci' ? <ComciTimetable /> : <NeisPe />}
+      </div>
+    </>
+  )
+}
+
+/** 나이스 공개 시간표에서 체육 칸만 모아 겹침(같은 시각 체육 수업 2개 이상)을 본다 */
+function NeisPe() {
   const { settings, updateSettings, readOnly } = useApp()
   const school = settings.neisSchool
   const saved = settings.neisPeWeek
@@ -45,8 +70,6 @@ export default function PeTimetablePage() {
 
   return (
     <>
-      <PageHeader title="전체 체육 시간표" sub={school ? school.name : '학교를 먼저 고르세요'} back />
-      <div className="page space-y-4 pb-10">
         {!school ? (
           <section className="card space-y-2">
             <p className="font-bold">나이스에서 우리 학교를 먼저 찾아 주세요.</p>
@@ -137,7 +160,6 @@ export default function PeTimetablePage() {
             <p className="hint px-1">빨간 칸 = 같은 시각에 체육 수업이 2개 이상(체육관 · 운동장 · 교구를 나눠 써야 할 수 있어요). 검은 테두리 = 내 시간표에 있는 칸.</p>
           </>
         )}
-      </div>
     </>
   )
 }

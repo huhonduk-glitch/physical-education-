@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import fs from 'fs'
 import data from './fixtures/comcigan-data.json'
-import { cp949Percent, dataPath, findTeacher, parseData, parseSearch, parseStPage, peGrid, peTeacherNos, searchPath, teacherLessons } from '../src/lib/comcigan'
+import { cp949Percent, dataPath, findTeacher, myPicks, parseData, parseSearch, parseStPage, peGrid, peTeacherNos, searchPath, teacherLessons } from '../src/lib/comcigan'
 
 // 컴시간 실제 응답(2026-10-26, 한 고등학교)을 교사 이름 · 학교 이름만 가려 저장한 자료
 const st = fs.readFileSync('tests/fixtures/comcigan-st.txt', 'utf8')
@@ -16,7 +16,7 @@ describe('컴시간 코드 · 주소', () => {
     const cfg = parseStPage(st)
     expect(searchPath(cfg, '삼성여자')).toBe('/36179?17384l%bb%ef%bc%ba%bf%a9%c0%da')
     expect(dataPath(cfg, 15095)).toBe(`/36179?${btoa('73629_15095_0_1')}`)
-    expect(dataPath(cfg, 15095, 1)).toBe(`/36179?${btoa('73629_15095_1_1')}`)
+    expect(dataPath(cfg, 15095, 2)).toBe(`/36179?${btoa('73629_15095_0_2')}`)
   })
   it('학교 찾기 결과', () => {
     expect(parseSearch({ 학교검색: [[24966, '제주', '시연고등학교', 15095]] })).toEqual([{ code: 15095, region: '제주', name: '시연고등학교' }])
@@ -52,5 +52,19 @@ describe('컴시간 시간표 해석', () => {
     const grid = peGrid(d, pe)
     const c = grid.get('1|2')!
     expect(c.items.some((x) => x.teacherNo === 27 && x.classes.includes('1-1'))).toBe(true)
+  })
+})
+
+describe('내 수업 · 가린 이름', () => {
+  it('*로 가린 이름도 찾는다', () => {
+    expect(findTeacher({ teachers: ['', '김*수', '박민수'] }, '김민수')).toEqual([1])
+    expect(findTeacher({ teachers: ['', '김*수', '박민수'] }, '박민수')).toEqual([2])
+    expect(findTeacher({ teachers: ['', '김*수'] }, '김수')).toEqual([])
+  })
+  it('내 수업 → 시간표 넣기 꼴(요일 · 교시마다 하나)', () => {
+    const picks = myPicks(d, 27)
+    const keys = picks.map((p) => `${p.day}|${p.period}`)
+    expect(new Set(keys).size).toBe(keys.length)
+    expect(picks.find((p) => p.day === 1 && p.period === 2)).toEqual({ day: 1, period: 2, subject: '체육', classes: [{ grade: 1, classNo: 1 }] })
   })
 })

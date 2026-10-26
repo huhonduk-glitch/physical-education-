@@ -5,6 +5,7 @@ import type { CellSpec } from '../lib/papsLayout'
 import type { FlexMode, StepMethod } from '../lib/paps'
 import type { NeisEvent, NeisSchool, SlotGroup } from '../lib/neisOpenApi'
 import type { TermsAgreement } from '../lib/terms'
+import type { ComciData, ComciSchool } from '../lib/comcigan'
 import type { SchoolGenderType, SchoolLevel } from './types'
 
 /** 설정 화면에서 바꾸는 값들. settings 테이블에 key 하나씩 저장한다. */
@@ -50,6 +51,14 @@ export interface AppSettings {
   neisSchedule: { fetchedAt: number; events: NeisEvent[] } | null
   /** 전체 체육 시간표: 나이스에서 받은 한 주의 체육 칸 (인터넷 없어도 보이게 기기에 둔다) */
   neisPeWeek: { fetchedAt: number; from: string; slots: SlotGroup[] } | null
+  /** 컴시간 중계 주소 (교사 계정의 Cloudflare Worker, relay/). 컴시간 공개 시간표만 오간다 */
+  comciRelayUrl: string
+  /** 컴시간에서 찾은 우리 학교 */
+  comciSchool: ComciSchool | null
+  /** 컴시간 시간표에서 찾을 내 이름 */
+  comciTeacherName: string
+  /** 컴시간에서 받은 한 주 (공개 시간표 · 인터넷 없어도 보이게 기기에 둔다). peNos = 겹침을 볼 체육 선생님 */
+  comciWeek: { fetchedAt: number; week: number; label: string; myNo: number | null; peNos: number[]; data: ComciData } | null
   /** 이용 안내에 동의한 판·시각 (판이 오르면 다시 확인받는다) */
   termsAgreed: TermsAgreement | null
   /** 세특 AI 다듬기용 Claude API 키 (선택. 이 기기에만 저장 · 백업 파일에는 넣지 않는다) */
@@ -126,6 +135,10 @@ export function defaultSettings(): AppSettings {
     neisApiKey: '',
     neisSchedule: null,
     neisPeWeek: null,
+    comciRelayUrl: '',
+    comciSchool: null,
+    comciTeacherName: '',
+    comciWeek: null,
     termsAgreed: null,
     claudeApiKey: '',
     aiProvider: 'manual',

@@ -17,7 +17,7 @@ export interface ComciConfig {
   searchPrefix: string
   /** 학교 코드 앞 (예: '73629_') */
   scPrefix: string
-  /** 마지막 인자 (예: '1') */
+  /** 이번 주 번호 (예: '1') */
   r: string
 }
 
@@ -64,9 +64,9 @@ export function searchPath(cfg: ComciConfig, name: string): string {
   return `/${cfg.route}?${cfg.searchPrefix}${cp949Percent(name)}`
 }
 
-/** 시간표 자료 경로. week = 0 이번 주, 1 다음 주 … */
-export function dataPath(cfg: ComciConfig, schoolCode: number, week = 0): string {
-  return `/${cfg.route}?${btoa(`${cfg.scPrefix}${schoolCode}_${week}_${cfg.r}`)}`
+/** 시간표 자료 경로. week = 자료의 일자자료 번호(1 이번 주, 2 다음 주 …), 없으면 이번 주 (2026-10-26 실제 응답으로 확인) */
+export function dataPath(cfg: ComciConfig, schoolCode: number, week?: number): string {
+  return `/${cfg.route}?${btoa(`${cfg.scPrefix}${schoolCode}_0_${week ?? cfg.r}`)}`
 }
 
 /** 응답 끝의 찌꺼기를 자르고 JSON으로 */
@@ -164,11 +164,19 @@ export function parseData(json: unknown): ComciData {
   }
 }
 
-/** 이름으로 교사 찾기 (띄어쓰기 무시, 성만 다르게 적힌 경우는 찾지 않음) */
-export function findTeacher(data: ComciData, name: string): number[] {
+/** 이름으로 교사 찾기 (띄어쓰기 무시). 컴시간에서 이름 일부를 가린 학교(김*수)는 *를 아무 글자 하나로 본다 */
+export function findTeacher(data: Pick<ComciData, 'teachers'>, name: string): number[] {
   const n = name.replace(/\s+/g, '')
   if (!n) return []
-  return data.teachers.map((t, i) => (i > 0 && t.replace(/[\s*]+/g, '') === n ? i : -1)).filter((i) => i > 0)
+  return data.teachers
+    .map((t, i) => {
+      const c = t.replace(/\s+/g, '')
+      if (i === 0 || !c) return -1
+      if (c === n) return i
+      if (!c.includes('*') || c.length !== n.length) return -1
+      return [...c].every((ch, j) => ch === '*' || ch === n[j]) ? i : -1
+    })
+    .filter((i) => i > 0)
 }
 
 export function teacherLessons(data: ComciData, teacherNo: number): ComciLesson[] {
@@ -212,4 +220,61 @@ export function peGrid(data: ComciData, teacherNos: readonly number[]): Map<stri
     c.items.sort((a, b) => a.teacherNo - b.teacherNo)
   }
   return out
+}
+
+/** 내 수업 → 나이스 시간표 넣기와 같은 꼴(요일 · 교시 · 과목 · 반). 같은 시각에 여러 반이면 합반 */
+export function myPicks(data: ComciData, teacherNo: number): { day: number; period: number; subject: string; classes: { grade: number; classNo: number }[] }[] {
+  const m = new Map<string, { day: number; period: number; subject: string; classes: { grade: number; classNo: number }[] }>()
+  for (const l of teacherLessons(data, teacherNo)) {
+    const k = `${l.day}|${l.period}`
+    const p = m.get(k) ?? m.set(k, { day: l.day, period: l.period, subject: l.subject, classes: [] }).get(k)!
+    if (!p.classes.some((c) => c.grade === l.grade && c.classNo === l.classNo)) p.classes.push({ grade: l.grade, classNo: l.classNo })
+  }
+  return [...m.values()]
+}
+
+
+/** 기본 중계 주소 (교사 Cloudflare 계정에 올린 relay/comcigan-worker.js). 설정에서 바꿀 수 있다 */
+export const COMCI_RELAY_DEFAULT = ''
+
+export class ComciError extends Error {}
+
+/** 중계를 거쳐 컴시간 경로 하나를 받는다 (교사가 누를 때만) */
+async function relayGet(relay: string, path: string): Promise<ArrayBuffer> {
+  const base = relay.trim().replace(/\/+$/, '')
+  if (!/^https:\/\//.test(base)) throw new ComciError('중계 주소가 비었거나 https가 아니에요. [중계 주소]를 확인해 주세요.')
+  let res: Response
+  try {
+    res = await fetch(`${base}/?p=${encodeURIComponent(path)}`)
+  } catch {
+    throw new ComciError('컴시간에 닿지 못했어요. 인터넷을 확인해 주세요.')
+  }
+  if (!res.ok) throw new ComciError(`컴시간 중계가 응답하지 않아요(${res.status}). 잠시 뒤 다시 해 보세요.`)
+  return res.arrayBuffer()
+}
+
+/** 컴시간 첫 화면에서 그날의 경로 코드를 읽는다 */
+export async function comciConfig(relay: string): Promise<ComciConfig> {
+  return parseStPage(new TextDecoder('euc-kr').decode(await relayGet(relay, '/st')))
+}
+
+export async function comciSearch(relay: string, cfg: ComciConfig, name: string): Promise<ComciSchool[]> {
+  const body = new TextDecoder('utf-8').decode(await relayGet(relay, searchPath(cfg, name.trim())))
+  try {
+    return parseSearch(parseJsonBody(body))
+  } catch {
+    throw new ComciError('학교 찾기 결과를 읽지 못했어요. 컴시간 화면이 바뀌었을 수 있어요.')
+  }
+}
+
+export async function comciLoad(relay: string, cfg: ComciConfig, schoolCode: number, week?: number): Promise<ComciData> {
+  const body = new TextDecoder('utf-8').decode(await relayGet(relay, dataPath(cfg, schoolCode, week)))
+  let d: ComciData
+  try {
+    d = parseData(parseJsonBody(body))
+  } catch {
+    throw new ComciError('시간표를 읽지 못했어요. 컴시간 화면이 바뀌었을 수 있어요.')
+  }
+  if (!d.teachers.length) throw new ComciError('이 학교는 컴시간 시간표가 없거나 공개하지 않았어요.')
+  return d
 }

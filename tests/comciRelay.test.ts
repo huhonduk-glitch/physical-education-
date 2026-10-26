@@ -12,7 +12,7 @@ function setup() {
       put: async (r: Request, res: Response) => void store.set(r.url, res),
     },
   })
-  const f = vi.fn(async () => new Response('{"ok":1}', { status: 200 }))
+  const f = vi.fn(async (_url: string) => new Response('{"ok":1}', { status: 200 }))
   vi.stubGlobal('fetch', f)
   const waits: Promise<unknown>[] = []
   const ctx = { waitUntil: (p: Promise<unknown>) => void waits.push(p) }
