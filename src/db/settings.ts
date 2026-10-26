@@ -52,6 +52,13 @@ export interface AppSettings {
   termsAgreed: TermsAgreement | null
   /** 세특 AI 다듬기용 Claude API 키 (선택. 이 기기에만 저장 · 백업 파일에는 넣지 않는다) */
   claudeApiKey: string
+  /** 세특 AI 연결: claude(API 키) · openrouter(원하는 모델) · manual(키 없이 무료 챗봇에 복사) */
+  aiProvider: 'claude' | 'openrouter' | 'manual'
+  /** OpenRouter 키 (이 기기에만 · 백업 제외) */
+  openrouterApiKey: string
+  openrouterModel: string
+  /** 선생님 세특 예시 (AI가 문체만 참고. 이 기기에만) */
+  seteukStyle: string
 }
 
 export interface NeisTemplate {
@@ -118,6 +125,10 @@ export function defaultSettings(): AppSettings {
     neisSchedule: null,
     termsAgreed: null,
     claudeApiKey: '',
+    aiProvider: 'manual',
+    openrouterApiKey: '',
+    openrouterModel: '',
+    seteukStyle: '',
   }
 }
 

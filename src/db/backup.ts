@@ -11,7 +11,7 @@ export const BACKUP_FORMAT = 'pe-records-backup'
 export const BACKUP_VERSION = 4
 
 /** 백업 파일에 넣지 않는 설정 (이 기기에만) */
-export const SECRET_KEYS = ['claudeApiKey']
+export const SECRET_KEYS = ['claudeApiKey', 'openrouterApiKey']
 
 export const BACKUP_TABLES = ['settings', 'students', 'records', 'captains', 'absences', 'keywords', 'papsConfigs', 'papsResults', 'papsRounds', 'assessments', 'assessmentScores', 'timerPresets', 'groups', 'lessons', 'progressPlans', 'seteukDrafts'] as const
 const TABLES = BACKUP_TABLES
