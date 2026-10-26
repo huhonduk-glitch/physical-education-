@@ -226,6 +226,54 @@ export interface AudioFile {
 }
 
 /** 수업 일지 (재설계 5단계): 수업반 · 날짜마다 한 줄 */
+/** 진도표 한 차시 (6-5, v6). 날짜는 저장하지 않고 시간표·쉬는 날로 그때그때 계산한다 */
+export interface PlanItem {
+  id: string
+  /** 단원명 */
+  unit: string
+  /** 학습 내용 · 활동 */
+  content: string
+  /** 성취기준 코드 ([12스생2-01-01] …) */
+  standards: string[]
+  /** 수업 방법 (강의식 · 모둠별 · 협동식 …) */
+  method?: string
+  /** 평가 연계 · 메모 */
+  evalNote?: string
+  /** 이 날짜에 고정 (평가일 등). 밀기를 해도 움직이지 않는다 */
+  lockedDate?: string
+}
+
+/** 진도표: 과목·학년·학기 하나에 한 개. 여러 수업반이 같은 진도표를 쓴다 */
+export interface ProgressPlan {
+  id: string
+  schoolYear: number
+  semester: 1 | 2
+  title: string
+  subject: string
+  grade?: number
+  /** 주당 시간(학점) · 주 수 → 목표 차시 = 둘을 곱한 값 */
+  weeklyHours: number
+  weeks: number
+  /** 목표 차시 (보통 weeklyHours × weeks, 교사가 바꿀 수 있다) */
+  target: number
+  /** 학기 첫날 · 끝날 (YYYY-MM-DD) */
+  startDate: string
+  endDate: string
+  /** 수업이 없는 날 (공휴일 · 방학 · 고사 · 행사) */
+  offDays: string[]
+  /** 이 진도표를 쓰는 수업반 */
+  groupIds: string[]
+  items: PlanItem[]
+  /** 수업반별로 빠진 수업 'YYYY-MM-DD|교시' (밀기) */
+  skips: Record<string, string[]>
+  /** 수업반별로 끝낸 차시 id */
+  done: Record<string, string[]>
+  /** 범교과 연계 (사회정서 · 안전 · 인성 …) — 시기와 주제만 */
+  extras?: { when: string; label: string }[]
+  createdAt: number
+  updatedAt: number
+}
+
 export interface Lesson {
   id: string
   schoolYear: number

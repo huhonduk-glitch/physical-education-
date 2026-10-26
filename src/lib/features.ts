@@ -18,6 +18,7 @@ export interface FeatureInfo {
 
 export const FEATURES: FeatureInfo[] = [
   { id: 'records', label: '누가기록', short: '누가기록', desc: '수업반별 학생 카드 · 체크 · 메모', icon: 'class', tone: 'bg-brand-light text-brand', to: '/groups', needsRoster: true },
+  { id: 'plans', label: '교과 진도표', short: '진도표', desc: '차시 계획 · 날짜 자동 · 반별 진도 비교', icon: 'calendar', tone: 'bg-brand-light text-brand', to: '/plans', needsRoster: false },
   { id: 'paps', label: 'PAPS', short: 'PAPS', desc: '측정 입력 · 자동 등급 · 나이스 파일', icon: 'paps', tone: 'bg-brand-light text-brand', to: '/paps', needsRoster: true },
   { id: 'assess', label: '수행평가', short: '수행평가', desc: '평가 만들기 · 채점표 · 엑셀', icon: 'clipboard', tone: 'bg-brand-light text-brand', to: '/more/assessments', needsRoster: true },
   { id: 'tools', label: '수업 도구', short: '수업 도구', desc: '타이머 · 뽑기 · 팀 나누기 · PAPS 신호음', icon: 'timer', tone: 'bg-brand-light text-brand', to: '/tools', needsRoster: false },

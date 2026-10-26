@@ -23,6 +23,9 @@ const SetupPage = lazy(() => import('./pages/SetupPage'))
 const StudentsPage = lazy(() => import('./pages/StudentsPage'))
 const TimerPage = lazy(() => import('./pages/TimerPage'))
 const JournalPage = lazy(() => import('./pages/groups/JournalPage'))
+const PlansPage = lazy(() => import('./pages/plans/PlansPage'))
+const PlanPage = lazy(() => import('./pages/plans/PlanPage'))
+const PlanSetupPage = lazy(() => import('./pages/plans/PlanSetupPage'))
 const NeisSyncPage = lazy(() => import('./pages/NeisSyncPage'))
 const ReportPage = lazy(() => import('./pages/ReportPage'))
 const RubricPage = lazy(() => import('./pages/RubricPage'))
@@ -149,6 +152,10 @@ export default function App() {
           <Route path="/groups/:id/stats" element={<GroupStatsPage />} />
           <Route path="/groups/:id/journal" element={<JournalPage />} />
           <Route path="/groups/:id/report" element={<ReportPage scope="group" />} />
+          <Route path="/plans" element={<PlansPage />} />
+          <Route path="/plans/new" element={<PlanSetupPage />} />
+          <Route path="/plans/:id" element={<PlanPage />} />
+          <Route path="/plans/:id/setup" element={<PlanSetupPage />} />
           <Route path="/eval" element={<EvalPage />} />
           <Route path="/timer" element={<TimerPage />} />
           <Route path="/tools" element={<ToolsPage />} />

@@ -6,10 +6,13 @@ import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
 import { db } from '../../db/db'
 import { saveLesson } from '../../db/lessonsRepo'
+import { plansForGroup, setDone } from '../../db/plansRepo'
 import { longDateLabel, shortDateLabel, todayStr } from '../../lib/dates'
 import { saveXlsx } from '../../lib/download'
 import { countsByDate, journalRows, previousLesson, unitSuggestions } from '../../lib/lessons'
 import { classForNow } from '../../lib/timetable'
+import { itemsOn, meetings, nextItem, schedule } from '../../lib/progressPlan'
+import { Link } from 'react-router-dom'
 import { useApp } from '../../state/AppContext'
 import { useGroups } from '../../state/useGroups'
 
@@ -38,6 +41,18 @@ export default function JournalPage() {
   const units = useMemo(() => unitSuggestions(lessons), [lessons])
   const marked = useMemo(() => new Set(lessons.map((l) => l.date)), [lessons])
   const dayCount = data?.counts.get(date)
+
+  // 진도표: 이날 이 반이 할 차시 (없으면 다음에 할 차시)
+  const plans = useLiveQuery(() => plansForGroup(db, id), [id])
+  const planDay = useMemo(
+    () =>
+      (plans ?? []).map((p) => {
+        const sched = schedule(p.items, meetings(id, settings.timetable, p, p.skips[id]))
+        const done = p.done[id] ?? []
+        return { p, done, on: itemsOn(sched, date), next: nextItem(sched, done) }
+      }),
+    [plans, id, settings.timetable, date],
+  )
 
   const nowPeriod = date === todayStr() ? classForNow(new Date(), settings.timetable, settings.periodStarts, settings.periodMinutes) : null
   const [form, setForm] = useState({ period: '', unit: '', activity: '', note: '' })
@@ -84,6 +99,53 @@ export default function JournalPage() {
       />
       <div className="page space-y-4 pb-8">
         <DateBar value={date} onChange={setDate} marked={marked} />
+
+        {planDay.map(({ p, done, on, next }) => {
+          const list = on.length ? on : next ? [next] : []
+          return (
+            <section key={p.id} className="card space-y-2">
+              <div className="flex items-baseline gap-2">
+                <p className="card-title flex-1">{on.length ? '이날 진도' : '다음 진도'}</p>
+                <Link to={`/plans/${p.id}?t=dates&g=${id}`} className="hint font-bold text-brand">
+                  {p.title} ›
+                </Link>
+              </div>
+              {list.length === 0 && <p className="hint">진도표의 차시를 모두 끝냈어요.</p>}
+              {list.map((s) => {
+                const isDone = done.includes(s.item.id)
+                return (
+                  <div key={s.item.id} className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${isDone ? 'bg-ok text-white' : 'bg-fill text-ink-3'}`}
+                      aria-pressed={isDone}
+                      aria-label={`${s.no}차시 ${isDone ? '끝냄 취소' : '끝냄'}`}
+                      onClick={() => setDone(db, p.id, id, s.item.id, !isDone)}
+                      disabled={readOnly}
+                    >
+                      <Icon name="check" size={20} />
+                    </button>
+                    <span className="min-w-0 flex-1">
+                      <b className="block truncate">
+                        {s.no}차시 · {s.item.unit}
+                      </b>
+                      <span className="hint block truncate">{s.item.content}</span>
+                    </span>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost shrink-0 px-3 text-sm"
+                        onClick={() => setForm((f) => ({ ...f, unit: s.item.unit || f.unit, activity: f.activity || s.item.content }))}
+                      >
+                        일지에 넣기
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </section>
+          )
+        })}
 
         {prev?.note && !current && (
           <section className="rounded-2xl bg-caution-light p-4">
