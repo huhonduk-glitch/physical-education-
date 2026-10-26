@@ -363,8 +363,9 @@ function Scoreboard({ league, match, team, onClose }: { league: League; match: L
           <div key={i} className="flex flex-col rounded-3xl" style={{ background: colorOf(sides[i]).fg }}>
             <button type="button" className="flex flex-1 flex-col items-center justify-center gap-2 p-2 active:brightness-110" onClick={() => tap(i, steps[0])} disabled={over} aria-label={`${sides[i]?.name} ${steps[0]}점`}>
               <span className="max-w-full truncate text-xl font-extrabold">{sides[i]?.name}</span>
-              {league.rules.kind === 'sets' && <span className="text-lg font-bold text-white/80">세트 {setsWon(i)}</span>}
-              <span className="text-[min(28vw,10rem)] leading-none font-black tabular-nums">{b.cur[i]}</span>
+              {league.rules.kind === 'sets' && <span className="text-lg font-bold text-white/80">{over ? (setsWon(i) > setsWon(i === 0 ? 1 : 0) ? '승리' : '') : `세트 ${setsWon(i)}`}</span>}
+              {/* 경기가 끝나면 이긴 세트 수를 크게 (지금 세트 0:0은 헷갈림) */}
+              <span className="text-[min(28vw,10rem)] leading-none font-black tabular-nums">{over ? setsWon(i) : b.cur[i]}</span>
             </button>
             <div className="flex gap-1 p-1">
               {steps.slice(1).map((s) => (
