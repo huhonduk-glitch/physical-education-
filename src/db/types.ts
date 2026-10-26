@@ -283,6 +283,25 @@ export interface ProgressPlan {
   updatedAt: number
 }
 
+/** 세특 쓰기 (6-5 ③, v7): 학생 · 수업반마다 한 줄. 교사가 쓴 글과 AI가 다듬은 글을 나눠 둔다 */
+export interface SeteukDraft {
+  id: string
+  schoolYear: number
+  studentId: string
+  groupId: string
+  /** 지금 글 (교사가 고치는 칸) */
+  text: string
+  /** AI가 마지막으로 다듬어 준 글 — 교사가 고쳤는지 비교한다 (기재요령: AI 글을 그대로 입력 금지) */
+  aiText?: string
+  aiUsed?: boolean
+  /** AI 도움을 받았을 때 교사 확인 (AI_CONFIRM_ITEMS 순서) */
+  aiConfirm?: boolean[]
+  status: 'draft' | 'confirmed'
+  confirmedText?: string
+  confirmedAt?: number
+  updatedAt: number
+}
+
 export interface Lesson {
   id: string
   schoolYear: number

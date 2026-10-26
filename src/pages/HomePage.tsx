@@ -200,6 +200,48 @@ export default function HomePage() {
           </section>
         )}
 
+        {/* 이번 주 내 시간표 — 요일 × 교시 표 (2026-10-26 교사 요청) */}
+        {recordsOn && settings.timetable.length > 0 && (
+          <section className="space-y-2">
+            <SectionTitle title="이번 주 내 시간표" action={{ to: '/timetable/pe', label: '전체 체육' }} />
+            <div className="card overflow-x-auto p-2">
+              <table className="w-full table-fixed border-separate border-spacing-1 text-[0.78rem]">
+                <thead>
+                  <tr>
+                    <th className="w-6" />
+                    {['월', '화', '수', '목', '금'].map((d, i) => (
+                      <th key={d} className={`py-0.5 font-extrabold ${now.getDay() === i + 1 ? 'text-brand' : 'text-ink-3'}`}>
+                        {d}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: Math.max(6, ...settings.timetable.map((t) => t.period)) }, (_, i) => i + 1).map((p) => (
+                    <tr key={p}>
+                      <th className="text-center font-bold text-ink-3 tabular-nums">{p}</th>
+                      {[1, 2, 3, 4, 5].map((d) => {
+                        const t = settings.timetable.find((x) => x.day === d && x.period === p)
+                        const g = t ? groupById.get(t.groupId) : undefined
+                        if (!g) return <td key={d} className="h-9 rounded-md bg-fill/60" />
+                        const c = GROUP_COLORS[g.color] ?? GROUP_COLORS.blue
+                        const live = now.getDay() === d && period === p
+                        return (
+                          <td key={d} className={`h-9 rounded-md p-0 ${live ? 'ring-2 ring-brand' : ''}`} style={{ background: c.bg }}>
+                            <Link to={`/groups/${g.id}`} className="block truncate px-1 py-1 leading-tight font-bold text-ink" title={g.name}>
+                              {g.name.replace(/학년\s*/, '-').replace(/반$/, '')}
+                            </Link>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
         {/* ③ 내 수업반 — 가로로 넘겨 보기 */}
         {recordsOn && groups && groups.length > 0 && (
           <section className="space-y-2">

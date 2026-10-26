@@ -16,6 +16,7 @@ import type {
   Lesson,
   PapsRound,
   ProgressPlan,
+  SeteukDraft,
 } from './types'
 import { migrateToGroups } from './groupsRepo'
 import { dbName } from '../lib/demo'
@@ -41,6 +42,7 @@ export class PeDatabase extends Dexie {
   lessons!: EntityTable<Lesson, 'id'>
   papsRounds!: EntityTable<PapsRound, 'id'>
   progressPlans!: EntityTable<ProgressPlan, 'id'>
+  seteukDrafts!: EntityTable<SeteukDraft, 'id'>
 
   constructor(name = 'pe-records') {
     super(name)
@@ -82,6 +84,8 @@ export class PeDatabase extends Dexie {
     this.version(5).stores({ papsRounds: 'id, schoolYear, [schoolYear+grade+classNo]' })
     // v6: 교과 진도표 (6-5). 표 하나만 더한다 — 기존 자료는 건드리지 않는다. 열기 전에 자동 백업
     this.version(6).stores({ progressPlans: 'id, schoolYear, *groupIds' })
+    // v7: 세특 쓰기 (6-5 ③). 표 하나만 더한다. 열기 전에 자동 백업
+    this.version(7).stores({ seteukDrafts: 'id, schoolYear, studentId, groupId, [groupId+studentId]' })
   }
 }
 

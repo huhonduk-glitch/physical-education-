@@ -3,7 +3,7 @@ import neisRanges from '../data/neis-valid-ranges.json'
 import type { Ranges } from '../lib/neisExport'
 import type { CellSpec } from '../lib/papsLayout'
 import type { FlexMode, StepMethod } from '../lib/paps'
-import type { NeisEvent, NeisSchool } from '../lib/neisOpenApi'
+import type { NeisEvent, NeisSchool, SlotGroup } from '../lib/neisOpenApi'
 import type { TermsAgreement } from '../lib/terms'
 import type { SchoolGenderType, SchoolLevel } from './types'
 
@@ -48,8 +48,19 @@ export interface AppSettings {
   neisApiKey: string
   /** 불러온 학사일정 (인터넷이 없어도 홈에 보이도록 기기에 둔다) */
   neisSchedule: { fetchedAt: number; events: NeisEvent[] } | null
+  /** 전체 체육 시간표: 나이스에서 받은 한 주의 체육 칸 (인터넷 없어도 보이게 기기에 둔다) */
+  neisPeWeek: { fetchedAt: number; from: string; slots: SlotGroup[] } | null
   /** 이용 안내에 동의한 판·시각 (판이 오르면 다시 확인받는다) */
   termsAgreed: TermsAgreement | null
+  /** 세특 AI 다듬기용 Claude API 키 (선택. 이 기기에만 저장 · 백업 파일에는 넣지 않는다) */
+  claudeApiKey: string
+  /** 세특 AI 연결: claude(API 키) · openrouter(원하는 모델) · manual(키 없이 무료 챗봇에 복사) */
+  aiProvider: 'claude' | 'openrouter' | 'manual'
+  /** OpenRouter 키 (이 기기에만 · 백업 제외) */
+  openrouterApiKey: string
+  openrouterModel: string
+  /** 선생님 세특 예시 (AI가 문체만 참고. 이 기기에만) */
+  seteukStyle: string
 }
 
 export interface NeisTemplate {
@@ -114,7 +125,13 @@ export function defaultSettings(): AppSettings {
     neisSchool: null,
     neisApiKey: '',
     neisSchedule: null,
+    neisPeWeek: null,
     termsAgreed: null,
+    claudeApiKey: '',
+    aiProvider: 'manual',
+    openrouterApiKey: '',
+    openrouterModel: '',
+    seteukStyle: '',
   }
 }
 

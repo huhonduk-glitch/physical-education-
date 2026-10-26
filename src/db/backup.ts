@@ -7,10 +7,13 @@ import { runGroupMigration } from './groupsRepo'
 
 export const BACKUP_FORMAT = 'pe-records-backup'
 /** 2: PAPS 회차(papsRounds, papsResults.roundId) 추가 (2026-10-22). 옛 앱은 2를 복원하지 않는다(회차가 섞이지 않게) */
-/** 3: 교과 진도표(progressPlans) 추가 (2026-10-26) */
-export const BACKUP_VERSION = 3
+/** 3: 교과 진도표(progressPlans) 추가 (2026-10-26) · 4: 세특 쓰기(seteukDrafts) 추가 */
+export const BACKUP_VERSION = 4
 
-export const BACKUP_TABLES = ['settings', 'students', 'records', 'captains', 'absences', 'keywords', 'papsConfigs', 'papsResults', 'papsRounds', 'assessments', 'assessmentScores', 'timerPresets', 'groups', 'lessons', 'progressPlans'] as const
+/** 백업 파일에 넣지 않는 설정 (이 기기에만) */
+export const SECRET_KEYS = ['claudeApiKey', 'openrouterApiKey']
+
+export const BACKUP_TABLES = ['settings', 'students', 'records', 'captains', 'absences', 'keywords', 'papsConfigs', 'papsResults', 'papsRounds', 'assessments', 'assessmentScores', 'timerPresets', 'groups', 'lessons', 'progressPlans', 'seteukDrafts'] as const
 const TABLES = BACKUP_TABLES
 type TableName = (typeof TABLES)[number]
 
@@ -28,6 +31,8 @@ export async function exportAll(db: PeDatabase): Promise<BackupFile> {
   await db.transaction('r', TABLES.map((t) => db.table(t)), async () => {
     for (const t of TABLES) {
       tables[t] = await db.table(t).toArray()
+      // 세특 AI 키는 기기 밖으로 나가지 않게 백업 파일에서 뺀다
+      if (t === 'settings') tables[t] = (tables[t] as { key: string }[]).filter((r) => !SECRET_KEYS.includes(r.key))
       counts[t] = tables[t].length
     }
   })
@@ -49,11 +54,14 @@ export function checkBackup(x: unknown): { ok: true; file: BackupFile } | { ok: 
 /** 지금 자료를 모두 지우고 백업으로 바꾼다 (한 번에 — 중간에 실패하면 아무것도 안 바뀐다) */
 export async function restoreAll(db: PeDatabase, file: BackupFile): Promise<void> {
   await db.transaction('rw', TABLES.map((t) => db.table(t)), async () => {
+    // 이 기기의 비밀 값(세특 AI 키)은 복원해도 그대로 둔다
+    const keep = await db.settings.bulkGet(SECRET_KEYS)
     for (const t of TABLES) {
       await db.table(t).clear()
-      const rows = file.tables[t] ?? []
+      const rows = (file.tables[t] ?? []).filter((r) => t !== 'settings' || !SECRET_KEYS.includes((r as { key: string }).key))
       if (rows.length) await db.table(t).bulkAdd(rows)
     }
+    for (const r of keep) if (r) await db.settings.put(r)
   })
   // 수업반이 생기기 전에 만든 백업이면 학적반 수업반을 만들어 붙인다
   await runGroupMigration(db)
@@ -83,6 +91,7 @@ export const TABLE_LABELS: Partial<Record<TableName, string>> = {
   assessmentScores: '채점한 학생',
   lessons: '수업 일지',
   progressPlans: '진도표',
+  seteukDrafts: '세특 글',
   keywords: '세특 키워드',
 }
 
