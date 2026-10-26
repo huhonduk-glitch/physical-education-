@@ -120,3 +120,27 @@ describe('기관명 · 상호명 찾기 (기재요령 3-타)', () => {
     expect(by(t, 'org-maybe')).toEqual([])
   })
 })
+
+describe('연수자료 분야별 확장 · 모든 학교명', () => {
+  const ids = (t: string, o?: { schoolName?: string }) => checkSeteuk(t, o).map((h) => h.id)
+  const words = (t: string, id: string) => checkSeteuk(t).find((h) => h.id === id)?.words ?? []
+  it('다른 학교 이름도 (고교블라인드)', () => {
+    expect(words('한국과학고등학교와 서울여고, 부산중학교 학생들과 교류전을 함.', 'school')).toEqual(['한국과학고등학교', '서울여고', '부산중학교'])
+    expect(words('우리 고등학교 체육관과 일반 고등학교 수업을 비교함.', 'school')).toEqual([])
+  })
+  it('자격증 · 인증 · 단증, 공모전 · 경시 · 메달, 장관상, 수능 성적, 학원 강사', () => {
+    expect(ids('생활스포츠지도사 자격 취득을 목표로 함.')).toContain('cert')
+    expect(ids('태권도 2단 승단과 컴퓨터활용능력을 준비함.')).toContain('cert')
+    expect(ids('영상 공모전과 수학 경시에 나가 금메달을 땀.')).toContain('contest')
+    expect(ids('교육감상을 받음.')).toContain('outside-award')
+    expect(ids('수능 등급 향상을 위해 노력함.')).toContain('mock')
+    expect(ids('김철수 코치에게 배운 기술을 익힘.')).toContain('univ')
+    expect(ids('서울대 진학을 목표로 함.')).toContain('univ')
+    expect(ids('IELTS를 준비함.')).toContain('lang-test')
+  })
+  it('소논문 · 같은 문장 반복', () => {
+    expect(ids('배드민턴 하이클리어를 주제로 소논문을 작성함.')).not.toContain('paper')
+    expect(ids('논문을 학술지에 투고함.')).toContain('paper')
+    expect(ids('랠리를 끝까지 이어가며 집중함. 랠리를 끝까지 이어가며 집중함.')).toContain('repeat')
+  })
+})

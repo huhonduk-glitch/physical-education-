@@ -36,22 +36,39 @@ interface Rule {
 const P = '기재요령 23~24쪽'
 /** 어떤 항목에도 기재할 수 없는 사항 (총칙 3) + 학교를 알 수 있는 내용 (총칙 4) */
 const RULES: Rule[] = [
-  { id: 'lang-test', level: 'error', title: '공인어학시험 · 한자시험', basis: `${P} 3-가`, re: /TOEIC|TOEFL|TEPS|HSK|JPT|JLPT|DELF|DALF|TORFL|DELE|토익|토플|텝스|한자능력검정|한자급수|실용한자|상무한검/gi },
-  { id: 'contest', level: 'error', title: '대회 참여 · 수상 실적', basis: `${P} 3-나 (교내대회는 '수상경력'에만)`, re: /대회|수상(?!\s*(스포츠|안전|레저|구조|인명))|입상|금상|은상|동상(?!이몽)|대상\s*(수상|을\s*받)|최우수상|우수상|장려상/g },
-  { id: 'rank', level: 'warn', title: '순위 · 우승 (대회라면 기재 불가)', basis: `${P} 3-나 — 수업 중 경기 결과라면 괜찮아요`, re: /준?우승|[0-9]+위(?![가-힣])/g },
-  { id: 'outside-award', level: 'error', title: '교외상 · 표창 · 감사장 · 공로상', basis: `${P} 3-다`, re: /표창|감사장|공로상|교외상/g },
-  { id: 'cert', level: 'error', title: '인증시험 · 자격증', basis: `${P} 3-라, 파`, re: /인증시험|자격증|급수\s*취득|[0-9]+급\s*(취득|합격)/g },
-  { id: 'mock', level: 'error', title: '모의고사 · 학력평가 성적', basis: `${P} 3-마`, re: /모의고사|모의평가|학력평가|전국연합/g },
-  { id: 'paper', level: 'error', title: '논문 · 학회 발표', basis: `${P} 3-바`, re: /논문|학회|학술지|학술대회/g },
-  { id: 'book', level: 'error', title: '도서 출간', basis: `${P} 3-사`, re: /출간|출판|저서|책을\s*(냄|펴냄|발간)/g },
-  { id: 'ip', level: 'error', title: '특허 · 지식재산권', basis: `${P} 3-아`, re: /특허|실용신안|상표\s*(출원|등록)|지식재산/g },
-  { id: 'abroad', level: 'error', title: '어학연수 · 해외 활동', basis: `${P} 3-자`, re: /어학연수|해외\s*(봉사|활동|연수|캠프)|유학/g },
-  { id: 'parents', level: 'warn', title: '부모 · 친인척 언급 (사회·경제적 지위 암시 금지)', basis: `${P} 3-차`, re: /아버지|어머니|부모님|부친|모친|아빠|엄마|삼촌|이모|고모|할아버지|할머니/g },
+  // 가. 공인어학시험 (연수자료 · 기재요령 예시 + 흔한 시험)
+  { id: 'lang-test', level: 'error', title: '공인어학시험 · 한자시험', basis: `${P} 3-가`, re: /TOEIC|TOEFL|TEPS|IELTS|OPIc|G-?TELP|FLEX|HSK|JPT|JLPT|DELF|DALF|TORFL|DELE|ZD|TESTDAF|DSH|DSD|토익|토플|텝스|아이엘츠|오픽|지텔프|한자능력검정|한자급수|실용한자|상무한검|한자자격/g },
+  // 나. 대회 참여 · 성적 · 수상 (교내대회는 '수상경력'에만, '대회' · '수상'이라는 말 자체를 다른 항목에 쓰지 않음 — 연수자료 3.수상경력)
+  { id: 'contest', level: 'error', title: '대회 참여 · 수상 실적', basis: `${P} 3-나 · 연수자료 '수상 사실 · 대회라는 용어는 수상경력 외 입력 금지'`, re: /대회|경시|올림피아드|공모전|경진|백일장|수상(?!\s*(스포츠|안전|레저|구조|인명))|입상|금상|은상|동상(?!이몽)|대상\s*(수상|을\s*받)|최우수상|우수상|장려상|금메달|은메달|동메달|메달을\s*(땀|획득)|상장/g },
+  { id: 'rank', level: 'warn', title: '순위 · 우승 (대회라면 기재 불가)', basis: `${P} 3-나 — 수업 중 경기 결과라면 괜찮아요`, re: /준?우승|[0-9]+위(?![가-힣])|[0-9]+등(?=[을를\s.,]|$)/g },
+  // 다. 교외상
+  { id: 'outside-award', level: 'error', title: '교외상 · 표창 · 감사장 · 공로상', basis: `${P} 3-다`, re: /표창|감사장|공로상|봉사상|교외상|장관상|시장상|도지사상|교육감상|구청장상/g },
+  // 라 · 파. 인증시험 · 자격증 (자격증은 '자격증 및 인증 취득상황'에만)
+  { id: 'cert', level: 'error', title: '인증시험 · 자격증', basis: `${P} 3-라 · 파 (자격증은 '자격증 취득' 항목에만)`, re: /인증시험|인증\s*(취득|획득)|자격증|자격\s*(취득|획득)|급수\s*취득|[0-9]+급\s*(취득|합격)|기능사|산업기사|생활스포츠지도사|스포츠지도사|컴퓨터활용능력|워드프로세서|ITQ|GTQ|MOS|DIAT|한국사능력검정|유단자|[0-9]\s*단\s*(취득|승단)|단증|품증/g },
+  // 마. 모의고사 · 학력평가
+  { id: 'mock', level: 'error', title: '모의고사 · 학력평가 성적', basis: `${P} 3-마`, re: /모의고사|모의평가|학력평가|전국연합|수능\s*(성적|점수|등급)|백분위|표준점수/g },
+  // 바. 논문 · 학회 (수업 중 소논문 · 탐구 보고서는 괜찮음)
+  { id: 'paper', level: 'error', title: '논문 투고 · 학회 발표', basis: `${P} 3-바`, re: /(?<!소)논문\s*(투고|게재|등재|발표)|학회|학술지|학술대회|저널에/g },
+  // 사. 도서 출간
+  { id: 'book', level: 'error', title: '도서 출간', basis: `${P} 3-사`, re: /출간|출판|저서|책을\s*(냄|펴냄|발간)|전자책을?\s*(냄|펴냄|발간)/g },
+  // 아. 지식재산권
+  { id: 'ip', level: 'error', title: '특허 · 지식재산권', basis: `${P} 3-아`, re: /특허|실용신안|상표\s*(출원|등록)|디자인\s*(출원|등록)|지식재산/g },
+  // 자. 해외 활동
+  { id: 'abroad', level: 'error', title: '어학연수 · 해외 활동', basis: `${P} 3-자 · 연수자료 '해외'`, re: /어학연수|해외\s*(봉사|활동|연수|캠프|탐방|여행|대학)|유학|국제\s*캠프/g },
+  // 차. 부모 사회·경제적 지위 암시 (직종 · 직업 · 직장 · 직위)
+  { id: 'parents', level: 'warn', title: '부모 · 친인척 언급 (사회·경제적 지위 암시 금지)', basis: `${P} 3-차`, re: /아버지|어머니|부모님|부친|모친|아빠|엄마|삼촌|이모|고모|할아버지|할머니|가업|집안|부모의\s*직업/g },
+  // 카. 장학
   { id: 'scholar', level: 'error', title: '장학생 · 장학금', basis: `${P} 3-카`, re: /장학/g },
+  // 다른 항목 입력 금지 내용 (방과후 등)
   { id: 'afterschool', level: 'error', title: '방과후 활동', basis: '기재요령 (다른 항목 입력 금지 내용) · 학교 연수자료', re: /방과\s*후/g },
-  { id: 'univ', level: 'error', title: '특정 대학명 · 기관명 · 상호명 · 강사명', basis: `${P} 3-타`, re: /[가-힣A-Za-z]{2,}대학교|학원|과외|인강|인터넷\s*강의/g },
+  // 타. 특정 대학명 · 상호명 · 강사명 (기관명은 findOrgs)
+  { id: 'univ', level: 'error', title: '특정 대학명 · 사교육 · 강사명', basis: `${P} 3-타`, re: /[가-힣A-Za-z]{2,}대학교|서울대|연세대|고려대|카이스트|KAIST|포스텍|POSTECH|성균관대|한양대|이화여대|경희대|중앙대|서강대|부산대|경북대|체대\s*입시|학원|과외|인강|인터넷\s*강의|[가-힣]{2,3}\s*쌤|[가-힣]{2,4}\s*(강사|코치)(?=님|에게|의|께|가|와|과|\s)/g },
 ]
 
+/** 학교 이름 꼴: ○○고등학교 · ○○중학교 · ○○초등학교 · ○○여자고등학교 · ○○여고 · ○○남고 · ○○여중 · ○○고교 · ○○과학고 · ○○외고 */
+const SCHOOL_NAME = /[가-힣]{2,}(?:여자|남자)?(?:고등학교|중학교|초등학교|고교|여고|남고|여중|남중|과학고|외고|국제고|예고|체고|마이스터고)/g
+/** 학교 이름 꼴이지만 일반 명칭 */
+const NOT_SCHOOL = /^(우리|같은|다른|해당|인근|지역|일반|특성화|자율형|사립|공립|국립|여러|각|전국|이웃)/
 /** 학교를 알 수 있는 내용 (총칙 4): 학교 이름과 줄임말 */
 function schoolWords(schoolName: string): string[] {
   const n = schoolName.replace(/\s+/g, '').replace(/\(.*?\)/g, '')
@@ -134,8 +151,11 @@ export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?
     const words = [...new Set([...text.matchAll(r.re)].map((m) => m[0].trim()))]
     if (words.length) hits.push({ id: r.id, level: r.level, title: r.title, basis: r.basis, words })
   }
-  const school = schoolWords(opts.schoolName ?? '').filter((w) => text.replace(/\s+/g, '').includes(w))
-  if (school.length) hits.push({ id: 'school', level: 'error', title: '학교를 알 수 있는 내용', basis: '기재요령 23쪽 4 (학교명 · 재단명 · 축제명 · 별칭 등)', words: school })
+  const own = schoolWords(opts.schoolName ?? '').filter((w) => text.replace(/\s+/g, '').includes(w))
+  // 다른 학교 이름도 (고교블라인드 · 연수자료 '학교명'): ○○고등학교 · ○○여고 · ○○고교 · ○○중학교 · ○○초 …
+  const any = [...text.matchAll(SCHOOL_NAME)].map((m) => m[0].trim()).filter((w) => !NOT_SCHOOL.test(w))
+  const school = [...new Set([...own, ...any])]
+  if (school.length) hits.push({ id: 'school', level: 'error', title: '학교를 알 수 있는 내용', basis: '기재요령 23쪽 4 고교블라인드 (학교명 · 재단명 · 축제명 · 별칭 등) · 연수자료', words: school })
   // 학교 연수자료(2026 학교생활기록부 기재요령 담임 연수, 기재요령 28~30쪽): 한글 입력 · 명사형 종결과 마침표 · 기호 최소화
   const sub = SUBSTITUTES.flatMap((x) => [...text.matchAll(x.re)].map((m) => `${m[0].trim()} → ${x.to}`))
   if (sub.length) hits.push({ id: 'substitute', level: 'error', title: '기재 유의어 (대체어로 바꿔 주세요)', basis: '기재요령 · 학교 연수자료 ‘기재 유의어 → 대체어’', words: [...new Set(sub)] })
@@ -149,6 +169,9 @@ export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?
   const sym = [...new Set(text.match(/[^\p{L}\p{N}\s.,\-'‘’[\]]/gu) ?? [])]
   if (sym.length) hits.push({ id: 'symbol', level: 'warn', title: '특수 기호 (최소화)', basis: '기재요령 28~30쪽: 온점 · 쉼표 · 하이픈 · 작은따옴표 · 대괄호만', words: sym })
   if (/ {2,}/.test(text)) hits.push({ id: 'space', level: 'warn', title: '공백 두 칸', basis: '학교 연수자료: 자주 틀리는 오류', words: ['두 칸 띄어쓰기'] })
+  const sens = text.split(/(?<=[.])\s+/).map((x) => x.trim()).filter((x) => x.length >= 12)
+  const dup = [...new Set(sens.filter((x, i) => sens.indexOf(x) !== i))]
+  if (dup.length) hits.push({ id: 'repeat', level: 'warn', title: '같은 문장 반복', basis: '학교 연수자료: 자주 틀리는 오류 (같은 내용 반복 복사)', words: dup.map((x) => `${x.slice(0, 20)}…`) })
   const org = findOrgs(text)
   if (org.sure.length) hits.push({ id: 'org', level: 'error', title: '특정 기관명 · 단체명 · 상호명', basis: '기재요령 23~24쪽 3-타 — 일반 명칭으로 (예: 질병관리청 → 감염병 관리 기관)', words: org.sure })
   if (org.maybe.length) hits.push({ id: 'org-maybe', level: 'warn', title: '기관 · 단체 · 상호 이름으로 보여요', basis: '기재요령 23~24쪽 3-타 — 특정 이름이면 일반 명칭으로 바꿔 주세요', words: org.maybe })
