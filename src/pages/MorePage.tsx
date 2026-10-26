@@ -26,6 +26,7 @@ const GROUPS: { title: string; items: MenuItem[] }[] = [
     items: [
       { to: '/plans', label: '교과 진도표', desc: '차시 계획 · 날짜 자동 · 반별 진도', icon: 'calendar', tone: 'bg-brand-light text-brand', feature: 'plans' },
       { to: '/more/assessments', label: '수행평가', desc: '평가 만들기 · 채점 · 나이스 파일', icon: 'clipboard', tone: 'bg-brand-light text-brand', feature: 'assess' },
+      { to: '/seteuk/write', label: '세특 쓰기', desc: '초안 · 기재요령 검사 · AI 다듬기 · 확정', icon: 'edit', tone: 'bg-brand-light text-brand', feature: 'seteuk' },
       { to: '/more/keywords', label: '세특 키워드', desc: '근거 모아보기 · 키워드 사전', icon: 'tag', tone: 'bg-brand-light text-brand', feature: 'seteuk' },
       { to: '/tools/apps', label: '팀 편성 · 전술 보드', desc: '반 명단 보내기', icon: 'share', tone: 'bg-brand-light text-brand', feature: 'apps' },
       { to: '/more/captains', label: '체육부장', desc: '지정 · 활동 체크', icon: 'medal', tone: 'bg-brand-light text-brand', feature: 'captains' },
