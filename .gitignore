@@ -9,3 +9,6 @@ dev-dist/
 coverage/
 *.local
 .DS_Store
+
+# Cloudflare Worker 로컬 실행 파일
+.wrangler/
