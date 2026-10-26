@@ -50,6 +50,8 @@ export interface AppSettings {
   neisSchedule: { fetchedAt: number; events: NeisEvent[] } | null
   /** 이용 안내에 동의한 판·시각 (판이 오르면 다시 확인받는다) */
   termsAgreed: TermsAgreement | null
+  /** 세특 AI 다듬기용 Claude API 키 (선택. 이 기기에만 저장 · 백업 파일에는 넣지 않는다) */
+  claudeApiKey: string
 }
 
 export interface NeisTemplate {
@@ -115,6 +117,7 @@ export function defaultSettings(): AppSettings {
     neisApiKey: '',
     neisSchedule: null,
     termsAgreed: null,
+    claudeApiKey: '',
   }
 }
 
