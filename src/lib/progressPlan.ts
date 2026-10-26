@@ -163,6 +163,8 @@ export interface WeekRow {
   week: number
   hours: number
   unit: string
+  /** 주 대신 보여 줄 시기 ('9월' — 월 단위 진도표) */
+  label?: string
   /** 학습 내용 (없으면 'N주'로 표시) */
   content?: string
   standards: string[]
@@ -183,7 +185,7 @@ export function itemsFromWeeks(rows: readonly WeekRow[]): { items: PlanItem[]; e
     }
     const n = Math.max(0, Math.round(r.hours))
     for (let i = 0; i < n; i++) {
-      items.push({ id: newItemId(), unit: r.unit, content: r.content ?? `${r.week}주 ${n > 1 ? `(${i + 1}/${n})` : ''}`.trim(), standards: [...r.standards], method: r.method, evalNote: r.evalNote })
+      items.push({ id: newItemId(), unit: r.unit, content: r.content ?? `${r.label ?? `${r.week}주`} ${n > 1 ? `(${i + 1}/${n})` : ''}`.trim(), standards: [...r.standards], method: r.method, evalNote: r.evalNote })
     }
   }
   return { items, events }

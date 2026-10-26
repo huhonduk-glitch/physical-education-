@@ -141,6 +141,73 @@ export function assessmentsFromCells(pages: readonly Cell[][]): PlannedAssessmen
   return out.filter((a) => a.item || a.elements)
 }
 
+/**
+ * 공시본처럼 세부 채점 기준표가 없는 계획서: '평가의 종류 … 반영 비율' 개요 표에서 평가를 만든다.
+ *   [명칭/영역 | 미실시 | 플레이트야구 기본기능 | 학교체육시설 안전탐구활동 | -]
+ *   [배점(점) | | 100 | 100 | 200] [반영비율(%) | | 50 | 50 | 100] [성취기준 | …] [평가시기 | 8월 | 9월]
+ * 채점 요소는 '점수 입력'(만점 = 배점)으로 두고, 성취기준별 상·중·하 평가기준을 수행 특성으로 붙인다.
+ */
+export function assessmentsFromOverview(pages: readonly Cell[][]): PlannedAssessment[] {
+  const cells: PCell[] = pages.flatMap((cs, page) => cs.map((c) => ({ ...c, page })))
+  const out: PlannedAssessment[] = []
+  const levels = levelCriteria(cells)
+  for (const nameL of cells.filter((c) => /^명칭/.test(norm(c.text)))) {
+    const labelsBelow = cells.filter((c) => c.page === nameL.page && Math.abs(c.x0 - nameL.x0) < 3 && c.y1 <= nameL.y0 + 1.5 && nameL.y0 - c.y1 < 160)
+    const row = (re: RegExp) => labelsBelow.filter((c) => re.test(norm(c.text))).sort((a, b) => b.y1 - a.y1)[0]
+    const pointsL = row(/^배점/)
+    const ratioL = row(/^반영비율/)
+    const stdL = row(/^성취기준/)
+    const whenL = row(/^평가시기/)
+    const cols = rightOf(cells, nameL).filter((c) => !/^(미실시|-|–|합계)$/.test(norm(c.text)) && norm(c.text))
+    for (const col of cols) {
+      const x = (col.x0 + col.x1) / 2
+      const at = (l?: PCell) => (l ? cells.find((c) => c.page === l.page && x >= c.x0 && x <= c.x1 && overlapY(c, l) > (l.y1 - l.y0) * 0.5)?.text.trim() : undefined)
+      const max = Number(/(\d+(?:\.\d+)?)/.exec(at(pointsL) ?? '')?.[1])
+      const ratio = at(ratioL)
+      const standards = standardCodes(at(stdL) ?? '')
+      const title = col.text.replace(/\s+/g, ' ').trim()
+      out.push({
+        title,
+        max: Number.isFinite(max) ? max : undefined,
+        ratio: ratio ? (/%/.test(ratio) ? ratio : `${ratio}%`) : undefined,
+        when: at(whenL),
+        standards,
+        methods: [],
+        levelDescs: standards.flatMap((code) => (levels.get(code) ?? []).map((l) => ({ label: standards.length > 1 ? `${code} ${l.label}` : l.label, desc: l.desc }))),
+        item: Number.isFinite(max) ? { id: `plan-${title}`, label: title, method: 'direct', max } : undefined,
+        problems: ['계획서에 세부 채점 기준표가 없어요(공시본). 점수를 직접 넣거나, [고치기]에서 채점 요소를 나눠 주세요'],
+      })
+    }
+  }
+  return out
+}
+
+/** 성취기준별 상·중·하 평가기준: [성취기준 칸] [상|중|하] [설명] */
+function levelCriteria(cells: readonly PCell[]): Map<string, { label: string; desc: string }[]> {
+  const m = new Map<string, { label: string; desc: string }[]>()
+  let lastCode: string | undefined
+  const lvs = cells.filter((c) => /^(상|중|하)$/.test(norm(c.text))).sort((a, b) => a.page - b.page || b.y1 - a.y1)
+  for (const lv of lvs) {
+    const left = cells.filter((c) => c.page === lv.page && c.x1 <= lv.x0 + 1.5 && overlapY(c, lv) > 1).sort((a, b) => b.x1 - a.x1)[0]
+    const desc = rightOf(cells, lv)[0]?.text
+    if (!left || !desc) continue
+    // 쪽을 넘어간 칸은 코드가 없다 → 앞 쪽의 성취기준을 이어 쓴다
+    const code = standardCodes(left.text)[0] ?? lastCode
+    if (!code) continue
+    lastCode = code
+    const list = m.get(code) ?? []
+    if (!list.some((x) => x.label === norm(lv.text))) list.push({ label: norm(lv.text), desc: desc.replace(/\s+/g, ' ').trim() })
+    m.set(code, list)
+  }
+  return m
+}
+
+/** 세부계획 표가 있으면 그것으로, 없으면 개요 표로 */
+export function readAssessPlan(pages: readonly Cell[][]): PlannedAssessment[] {
+  const detailed = assessmentsFromCells(pages)
+  return detailed.some((a) => a.item && a.item.method !== 'direct') ? detailed : assessmentsFromOverview(pages)
+}
+
 /** 평가 영역별 만점 합 · 반영비율 합 확인 */
 export function planTotals(list: readonly PlannedAssessment[]): { max: number; ratio: number } {
   return {

@@ -5,7 +5,7 @@ import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import { db, newId } from '../db/db'
 import type { AssessItem, Assessment } from '../db/types'
-import { assessmentsFromCells, planTotals, type PlannedAssessment } from '../lib/assessPlanCells'
+import { readAssessPlan, planTotals, type PlannedAssessment } from '../lib/assessPlanCells'
 import { fmtNum, itemMax } from '../lib/assessScore'
 import { STANDARDS, findStandards } from '../lib/standards'
 import { useApp } from '../state/AppContext'
@@ -29,7 +29,7 @@ export default function AssessFromPlanPage() {
       const [{ readPdf, buildCells }, pdfjs, worker] = await Promise.all([import('../lib/pdfTable'), import('pdfjs-dist'), import('pdfjs-dist/build/pdf.worker.min.mjs?url')])
       pdfjs.GlobalWorkerOptions.workerSrc = worker.default
       const pages = await readPdf(pdfjs as unknown as Parameters<typeof readPdf>[0], new Uint8Array(await f.arrayBuffer()))
-      const found = assessmentsFromCells(pages.map((p) => buildCells(p).cells))
+      const found = readAssessPlan(pages.map((p) => buildCells(p).cells))
       if (!found.length) setErr('수행평가 세부계획 표(평가요소 · 채점 기준)를 찾지 못했어요. 한글에서 PDF로 저장한 파일인지 확인해 주세요. 스캔한 PDF는 못 읽어요.')
       setList(found.map((a) => ({ ...a, on: true })))
     } catch (e) {
