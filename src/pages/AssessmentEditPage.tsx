@@ -72,6 +72,7 @@ export default function AssessmentEditPage() {
       items: items.map((it) => ({ ...it, label: it.label.trim() })),
       semester,
       ...(existing?.standards ? { standards: existing.standards } : {}),
+      ...(existing?.plan ? { plan: existing.plan } : {}),
     }
     await db.assessments.put(a)
     nav(`/more/assessments/${a.id}`, { replace: true })
