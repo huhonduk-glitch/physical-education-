@@ -309,7 +309,7 @@ function AssessCard({ student }: { student: Student }) {
           {data.list.map((a) => {
             const sc = data.scores.get(a.id)
             const items = itemsOf(a)
-            const t = totalOf(items, sc?.scores)
+            const t = totalOf(items, sc?.scores, student.gender)
             return (
               <li key={a.id} className="rounded-xl bg-fill px-3 py-2">
                 <p className="font-bold">
@@ -324,7 +324,7 @@ function AssessCard({ student }: { student: Student }) {
                   {items
                     .map((it) => {
                       const raw = sc?.scores[it.id]
-                      const p = itemPoints(it, raw)
+                      const p = itemPoints(it, raw, student.gender)
                       return `${it.label} ${p === null ? '—' : it.method === 'level' ? `${raw}(${fmtNum(p)})` : fmtNum(p)}`
                     })
                     .join(' · ')}

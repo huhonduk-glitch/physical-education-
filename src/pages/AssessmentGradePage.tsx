@@ -9,7 +9,7 @@ import PageHeader from '../components/PageHeader'
 import { db, newId } from '../db/db'
 import { addRecords } from '../db/recordsRepo'
 import type { AssessItem, Assessment, AssessmentScore, Student } from '../db/types'
-import { directProblem, fmtNum, itemMax, itemPoints, itemsOf, totalOf } from '../lib/assessScore'
+import { directProblem, fmtNum, itemMax, itemPoints, itemsOf, NON_PART, totalOf } from '../lib/assessScore'
 import { todayStr } from '../lib/dates'
 import { saveXlsx } from '../lib/download'
 import { memberNo } from '../lib/groups'
@@ -42,7 +42,7 @@ export default function AssessmentGradePage() {
 
   if (!a) return <PageHeader title="불러오는 중…" back />
   const maxTotal = items.reduce((n, it) => n + itemMax(it), 0)
-  const doneCount = list.filter((s) => totalOf(items, byStudent.get(s.id)?.scores).complete).length
+  const doneCount = list.filter((s) => totalOf(items, byStudent.get(s.id)?.scores, s.gender).complete).length
 
   const setScore = async (s: Student, itemId: string, v: string | number) => {
     const cur = byStudent.get(s.id)
@@ -57,10 +57,10 @@ export default function AssessmentGradePage() {
     const head = ['번호', '학번', '이름', ...items.map((it) => `${it.label}(${itemMax(it)}점)`), `합계(${maxTotal}점)`, '비고']
     const body = list.map((s) => {
       const sc = byStudent.get(s.id)?.scores
-      const t = totalOf(items, sc)
+      const t = totalOf(items, sc, s.gender)
       const alt = absences?.find((x) => x.studentId === s.id && x.altTaskId === a.id)
       const memo = [alt ? `대체과제${alt.altTaskDone ? '(제출)' : '(미제출)'}` : '', byStudent.get(s.id)?.note ?? ''].filter(Boolean).join(' / ')
-      return [memberNo(group, s), s.studentCode, s.name, ...items.map((it) => itemPoints(it, sc?.[it.id]) ?? ''), t.done ? t.total : '', memo]
+      return [memberNo(group, s), s.studentCode, s.name, ...items.map((it) => itemPoints(it, sc?.[it.id], s.gender) ?? ''), t.done ? t.total : '', memo]
     })
     await saveXlsx(`수행평가_${a.title}_${group.name}.xlsx`, [{ name: '채점표', rows: [head, ...body] }])
   }
@@ -95,7 +95,7 @@ export default function AssessmentGradePage() {
 
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none]" role="tablist" aria-label="채점 요소">
           {items.map((it) => {
-            const n = list.filter((s) => itemPoints(it, byStudent.get(s.id)?.scores[it.id]) !== null).length
+            const n = list.filter((s) => itemPoints(it, byStudent.get(s.id)?.scores[it.id], s.gender) !== null).length
             return (
               <button key={it.id} type="button" role="tab" aria-selected={curTab === it.id} className="chip shrink-0 gap-1.5" onClick={() => setTab(it.id)}>
                 {it.label || '(이름 없음)'}
@@ -161,7 +161,23 @@ function ItemColumn({
   return (
     <ul className="card divide-y divide-line p-0">
       <li className="px-4 py-2.5 text-sm font-bold text-ink-3">
-        {item.method === 'level' ? '등급을 누르세요 (다시 누르면 지워져요)' : item.method === 'record' ? `기록(${item.unit ?? ''})을 넣으면 점수가 정해져요 · 엔터 → 다음 학생` : `점수를 넣으세요 (0~${item.max ?? 0}점) · 엔터 → 다음 학생`}
+        {item.method === 'level'
+          ? '등급을 누르세요 (다시 누르면 지워져요)'
+          : item.method === 'record'
+            ? item.checks?.length
+              ? `만족한 평가 요소 개수(0~${item.checks.length})를 넣으면 점수가 정해져요 · 엔터 → 다음 학생`
+              : `기록(${item.unit ?? ''})을 넣으면 점수가 정해져요${item.bandsF?.length ? ' · 남녀 기준이 달라요' : ''} · 엔터 → 다음 학생`
+            : `점수를 넣으세요 (0~${item.max ?? 0}점) · 엔터 → 다음 학생`}
+        {item.checks?.length ? (
+          <details className="mt-1 font-normal text-ink-2">
+            <summary className="cursor-pointer font-bold text-brand">평가 요소 {item.checks.length}개 보기</summary>
+            <ol className="mt-1 list-decimal space-y-0.5 pl-5">
+              {item.checks.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ol>
+          </details>
+        ) : null}
         {item.method === 'level' && item.levels?.some((l) => l.desc) && (
           <details className="mt-1 font-normal text-ink-2">
             <summary className="cursor-pointer font-bold text-brand">등급 기준 보기</summary>
@@ -177,7 +193,7 @@ function ItemColumn({
       </li>
       {list.map((s, i) => {
         const raw = byStudent.get(s.id)?.scores[item.id]
-        const pts = itemPoints(item, raw)
+        const pts = itemPoints(item, raw, s.gender)
         const alt = altIds.get(s.id)
         return (
           <li key={s.id} className="flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2.5">
@@ -214,6 +230,17 @@ function ItemColumn({
                 onNext={() => refs.current[i + 1]?.focus()}
               />
             )}
+            {item.nonPartPoints !== undefined && !readOnly && (
+              <button
+                type="button"
+                aria-pressed={raw === NON_PART}
+                className={`h-11 shrink-0 rounded-xl px-2 text-sm font-bold ${raw === NON_PART ? 'bg-ink text-white' : 'bg-fill text-ink-3'}`}
+                onClick={() => onSet(s, item.id, raw === NON_PART ? '' : NON_PART)}
+                title={`자발적 미참여 · 장기 미인정 결석 (${fmtNum(item.nonPartPoints)}점)`}
+              >
+                미참여
+              </button>
+            )}
             {item.method !== 'direct' && (
               <span className={`w-12 shrink-0 text-right font-extrabold tabular-nums ${pts === null ? 'text-ink-3' : 'text-brand'}`}>{pts === null ? '—' : `${fmtNum(pts)}점`}</span>
             )}
@@ -243,10 +270,11 @@ function ScoreInput({
 }) {
   const [text, setText] = useState(raw === undefined ? '' : String(raw))
   useEffect(() => setText(raw === undefined ? '' : String(raw)), [raw])
-  const problem = item.method === 'direct' ? directProblem(item, text.trim()) : text.trim() && !Number.isFinite(Number(text)) ? '숫자가 아니에요' : null
+  const problem = text.trim() === NON_PART ? null : item.method === 'direct' ? directProblem(item, text.trim()) : text.trim() && !Number.isFinite(Number(text)) ? '숫자가 아니에요' : null
   const commit = () => {
     const t = text.trim()
     if (t === '') return onCommit('')
+    if (t === NON_PART) return onCommit(NON_PART)
     if (problem) return
     onCommit(Number(t))
   }
@@ -313,7 +341,7 @@ function SumTable({
         <tbody>
           {list.map((s) => {
             const sc = byStudent.get(s.id)
-            const t = totalOf(items, sc?.scores)
+            const t = totalOf(items, sc?.scores, s.gender)
             return (
               <tr key={s.id}>
                 <th className="sticky left-0 z-10 border-t border-line bg-white px-2 py-2 text-left text-sm font-semibold whitespace-nowrap">
@@ -321,7 +349,7 @@ function SumTable({
                   {s.name}
                 </th>
                 {items.map((it) => {
-                  const p = itemPoints(it, sc?.scores[it.id])
+                  const p = itemPoints(it, sc?.scores[it.id], s.gender)
                   return (
                     <td key={it.id} className="border-t border-line px-1 tabular-nums">
                       {p === null ? <span className="text-ink-3">—</span> : fmtNum(p)}

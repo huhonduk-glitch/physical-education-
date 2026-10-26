@@ -57,7 +57,7 @@ export default function AssessExportPage() {
   }, [linked.map((a) => a.id).join(',')])
   const [mode, setMode] = useState<'template' | 'new'>('template')
 
-  const scoreOf = (a: Assessment, studentId: string) => totalOf(itemsOf(a), scores?.get(a.id)?.get(studentId)?.scores)
+  const scoreOf = (a: Assessment, studentId: string) => totalOf(itemsOf(a), scores?.get(a.id)?.get(studentId)?.scores, members.find((s) => s.id === studentId)?.gender)
 
   return (
     <>

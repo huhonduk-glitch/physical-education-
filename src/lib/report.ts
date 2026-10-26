@@ -63,7 +63,7 @@ export function buildReport(
       .map((a) => {
         const items = itemsOf(a)
         const sc = scoreBy.get(a.id)
-        const t = totalOf(items, sc?.scores)
+        const t = totalOf(items, sc?.scores, student.gender)
         return {
           title: a.title,
           score: t.done ? `${fmtNum(t.total)} / ${t.max}점` : '미채점',
@@ -71,7 +71,7 @@ export function buildReport(
           detail: items
             .map((it) => {
               const raw = sc?.scores[it.id]
-              const p = itemPoints(it, raw)
+              const p = itemPoints(it, raw, student.gender)
               return `${it.label} ${p === null ? '—' : it.method === 'level' ? `${raw}` : fmtNum(p)}`
             })
             .join(' · '),

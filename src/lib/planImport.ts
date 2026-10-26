@@ -1,5 +1,6 @@
 import type { Cell } from './pdfTable'
 import type { WeekRow } from './progressPlan'
+import { STANDARDS } from './standards'
 
 /**
  * 진도표 파일 읽기 (6-5). 순수 함수.
@@ -15,9 +16,23 @@ export interface ParsedPlan {
 }
 
 /** 성취기준 코드: [12스생2-01-01], 〔12스생2-01-01 처럼 괄호가 빠져도 찾는다 */
-const CODE = /(\d{1,2}[가-힣]+\d*-\d{2}-\d{2})/g
+const CODE = /(\d{1,2}[가-힣]+\d*(?:-\d{2}){1,2})(?![\d-])/g
+const ALL_CODES = STANDARDS.subjects.flatMap((s) => s.areas.flatMap((a) => a.standards.map((x) => x.code)))
 export function standardCodes(text: string): string[] {
-  return [...new Set([...text.matchAll(CODE)].map((m) => `[${m[1]}]`))]
+  const out: string[] = []
+  const ms = [...text.matchAll(CODE)]
+  ms.forEach((m, i) => {
+    out.push(`[${m[1]}]`)
+    // '[12운건02-03] ~ [12운건02-04]'처럼 범위면 사이 성취기준도 (성취기준 목록에 있는 것만)
+    const next = ms[i + 1]
+    if (next && /^[\]\s〕]*[~∼〜-]\s*[[〔]?$/.test(text.slice(m.index! + m[1].length, next.index))) {
+      const prefix = m[1].replace(/-\d{2}$/, '')
+      const lo = `[${m[1]}]`
+      const hi = `[${next[1]}]`
+      for (const c of ALL_CODES) if (c > lo && c < hi && c.startsWith(`[${prefix}`)) out.push(c)
+    }
+  })
+  return [...new Set(out)]
 }
 
 /** '1. 배드민턴 이해하기' → '배드민턴 이해하기' */
@@ -53,19 +68,41 @@ export function weeksFromCells(pages: readonly Cell[][]): ParsedPlan {
   for (const cells of pages) {
     // 1) 머리글: '단원'과 '성취기준'이 같은 줄에 있는 표
     const unitH = cells.find((c) => /단원/.test(norm(c.text)) && norm(c.text).length <= 8)
-    const stdH = unitH && cells.find((c) => /성취기준/.test(norm(c.text)) && norm(c.text).length <= 12 && Math.abs(cy(c) - cy(unitH)) < 25)
+    const stdH = unitH && cells.find((c) => /성취기준/.test(norm(c.text)) && norm(c.text).length <= 16 && Math.abs(cy(c) - cy(unitH)) < 25)
     if (unitH && stdH) {
       const headerY = Math.min(unitH.y0, stdH.y0)
       const inHeader = (c: Cell) => c.y0 >= headerY - 1 && c.y0 < headerY + 40 && c.y1 > headerY
       const header = cells.filter(inHeader)
       const methodH = header.find((c) => /수업방법|교수방법|지도방법/.test(norm(c.text)))
-      const evalH = header.find((c) => /평가/.test(norm(c.text)) && c !== stdH)
+      const evalH = header.find((c) => norm(c.text) === '평가방법') ?? header.find((c) => /평가/.test(norm(c.text)) && c !== stdH && !/^수업/.test(norm(c.text)))
       const weekH = header.find((c) => /^주(\(|$|차|시수|학점)/.test(norm(c.text)))
-      const monthH = header.find((c) => norm(c.text) === '월')
+      const monthH = header.find((c) => norm(c.text) === '월') ?? header.find((c) => norm(c.text) === '시기')
+      // 월 단위 진도표: '시수/누계' 열에 '5/5' (이번 달 시수 / 누계)
+      const hoursH = header.find((c) => /시수|누계/.test(norm(c.text)) && !/^주/.test(norm(c.text)))
       const body = cells.filter((c) => c.y1 <= headerY + 1)
       const weekCells = body
         .filter((c) => WEEK_CELL.test(norm(c.text)) && (!weekH || (cx(c) >= weekH.x0 - 2 && cx(c) <= weekH.x1 + 2)))
         .sort((a, b) => b.y1 - a.y1)
+      if (!weekCells.length && hoursH) {
+        const rows = body.filter((c) => /^\d+\/\d+$/.test(norm(c.text)) && cx(c) >= hoursH.x0 - 2 && cx(c) <= hoursH.x1 + 2).sort((a, b) => b.y1 - a.y1)
+        for (const r of rows) {
+          const y = cy(r)
+          const at = (h: Cell | undefined) => (h ? cellAt(body, cx(h), y) : undefined)
+          const mt = /^(\d{1,2})월$/.exec(norm(at(monthH)?.text ?? ''))
+          if (mt) month = Number(mt[1])
+          const uCell = at(unitH)
+          const sCell = at(stdH)
+          const stdText = sCell?.text ?? ''
+          const row: WeekRow = { month, week: weeks.length + 1, label: month ? `${month}월` : undefined, hours: Number(norm(r.text).split('/')[0]), unit: cleanUnit(uCell?.text ?? ''), standards: standardCodes(stdText) }
+          const content = stdText.replace(/[[〔]?\d{1,2}[가-힣]+\d*(?:-\d{2}){1,2}[\]〕]?\s*([~∼,]\s*)?/g, '').replace(/^[\s▪•]+/, '').trim()
+          if (content) row.content = content
+          const meth = at(methodH)?.text
+          const ev = at(evalH)?.text
+          if (meth) row.method = meth
+          if (ev) row.evalNote = ev
+          weeks.push(row)
+        }
+      }
       for (const w of weekCells) {
         const m = WEEK_CELL.exec(norm(w.text))!
         const y = cy(w)

@@ -182,6 +182,13 @@ export interface AssessItem {
   bands?: RecordBand[]
   /** 기록표에서 어느 구간에도 들지 못할 때 점수 (기본 점수) */
   basePoints?: number
+  /** 여학생 기준이 따로 있으면 (평가계획서의 '남자 20회 이상, 여자 15회 이상'). 없으면 bands를 함께 쓴다 */
+  bandsF?: RecordBand[]
+  basePointsF?: number
+  /** '미참여'로 입력하면 받는 점수 (자발적 미참여 · 장기 미인정 결석) */
+  nonPartPoints?: number
+  /** 체크리스트: 평가 요소 목록. 기록 = 만족한 개수 */
+  checks?: string[]
 }
 
 export interface Assessment {
@@ -201,6 +208,8 @@ export interface Assessment {
   semester?: 0 | 1 | 2
   /** 5단계: 이 평가가 근거로 삼은 성취기준 (루브릭 만들기에서 고른 것) */
   standards?: { code: string; text: string }[]
+  /** 6-5 ②: 평가계획서에서 읽은 정보 (평가요소 · 평가방법 · 시기 · 반영비율 · 성취수준별 수행 특성) */
+  plan?: { elements?: string; methods?: string[]; when?: string; ratio?: string; levelDescs?: { label: string; desc: string }[] }
 }
 
 export interface AssessmentScore {

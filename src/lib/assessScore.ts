@@ -1,5 +1,7 @@
 import type { AssessItem, Assessment, RubricItem } from '../db/types'
 
+type Gender = 'M' | 'F' | null
+
 /**
  * 수행평가 점수 계산 (재설계 3단계). 순수 함수.
  * 평가 1개 = 나이스 양식의 영역 1칸. 영역 점수 = 채점 요소 점수의 합, 영역 만점 = 요소 만점의 합.
@@ -10,28 +12,35 @@ export const fmtNum = (n: number) => String(Math.round(n * 100) / 100)
 /** 요소 만점 */
 export function itemMax(it: AssessItem): number {
   if (it.method === 'level') return Math.max(0, ...(it.levels ?? []).map((l) => l.points))
-  if (it.method === 'record') return Math.max(0, it.basePoints ?? 0, ...(it.bands ?? []).map((b) => b.points))
+  if (it.method === 'record') return Math.max(0, it.basePoints ?? 0, it.basePointsF ?? 0, ...(it.bands ?? []).map((b) => b.points), ...(it.bandsF ?? []).map((b) => b.points))
   return it.max ?? 0
 }
 
 /** 기록표 구간 찾기: 높을수록 → 기록 ≥ 기준 중 가장 높은 기준, 낮을수록 → 기록 ≤ 기준 중 가장 낮은 기준 */
-export function recordPoints(it: AssessItem, value: number): number {
-  const bands = it.bands ?? []
+export function recordPoints(it: AssessItem, value: number, gender?: Gender): number {
+  // 여학생 기준이 따로 있으면 여학생은 그 기준으로
+  const female = gender === 'F' && (it.bandsF?.length ?? 0) > 0
+  const bands = female ? it.bandsF! : (it.bands ?? [])
+  const base = female ? (it.basePointsF ?? it.basePoints ?? 0) : (it.basePoints ?? 0)
   if (it.better === 'lower') {
     const hit = [...bands].sort((a, b) => a.limit - b.limit).find((b) => value <= b.limit)
-    return hit ? hit.points : (it.basePoints ?? 0)
+    return hit ? hit.points : base
   }
   const hit = [...bands].sort((a, b) => b.limit - a.limit).find((b) => value >= b.limit)
-  return hit ? hit.points : (it.basePoints ?? 0)
+  return hit ? hit.points : base
 }
 
+/** '미참여' 입력 (자발적 미참여 · 장기 미인정 결석) */
+export const NON_PART = '미참여'
+
 /** 입력값 하나를 점수로. 비었거나 알 수 없으면 null */
-export function itemPoints(it: AssessItem, raw: string | number | undefined | null): number | null {
+export function itemPoints(it: AssessItem, raw: string | number | undefined | null, gender?: Gender): number | null {
   if (raw === undefined || raw === null || raw === '') return null
+  if (raw === NON_PART && it.nonPartPoints !== undefined) return it.nonPartPoints
   if (it.method === 'level') return it.levels?.find((l) => l.label === String(raw))?.points ?? null
   const v = typeof raw === 'number' ? raw : Number(String(raw).trim())
   if (!Number.isFinite(v)) return null
-  if (it.method === 'record') return recordPoints(it, v)
+  if (it.method === 'record') return recordPoints(it, v, gender)
   return v
 }
 
@@ -53,13 +62,13 @@ export interface AssessTotal {
   done: number
 }
 
-export function totalOf(items: readonly AssessItem[], scores: Record<string, string | number> | undefined): AssessTotal {
+export function totalOf(items: readonly AssessItem[], scores: Record<string, string | number> | undefined, gender?: Gender): AssessTotal {
   let total = 0
   let max = 0
   let done = 0
   for (const it of items) {
     max += itemMax(it)
-    const p = itemPoints(it, scores?.[it.id])
+    const p = itemPoints(it, scores?.[it.id], gender)
     if (p !== null) {
       total += p
       done++

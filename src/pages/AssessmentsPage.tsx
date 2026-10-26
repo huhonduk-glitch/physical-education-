@@ -40,6 +40,18 @@ export default function AssessmentsPage() {
           <Icon name="chevronRight" />
         </Link>
         {!readOnly && (
+          <Link to="/more/assessments/from-plan" className="card flex min-h-[72px] items-center gap-3 transition-transform active:scale-[0.99]">
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-light text-brand">
+              <Icon name="upload" size={22} />
+            </span>
+            <span className="flex-1">
+              <b className="block text-lg">평가계획서로 만들기</b>
+              <span className="hint">학기 초 평가계획서 PDF를 넣으면 평가 · 채점 기준 · 체크리스트를 한 번에</span>
+            </span>
+            <Icon name="chevronRight" className="text-ink-3" />
+          </Link>
+        )}
+        {!readOnly && (
           <Link to="/more/assessments/rubric" className="card flex min-h-[72px] items-center gap-3 transition-transform active:scale-[0.99]">
             <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-light text-brand">
               <Icon name="bolt" size={22} />
