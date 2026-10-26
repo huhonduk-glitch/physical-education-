@@ -164,3 +164,14 @@ describe('홈 학사일정', () => {
     expect(dday('2026-10-10', '2026-10-10')).toBe('오늘')
   })
 })
+
+describe('공용 인증키 (중계)', () => {
+  it('선생님 키가 없으면 중계 주소로, 키는 붙이지 않음', async () => {
+    const { neisKeyOf, neisUrl } = await import('../src/lib/neisOpenApi')
+    expect(neisKeyOf('  ', 'https://r.example/')).toBe('relay:https://r.example')
+    expect(neisKeyOf('MYKEY', 'https://r.example')).toBe('MYKEY')
+    const u = neisUrl('classInfo', { AY: 2026 }, neisKeyOf('', 'https://r.example'))
+    expect(u).toBe('https://r.example/?neis=classInfo&Type=json&AY=2026')
+    expect(neisUrl('classInfo', { AY: 2026 }, 'MYKEY')).toBe('https://open.neis.go.kr/hub/classInfo?Type=json&KEY=MYKEY&AY=2026')
+  })
+})

@@ -4,6 +4,7 @@ import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import { db } from '../db/db'
 import { addHomeroomGroups } from '../db/groupsRepo'
+import { neisKey } from '../lib/neisKey'
 import { applyNeisTimetable, combinedName, type SlotPick } from '../db/neisRepo'
 import { todayStr } from '../lib/dates'
 import { homeroomName } from '../lib/groups'
@@ -40,7 +41,7 @@ export default function NeisSyncPage() {
         <section className="rounded-2xl bg-brand-light p-4 text-sm font-semibold text-brand">
           나이스 교육정보 개방 포털의 <b>학교 공개 자료</b>만 받아 와요. 보내는 것은 학교 이름·학교 코드뿐이고, 학생 정보는 보내지 않아요. 담당 교사 이름은 공개 자료에 없어서, 내 수업 칸은 한 번 골라 주셔야 해요.
         </section>
-        <SchoolCard school={school} onPick={(s) => updateSettings({ neisSchool: s, schoolName: settings.schoolName || s.name, schoolLevel: s.kind === '중' ? '중' : '고' })} apiKey={settings.neisApiKey} />
+        <SchoolCard school={school} onPick={(s) => updateSettings({ neisSchool: s, schoolName: settings.schoolName || s.name, schoolLevel: s.kind === '중' ? '중' : '고' })} apiKey={neisKey(settings)} />
         <KeyCard value={settings.neisApiKey} onSave={(k) => updateSettings({ neisApiKey: k })} />
         {school && !readOnly && (
           <>
@@ -157,10 +158,10 @@ function KeyCard({ value, onSave }: { value: string; onSave: (k: string) => void
   return (
     <section className="card space-y-2">
       <p className="card-title">
-        인증키 {value ? <span className="badge ml-1 bg-ok-light text-ok">넣음</span> : <span className="badge ml-1 bg-caution-light text-caution">필요</span>}
+        내 인증키 (선택) {value ? <span className="badge ml-1 bg-ok-light text-ok">넣음</span> : <span className="badge ml-1 bg-brand-light text-brand">공용 키 사용 중</span>}
       </p>
       <p className="hint">
-        인증키가 없으면 나이스가 맛보기 5줄만 줘서 학교 찾기만 돼요. 학급·시간표·학사일정을 받으려면 인증키가 필요해요. 무료이고, 회원가입 뒤 바로 나와요:
+        넣지 않아도 돼요. 비워 두면 앱의 공용 인증키(중계)로 학교 찾기 · 학급 · 시간표 · 학사일정을 모두 받아요(학교 코드 · 날짜만 보냄). 공용 키가 막히거나 느릴 때만 내 키를 넣으세요. 무료이고, 회원가입 뒤 바로 나와요:
         <a className="ml-1 font-bold text-brand underline" href="https://open.neis.go.kr/portal/guide/actKeyPage.do" target="_blank" rel="noopener noreferrer">
           나이스 교육정보 개방 포털 → 인증키 신청
         </a>
@@ -172,7 +173,7 @@ function KeyCard({ value, onSave }: { value: string; onSave: (k: string) => void
         </button>
       </div>
       {msg && <p className={`font-bold ${msgTone(msg)}`}>{msg}</p>}
-      <p className="hint">인증키는 이 기기에만 저장돼요.</p>
+      <p className="hint">내 인증키는 이 기기에만 저장되고, 넣으면 중계를 거치지 않고 나이스에 바로 물어요.</p>
     </section>
   )
 }
@@ -208,7 +209,7 @@ function ClassesCard({ school }: { school: NeisSchool }) {
     setBusy(true)
     setMsg('')
     try {
-      setClasses(await fetchClasses(school, settings.schoolYear, { key: settings.neisApiKey, onProgress: (done, total) => setProg({ done, total }) }))
+      setClasses(await fetchClasses(school, settings.schoolYear, { key: neisKey(settings), onProgress: (done, total) => setProg({ done, total }) }))
     } catch (e) {
       setMsg(errText(e))
     } finally {
@@ -227,7 +228,7 @@ function ClassesCard({ school }: { school: NeisSchool }) {
     <section className="card space-y-3">
       <p className="card-title">② 학급 → 수업반</p>
       <p className="hint">{settings.schoolYear}학년도 학급 목록을 받아 내가 수업하는 반을 수업반으로 만들어요. 시간표를 불러오면(③) 필요한 반은 저절로 만들어지니 건너뛰어도 돼요.</p>
-      {!settings.neisApiKey ? (
+      {!neisKey(settings) ? (
         <NeedKey />
       ) : !classes ? (
         <button type="button" className="btn btn-soft w-full" onClick={load} disabled={busy}>
@@ -291,7 +292,7 @@ function TimetableCard({ school }: { school: NeisSchool }) {
     setBusy(true)
     setMsg('')
     try {
-      const lessons = await fetchWeekTimetable(school, date, { key: settings.neisApiKey, grade: grade ?? undefined, onProgress: (done, total) => setProg({ done, total }) })
+      const lessons = await fetchWeekTimetable(school, date, { key: neisKey(settings), grade: grade ?? undefined, onProgress: (done, total) => setProg({ done, total }) })
       const all = slotGroups(lessons)
       setSlots(all)
       setChoice({})
@@ -354,7 +355,7 @@ function TimetableCard({ school }: { school: NeisSchool }) {
       <p className="hint">
         {from} ~ {to}
       </p>
-      {settings.neisApiKey ? (
+      {neisKey(settings) ? (
         <button type="button" className="btn btn-soft w-full" onClick={load} disabled={busy}>
           {busy ? '받는 중…' : '시간표 불러오기'}
         </button>
@@ -444,7 +445,7 @@ function ScheduleCard({ school }: { school: NeisSchool }) {
     setBusy(true)
     setMsg('')
     try {
-      const events = await fetchSchedule(school, `${y}-03-01`, `${y + 1}-02-28`, { key: settings.neisApiKey })
+      const events = await fetchSchedule(school, `${y}-03-01`, `${y + 1}-02-28`, { key: neisKey(settings) })
       await updateSettings({ neisSchedule: { fetchedAt: Date.now(), events } })
       setMsg(`학사일정 ${events.length}개를 받았어요. 홈에 다가오는 일정이 보여요.`)
     } catch (e) {
@@ -459,7 +460,7 @@ function ScheduleCard({ school }: { school: NeisSchool }) {
       <p className="card-title">④ 학사일정</p>
       <p className="hint">시험·행사·방학을 받아 홈에 다가오는 일정을 보여 줘요. 인터넷이 없어도 보이도록 기기에 둬요.</p>
       {sch && <p className="hint">마지막으로 받은 때: {new Date(sch.fetchedAt).toLocaleString('ko-KR')} · {sch.events.length}개</p>}
-      {settings.neisApiKey ? (
+      {neisKey(settings) ? (
         <button type="button" className="btn btn-soft w-full" onClick={load} disabled={busy}>
           {busy ? '받는 중…' : sch ? '학사일정 다시 받기' : '학사일정 불러오기'}
         </button>

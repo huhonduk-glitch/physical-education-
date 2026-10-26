@@ -46,8 +46,7 @@ const GROUPS: { title: string; items: MenuItem[] }[] = [
     items: [
       { to: '/more/settings', label: '설정', desc: '학교 · 버튼 · PIN · 연동 앱', icon: 'settings', tone: 'bg-brand-light text-brand' },
       { to: '/more/settings/timetable', label: '수업 시간표', icon: 'calendar', tone: 'bg-brand-light text-brand' },
-      { to: '/timetable/pe', label: '전체 체육 시간표', desc: '학교 체육 수업 겹침 확인 (나이스)', icon: 'grid', tone: 'bg-brand-light text-brand' },
-      { to: '/timetable/pe', label: '전체 체육 시간표', desc: '학교 체육 수업 겹침 확인 (나이스)', icon: 'grid', tone: 'bg-brand-light text-brand' },
+      { to: '/timetable/pe', label: '전체 체육 시간표', desc: '학교 체육 수업 겹침 확인 (컴시간 · 나이스)', icon: 'grid', tone: 'bg-brand-light text-brand' },
       { to: '/more/settings/neis', label: '나이스에서 불러오기', desc: '학급 · 시간표 · 학사일정', icon: 'download', tone: 'bg-brand-light text-brand' },
       { to: '/more/data', label: '백업 · 학년도', desc: '백업 · 복원 · 새 학년도', icon: 'database', tone: 'bg-brand-light text-brand' },
     ],

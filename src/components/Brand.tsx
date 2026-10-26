@@ -2,7 +2,7 @@ import logo from '../assets/deok-tt-logo.png'
 
 /** 앱 이름 (SPORTS BRACKET · K-TacticBoard Studio와 같은 DEOK TT 브랜드) */
 export const APP_NAME = 'PE LOG'
-export const APP_SUB = '체육수업 누가기록'
+export const APP_SUB = '체육수업 종합 플랫폼'
 export const MAKER = 'DEOK TT'
 
 export function Logo({ size = 40, className = '' }: { size?: number; className?: string }) {

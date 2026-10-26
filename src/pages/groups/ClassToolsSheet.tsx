@@ -14,6 +14,7 @@ export default function ClassToolsSheet({ group, onClose, onTeamSend }: { group:
     { to: `/groups/${group.id}/stats`, icon: 'list', title: '누적 기록', desc: '학생별 칭찬 · 지도 · 견학 합계 · 엑셀', show: true },
     { to: `/tools/pick?g=${group.id}`, icon: 'dice', title: '뽑기', desc: '오늘 참여 학생 중에서', show: tools },
     { to: `/tools/teams?g=${group.id}`, icon: 'shuffle', title: '팀 나누기', desc: '무작위 · 남녀 고르게 · 실력 고르게', show: tools },
+    { to: `/leagues/new?g=${group.id}`, icon: 'medal', title: '리그전', desc: '이 반 팀으로 대진표 · 점수판 · 순위', show: tools },
     { to: `/paps?c=${group.grade}-${group.classNo}`, icon: 'paps', title: 'PAPS', desc: '이 반 측정 입력 · 등급', show: paps },
     { to: `/timer?tab=paps&aid=shuttle&c=${group.grade}-${group.classNo}`, icon: 'flag', title: '왕복오래달리기', desc: '신호마다 한 번 · 늦은 학생만 누르기', show: paps && tools },
     { to: `/groups/${group.id}/journal`, icon: 'book', title: '수업 일지', desc: '단원 · 한 일 · 다음 시간 메모', show: true },

@@ -18,9 +18,9 @@ export default defineConfig({
       injectRegister: false, // UpdateBanner가 직접 등록한다 (새 버전 알림)
       includeAssets: ['icons/favicon-64.png', 'icons/apple-touch-icon.png'],
       manifest: {
-        name: 'PE LOG · 체육수업 누가기록',
+        name: 'PE LOG · 체육수업 종합 플랫폼',
         short_name: 'PE LOG',
-        description: '체육 수업 누가기록 · PAPS · 타이머 (기기 안에만 저장) · 제작 DEOK TT',
+        description: '체육수업 종합 플랫폼 — 누가기록 · PAPS · 수행평가 · 진도표 · 세특 · 리그전 · 타이머 (기기 안에만 저장) · 제작 DEOK TT',
         lang: 'ko',
         start_url: BASE,
         scope: BASE,
