@@ -53,6 +53,7 @@ const PapsLinkCodesPage = lazy(() => import('./pages/paps/PapsLinkCodesPage'))
 const KeywordsPage = lazy(() => import('./pages/KeywordsPage'))
 const SeteukWritePage = lazy(() => import('./pages/SeteukWritePage'))
 const AiGuidePage = lazy(() => import('./pages/AiGuidePage'))
+const PeTimetablePage = lazy(() => import('./pages/PeTimetablePage'))
 const AssessmentsPage = lazy(() => import('./pages/AssessmentsPage'))
 const AssessmentGradePage = lazy(() => import('./pages/AssessmentGradePage'))
 const AssessmentEditPage = lazy(() => import('./pages/AssessmentEditPage'))
@@ -185,6 +186,7 @@ export default function App() {
           <Route path="/more/keywords" element={<KeywordsPage />} />
           <Route path="/seteuk/write" element={<SeteukWritePage />} />
           <Route path="/seteuk/ai-guide" element={<AiGuidePage />} />
+          <Route path="/timetable/pe" element={<PeTimetablePage />} />
           <Route path="/more/data" element={<DataPage />} />
           <Route path="/more/assessments" element={<AssessmentsPage />} />
           <Route path="/more/assessments/new" element={<AssessmentEditPage />} />
