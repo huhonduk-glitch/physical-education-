@@ -7,13 +7,13 @@ import { runGroupMigration } from './groupsRepo'
 
 export const BACKUP_FORMAT = 'pe-records-backup'
 /** 2: PAPS 회차(papsRounds, papsResults.roundId) 추가 (2026-10-22). 옛 앱은 2를 복원하지 않는다(회차가 섞이지 않게) */
-/** 3: 교과 진도표(progressPlans) 추가 (2026-10-26) · 4: 세특 쓰기(seteukDrafts) 추가 */
-export const BACKUP_VERSION = 4
+/** 3: 교과 진도표(progressPlans) 추가 (2026-10-26) · 4: 세특 쓰기(seteukDrafts) 추가 · 5: 리그전(leagues) 추가 (2026-10-27) */
+export const BACKUP_VERSION = 5
 
 /** 백업 파일에 넣지 않는 설정 (이 기기에만) */
 export const SECRET_KEYS = ['claudeApiKey', 'openrouterApiKey']
 
-export const BACKUP_TABLES = ['settings', 'students', 'records', 'captains', 'absences', 'keywords', 'papsConfigs', 'papsResults', 'papsRounds', 'assessments', 'assessmentScores', 'timerPresets', 'groups', 'lessons', 'progressPlans', 'seteukDrafts'] as const
+export const BACKUP_TABLES = ['settings', 'students', 'records', 'captains', 'absences', 'keywords', 'papsConfigs', 'papsResults', 'papsRounds', 'assessments', 'assessmentScores', 'timerPresets', 'groups', 'lessons', 'progressPlans', 'seteukDrafts', 'leagues'] as const
 const TABLES = BACKUP_TABLES
 type TableName = (typeof TABLES)[number]
 
@@ -92,6 +92,7 @@ export const TABLE_LABELS: Partial<Record<TableName, string>> = {
   lessons: '수업 일지',
   progressPlans: '진도표',
   seteukDrafts: '세특 글',
+  leagues: '리그전',
   keywords: '세특 키워드',
 }
 

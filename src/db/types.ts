@@ -302,6 +302,23 @@ export interface SeteukDraft {
   updatedAt: number
 }
 
+/** 리그전 (6-5 ④, v8): 수업반(선택) 안 팀끼리 돌아가며 겨룬다. 순위는 저장하지 않고 볼 때마다 계산 (src/lib/league.ts) */
+export interface League {
+  id: string
+  schoolYear: number
+  groupId?: string
+  sport: import('../lib/league').SportId
+  name: string
+  rules: import('../lib/league').LeagueRules
+  /** 두 번씩(홈 · 원정 바꿔) */
+  double: boolean
+  teams: import('../lib/league').LeagueTeam[]
+  matches: import('../lib/league').LeagueMatch[]
+  archived?: boolean
+  createdAt: number
+  updatedAt: number
+}
+
 export interface Lesson {
   id: string
   schoolYear: number
