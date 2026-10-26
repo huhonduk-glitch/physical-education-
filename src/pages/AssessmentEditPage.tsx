@@ -315,27 +315,67 @@ function ItemEditor({
               </div>
             </div>
           </div>
-          {(item.bands ?? []).map((b, k) => (
-            <div key={k} className="flex items-center gap-2">
-              <NumInput className="field w-24 text-right tabular-nums" value={b.limit} aria-label="기준 기록" disabled={readOnly} onValue={(v) => onChange({ bands: item.bands!.map((x, j) => (j === k ? { ...x, limit: v } : x)) })} />
-              <span className="shrink-0 text-sm text-ink-2">
-                {item.unit} {item.better === 'lower' ? '이하' : '이상'} →
-              </span>
-              <NumInput className="field flex-1 text-right tabular-nums" value={b.points} aria-label="점수" disabled={readOnly} onValue={(v) => onChange({ bands: item.bands!.map((x, j) => (j === k ? { ...x, points: v } : x)) })} />
-              <span className="text-ink-3">점</span>
-              <button type="button" className="btn btn-ghost px-2 text-ink-3" aria-label="구간 빼기" disabled={readOnly} onClick={() => onChange({ bands: item.bands!.filter((_, j) => j !== k) })}>
-                <Icon name="close" size={18} />
-              </button>
-            </div>
-          ))}
-          <button type="button" className="btn btn-soft" disabled={readOnly} onClick={() => onChange({ bands: [...(item.bands ?? []), { limit: 0, points: 0 }] })}>
-            <Icon name="plus" size={18} /> 구간
-          </button>
+          {(['bands', 'bandsF'] as const)
+            .filter((key) => key === 'bands' || item.bandsF)
+            .map((key) => {
+              const baseKey = key === 'bands' ? 'basePoints' : 'basePointsF'
+              const list = item[key] ?? []
+              return (
+                <div key={key} className="space-y-2">
+                  {item.bandsF && <p className="text-sm font-extrabold text-ink-2">{key === 'bands' ? '남학생 기준' : '여학생 기준'}</p>}
+                  {list.map((b, k) => (
+                    <div key={k} className="flex items-center gap-2">
+                      <NumInput className="field w-24 text-right tabular-nums" value={b.limit} aria-label="기준 기록" disabled={readOnly} onValue={(v) => onChange({ [key]: list.map((x, j) => (j === k ? { ...x, limit: v } : x)) })} />
+                      <span className="shrink-0 text-sm text-ink-2">
+                        {item.unit} {item.better === 'lower' ? '이하' : '이상'} →
+                      </span>
+                      <NumInput className="field flex-1 text-right tabular-nums" value={b.points} aria-label="점수" disabled={readOnly} onValue={(v) => onChange({ [key]: list.map((x, j) => (j === k ? { ...x, points: v } : x)) })} />
+                      <span className="text-ink-3">점</span>
+                      <button type="button" className="btn btn-ghost px-2 text-ink-3" aria-label="구간 빼기" disabled={readOnly} onClick={() => onChange({ [key]: list.filter((_, j) => j !== k) })}>
+                        <Icon name="close" size={18} />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" className="btn btn-soft" disabled={readOnly} onClick={() => onChange({ [key]: [...list, { limit: 0, points: 0 }] })}>
+                    <Icon name="plus" size={18} /> 구간
+                  </button>
+                  <label className="flex items-center gap-2">
+                    <span className="flex-1 text-sm font-bold text-ink-2">어느 구간에도 못 들면 (기본 점수)</span>
+                    <NumInput className="field w-24 text-right tabular-nums" value={item[baseKey] ?? 0} aria-label="기본 점수" onValue={(v) => onChange({ [baseKey]: v })} disabled={readOnly} />
+                    <span className="text-ink-3">점</span>
+                  </label>
+                </div>
+              )
+            })}
+          {!readOnly && (
+            <button
+              type="button"
+              className="btn btn-ghost w-full text-sm"
+              onClick={() => onChange(item.bandsF ? { bandsF: undefined, basePointsF: undefined } : { bandsF: (item.bands ?? []).map((b) => ({ ...b })), basePointsF: item.basePoints })}
+            >
+              {item.bandsF ? '여학생 기준 빼기 (남녀 같은 기준)' : '+ 여학생 기준 따로 정하기'}
+            </button>
+          )}
           <label className="flex items-center gap-2">
-            <span className="flex-1 text-sm font-bold text-ink-2">어느 구간에도 못 들면 (기본 점수)</span>
-            <NumInput className="field w-24 text-right tabular-nums" value={item.basePoints ?? 0} aria-label="기본 점수" onValue={(v) => onChange({ basePoints: v })} disabled={readOnly} />
-            <span className="text-ink-3">점</span>
+            <input type="checkbox" className="h-5 w-5" checked={item.nonPartPoints !== undefined} disabled={readOnly} onChange={(e) => onChange({ nonPartPoints: e.target.checked ? (item.basePoints ?? 0) : undefined })} />
+            <span className="flex-1 text-sm font-bold text-ink-2">자발적 미참여 · 장기 미인정 결석 점수</span>
+            {item.nonPartPoints !== undefined && (
+              <>
+                <NumInput className="field w-24 text-right tabular-nums" value={item.nonPartPoints} aria-label="미참여 점수" onValue={(v) => onChange({ nonPartPoints: v })} disabled={readOnly} />
+                <span className="text-ink-3">점</span>
+              </>
+            )}
           </label>
+          {item.checks?.length ? (
+            <div className="rounded-xl bg-fill px-3 py-2 text-sm">
+              <p className="font-bold text-ink-2">체크리스트 (기록 = 만족한 개수)</p>
+              <ol className="mt-1 list-decimal space-y-0.5 pl-5 text-ink-2">
+                {item.checks.map((c) => (
+                  <li key={c}>{c}</li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
         </div>
       )}
 

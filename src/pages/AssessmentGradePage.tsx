@@ -9,7 +9,7 @@ import PageHeader from '../components/PageHeader'
 import { db, newId } from '../db/db'
 import { addRecords } from '../db/recordsRepo'
 import type { AssessItem, Assessment, AssessmentScore, Student } from '../db/types'
-import { directProblem, fmtNum, itemMax, itemPoints, itemsOf, totalOf } from '../lib/assessScore'
+import { directProblem, fmtNum, itemMax, itemPoints, itemsOf, NON_PART, totalOf } from '../lib/assessScore'
 import { todayStr } from '../lib/dates'
 import { saveXlsx } from '../lib/download'
 import { memberNo } from '../lib/groups'
@@ -161,7 +161,23 @@ function ItemColumn({
   return (
     <ul className="card divide-y divide-line p-0">
       <li className="px-4 py-2.5 text-sm font-bold text-ink-3">
-        {item.method === 'level' ? '등급을 누르세요 (다시 누르면 지워져요)' : item.method === 'record' ? `기록(${item.unit ?? ''})을 넣으면 점수가 정해져요 · 엔터 → 다음 학생` : `점수를 넣으세요 (0~${item.max ?? 0}점) · 엔터 → 다음 학생`}
+        {item.method === 'level'
+          ? '등급을 누르세요 (다시 누르면 지워져요)'
+          : item.method === 'record'
+            ? item.checks?.length
+              ? `만족한 평가 요소 개수(0~${item.checks.length})를 넣으면 점수가 정해져요 · 엔터 → 다음 학생`
+              : `기록(${item.unit ?? ''})을 넣으면 점수가 정해져요${item.bandsF?.length ? ' · 남녀 기준이 달라요' : ''} · 엔터 → 다음 학생`
+            : `점수를 넣으세요 (0~${item.max ?? 0}점) · 엔터 → 다음 학생`}
+        {item.checks?.length ? (
+          <details className="mt-1 font-normal text-ink-2">
+            <summary className="cursor-pointer font-bold text-brand">평가 요소 {item.checks.length}개 보기</summary>
+            <ol className="mt-1 list-decimal space-y-0.5 pl-5">
+              {item.checks.map((c) => (
+                <li key={c}>{c}</li>
+              ))}
+            </ol>
+          </details>
+        ) : null}
         {item.method === 'level' && item.levels?.some((l) => l.desc) && (
           <details className="mt-1 font-normal text-ink-2">
             <summary className="cursor-pointer font-bold text-brand">등급 기준 보기</summary>
@@ -214,6 +230,17 @@ function ItemColumn({
                 onNext={() => refs.current[i + 1]?.focus()}
               />
             )}
+            {item.nonPartPoints !== undefined && !readOnly && (
+              <button
+                type="button"
+                aria-pressed={raw === NON_PART}
+                className={`h-11 shrink-0 rounded-xl px-2 text-sm font-bold ${raw === NON_PART ? 'bg-ink text-white' : 'bg-fill text-ink-3'}`}
+                onClick={() => onSet(s, item.id, raw === NON_PART ? '' : NON_PART)}
+                title={`자발적 미참여 · 장기 미인정 결석 (${fmtNum(item.nonPartPoints)}점)`}
+              >
+                미참여
+              </button>
+            )}
             {item.method !== 'direct' && (
               <span className={`w-12 shrink-0 text-right font-extrabold tabular-nums ${pts === null ? 'text-ink-3' : 'text-brand'}`}>{pts === null ? '—' : `${fmtNum(pts)}점`}</span>
             )}
@@ -243,10 +270,11 @@ function ScoreInput({
 }) {
   const [text, setText] = useState(raw === undefined ? '' : String(raw))
   useEffect(() => setText(raw === undefined ? '' : String(raw)), [raw])
-  const problem = item.method === 'direct' ? directProblem(item, text.trim()) : text.trim() && !Number.isFinite(Number(text)) ? '숫자가 아니에요' : null
+  const problem = text.trim() === NON_PART ? null : item.method === 'direct' ? directProblem(item, text.trim()) : text.trim() && !Number.isFinite(Number(text)) ? '숫자가 아니에요' : null
   const commit = () => {
     const t = text.trim()
     if (t === '') return onCommit('')
+    if (t === NON_PART) return onCommit(NON_PART)
     if (problem) return
     onCommit(Number(t))
   }
