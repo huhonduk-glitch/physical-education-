@@ -46,6 +46,7 @@ const RULES: Rule[] = [
   { id: 'abroad', level: 'error', title: '어학연수 · 해외 활동', basis: `${P} 3-자`, re: /어학연수|해외\s*(봉사|활동|연수|캠프)|유학/g },
   { id: 'parents', level: 'warn', title: '부모 · 친인척 언급 (사회·경제적 지위 암시 금지)', basis: `${P} 3-차`, re: /아버지|어머니|부모님|부친|모친|아빠|엄마|삼촌|이모|고모|할아버지|할머니/g },
   { id: 'scholar', level: 'error', title: '장학생 · 장학금', basis: `${P} 3-카`, re: /장학/g },
+  { id: 'afterschool', level: 'error', title: '방과후 활동', basis: '기재요령 (다른 항목 입력 금지 내용) · 학교 연수자료', re: /방과\s*후/g },
   { id: 'univ', level: 'error', title: '특정 대학명 · 기관명 · 상호명 · 강사명', basis: `${P} 3-타`, re: /[가-힣A-Za-z]{2,}대학교|학원|과외|인강|인터넷\s*강의/g },
 ]
 
@@ -66,6 +67,62 @@ function schoolWords(schoolName: string): string[] {
   return [...out].filter((w) => w.length >= 2)
 }
 
+/** 기재 유의어 → 대체어 (학교 연수자료 5. 기재 유의어 → 대체어, 기재요령 기준) */
+const SUBSTITUTES: { re: RegExp; to: string }[] = [
+  [/구글\s*클래스룸|Google\s*Classroom|EBS\s*온라인\s*클래스/gi, '학습 플랫폼, 원격 학습 플랫폼'],
+  [/구글\s*티비|Google\s*TV|유튜브|YouTube|티빙|TVING|왓챠|watcha|넷플릭스|netflix|웨이브|wavve|디즈니\s*(플러스|\+)|disneyplus/gi, '동영상 플랫폼, 동영상 공유 서비스'],
+  [/구글\s*문서|Google\s*Docs/gi, '온라인 문서 편집기'],
+  [/구글|Google|네이버(?!\s*웨일온)|NAVER|다음\s*포털|Daum/gi, '포털사이트'],
+  [/틱톡|TikTok/gi, '엔터테인먼트 플랫폼'],
+  [/개더\s*타운|Gather\s*Town|제페토|ZEPETO/gi, '메타버스 플랫폼'],
+  [/미리\s*캔버스|miricanvas|망고\s*보드|mangoboard|캔바|Canva/gi, '디자인 제작 플랫폼'],
+  [/블로(?=\s|$|[로를를의에])|Vllo|프리미어\s*프로|Premiere\s*Pro|파워\s*디렉터|키네\s*마스터|파이널\s*컷|Final\s*Cut/gi, '영상 제작 프로그램, 영상 편집 프로그램'],
+  [/포토샵|페인트샵|김프/gi, '사진 편집 프로그램'],
+  [/클래스팅|classting/gi, '학습 플랫폼, 클래스 관리 도구'],
+  [/유튜버|YouTuber/gi, '동영상 크리에이터, 동영상 제공자, 개인 미디어 제작자'],
+  [/카카오톡|카톡|KakaoTalk/gi, '메신저, 메신저 서비스'],
+  [/인스타그램|Instagram|트위터|Twitter|페이스북|Facebook|라인(?=\s*메신저)|LINE(?=\s)|메타\s*\(구/gi, '소셜네트워크서비스'],
+  [/이프랜드|ifland/gi, '메타버스 소셜커뮤니케이션서비스'],
+  [/패들렛|Padlet|띵커벨|ThinkerBell|알로(?=\s|$|[로를의에])|Allo/gi, '온라인 협업 도구, 협업 플랫폼'],
+  [/클래스\s*카드|classcard/gi, '온라인 단어 학습 앱'],
+  [/커리어넷|careernet|워크넷|메이저맵|majormap/gi, '진로 정보망, 진로 정보 사이트'],
+  [/홀랜드|Holland/gi, '직업 선호도 검사'],
+  [/KTX|SRT|케이티엑스|에스알티/g, '초고속 열차, 고속 열차'],
+  [/유엔|\bUN\b|유럽\s*연합|\bEU\b|\bWHO\b|\bWTO\b|OECD|\bIMF\b|유네스코|UNESCO|IAEA|NATO/g, '국제기구'],
+  [/줌(?=\s*(으로|을|회의|수업))|Zoom|웨일\s*온/gi, '화상 회의'],
+  [/MBTI/gi, '성격유형 검사'],
+  [/\bVR\b|브이알/g, '가상현실'],
+  [/\bAR\b|에이알/g, '증강현실'],
+  [/HTML|에이치티엠엘/gi, '하이퍼텍스트 마크업 언어, 웹 페이지 제작 언어'],
+  [/\bCSS\b|씨에스에스/g, '스타일 시트 언어'],
+  [/아이패드|iPad|갤럭시\s*탭|Galaxy\s*Tab/gi, '태블릿피시'],
+  [/크롬\s*북|chrome\s*book/gi, '휴대용 컴퓨터'],
+  [/\bhwp\b|한글\s*프로그램|MS\s*워드|워드\s*프로그램/gi, '문서작성 프로그램'],
+  [/엑셀|한셀/g, '스프레드시트'],
+  [/챗\s*GPT|ChatGPT|뤼튼|빙챗|바드|하이퍼클로바\s*X|클로드|Claude|제미나이|Gemini/gi, '대화형 인공지능, 생성형 인공지능'],
+  [/알트코인|비트코인/g, '가상화폐'],
+  [/파이썬|Python/gi, '프로그래밍 언어'],
+  [/\bTED\b|테드\s*강연/g, '온라인 강연회'],
+].map(([re, to]) => ({ re: re as RegExp, to: to as string }))
+
+/** 영문 그대로 써도 되는 일반화된 명사 (기재요령 28~30쪽 예시) */
+const ALLOWED_EN = ['CEO', 'PD', 'UCC', 'IT', 'POP', 'CF', 'TV', 'PAPS', 'SNS', 'PPT', 'AI']
+
+/** 문장 끝이 명사형(받침 ㅁ)이고 마침표로 끝나는지: 걸린 문장 끝 조각 */
+function badEndings(text: string): string[] {
+  const t = text.trim()
+  if (!t) return []
+  const out: string[] = []
+  if (!/[.]$/.test(t)) out.push(`마침표 없음: '…${t.slice(-8)}'`)
+  for (const sen of t.split(/(?<=[.])\s+/)) {
+    const body = sen.replace(/[.\s'’‘\])]+$/, '')
+    const last = body.slice(-1)
+    const code = last.charCodeAt(0) - 0xac00
+    if (code >= 0 && code <= 11171 && code % 28 !== 16) out.push(`'…${body.slice(-6)}.'`)
+  }
+  return out.slice(0, 5)
+}
+
 export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?: number } = {}): CheckHit[] {
   const hits: CheckHit[] = []
   const max = opts.maxChars ?? SETEUK_MAX_CHARS
@@ -77,9 +134,19 @@ export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?
   }
   const school = schoolWords(opts.schoolName ?? '').filter((w) => text.replace(/\s+/g, '').includes(w))
   if (school.length) hits.push({ id: 'school', level: 'error', title: '학교를 알 수 있는 내용', basis: '기재요령 23쪽 4 (학교명 · 재단명 · 축제명 · 별칭 등)', words: school })
-  // 참고: 기호 · 영문 줄임말 (나이스 입력 오류나 읽기 어려움)
-  const sym = [...new Set(text.match(/[~※★☆♥♡◆■□▶→←#@$%^&*+=<>|\\{}[\]]|[😀-🙏]/gu) ?? [])]
-  if (sym.length) hits.push({ id: 'symbol', level: 'warn', title: '특수 기호', basis: '참고 (나이스 입력 · 읽기)', words: sym })
+  // 학교 연수자료(2026 학교생활기록부 기재요령 담임 연수, 기재요령 28~30쪽): 한글 입력 · 명사형 종결과 마침표 · 기호 최소화
+  const sub = SUBSTITUTES.flatMap((x) => [...text.matchAll(x.re)].map((m) => `${m[0].trim()} → ${x.to}`))
+  if (sub.length) hits.push({ id: 'substitute', level: 'error', title: '기재 유의어 (대체어로 바꿔 주세요)', basis: '기재요령 · 학교 연수자료 ‘기재 유의어 → 대체어’', words: [...new Set(sub)] })
+  // 유의어로 이미 잡은 자리(예: 챗GPT)의 영문은 다시 걸지 않는다
+  const spans = SUBSTITUTES.flatMap((x) => [...text.matchAll(x.re)].map((m) => [m.index!, m.index! + m[0].length] as const))
+  const inSpan = (i: number) => spans.some(([a, b]) => i >= a && i < b)
+  const eng = [...new Set([...text.matchAll(/[A-Za-z][A-Za-z0-9]*/g)].filter((m) => !inSpan(m.index!) && !ALLOWED_EN.includes(m[0].toUpperCase())).map((m) => m[0]))]
+  if (eng.length) hits.push({ id: 'english', level: 'warn', title: '영문 입력 지양 (한글로)', basis: '기재요령 28~30쪽: 한글 입력 (허용 예: CEO, PD, UCC, IT, TV, PAPS, SNS, PPT, AI 등 일반화된 명사)', words: eng })
+  const ending = badEndings(text)
+  if (ending.length) hits.push({ id: 'ending', level: 'warn', title: '명사형 종결어미 · 마침표', basis: '기재요령 28~30쪽 (예: ~우수함. ~성실한 학생임.)', words: ending })
+  const sym = [...new Set(text.match(/[^\p{L}\p{N}\s.,\-'‘’[\]]/gu) ?? [])]
+  if (sym.length) hits.push({ id: 'symbol', level: 'warn', title: '특수 기호 (최소화)', basis: '기재요령 28~30쪽: 온점 · 쉼표 · 하이픈 · 작은따옴표 · 대괄호만', words: sym })
+  if (/ {2,}/.test(text)) hits.push({ id: 'space', level: 'warn', title: '공백 두 칸', basis: '학교 연수자료: 자주 틀리는 오류', words: ['두 칸 띄어쓰기'] })
   return hits
 }
 

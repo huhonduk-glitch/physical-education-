@@ -31,8 +31,21 @@ describe('세특 검사 (기재요령 총칙 3~5)', () => {
   })
   it('500자 넘으면 오류, 바이트도 센다', () => {
     expect(countText('가a\n')).toEqual({ chars: 3, bytes: 6 })
-    expect(checkSeteuk('가'.repeat(501))[0]).toMatchObject({ id: 'length', level: 'error' })
-    expect(checkSeteuk('가'.repeat(500))).toEqual([])
+    expect(checkSeteuk(`${'가'.repeat(499)}함.`)[0]).toMatchObject({ id: 'length', level: 'error' })
+    expect(checkSeteuk(`${'가'.repeat(498)}함.`)).toEqual([])
+  })
+  it('학교 연수자료: 유의어 → 대체어 · 영문 · 명사형 종결 · 기호 · 두 칸 · 방과후', () => {
+    const r = checkSeteuk('유튜브 영상과 챗GPT로 조사하고 엑셀로 정리함. PAPS 결과를 TV로 보며 Python을 배웠다. 방과후에도  연습함 ~')
+    const by = (id: string) => r.find((h) => h.id === id)
+    expect(by('substitute')?.words).toEqual(expect.arrayContaining(['유튜브 → 동영상 플랫폼, 동영상 공유 서비스', '챗GPT → 대화형 인공지능, 생성형 인공지능', '엑셀 → 스프레드시트', 'Python → 프로그래밍 언어']))
+    // PAPS · TV는 허용된 영문, Python은 유의어에서 이미 잡음
+    expect(by('english')).toBeUndefined()
+    expect(by('ending')?.words.join(' ')).toContain('배웠다')
+    expect(by('symbol')?.words).toEqual(['~'])
+    expect(by('space')).toBeDefined()
+    expect(by('afterschool')?.level).toBe('error')
+    expect(checkSeteuk('Badminton 랠리를 함.').find((h) => h.id === 'english')?.words).toEqual(['Badminton'])
+    expect(checkSeteuk("'하이클리어' 동작을 [분석]해 설명함.")).toEqual([])
   })
   it('고친 정도: 같으면 0, 전부 다르면 1', () => {
     expect(editRatio('가나다라', '가나다라')).toBe(0)
