@@ -12,7 +12,8 @@ import { TERMS_VERSION } from '../lib/terms'
 import { ensureKeywordSeed } from './recordsRepo'
 import type { PeDatabase } from './db'
 import { currentSchoolYear, defaultSettings, saveSettings, type TimetableEntry } from './settings'
-import type { Absence, Assessment, AssessmentScore, Captain, ClassGroup, ClassRecord, Lesson, PapsResult, PapsRound, Student } from './types'
+import type { Absence, Assessment, AssessmentScore, Captain, ClassGroup, ClassRecord, Lesson, PapsResult, PapsRound, ProgressPlan, Student } from './types'
+import { itemsFromUnits, meetings, schedule } from '../lib/progressPlan'
 
 export const DEMO_SEEDED_KEY = 'demoSeeded'
 export const DEMO_SCHOOL = '시연고등학교 (가상)'
@@ -256,8 +257,43 @@ export async function seedDemo(db: PeDatabase, opts: DemoSeedOptions = {}): Prom
     scores: { 'demo-item-1': pick(['A', 'A', 'B', 'B', 'B', 'C', 'C', 'D']), 'demo-item-2': Math.floor(between(2, 11)) },
   }))
 
+  // ── 교과 진도표 (1학년 체육1 · 1-1 · 1-2). 학기는 4주 전에 시작, 1-1은 계획대로, 1-2는 2차시 늦음
+  const planStart = addDays(today, -28)
+  const planItems = itemsFromUnits([
+    { unit: '오리엔테이션 · 안전교육', hours: 2 },
+    { unit: '농구 이해하기', hours: 4, standards: ['[12체육1-01-01]'] },
+    { unit: '농구 기능 익히기', hours: 15, standards: ['[12체육1-01-02]'] },
+    { unit: '농구 경기 전략', hours: 15, standards: ['[12체육1-01-03]'] },
+    { unit: '수행평가 · 리그전', hours: 15, standards: ['[12체육1-01-02]', '[12체육1-01-03]'] },
+  ])
+  const plan: ProgressPlan = {
+    id: id('plan'),
+    schoolYear: year,
+    semester: 2,
+    title: '1학년 체육1 (농구)',
+    subject: '체육1',
+    grade: 1,
+    weeklyHours: 3,
+    weeks: 17,
+    target: 51,
+    startDate: planStart,
+    endDate: addDays(planStart, 17 * 7 - 1),
+    offDays: [],
+    groupIds: [g11.id, g12.id],
+    items: planItems,
+    skips: {},
+    done: {},
+    createdAt: ts,
+    updatedAt: ts,
+  }
+  for (const [g, behind] of [[g11, 0], [g12, 2]] as const) {
+    const sched = schedule(planItems, meetings(g.id, timetable, plan))
+    const n = Math.max(0, sched.filter((x) => x.meeting && x.meeting.date < today).length - behind)
+    plan.done[g.id] = sched.slice(0, n).map((x) => x.item.id)
+  }
+
   const pin = opts.pin ?? (await hashPin('0000'))
-  await db.transaction('rw', [db.students, db.groups, db.records, db.absences, db.lessons, db.captains, db.papsConfigs, db.papsRounds, db.papsResults, db.assessments, db.assessmentScores, db.settings], async () => {
+  await db.transaction('rw', [db.students, db.groups, db.records, db.absences, db.lessons, db.captains, db.papsConfigs, db.papsRounds, db.papsResults, db.assessments, db.assessmentScores, db.progressPlans, db.settings], async () => {
     await db.students.bulkAdd(students)
     await db.groups.bulkAdd(groups)
     await db.records.bulkAdd(records)
@@ -269,6 +305,7 @@ export async function seedDemo(db: PeDatabase, opts: DemoSeedOptions = {}): Prom
     await db.papsResults.bulkAdd(papsResults)
     await db.assessments.add(assessment)
     await db.assessmentScores.bulkAdd(scores)
+    await db.progressPlans.add(plan)
     await saveSettings(db, {
       ...defaultSettings(),
       schoolName: DEMO_SCHOOL,

@@ -7,9 +7,10 @@ import { runGroupMigration } from './groupsRepo'
 
 export const BACKUP_FORMAT = 'pe-records-backup'
 /** 2: PAPS 회차(papsRounds, papsResults.roundId) 추가 (2026-10-22). 옛 앱은 2를 복원하지 않는다(회차가 섞이지 않게) */
-export const BACKUP_VERSION = 2
+/** 3: 교과 진도표(progressPlans) 추가 (2026-10-26) */
+export const BACKUP_VERSION = 3
 
-export const BACKUP_TABLES = ['settings', 'students', 'records', 'captains', 'absences', 'keywords', 'papsConfigs', 'papsResults', 'papsRounds', 'assessments', 'assessmentScores', 'timerPresets', 'groups', 'lessons'] as const
+export const BACKUP_TABLES = ['settings', 'students', 'records', 'captains', 'absences', 'keywords', 'papsConfigs', 'papsResults', 'papsRounds', 'assessments', 'assessmentScores', 'timerPresets', 'groups', 'lessons', 'progressPlans'] as const
 const TABLES = BACKUP_TABLES
 type TableName = (typeof TABLES)[number]
 
@@ -81,6 +82,7 @@ export const TABLE_LABELS: Partial<Record<TableName, string>> = {
   assessments: '수행평가',
   assessmentScores: '채점한 학생',
   lessons: '수업 일지',
+  progressPlans: '진도표',
   keywords: '세특 키워드',
 }
 

@@ -17,6 +17,7 @@ export default function ClassToolsSheet({ group, onClose, onTeamSend }: { group:
     { to: `/paps?c=${group.grade}-${group.classNo}`, icon: 'paps', title: 'PAPS', desc: '이 반 측정 입력 · 등급', show: paps },
     { to: `/timer?tab=paps&aid=shuttle&c=${group.grade}-${group.classNo}`, icon: 'flag', title: '왕복오래달리기', desc: '신호마다 한 번 · 늦은 학생만 누르기', show: paps && tools },
     { to: `/groups/${group.id}/journal`, icon: 'book', title: '수업 일지', desc: '단원 · 한 일 · 다음 시간 메모', show: true },
+    { to: `/plans?g=${group.id}`, icon: 'calendar', title: '교과 진도표', desc: '이 반 차시 · 날짜 · 진도', show: featureOn(settings.features, 'plans') },
     { to: `/more/keywords?g=${group.id}`, icon: 'tag', title: '세특 모아보기', desc: '학생별 키워드 · 근거 기록', show: featureOn(settings.features, 'seteuk') },
     { to: `/groups/${group.id}/report`, icon: 'file', title: '학생 리포트 인쇄', desc: '한 장에 한 명 · 상담·피드백용', show: true },
   ]

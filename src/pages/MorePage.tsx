@@ -24,6 +24,7 @@ const GROUPS: { title: string; items: MenuItem[] }[] = [
   {
     title: '수업',
     items: [
+      { to: '/plans', label: '교과 진도표', desc: '차시 계획 · 날짜 자동 · 반별 진도', icon: 'calendar', tone: 'bg-brand-light text-brand', feature: 'plans' },
       { to: '/more/assessments', label: '수행평가', desc: '평가 만들기 · 채점 · 나이스 파일', icon: 'clipboard', tone: 'bg-brand-light text-brand', feature: 'assess' },
       { to: '/more/keywords', label: '세특 키워드', desc: '근거 모아보기 · 키워드 사전', icon: 'tag', tone: 'bg-brand-light text-brand', feature: 'seteuk' },
       { to: '/tools/apps', label: '팀 편성 · 전술 보드', desc: '반 명단 보내기', icon: 'share', tone: 'bg-brand-light text-brand', feature: 'apps' },
