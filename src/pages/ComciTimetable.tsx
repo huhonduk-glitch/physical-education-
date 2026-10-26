@@ -65,6 +65,7 @@ export default function ComciTimetable() {
   }
 
   const setMe = (no: number | null) => {
+    setErr('')
     if (!saved) return
     const peNos = no && !saved.peNos.includes(no) ? [...saved.peNos, no].sort((a, b) => a - b) : saved.peNos
     void updateSettings({ comciWeek: { ...saved, myNo: no, peNos } })

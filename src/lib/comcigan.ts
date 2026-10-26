@@ -235,7 +235,7 @@ export function myPicks(data: ComciData, teacherNo: number): { day: number; peri
 
 
 /** 기본 중계 주소 (교사 Cloudflare 계정에 올린 relay/comcigan-worker.js). 설정에서 바꿀 수 있다 */
-export const COMCI_RELAY_DEFAULT = ''
+export const COMCI_RELAY_DEFAULT = 'https://pelog-comcigan.huhonduk.workers.dev'
 
 export class ComciError extends Error {}
 
