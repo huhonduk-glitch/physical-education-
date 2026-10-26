@@ -42,7 +42,7 @@ export default function AssessmentGradePage() {
 
   if (!a) return <PageHeader title="불러오는 중…" back />
   const maxTotal = items.reduce((n, it) => n + itemMax(it), 0)
-  const doneCount = list.filter((s) => totalOf(items, byStudent.get(s.id)?.scores).complete).length
+  const doneCount = list.filter((s) => totalOf(items, byStudent.get(s.id)?.scores, s.gender).complete).length
 
   const setScore = async (s: Student, itemId: string, v: string | number) => {
     const cur = byStudent.get(s.id)
@@ -57,10 +57,10 @@ export default function AssessmentGradePage() {
     const head = ['번호', '학번', '이름', ...items.map((it) => `${it.label}(${itemMax(it)}점)`), `합계(${maxTotal}점)`, '비고']
     const body = list.map((s) => {
       const sc = byStudent.get(s.id)?.scores
-      const t = totalOf(items, sc)
+      const t = totalOf(items, sc, s.gender)
       const alt = absences?.find((x) => x.studentId === s.id && x.altTaskId === a.id)
       const memo = [alt ? `대체과제${alt.altTaskDone ? '(제출)' : '(미제출)'}` : '', byStudent.get(s.id)?.note ?? ''].filter(Boolean).join(' / ')
-      return [memberNo(group, s), s.studentCode, s.name, ...items.map((it) => itemPoints(it, sc?.[it.id]) ?? ''), t.done ? t.total : '', memo]
+      return [memberNo(group, s), s.studentCode, s.name, ...items.map((it) => itemPoints(it, sc?.[it.id], s.gender) ?? ''), t.done ? t.total : '', memo]
     })
     await saveXlsx(`수행평가_${a.title}_${group.name}.xlsx`, [{ name: '채점표', rows: [head, ...body] }])
   }
@@ -95,7 +95,7 @@ export default function AssessmentGradePage() {
 
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none]" role="tablist" aria-label="채점 요소">
           {items.map((it) => {
-            const n = list.filter((s) => itemPoints(it, byStudent.get(s.id)?.scores[it.id]) !== null).length
+            const n = list.filter((s) => itemPoints(it, byStudent.get(s.id)?.scores[it.id], s.gender) !== null).length
             return (
               <button key={it.id} type="button" role="tab" aria-selected={curTab === it.id} className="chip shrink-0 gap-1.5" onClick={() => setTab(it.id)}>
                 {it.label || '(이름 없음)'}
@@ -177,7 +177,7 @@ function ItemColumn({
       </li>
       {list.map((s, i) => {
         const raw = byStudent.get(s.id)?.scores[item.id]
-        const pts = itemPoints(item, raw)
+        const pts = itemPoints(item, raw, s.gender)
         const alt = altIds.get(s.id)
         return (
           <li key={s.id} className="flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2.5">
@@ -313,7 +313,7 @@ function SumTable({
         <tbody>
           {list.map((s) => {
             const sc = byStudent.get(s.id)
-            const t = totalOf(items, sc?.scores)
+            const t = totalOf(items, sc?.scores, s.gender)
             return (
               <tr key={s.id}>
                 <th className="sticky left-0 z-10 border-t border-line bg-white px-2 py-2 text-left text-sm font-semibold whitespace-nowrap">
@@ -321,7 +321,7 @@ function SumTable({
                   {s.name}
                 </th>
                 {items.map((it) => {
-                  const p = itemPoints(it, sc?.scores[it.id])
+                  const p = itemPoints(it, sc?.scores[it.id], s.gender)
                   return (
                     <td key={it.id} className="border-t border-line px-1 tabular-nums">
                       {p === null ? <span className="text-ink-3">—</span> : fmtNum(p)}
