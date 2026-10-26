@@ -168,10 +168,20 @@ export function weekOf(date: string): [string, string] {
 
 const compact = (d: string) => d.replaceAll('-', '')
 
+/** 공용 인증키 표시: 'relay:<중계 주소>'. 선생님 키가 없으면 중계가 Cloudflare 비밀 값의 키를 붙여 나이스에 묻는다 (2026-10-27 교사 결정) */
+export const RELAY_KEY_PREFIX = 'relay:'
+
+/** 선생님 인증키가 있으면 그 키, 없으면 공용 키(중계) */
+export function neisKeyOf(ownKey: string, relayUrl: string): string {
+  return ownKey.trim() || (relayUrl.trim() ? `${RELAY_KEY_PREFIX}${relayUrl.trim().replace(/\/+$/, '')}` : '')
+}
+
 export function neisUrl(service: string, params: Record<string, string | number | undefined>, key?: string): string {
   const q = new URLSearchParams({ Type: 'json' })
-  if (key?.trim()) q.set('KEY', key.trim())
+  const relay = key?.startsWith(RELAY_KEY_PREFIX) ? key.slice(RELAY_KEY_PREFIX.length) : ''
+  if (key?.trim() && !relay) q.set('KEY', key.trim())
   for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== '') q.set(k, String(v))
+  if (relay) return `${relay}/?neis=${service}&${q.toString()}`
   return `${NEIS_BASE}${service}?${q.toString()}`
 }
 

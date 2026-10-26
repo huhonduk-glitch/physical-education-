@@ -6,6 +6,7 @@ import { addDays, shortDateLabel, todayStr } from '../lib/dates'
 import { fetchWeekTimetable, looksLikePe, NeisError, slotGroups, weekOf } from '../lib/neisOpenApi'
 import { groupLabel, maxPeriod, peCells, peSummary } from '../lib/peTimetable'
 import { useApp } from '../state/AppContext'
+import { neisKey } from '../lib/neisKey'
 import ComciTimetable from './ComciTimetable'
 
 const DAYS = ['월', '화', '수', '목', '금']
@@ -56,7 +57,7 @@ function NeisPe() {
     setBusy(true)
     setErr('')
     try {
-      const lessons = await fetchWeekTimetable(school, date, { key: settings.neisApiKey, onProgress: (d, t) => setProg(`${d}/${t}`) })
+      const lessons = await fetchWeekTimetable(school, date, { key: neisKey(settings), onProgress: (d, t) => setProg(`${d}/${t}`) })
       const slots = slotGroups(lessons, looksLikePe)
       if (!lessons.length) setErr('그 주 시간표가 없어요(방학 · 시험 기간이거나 아직 등록 전). 다른 주를 받아 보세요.')
       await updateSettings({ neisPeWeek: { fetchedAt: Date.now(), from: weekOf(date)[0], slots } })
@@ -88,7 +89,6 @@ function NeisPe() {
               </button>
             </div>
             {busy && <p className="hint">받는 중… {prog}</p>}
-            {!settings.neisApiKey && <p className="hint">나이스 인증키가 없으면 일부만 받아져요. [나이스에서 불러오기]에서 인증키를 넣어 주세요(무료).</p>}
             {err && <p className="font-bold text-danger">{err}</p>}
             <p className="hint">학교 공개 시간표(나이스)에서 체육 과목 칸만 모아요. 나이스 공개 자료에는 담당 선생님 이름이 없어서, 같은 시각에 따로 하는 체육 수업 수로 겹침을 봐요(합반은 하나로 셈).</p>
           </section>

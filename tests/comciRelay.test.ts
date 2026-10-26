@@ -43,3 +43,16 @@ describe('컴시간 중계', () => {
     expect(f).not.toHaveBeenCalled()
   })
 })
+
+describe('나이스 공용 인증키 중계', () => {
+  it('정해진 서비스만, 비밀 키를 붙이고 앱이 보낸 KEY는 버린다', async () => {
+    const { f, ctx } = setup()
+    const res = await worker.fetch(new Request('https://relay.example/?neis=hisTimetable&ATPT_OFCDC_SC_CODE=T10&SD_SCHUL_CODE=1&KEY=leak&pIndex=1'), { NEIS_KEY: 'secret' }, ctx)
+    expect(res.status).toBe(200)
+    const u = new URL(f.mock.calls[0][0])
+    expect(u.origin + u.pathname).toBe('https://open.neis.go.kr/hub/hisTimetable')
+    expect(u.searchParams.get('KEY')).toBe('secret')
+    expect(u.searchParams.get('SD_SCHUL_CODE')).toBe('1')
+    expect((await worker.fetch(new Request('https://relay.example/?neis=mealServiceDietInfo'), { NEIS_KEY: 'secret' }, ctx)).status).toBe(400)
+  })
+})
