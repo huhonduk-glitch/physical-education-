@@ -14,6 +14,7 @@ import { copyText, saveXlsx } from '../lib/download'
 import { memberNo, readLastGroup } from '../lib/groups'
 import { AiError, CLAUDE_MODEL, draftPrompt, loadRouterModels, manualPromptText, polishPrompt, runAi, type AiSettings, type RouterModel } from '../lib/aiPolish'
 import { studentEvidence } from '../lib/seteuk'
+import { SAMPLE_STYLE } from '../data/seteukStyleSample'
 import { AI_CONFIRM_ITEMS, checkSeteuk, countText, SETEUK_MAX_BYTES } from '../lib/seteukCheck'
 import { draftParts, draftText } from '../lib/seteukDraft'
 import { useApp } from '../state/AppContext'
@@ -234,9 +235,15 @@ function AiSetupCard({ readOnly }: { readOnly: boolean }) {
           <span className="label">내 문체 예시 (선생님이 잘 쓴 세특 몇 개 · 학생 이름은 빼고)</span>
           <textarea className="field min-h-[120px] py-3 text-sm" value={style} onChange={(e) => setStyle(e.target.value)} disabled={readOnly} placeholder="AI가 문장 구성 · 어휘 · 길이만 참고해요. 예시의 내용은 가져오지 않아요." />
         </label>
-        <button type="button" className="btn btn-soft w-full" onClick={() => updateSettings({ seteukStyle: style })} disabled={readOnly || style === settings.seteukStyle}>
-          예시 저장 ({countText(style).chars}자)
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" className="btn btn-soft" onClick={() => setStyle(style.trim() ? style : SAMPLE_STYLE)} disabled={readOnly || !!style.trim()}>
+            앱 예시 넣어 보기
+          </button>
+          <button type="button" className="btn btn-primary" onClick={() => updateSettings({ seteukStyle: style })} disabled={readOnly || style === settings.seteukStyle}>
+            예시 저장 ({countText(style).chars}자)
+          </button>
+        </div>
+        <p className="hint">앱 예시는 가상 학생 글이에요. 선생님이 직접 쓴 잘된 세특 2~5개(학생 이름은 빼고)로 바꿔 넣으면 AI가 선생님 문체로 써요. 예시는 이 기기에만 저장돼요.</p>
       </div>
     </Collapse>
   )
@@ -387,6 +394,7 @@ function Editor({ group, student, draft, onClose }: { group: ClassGroup; student
           </div>
         )}
         {!ready && <p className="hint">AI를 쓰려면 위 [AI 연결]에서 키(와 모델)를 넣어 주세요.</p>}
+        {!ai$.styleExamples.trim() && <p className="hint">[AI 연결 · 내 문체 예시]에 선생님이 쓴 세특을 넣어 두면 AI가 선생님 문체로 써요.</p>}
         {pasteBox !== null && ai === null && (
           <section className="space-y-2 rounded-2xl bg-fill p-3">
             <p className="text-sm font-bold">요청문을 복사했어요. 무료 챗봇에 붙여 넣고, 받은 답을 여기에 붙여 넣으세요.</p>

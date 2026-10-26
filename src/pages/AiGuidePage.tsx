@@ -41,6 +41,7 @@ export default function AiGuidePage() {
             <>챗봇의 답을 복사해 앱의 [챗봇의 답 붙여 넣기] 칸에 넣고 [확인] → [받아 쓰기].</>,
             <>선생님 문장으로 고치고, 확인 4개를 체크한 뒤 [확정].</>,
           ]}
+          images={[{ src: 'app-ai-setup.png', caption: '세특 쓰기 → [AI 연결 · 내 문체 예시]를 펼친 모습 (시연 모드)' }]}
           tips={['챗봇 설정에서 「대화 기록을 학습에 사용」을 끌 수 있으면 꺼 두세요.', '학생 이름을 빼고 싶으면 붙여 넣은 요청문에서 이름 줄을 지우고 보내도 돼요.']}
         />
 
@@ -56,6 +57,10 @@ export default function AiGuidePage() {
             <>앱 세특 쓰기 → [AI 연결] → <b>OpenRouter</b> → 키 붙여 넣고 [키 저장].</>,
             <>[모델 목록 불러오기] → 「무료만」을 켜면 무료 모델이, 끄면 값과 함께 모든 모델이 나와요. 하나를 누르면 그 모델로 써요.</>,
           ]}
+          images={[
+            { src: 'openrouter-signin.png', caption: 'openrouter.ai 로그인 화면 — GitHub · Google 계정 또는 이메일' },
+            { src: 'openrouter-free-models.png', caption: 'openrouter.ai/models 에서 가격을 FREE로 두면 보이는 무료 모델 (목록은 자주 바뀜)' },
+          ]}
           tips={['무료 모델 목록은 자주 바뀌어요. 안 되면 다른 무료 모델을 고르세요.', '무료 모델은 하루 요청 수가 적어요(사용량 제한). 한 반을 한 번에 쓰기보다 나눠 쓰세요.', '값은 「100만 토큰당 달러」예요. 세특 한 명은 대략 수천 토큰이에요.']}
         />
 
@@ -63,7 +68,7 @@ export default function AiGuidePage() {
           title={`③ Claude API (Anthropic) — ${CLAUDE_MODEL}`}
           sub="품질이 가장 좋은 편 · 쓴 만큼 요금"
           steps={[
-            <>console.anthropic.com 에 접속해 가입 · 로그인하세요.</>,
+            <>platform.claude.com (Claude Console, 예전 주소 console.anthropic.com)에 접속해 가입 · 로그인하세요.</>,
             <>
               <b>Billing</b>(결제)에서 크레딧을 충전하세요. 충전이 없으면 키가 있어도 오류가 나요.
             </>,
@@ -72,6 +77,7 @@ export default function AiGuidePage() {
             </>,
             <>앱 세특 쓰기 → [AI 연결] → <b>Claude</b> → 키 붙여 넣고 [키 저장].</>,
           ]}
+          images={[{ src: 'claude-console-signin.png', caption: 'Claude Console 로그인 화면 — Google 계정 또는 이메일' }]}
           tips={['요청이 정책상 거절되면 회사 서버가 다른 Claude 모델로 이어 받도록 설정해 두었어요.', '사용량 · 요금은 콘솔의 Usage(사용량)에서 볼 수 있어요. 월 한도도 정할 수 있어요.']}
         />
 
@@ -89,13 +95,15 @@ export default function AiGuidePage() {
             세특 쓰기로
           </Link>
         </section>
-        <p className="hint px-1">회사 사이트의 메뉴 이름 · 위치는 바뀔 수 있어요. 안 보이면 사이트 안에서 「API key」를 찾아보세요.</p>
+        <p className="hint px-1">회사 사이트의 메뉴 이름 · 위치는 바뀔 수 있어요. 안 보이면 사이트 안에서 「API key」를 찾아보세요. 로그인한 뒤의 화면(키 만들기)은 계정마다 달라 사진 대신 메뉴 이름으로 적었어요. 사진: 각 사이트의 공개 화면을 2026년 10월에 직접 캡처.</p>
       </div>
     </>
   )
 }
 
-function Way({ title, sub, steps, tips }: { title: string; sub: string; steps: ReactNode[]; tips: string[] }) {
+const img = (name: string) => `${import.meta.env.BASE_URL}guide/${name}`
+
+function Way({ title, sub, steps, tips, images = [] }: { title: string; sub: string; steps: ReactNode[]; tips: string[]; images?: { src: string; caption: string }[] }) {
   return (
     <section className="card space-y-3">
       <div>
@@ -110,6 +118,12 @@ function Way({ title, sub, steps, tips }: { title: string; sub: string; steps: R
           </li>
         ))}
       </ol>
+      {images.map((m) => (
+        <figure key={m.src} className="space-y-1">
+          <img src={img(m.src)} alt={m.caption} loading="lazy" className="w-full rounded-xl border border-line" />
+          <figcaption className="hint text-center">{m.caption}</figcaption>
+        </figure>
+      ))}
       <ul className="space-y-1 rounded-xl bg-fill px-3 py-2 text-sm text-ink-2">
         {tips.map((t) => (
           <li key={t} className="flex gap-1.5">
