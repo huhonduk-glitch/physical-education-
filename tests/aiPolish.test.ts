@@ -8,7 +8,7 @@ describe('세특 AI 요청문', () => {
   it('다듬기: 규칙 · 문체 예시(내용은 가져오지 말 것) · 초안', () => {
     const p = polishPrompt({ text: '랠리를 주도함.', studentName: '김가명', subject: '체육', styleExamples: '예시 문장임.' })
     expect(p.system).toContain('다듬기만 하고 새로 쓰지 않습니다')
-    expect(p.system).toContain('500자')
+    expect(p.system).toContain('1,500바이트')
     expect(p.system).toContain('<예시>\n예시 문장임.\n</예시>')
     expect(p.system).toContain('내용(다른 학생의 활동')
     expect(p.user).toBe('학생: 김가명\n과목: 체육\n교사 초안:\n랠리를 주도함.')

@@ -31,8 +31,10 @@ describe('세특 검사 (기재요령 총칙 3~5)', () => {
   })
   it('500자 넘으면 오류, 바이트도 센다', () => {
     expect(countText('가a\n')).toEqual({ chars: 3, bytes: 6 })
-    expect(checkSeteuk(`${'가'.repeat(499)}함.`)[0]).toMatchObject({ id: 'length', level: 'error' })
+    // 나이스 1,500바이트: 한글 499자 + 마침표 = 1,498바이트 → 통과, 띄어쓰기는 1바이트라 한글 500자 + 띄어쓰기 있어도 통과
     expect(checkSeteuk(`${'가'.repeat(498)}함.`)).toEqual([])
+    expect(checkSeteuk(`${'가'.repeat(250)} ${'가'.repeat(248)}함.`).find((h) => h.id === 'length')).toBeUndefined()
+    expect(checkSeteuk(`${'가'.repeat(500)}함.`)[0]).toMatchObject({ id: 'length', level: 'error' })
   })
   it('학교 연수자료: 유의어 → 대체어 · 영문 · 명사형 종결 · 기호 · 두 칸 · 방과후', () => {
     const r = checkSeteuk('유튜브 영상과 챗GPT로 조사하고 엑셀로 정리함. PAPS 결과를 TV로 보며 Python을 배웠다. 방과후에도  연습함 ~')
@@ -99,5 +101,22 @@ describe('세특 틀 초안 (기록에 있는 것만)', () => {
   })
   it('기록이 없으면 빈 초안', () => {
     expect(draftParts({ records: [], keywords: [], assessments: [], captainRoles: [] })).toEqual([])
+  })
+})
+
+describe('기관명 · 상호명 찾기 (기재요령 3-타)', () => {
+  const by = (t: string, id: string) => checkSeteuk(t).find((h) => h.id === id)?.words ?? []
+  it('확실한 이름은 오류: 중앙부처 · 체육 단체 · 리그 · 브랜드', () => {
+    expect(by('문화체육관광부와 대한체육회 자료로 프리미어리그 경기와 나이키 운동화를 분석함.', 'org')).toEqual(expect.arrayContaining(['문화체육관광부', '대한체육회', '프리미어리그', '나이키']))
+  })
+  it('이름 꼴(…청 · …협회 · …공단 · …센터 · 주식회사)은 의심으로', () => {
+    expect(by('질병관리청 통계와 대한배드민턴협회 규칙, 한국전력공사 자료, 강남스포츠센터 견학, 주식회사 가나다를 조사함.', 'org-maybe')).toEqual(
+      expect.arrayContaining(['질병관리청', '대한배드민턴협회', '한국전력공사', '강남스포츠센터', '주식회사 가나다']),
+    )
+  })
+  it('흔한 낱말 · 일반 명칭은 걸지 않음', () => {
+    const t = '자료 출처를 밝히고 참가신청을 받아 위기대처 방법을 경청함. 지역 보건소와 스포츠센터, 학교 체육부 활동, 영상을 시청함.'
+    expect(by(t, 'org')).toEqual([])
+    expect(by(t, 'org-maybe')).toEqual([])
   })
 })

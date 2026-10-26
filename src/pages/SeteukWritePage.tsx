@@ -14,7 +14,7 @@ import { copyText, saveXlsx } from '../lib/download'
 import { memberNo, readLastGroup } from '../lib/groups'
 import { AiError, CLAUDE_MODEL, draftPrompt, loadRouterModels, manualPromptText, polishPrompt, runAi, type AiSettings, type RouterModel } from '../lib/aiPolish'
 import { studentEvidence } from '../lib/seteuk'
-import { AI_CONFIRM_ITEMS, checkSeteuk, countText, SETEUK_MAX_CHARS } from '../lib/seteukCheck'
+import { AI_CONFIRM_ITEMS, checkSeteuk, countText, SETEUK_MAX_BYTES } from '../lib/seteukCheck'
 import { draftParts, draftText } from '../lib/seteukDraft'
 import { useApp } from '../state/AppContext'
 import { useGroups } from '../state/useGroups'
@@ -357,8 +357,8 @@ function Editor({ group, student, draft, onClose }: { group: ClassGroup; student
         <label className="block">
           <span className="label flex items-baseline justify-between">
             <span>세부능력 및 특기사항 (선생님 문장으로)</span>
-            <span className={`tabular-nums ${cnt.chars > SETEUK_MAX_CHARS ? 'font-extrabold text-danger' : 'text-ink-3'}`}>
-              {cnt.chars}/{SETEUK_MAX_CHARS}자 · {cnt.bytes}B
+            <span className={`tabular-nums ${cnt.bytes > SETEUK_MAX_BYTES ? 'font-extrabold text-danger' : 'text-ink-3'}`}>
+              {cnt.bytes}/{SETEUK_MAX_BYTES}바이트 · {cnt.chars}자
             </span>
           </span>
           <textarea className="field min-h-[180px] py-3 leading-relaxed" value={text} onChange={(e) => setText(e.target.value)} onBlur={save} disabled={readOnly} placeholder="학생이 실제로 한 활동을 선생님이 관찰한 대로 적어 주세요." />

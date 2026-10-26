@@ -15,6 +15,8 @@ export interface CheckHit {
 }
 
 export const SETEUK_MAX_CHARS = 500
+/** 나이스는 '500자'를 바이트로 센다: 1,500바이트 (한글 3 · 영문/숫자/띄어쓰기 1 · 줄바꿈 2) */
+export const SETEUK_MAX_BYTES = 1500
 
 /** 나이스 글자 수 셈: 글자 수(공백 포함)와 바이트(한글 3 · 영문/숫자/공백 1 · 줄바꿈 2) */
 export function countText(text: string): { chars: number; bytes: number } {
@@ -125,9 +127,9 @@ function badEndings(text: string): string[] {
 
 export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?: number } = {}): CheckHit[] {
   const hits: CheckHit[] = []
-  const max = opts.maxChars ?? SETEUK_MAX_CHARS
-  const { chars } = countText(text)
-  if (chars > max) hits.push({ id: 'length', level: 'error', title: `${max}자를 넘었어요 (${chars}자)`, basis: '기재요령: 과목별 세부능력 및 특기사항 500자', words: [] })
+  const maxBytes = (opts.maxChars ?? SETEUK_MAX_CHARS) * 3
+  const { bytes } = countText(text)
+  if (bytes > maxBytes) hits.push({ id: 'length', level: 'error', title: `나이스 글자 수를 넘었어요 (${bytes}/${maxBytes}바이트)`, basis: '기재요령: 과목별 세특 500자 = 나이스 1,500바이트 (한글 3 · 띄어쓰기 · 숫자 1)', words: [] })
   for (const r of RULES) {
     const words = [...new Set([...text.matchAll(r.re)].map((m) => m[0].trim()))]
     if (words.length) hits.push({ id: r.id, level: r.level, title: r.title, basis: r.basis, words })
@@ -147,7 +149,41 @@ export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?
   const sym = [...new Set(text.match(/[^\p{L}\p{N}\s.,\-'‘’[\]]/gu) ?? [])]
   if (sym.length) hits.push({ id: 'symbol', level: 'warn', title: '특수 기호 (최소화)', basis: '기재요령 28~30쪽: 온점 · 쉼표 · 하이픈 · 작은따옴표 · 대괄호만', words: sym })
   if (/ {2,}/.test(text)) hits.push({ id: 'space', level: 'warn', title: '공백 두 칸', basis: '학교 연수자료: 자주 틀리는 오류', words: ['두 칸 띄어쓰기'] })
+  const org = findOrgs(text)
+  if (org.sure.length) hits.push({ id: 'org', level: 'error', title: '특정 기관명 · 단체명 · 상호명', basis: '기재요령 23~24쪽 3-타 — 일반 명칭으로 (예: 질병관리청 → 감염병 관리 기관)', words: org.sure })
+  if (org.maybe.length) hits.push({ id: 'org-maybe', level: 'warn', title: '기관 · 단체 · 상호 이름으로 보여요', basis: '기재요령 23~24쪽 3-타 — 특정 이름이면 일반 명칭으로 바꿔 주세요', words: org.maybe })
   return hits
+}
+
+/**
+ * 기관 · 단체 · 상호 이름 찾기 (기재요령 3-타: 특정 대학명 · 기관명(기구 · 단체 · 조직 포함) · 상호명 · 강사명).
+ * 연수자료의 예시만으로는 부족해서, ① 확실한 이름 목록(중앙행정기관 · 체육 단체 · 스포츠 브랜드 · 리그)과
+ * ② 이름 꼴(…청 · …처 · …공단 · …협회 · …연맹 · …재단 · …위원회 · …센터 · …㈜ 등)으로 찾는다.
+ * ②는 '의심'으로만 알리고, '요청 · 출처 · 대처'처럼 흔한 낱말과 '지역 보건소'처럼 일반 명칭은 뺀다.
+ */
+const SURE_ORGS = [
+  // 중앙행정기관 '…부'(꼴만으로는 '체육부 · 운동부'와 구별이 안 돼 목록으로)
+  '기획재정부', '교육부', '과학기술정보통신부', '외교부', '통일부', '법무부', '국방부', '행정안전부', '국가보훈부', '문화체육관광부', '농림축산식품부', '산업통상자원부', '보건복지부', '환경부', '고용노동부', '여성가족부', '국토교통부', '해양수산부', '중소벤처기업부',
+  // 체육 · 건강 관련 기관 · 단체
+  '대한체육회', '국민체육진흥공단', '한국스포츠정책과학원', '대한장애인체육회', '국민건강보험공단', '대한적십자사', '한국도핑방지위원회', '세계반도핑기구', '국제올림픽위원회', '국제축구연맹', '아시아축구연맹',
+  // 리그 · 구단 이름 (단체)
+  '프리미어리그', 'K리그', '케이리그', '프로야구', '메이저리그', '프로농구', '프로배구', '챔피언스리그', 'FIFA', 'IOC', 'KBO', 'NBA', 'MLB', 'EPL', 'KBL', 'KOVO', 'UEFA',
+  // 스포츠 · 운동 용품 브랜드 (상호명)
+  '나이키', '아디다스', '언더아머', '뉴발란스', '푸마', '데상트', '요넥스', '빅터', '윌슨', '스팔딩', '몰텐', '미카사', '스타스포츠', '휠라', '아식스', '미즈노', '룰루레몬', '가민', '애플워치', '갤럭시워치', '쿠팡',
+]
+const ORG_TAIL = /([가-힣]{2,}(?:청|처|공단|공사|재단|협회|연맹|연구소|진흥원|개발원|평가원|위원회|체육회|보건소|경찰서|소방서|센터|박물관|미술관|기념관|구단|은행|협동조합|연합회|병원))(?=[\s,.·의에서을를이가과와은는로도만]|$)|((?:주식회사|㈜|\(주\))\s*[가-힣A-Za-z]{2,}|[가-힣A-Za-z]{2,}\s*(?:주식회사|㈜|\(주\)))/g
+/** 꼴은 맞지만 흔한 낱말 · 일반 명칭 */
+const NOT_ORG = /^(요청|경청|시청|신청|초청|도청|대처|조처|거처|출처|근처|상처|처처|공사|보수공사|건설공사)$|(요청|경청|신청|초청|대처|출처|근처|상처)$|^(지역|인근|근처|동네|가까운|주변|학교|교내|우리|해당|관련|여러|다양한|각|국내|해외|공공|민간|청소년|체육|스포츠|운동|건강|복지|상담|진로|의료|재활|돌봄|교육)(보건소|센터|병원|박물관|미술관|기념관|위원회|협회|연구소|재단)$/
+
+function findOrgs(text: string): { sure: string[]; maybe: string[] } {
+  const sure = SURE_ORGS.filter((w) => new RegExp(`(^|[^가-힣A-Za-z])${w.replace(/[()]/g, '\\$&')}`, 'i').test(text))
+  const maybe = new Set<string>()
+  for (const m of text.matchAll(ORG_TAIL)) {
+    const w = (m[1] ?? (m[2] ?? '').replace(/(으로|에서|을|를|이|가|은|는|의|에|와|과|로|도|만)$/, '')).trim()
+    if (!w || NOT_ORG.test(w) || sure.some((s) => w.includes(s))) continue
+    maybe.add(w)
+  }
+  return { sure, maybe: [...maybe] }
 }
 
 /** AI 도움을 받았을 때 최종 입력 전에 교사가 확인할 것 (기재요령 24쪽 5-다 ※) */
