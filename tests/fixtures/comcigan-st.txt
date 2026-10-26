@@ -1,0 +1,3 @@
+_change();}function school_ra(sc){$.ajax({ url:'./36179?17384l'+sc,success:function(data2){var da=data2.substr(0,data2.lastIndexOf('}')+1);H학교명단=JSON.parse(da);학교명단_출력하기(H학교명단.학교검색
+...
+mpty().append(scnm);sc_data('73629_',sc,1,'0');}function sc_search(){$('#학교찾기').show();$('#시간표열람').hide();}function sc2_search(){var sc = document.getElementById('sc').value;if(sc!
