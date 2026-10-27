@@ -3,6 +3,7 @@ import Collapse from '../../components/Collapse'
 import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
 import { sportOf } from '../../data/sports'
+import { FigureView } from './SlideView'
 
 /** 종목 한 개: 공식 규칙서를 줄인 요약. 줄마다 조항, 맨 아래 출처(규칙서 판) */
 export default function SportGuidePage() {
@@ -13,9 +14,38 @@ export default function SportGuidePage() {
     <>
       <PageHeader title={`${s.emoji} ${s.name}`} sub={s.summary} back />
       <div className="page space-y-3 pb-10">
-        <p className="hint px-1">공식 규칙서를 직접 읽고 쉬운 말로 줄였어요. 오른쪽 작은 글씨가 규칙서 조항이에요. 학교 수업에서는 시간 · 점수를 줄여 써도 돼요(리그전 설정에서 바꿔요).</p>
+        <Link to={`/sports/${s.id}/slides`} className="flex min-h-[64px] items-center gap-3 rounded-3xl bg-brand px-5 text-white shadow-[var(--shadow-float)] active:scale-[0.99]">
+          <Icon name="play" />
+          <span className="min-w-0 flex-1">
+            <b className="block">슬라이드로 보기 · PPT로 받기</b>
+            <span className="text-sm font-semibold text-white/85">빔 화면에 띄워 수업 · 경기장 그림 · 사진 포함</span>
+          </span>
+          <Icon name="chevronRight" />
+        </Link>
+        <p className="hint px-1">공식 규칙서를 직접 읽고 쉬운 말로 줄였어요. 작은 글씨 [ ]가 규칙서 조항이에요. 학교 수업에서는 시간 · 점수를 줄여 써도 돼요.</p>
         {s.sections.map((sec, i) => (
           <Collapse key={sec.title} title={<b className="text-ink">{sec.title}</b>} sub={`${sec.items.length}가지`} defaultOpen={i < 2} className="card px-2 py-1">
+            {sec.lead && <p className="mx-2 mb-2 rounded-2xl bg-brand-light p-3 font-bold text-brand-ink">{sec.lead}</p>}
+            {sec.specs && sec.specs.length > 0 && (
+              <table className="mx-2 mb-2 w-[calc(100%-1rem)] text-left text-sm">
+                <tbody>
+                  {sec.specs.map((sp) => (
+                    <tr key={sp.label} className="border-b border-line">
+                      <th className="py-1.5 pr-2 font-bold text-ink-2">{sp.label}</th>
+                      <td className="py-1.5 font-extrabold tabular-nums">
+                        {sp.value}
+                        {sp.ref && <span className="ml-1 text-xs font-bold text-ink-3">[{sp.ref}]</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {sec.figure && (
+              <div className="mx-2 mb-2">
+                <FigureView figure={sec.figure} compact />
+              </div>
+            )}
             <ul className="space-y-2 px-2 pb-3">
               {sec.items.map((it) => (
                 <li key={it.t} className="flex gap-2 leading-relaxed">

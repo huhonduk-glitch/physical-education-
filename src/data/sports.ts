@@ -1,3 +1,4 @@
+import type { CourtId } from '../components/CourtDiagram'
 import type { LeagueRules, SportId } from '../lib/league'
 
 /**
@@ -12,9 +13,22 @@ export interface GuideItem {
   /** 규칙서 조항 (예: '제8조', 'Law 11') */
   ref?: string
 }
+/** 규격 표 한 줄 (예: 둘레 | 750~770 mm | 장비 규정) */
+export interface Spec {
+  label: string
+  value: string
+  ref?: string
+}
+/** 절에 붙는 그림: 직접 그린 경기장 또는 자유 이용 사진(src/data/sportPhotos.ts 열쇠) */
+export type Figure = { kind: 'court'; court: CourtId; caption: string } | { kind: 'photo'; photo: string; caption: string }
+
 export interface GuideSection {
   title: string
+  /** 수업에서 처음 꺼내는 한두 문장 */
+  lead?: string
   items: GuideItem[]
+  specs?: Spec[]
+  figure?: Figure
 }
 export interface GuideSource {
   label: string
@@ -51,6 +65,8 @@ export interface SportGuide {
   emoji: string
   group: SportGroup
   summary: string
+  /** 표지 사진 (sportPhotos 열쇠) */
+  cover?: string
   sections: GuideSection[]
   sources: GuideSource[]
   bracket?: BracketGuide
