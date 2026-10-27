@@ -24,7 +24,7 @@ export default function SportsPage() {
           </span>
           <span className="min-w-0 flex-1">
             <b className="block text-lg">리그전 · 토너먼트</b>
-            <span className="block text-sm font-semibold text-white/85">반 명단을 SPORTS BRACKET으로 보내 대진표 만들기 · 종목별 설정은 각 종목 안내에</span>
+            <span className="block text-sm font-semibold text-white/85">반 명단을 SPORTS BRACKET으로 보내 대진표 만들기</span>
           </span>
           <Icon name="chevronRight" />
         </Link>
