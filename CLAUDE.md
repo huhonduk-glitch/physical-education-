@@ -687,6 +687,14 @@ lessons         { id, schoolYear, groupId, date, period?, unit?, activity, note?
 - 승점 기본: 농구 = FIBA D.1.1(승 2 · 패 1 · 몰수 0). 축구·풋살 · 배구 · 배드민턴은 규칙서에 없어 "많이 쓰는 방식"으로 표시, 교사가 바꿈
 - 저장 v8 `leagues`, 자동 백업 `UPGRADE_TO = 8`, 백업 형식 5. `src/db/leaguesRepo.ts`(테스트 `tests/leaguesRepo.test.ts`)
 
+**④ 다시 짬 — 종목 수업자료 (2026-10-27 교사 요청 6가지, 브랜치 `sports-hub`)**
+- 교사 결정: 메뉴는 **하단 탭 '종목' + 홈 카드** · 18종목을 **영역 · 네트 · 필드 · 기술형** 4개로(2022 교육과정 이름, 킨볼=네트형 · 츄크볼=영역형은 교과서마다 다를 수 있다고 표시) · 그림은 **규칙서 치수로 직접 그린 경기장 + 위키미디어 공용 자유 이용 사진(저작자 · 라이선스 표시)** · **PE LOG 리그전은 메뉴만 숨김**(만든 리그전은 보기만, `leagues` 표 유지) → 리그전 · 토너먼트는 SPORTS BRACKET으로, 종목마다 그 앱 설정(방식 · 스코어 방식 · 승점 · 득점자 기록) 안내(`bracket`). SPORTS BRACKET 코드는 읽기만
+- ① 교시 시각: 나이스 시간표에는 시각이 없어 **컴시간 일과시간**으로 `settings.periodStarts`를 자동으로(`periodStarts()`, 실제 수업 있는 교시까지)
+- 자료 구조(`src/data/sports.ts`): 절마다 `lead` · `items`(조항 ref) · `specs`(규격 표) · `figure`(court | photo). 영역형 6종목은 `src/data/sportsInvasion.ts`. 아직 없는 종목은 `UPCOMING`(카드에 '자료 준비 중'). 네트 · 필드 · 기술형은 **다음 단계에서 같은 방식으로**(공식 규칙서 원문을 받아 읽고, 못 찾으면 멈추고 교사에게 자료 요청)
+- 근거(원문 PDF를 받아 읽음): **FIBA 2026(2026-10-01 시행, 37조 디스럽티브 · 38조 플래그런트 파울 새로, 41~44조 번호 바뀜)** + FIBA 장비 2026 · IFAB 2025/26(골키퍼 8초 → 코너킥) · FIFA 유소년 공 권고 2016(3 · 4 · 5호) · FIFA 풋살 2025-26 · World Netball 2024 · FITB 츄크볼 · WFDF 2025-2028. 역사는 영문 위키백과에서 여러 자료가 같게 말하는 것만
+- 경기장 그림 `src/components/CourtDiagram.tsx`(6종, 미터 단위 SVG). 사진 `public/sports/`(15장, 800px JPG, 1.6 MB) · 출처 `src/data/sportPhotos.ts`
+- 슬라이드 `src/lib/sportSlides.ts`(테스트 `tests/sportSlides.test.ts`) → 화면 `/sports/:sport/slides`(전체 화면 · 밀기 · 화살표 키) · **[PPT로 받기]** `src/lib/sportPptx.ts`(pptxgenjs 4.0.1 MIT, 누를 때만 불러옴, 경기장 SVG → PNG, 오프라인)
+
 **시간표 (2026-10-26 교사 요청, 브랜치 `seteuk-ai`)**
 - 홈에 **이번 주 내 시간표** 표(요일 × 교시, 수업반 색, 지금 교시 테두리, 칸을 누르면 그 반)
 - **전체 체육 시간표** `/timetable/pe`(더보기 · 홈 표 머리): 나이스 공개 자료로 학교 전체 한 주 시간표를 받아 체육 과목 칸만(`looksLikePe`) 요일 × 교시로. 같은 시각에 따로 하는 체육 수업 묶음이 2개 이상이면 빨강(겹침), 내 시간표 칸은 테두리. 받은 주는 기기에 저장(`settings.neisPeWeek`). 계산 `src/lib/peTimetable.ts`(테스트 `tests/peTimetable.test.ts`)

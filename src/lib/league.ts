@@ -6,7 +6,8 @@
  *   이 순서는 FIBA 공식 규칙 부록 D(D.1.3 · D.1.4)를 따랐다. 다른 종목도 같은 순서를 쓴다(교사가 승점은 바꿀 수 있다)
  */
 
-export type SportId = 'basketball' | 'volleyball' | 'football' | 'futsal' | 'badminton'
+/** 종목 id (src/data/sports.ts) */
+export type SportId = string
 export type ScoreKind = 'goals' | 'sets'
 
 export interface PointsRule {

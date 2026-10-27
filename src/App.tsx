@@ -36,7 +36,7 @@ const VideoPage = lazy(() => import('./pages/tools/VideoPage'))
 const SportsPage = lazy(() => import('./pages/sports/SportsPage'))
 const ChangelogPage = lazy(() => import('./pages/ChangelogPage'))
 const SportGuidePage = lazy(() => import('./pages/sports/SportGuidePage'))
-const LeagueSetupPage = lazy(() => import('./pages/sports/LeagueSetupPage'))
+const SlidesPage = lazy(() => import('./pages/sports/SlidesPage'))
 const LeaguePage = lazy(() => import('./pages/sports/LeaguePage'))
 const HelpPage = lazy(() => import('./pages/HelpPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
@@ -177,7 +177,9 @@ export default function App() {
           <Route path="/sports" element={<SportsPage />} />
           <Route path="/more/changelog" element={<ChangelogPage />} />
           <Route path="/sports/:sport" element={<SportGuidePage />} />
-          <Route path="/leagues/new" element={<LeagueSetupPage />} />
+          <Route path="/sports/:sport/slides" element={<SlidesPage />} />
+          {/* 리그전 새로 만들기는 SPORTS BRACKET으로 (2026-10-27 교사 결정). 이미 만든 리그전은 /leagues/:id 로 계속 본다 */}
+          <Route path="/leagues/new" element={<Navigate to="/sports" replace />} />
           <Route path="/leagues/:id" element={<LeaguePage />} />
           <Route path="/paps" element={<PapsPage />} />
           <Route path="/paps/input/:key" element={<PapsInputPage />} />

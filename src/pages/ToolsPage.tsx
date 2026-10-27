@@ -44,8 +44,8 @@ export default function ToolsPage() {
             <Icon name="medal" size={22} />
           </span>
           <span className="min-w-0 flex-1">
-            <b className="block">종목 · 리그전</b>
-            <span className="text-xs font-semibold text-ink-3">농구 · 배구 · 축구 · 풋살 · 배드민턴 규칙 요약 · 대진표 · 점수판 · 순위</span>
+            <b className="block">종목 수업자료</b>
+            <span className="text-xs font-semibold text-ink-3">규칙 · 경기 방법 · 리그전 · 토너먼트(SPORTS BRACKET) 안내</span>
           </span>
           <Icon name="chevronRight" className="text-ink-3" />
         </Link>
