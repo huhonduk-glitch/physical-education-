@@ -14,6 +14,7 @@ import {
   myPicks,
   peGrid,
   peTeacherNos,
+  periodStarts,
   teacherLessons,
   type ComciPeCell,
   type ComciSchool,
@@ -37,6 +38,7 @@ export default function ComciTimetable() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
+  const [timesMsg, setTimesMsg] = useState('')
   const [onlyOverlap, setOnlyOverlap] = useState(false)
   const [replaceAll, setReplaceAll] = useState(true)
 
@@ -53,7 +55,12 @@ export default function ComciTimetable() {
       const myNo = found.length === 1 ? found[0] : null
       const peNos = [...new Set([...peTeacherNos(data), ...(myNo ? [myNo] : [])])].sort((a, b) => a - b)
       const label = data.weeks.find((w) => w[0] === week)?.[1] ?? ''
-      await updateSettings({ comciTeacherName: name.trim(), comciWeek: { fetchedAt: Date.now(), week, label, myNo, peNos, data } })
+      // 교시 시작 시각도 컴시간대로 (나이스 시간표에는 시각이 없다). 지금 수업 · 오늘 시간표 표시에 쓰인다
+      const starts = periodStarts(data)
+      const timesChanged = starts.length > 0 && starts.join() !== settings.periodStarts.join()
+      await updateSettings({ comciTeacherName: name.trim(), comciWeek: { fetchedAt: Date.now(), week, label, myNo, peNos, data }, ...(timesChanged ? { periodStarts: starts } : {}) })
+      setTimesMsg('')
+      if (timesChanged) setTimesMsg(`교시 시각도 컴시간대로 맞췄어요: ${starts.map((t, i) => `${i + 1}교시 ${t}`).join(' · ')}`)
       if (!name.trim()) setErr('내 이름을 넣으면 내 수업을 찾아 시간표에 넣을 수 있어요.')
       else if (found.length === 0) setErr(`컴시간 시간표에서 '${name.trim()}' 선생님을 찾지 못했어요. 아래 [나는 누구]에서 골라 주세요.`)
       else if (found.length > 1) setErr(`같은 이름이 ${found.length}명이에요. 아래 [나는 누구]에서 골라 주세요.`)
@@ -123,6 +130,11 @@ export default function ComciTimetable() {
           </div>
           {busy && <p className="hint">받는 중…</p>}
           {err && <p className="font-bold text-danger">{err}</p>}
+          {timesMsg && (
+            <p className="font-bold text-ok" role="status">
+              {timesMsg}
+            </p>
+          )}
           <p className="hint">컴시간알리미의 공개 시간표(과목 · 선생님 이름 · 교실)를 받아요. 학생 정보는 보내지도 받지도 않아요. 받은 표는 이 기기에만 둬요.</p>
         </section>
       )}

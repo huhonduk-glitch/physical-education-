@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import fs from 'fs'
 import data from './fixtures/comcigan-data.json'
-import { cp949Percent, dataPath, findTeacher, myPicks, parseData, parseSearch, parseStPage, peGrid, peTeacherNos, searchPath, teacherLessons } from '../src/lib/comcigan'
+import { cp949Percent, dataPath, findTeacher, myPicks, parseData, periodStarts, parseSearch, parseStPage, peGrid, peTeacherNos, searchPath, teacherLessons } from '../src/lib/comcigan'
 
 // 컴시간 실제 응답(2026-10-26, 한 고등학교)을 교사 이름 · 학교 이름만 가려 저장한 자료
 const st = fs.readFileSync('tests/fixtures/comcigan-st.txt', 'utf8')
@@ -66,5 +66,13 @@ describe('내 수업 · 가린 이름', () => {
     const keys = picks.map((p) => `${p.day}|${p.period}`)
     expect(new Set(keys).size).toBe(keys.length)
     expect(picks.find((p) => p.day === 1 && p.period === 2)).toEqual({ day: 1, period: 2, subject: '체육', classes: [{ grade: 1, classNo: 1 }] })
+  })
+})
+
+describe('교시 시각', () => {
+  it('일과시간 → 시작 시각, 실제 수업 있는 교시까지', () => {
+    expect(periodStarts(d)).toEqual(['08:20', '09:20', '10:20', '11:20', '13:20', '14:20', '15:20'])
+    expect(periodStarts({ periodTimes: ['1(8:50)', '2(09:45)'], lessons: [] })).toEqual(['08:50', '09:45'])
+    expect(periodStarts({ periodTimes: ['이상한 값'], lessons: [] })).toEqual([])
   })
 })

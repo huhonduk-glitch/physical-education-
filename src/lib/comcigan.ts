@@ -278,3 +278,15 @@ export async function comciLoad(relay: string, cfg: ComciConfig, schoolCode: num
   if (!d.teachers.length) throw new ComciError('이 학교는 컴시간 시간표가 없거나 공개하지 않았어요.')
   return d
 }
+
+/** 교시 시작 시각 '1(08:20)' → ['08:20', …]. 이 학교 시간표에 실제 있는 교시까지만 (2026-10-27 교사 요청: 교시 시각 자동) */
+export function periodStarts(data: Pick<ComciData, 'periodTimes' | 'lessons'>): string[] {
+  const last = Math.max(0, ...data.lessons.map((l) => l.period))
+  const out: string[] = []
+  for (const t of data.periodTimes) {
+    const m = /^(\d+)\((\d{1,2}):(\d{2})\)$/.exec(t.trim())
+    if (!m || Number(m[1]) !== out.length + 1) break
+    out.push(`${m[2].padStart(2, '0')}:${m[3]}`)
+  }
+  return last ? out.slice(0, last) : out
+}
