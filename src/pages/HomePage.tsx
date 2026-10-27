@@ -112,6 +112,20 @@ export default function HomePage() {
           )
         )}
 
+        {/* 종목 수업자료 — 교사 요청으로 크게 (2026-10-27) */}
+        {featureOn(settings.features, 'sports') && (
+          <Link to="/sports" className="card flex min-h-[76px] items-center gap-3 transition-transform active:scale-[0.99]">
+            <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">
+              <Icon name="book" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <b className="block text-[1.05rem]">종목 수업자료</b>
+              <span className="text-sm font-semibold text-ink-3">영역 · 네트 · 필드 · 기술형 — 규칙 · 경기 방법 · 리그전 안내</span>
+            </span>
+            <Icon name="chevronRight" className="text-ink-3" />
+          </Link>
+        )}
+
         {/* ② 시작 준비 — 처음 쓰는 사람이 순서대로 따라 하게 */}
         {showSetup && (
           <section className="card space-y-3" aria-label="시작 준비">
@@ -319,7 +333,7 @@ export default function HomePage() {
 }
 
 /** 아래 탭에 이미 있는 기능 (홈 바로가기에서 뺀다) */
-const TAB_FEATURES: readonly string[] = ['records', 'paps', 'assess', 'tools']
+const TAB_FEATURES: readonly string[] = ['records', 'sports', 'paps', 'assess', 'tools']
 
 const SETUP_HIDE_KEY = 'pelog.setupHidden'
 function readSetupHidden(): boolean {

@@ -22,19 +22,42 @@ export interface GuideSource {
   url: string
 }
 
+/** 2022 개정 교육과정의 경쟁 유형으로 묶음 (2026-10-27 교사 결정: 영역 · 네트 · 필드 · 기술형) */
+export type SportGroup = 'invasion' | 'net' | 'field' | 'skill'
+export const SPORT_GROUPS: { id: SportGroup; name: string; desc: string }[] = [
+  { id: 'invasion', name: '영역형', desc: '상대 진영으로 들어가 골 · 득점을 노려요' },
+  { id: 'net', name: '네트형', desc: '네트나 정해진 공간 너머로 보내 상대가 받지 못하게 해요' },
+  { id: 'field', name: '필드형', desc: '공격과 수비를 번갈아 하며 치고 달려 점수를 내요' },
+  { id: 'skill', name: '기술형', desc: '정해진 동작 · 기록 · 표적에 도전해요 (동작형 · 기록형)' },
+]
+
+/** SPORTS BRACKET(교사 팀 편성 · 대진표 앱)에서 고를 설정. 이름은 그 앱 화면 글자 그대로 */
+export interface BracketGuide {
+  /** 대회설정 → 방식 */
+  formats: string
+  /** 대회설정 → 스코어 방식: 단일 점수 / 3세트제 / 5세트제 */
+  scoreMode: '단일 점수' | '3세트제' | '5세트제'
+  /** 리그전 승 · 무 · 패 승점 */
+  points: { win: number; draw: number; loss: number }
+  pointsNote: string
+  /** 득점자 기록 켜기/끄기 */
+  scorer: boolean
+  notes: string[]
+}
+
 export interface SportGuide {
   id: SportId
   name: string
   emoji: string
+  group: SportGroup
   summary: string
   sections: GuideSection[]
   sources: GuideSource[]
-  /** 리그전 기본값 (교사가 바꿀 수 있음) */
-  league: LeagueRules
-  /** 기본 승점의 근거 (없으면 '많이 쓰는 방식') */
-  pointsNote: string
-  /** 점수판 버튼 */
-  scoreSteps: number[]
+  bracket?: BracketGuide
+  /** 예전 PE LOG 리그전 기본값 (리그전 메뉴는 2026-10-27 숨김 — 이미 만든 리그전을 보여 줄 때만) */
+  league?: LeagueRules
+  pointsNote?: string
+  scoreSteps?: number[]
 }
 
 const FIBA: GuideSource = {
@@ -67,6 +90,15 @@ const OLY = (sport: string, path: string): GuideSource => ({ label: `올림픽 �
 export const SPORTS: SportGuide[] = [
   {
     id: 'basketball',
+    group: 'invasion',
+    bracket: {
+      formats: '📊 리그전 또는 🏅 조별+토너먼트',
+      scoreMode: '단일 점수',
+      points: { win: 2, draw: 0, loss: 1 },
+      pointsNote: 'FIBA 규칙 부록 D.1.1 (이기면 2 · 지면 1 · 몰수패 0)',
+      scorer: true,
+      notes: ['농구는 비기지 않아요. 동점이면 연장(제8조) 점수까지 넣어요.', '토너먼트도 같은 방식이에요(SPORTS BRACKET은 토너먼트 무승부를 받지 않아요).'],
+    },
     name: '농구',
     emoji: '🏀',
     summary: '5명씩, 10분 4쿼터, 바스켓에 넣어 1 · 2 · 3점',
@@ -139,6 +171,15 @@ export const SPORTS: SportGuide[] = [
   },
   {
     id: 'volleyball',
+    group: 'net',
+    bracket: {
+      formats: '📊 리그전 또는 🏅 조별+토너먼트',
+      scoreMode: '3세트제',
+      points: { win: 3, draw: 0, loss: 0 },
+      pointsNote: '많이 쓰는 방식. 공식 경기는 5세트제(3세트 먼저, 6.3)',
+      scorer: false,
+      notes: ['세트 점수는 25점 · 2점 차, 마지막 세트 15점(6.2 · 6.3). 수업 시간이 짧으면 15점 세트로 미리 정해 두세요.', '세트마다 점수를 넣으면 이긴 세트 수가 경기 결과가 돼요.'],
+    },
     name: '배구',
     emoji: '🏐',
     summary: '6명씩, 랠리마다 1점, 25점 세트, 3번 안에 넘기기',
@@ -196,6 +237,15 @@ export const SPORTS: SportGuide[] = [
   },
   {
     id: 'football',
+    group: 'invasion',
+    bracket: {
+      formats: '📊 리그전 또는 🏅 조별+토너먼트',
+      scoreMode: '단일 점수',
+      points: { win: 3, draw: 1, loss: 0 },
+      pointsNote: '많이 쓰는 방식 (경기 규칙서에는 승점이 없어요)',
+      scorer: true,
+      notes: ['리그전은 비김을 넣을 수 있어요.', '토너먼트는 비김을 넣을 수 없어요 → 비기면 승부차기(Law 10)로 이긴 팀을 승자로 정해 넣어요.'],
+    },
     name: '축구',
     emoji: '⚽',
     summary: '11명씩, 45분 두 번, 오프사이드 있음',
@@ -234,6 +284,15 @@ export const SPORTS: SportGuide[] = [
   },
   {
     id: 'futsal',
+    group: 'invasion',
+    bracket: {
+      formats: '📊 리그전 또는 🏅 조별+토너먼트',
+      scoreMode: '단일 점수',
+      points: { win: 3, draw: 1, loss: 0 },
+      pointsNote: '많이 쓰는 방식 (경기 규칙서에는 승점이 없어요)',
+      scorer: true,
+      notes: ['리그전은 비김을 넣을 수 있어요.', '토너먼트는 비김을 넣을 수 없어요 → 비기면 승부차기(Law 10)로 이긴 팀을 승자로 정해 넣어요.'],
+    },
     name: '풋살',
     emoji: '🥅',
     summary: '5명씩, 20분 두 번, 오프사이드 없음, 4초 규칙',
@@ -268,6 +327,15 @@ export const SPORTS: SportGuide[] = [
   },
   {
     id: 'badminton',
+    group: 'net',
+    bracket: {
+      formats: '🏆 토너먼트 또는 📊 리그전',
+      scoreMode: '3세트제',
+      points: { win: 2, draw: 0, loss: 1 },
+      pointsNote: '많이 쓰는 방식. 경기는 3게임 2선승(7.1)',
+      scorer: false,
+      notes: ['게임은 21점, 20-20이면 2점 차, 29-29면 30점(7.2~7.5). 수업에서는 1게임 21점이나 15점으로 줄여도 돼요(7.1 "정해 두지 않으면").', '단식 · 복식을 섞으면 종목을 나눠 대회를 따로 만드세요.'],
+    },
     name: '배드민턴',
     emoji: '🏸',
     summary: '단식 · 복식, 21점 3게임 2선승, 랠리마다 1점',
@@ -317,6 +385,23 @@ export const SPORTS: SportGuide[] = [
     pointsNote: '많이 쓰는 방식(승 2 · 패 1). 규칙서에는 승점이 없어 교사가 바꿀 수 있어요',
     scoreSteps: [1],
   },
+]
+
+/** 자료를 준비 중인 종목 (2026-10-27 교사 요청 목록). 공식 규칙서 · 자료를 확인하는 대로 SPORTS로 옮긴다 */
+export const UPCOMING: { id: string; name: string; emoji: string; group: SportGroup; note?: string }[] = [
+  { id: 'netball', name: '넷볼', emoji: '🏀', group: 'invasion' },
+  { id: 'tchoukball', name: '츄크볼', emoji: '🤾', group: 'invasion', note: '교과서마다 분류가 다를 수 있어요' },
+  { id: 'ultimate', name: '플라잉디스크 얼티미트', emoji: '🥏', group: 'invasion' },
+  { id: 'bigvolleyball', name: '빅발리볼', emoji: '🏐', group: 'net' },
+  { id: 'tabletennis', name: '탁구', emoji: '🏓', group: 'net' },
+  { id: 'pickleball', name: '피클볼', emoji: '🏓', group: 'net' },
+  { id: 'kinball', name: '킨볼', emoji: '🔵', group: 'net', note: '교과서마다 분류가 다를 수 있어요' },
+  { id: 'baseball', name: '야구', emoji: '⚾', group: 'field' },
+  { id: 'teeball', name: '티볼', emoji: '⚾', group: 'field' },
+  { id: 'platebaseball', name: '플레이트 야구', emoji: '⚾', group: 'field' },
+  { id: 'gymnastics', name: '체조 (맨몸)', emoji: '🤸', group: 'skill' },
+  { id: 'athletics', name: '육상 (50m · 이어달리기)', emoji: '🏃', group: 'skill' },
+  { id: 'discgolf', name: '플라잉디스크 골프', emoji: '🥏', group: 'skill' },
 ]
 
 export const sportOf = (id: string): SportGuide | undefined => SPORTS.find((s) => s.id === id)

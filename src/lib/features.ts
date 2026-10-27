@@ -21,6 +21,7 @@ export const FEATURES: FeatureInfo[] = [
   { id: 'plans', label: '교과 진도표', short: '진도표', desc: '차시 계획 · 날짜 자동 · 반별 진도 비교', icon: 'calendar', tone: 'bg-brand-light text-brand', to: '/plans', needsRoster: false },
   { id: 'paps', label: 'PAPS', short: 'PAPS', desc: '측정 입력 · 자동 등급 · 나이스 파일', icon: 'paps', tone: 'bg-brand-light text-brand', to: '/paps', needsRoster: true },
   { id: 'assess', label: '수행평가', short: '수행평가', desc: '평가 만들기 · 채점표 · 엑셀', icon: 'clipboard', tone: 'bg-brand-light text-brand', to: '/more/assessments', needsRoster: true },
+  { id: 'sports', label: '종목 수업자료', short: '종목', desc: '18종목 규칙 · 경기 방법 · 리그전 · 토너먼트 안내', icon: 'book', tone: 'bg-brand-light text-brand', to: '/sports', needsRoster: false },
   { id: 'tools', label: '수업 도구', short: '수업 도구', desc: '타이머 · 뽑기 · 팀 나누기 · PAPS 신호음', icon: 'timer', tone: 'bg-brand-light text-brand', to: '/tools', needsRoster: false },
   { id: 'apps', label: '팀 편성 · 전술 보드', short: '팀 편성', desc: '반 명단을 팀 편성 앱 · 전술 보드로 한 번에', icon: 'share', tone: 'bg-brand-light text-brand', to: '/tools/apps', needsRoster: false },
   { id: 'absences', label: '견학', short: '견학', desc: '견학 목록 · 대체 과제', icon: 'bandage', tone: 'bg-brand-light text-brand', to: '/more/absences', needsRoster: true },

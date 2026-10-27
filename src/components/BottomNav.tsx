@@ -16,6 +16,7 @@ interface Tab {
 const TABS: Tab[] = [
   { to: '/', label: '홈', icon: 'home', match: [] },
   { to: '/groups', label: '수업반', icon: 'class', match: ['/groups', '/students'] },
+  { to: '/sports', label: '종목', icon: 'book', match: ['/sports', '/leagues'], show: (f) => featureOn(f, 'sports') },
   { to: '/eval', label: '평가', icon: 'paps', match: ['/eval', '/paps', '/more/assessments'], show: (f) => featureOn(f, 'paps') || featureOn(f, 'assess') },
   { to: '/tools', label: '도구', icon: 'timer', match: ['/timer', '/tools'], show: (f) => featureOn(f, 'tools') },
   { to: '/more', label: '더보기', icon: 'more', match: ['/more'] },
@@ -30,7 +31,7 @@ function isActive(t: Tab, path: string): boolean {
 }
 
 /**
- * 하단 탭 (CLAUDE.md 5장): 홈 · 수업반 · 평가 · 도구 · 더보기. 끈 기능의 탭은 숨긴다.
+ * 하단 탭 (CLAUDE.md 5장): 홈 · 수업반 · 종목 · 평가 · 도구 · 더보기. 끈 기능의 탭은 숨긴다.
  * 폰·태블릿에서는 화면 맨 아래, 교무실 PC처럼 넓은 화면(1024px 이상)에서는 왼쪽 세로 메뉴로 바뀐다.
  */
 export default function BottomNav() {
