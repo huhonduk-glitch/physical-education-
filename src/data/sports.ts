@@ -1,5 +1,6 @@
 import type { CourtId } from '../components/CourtDiagram'
 import type { LeagueRules, SportId } from '../lib/league'
+import { INVASION } from './sportsInvasion'
 
 /**
  * 종목 수업자료 (6-5 ④, 2026-10-27).
@@ -76,11 +77,6 @@ export interface SportGuide {
   scoreSteps?: number[]
 }
 
-const FIBA: GuideSource = {
-  label: 'FIBA 공식 농구 규칙 (Official Basketball Rules)',
-  edition: '2024, 2024-10-01 시행 (v1.0a)',
-  url: 'https://assets.fiba.basketball/image/upload/documents-corporate-fiba-official-rules-2024-v10a.pdf',
-}
 const FIVB: GuideSource = {
   label: 'FIVB 공식 배구 규칙 (Official Volleyball Rules)',
   edition: '2025-2028',
@@ -91,100 +87,10 @@ const BWF: GuideSource = {
   edition: '2023-05-29 시행 v2.1',
   url: 'https://corporate.bwfbadminton.com/statutes/',
 }
-const IFAB: GuideSource = {
-  label: 'IFAB 축구 경기 규칙 (Laws of the Game)',
-  edition: '2025/26, 2025-07-01 시행',
-  url: 'https://www.theifab.com/laws-of-the-game-documents/',
-}
-const FUTSAL: GuideSource = {
-  label: 'FIFA 풋살 경기 규칙 (Futsal Laws of the Game) — 홍콩축구협회 게시본',
-  edition: '2025-26, 2025-09-05 시행',
-  url: 'https://resource.hkfa.com/upload//referee/LOTG%2025-26/Futsal%20Laws%20of%20the%20Game%202025_2026_EN.pdf',
-}
 const OLY = (sport: string, path: string): GuideSource => ({ label: `올림픽 공식 누리집 — ${sport}`, edition: '역사 참고', url: `https://www.olympics.com/en/sports/${path}/` })
 
 export const SPORTS: SportGuide[] = [
-  {
-    id: 'basketball',
-    group: 'invasion',
-    bracket: {
-      formats: '📊 리그전 또는 🏅 조별+토너먼트',
-      scoreMode: '단일 점수',
-      points: { win: 2, draw: 0, loss: 1 },
-      pointsNote: 'FIBA 규칙 부록 D.1.1 (이기면 2 · 지면 1 · 몰수패 0)',
-      scorer: true,
-      notes: ['농구는 비기지 않아요. 동점이면 연장(제8조) 점수까지 넣어요.', '토너먼트도 같은 방식이에요(SPORTS BRACKET은 토너먼트 무승부를 받지 않아요).'],
-    },
-    name: '농구',
-    emoji: '🏀',
-    summary: '5명씩, 10분 4쿼터, 바스켓에 넣어 1 · 2 · 3점',
-    sections: [
-      {
-        title: '역사',
-        items: [
-          { t: '1891년 미국 매사추세츠주 스프링필드의 YMCA 지도자 학교에서 체육 교사 제임스 네이스미스가 겨울에 실내에서 할 운동으로 만들었다. 처음에는 복숭아 바구니를 골대로 썼다.' },
-          { t: '1936년 베를린 올림픽부터 정식 종목이다.' },
-        ],
-      },
-      {
-        title: '경기장 · 인원 · 시간',
-        items: [
-          { t: '코트는 길이 28 m × 너비 15 m(선 안쪽 기준).', ref: '제2조' },
-          { t: '한 팀은 경기할 수 있는 선수 12명까지 등록하고, 코트에는 5명이 뛴다.', ref: '제4조' },
-          { t: '10분씩 4쿼터. 4쿼터가 끝나 동점이면 승부가 날 때까지 5분 연장을 이어 한다.', ref: '제8조' },
-          { t: '작전시간: 전반 2번, 후반 3번(4쿼터 마지막 2분 안에는 최대 2번), 연장마다 1번.', ref: '제18조' },
-        ],
-      },
-      {
-        title: '득점',
-        items: [
-          { t: '자유투 1점, 2점 구역 슛 2점, 3점 구역(3점 선 밖) 슛 3점.', ref: '제16조' },
-          { t: '경기 시간이 끝났을 때 점수가 많은 팀이 이긴다.', ref: '제1조' },
-        ],
-      },
-      {
-        title: '바이얼레이션(공을 상대에게 넘김)',
-        items: [
-          { t: '트래블링: 공을 가진 채 규칙이 허용하는 범위를 넘어 발을 움직임(축발이 떨어진 채 공을 놓지 않음 등).', ref: '제25조' },
-          { t: '더블 드리블: 드리블을 끝낸 뒤 다시 드리블. (슛한 공이나 상대가 건드린 공을 다시 잡은 경우는 괜찮음)', ref: '제24조' },
-          { t: '3초: 공격 중 상대 제한구역 안에 3초 넘게 머묾.', ref: '제26조' },
-          { t: '5초: 가까이 붙어 수비당하는 선수는 5초 안에 패스 · 슛 · 드리블.', ref: '제27조' },
-          { t: '8초: 백코트에서 공을 잡은 팀은 8초 안에 프런트코트로.', ref: '제28조' },
-          { t: '24초: 공을 잡은 팀은 24초 안에 슛을 던져 링에 닿게. 상황에 따라 14초로 다시 맞춘다.', ref: '제29조' },
-          { t: '하프라인 넘어간 공을 백코트로 되돌림.', ref: '제30조' },
-        ],
-      },
-      {
-        title: '파울',
-        items: [
-          { t: '선수 한 명이 파울 5개면 그 경기에서 더 뛸 수 없다.', ref: '제40조' },
-          { t: '팀 파울: 한 쿼터에 팀 파울 4개를 한 뒤(5번째부터)는 슛 동작이 아닌 선수에게 한 개인 파울도 자유투 2개(공을 가진 팀의 파울은 제외).', ref: '제41조' },
-          { t: '파울 종류: 개인 · 더블 · 테크니컬 · 언스포츠맨라이크 · 디스퀄리파잉.', ref: '제34~38조' },
-        ],
-      },
-      {
-        title: '심판 신호 (부록 A)',
-        items: [
-          { t: '시계 멈춤: 손바닥을 편다 / 파울로 멈춤: 주먹을 쥔다 / 시계 시작: 손으로 자르듯 내린다.', ref: '부록 A' },
-          { t: '득점: 손가락 1 · 2개를 손목으로 흔듦, 3점 시도는 손가락 3개를 한 팔로, 성공은 두 팔로.', ref: '부록 A' },
-          { t: '교체: 팔뚝을 엇갈림 / 작전시간: T자를 만들고 집게손가락.', ref: '부록 A' },
-          { t: '트래블링: 주먹을 돌림 / 더블 드리블: 손바닥으로 두드리는 동작 / 캐링: 손바닥 반 바퀴.', ref: '부록 A' },
-          { t: '3초: 팔을 흔들고 손가락 3개 / 5초: 손가락 5개 / 8초: 손가락 8개 / 24초: 손가락을 어깨에 댐.', ref: '부록 A' },
-        ],
-      },
-      {
-        title: '순위 정하기 (부록 D)',
-        items: [
-          { t: '이기면 2점, 지면 1점, 몰수패는 0점.', ref: 'D.1.1' },
-          { t: '같으면 그 팀들끼리 경기 결과 → 그 경기의 득실 → 득점 → 전체 득실 → 전체 득점 순. 앱 리그전 순위가 이 순서를 따른다.', ref: 'D.1.3' },
-        ],
-      },
-    ],
-    sources: [FIBA, OLY('농구', 'basketball')],
-    league: { kind: 'goals', allowDraw: false, points: { win: 2, draw: 0, loss: 1, forfeit: 0 } },
-    pointsNote: 'FIBA 규칙 부록 D.1.1 (승 2 · 패 1 · 몰수패 0)',
-    scoreSteps: [1, 2, 3],
-  },
+  ...INVASION,
   {
     id: 'volleyball',
     group: 'net',
@@ -252,96 +158,6 @@ export const SPORTS: SportGuide[] = [
     scoreSteps: [1],
   },
   {
-    id: 'football',
-    group: 'invasion',
-    bracket: {
-      formats: '📊 리그전 또는 🏅 조별+토너먼트',
-      scoreMode: '단일 점수',
-      points: { win: 3, draw: 1, loss: 0 },
-      pointsNote: '많이 쓰는 방식 (경기 규칙서에는 승점이 없어요)',
-      scorer: true,
-      notes: ['리그전은 비김을 넣을 수 있어요.', '토너먼트는 비김을 넣을 수 없어요 → 비기면 승부차기(Law 10)로 이긴 팀을 승자로 정해 넣어요.'],
-    },
-    name: '축구',
-    emoji: '⚽',
-    summary: '11명씩, 45분 두 번, 오프사이드 있음',
-    sections: [
-      {
-        title: '역사',
-        items: [{ t: '1863년 잉글랜드 축구협회(The FA)가 런던에서 첫 통일 규칙을 정했다. 지금 규칙은 국제축구평의회(IFAB)가 정한다.' }],
-      },
-      {
-        title: '경기장 · 인원 · 시간',
-        items: [
-          { t: '터치라인(긴 쪽) 90~120 m, 골라인 45~90 m. 대회가 이 안에서 정한다.', ref: 'Law 1' },
-          { t: '한 팀 11명까지(골키퍼 1명 포함). 7명보다 적으면 시작하거나 다시 할 수 없다.', ref: 'Law 3' },
-          { t: '45분씩 두 번(대회 · 학교 경기는 미리 정해 줄일 수 있음).', ref: 'Law 7' },
-        ],
-      },
-      {
-        title: '오프사이드',
-        items: [
-          { t: '오프사이드 위치: 상대 진영에서, 공과 뒤에서 두 번째 상대 선수(보통 마지막 수비수)보다 상대 골라인에 더 가까이 있음. 손 · 팔은 따지지 않는다.', ref: 'Law 11' },
-          { t: '그 위치에 있는 것만으로는 반칙이 아니다. 같은 팀이 공을 찬 순간 그 위치에 있다가 경기에 끼어들 때 반칙.', ref: 'Law 11' },
-        ],
-      },
-      {
-        title: '반칙 · 카드',
-        items: [
-          { t: '노란 카드 = 경고, 빨간 카드 = 퇴장.', ref: 'Law 12' },
-          { t: '심판 신호(그림은 규칙서 Law 5): 직접 프리킥 · 간접 프리킥 · 페널티킥 · 어드밴티지 · 코너킥 · 골킥.', ref: 'Law 5' },
-        ],
-      },
-    ],
-    sources: [IFAB],
-    league: { kind: 'goals', allowDraw: true, points: { win: 3, draw: 1, loss: 0, forfeit: 0 } },
-    pointsNote: '많이 쓰는 방식(승 3 · 무 1 · 패 0). 경기 규칙서에는 승점이 없어 교사가 바꿀 수 있어요',
-    scoreSteps: [1],
-  },
-  {
-    id: 'futsal',
-    group: 'invasion',
-    bracket: {
-      formats: '📊 리그전 또는 🏅 조별+토너먼트',
-      scoreMode: '단일 점수',
-      points: { win: 3, draw: 1, loss: 0 },
-      pointsNote: '많이 쓰는 방식 (경기 규칙서에는 승점이 없어요)',
-      scorer: true,
-      notes: ['리그전은 비김을 넣을 수 있어요.', '토너먼트는 비김을 넣을 수 없어요 → 비기면 승부차기(Law 10)로 이긴 팀을 승자로 정해 넣어요.'],
-    },
-    name: '풋살',
-    emoji: '🥅',
-    summary: '5명씩, 20분 두 번, 오프사이드 없음, 4초 규칙',
-    sections: [
-      {
-        title: '역사',
-        items: [{ t: '1930년대 우루과이 몬테비데오에서 실내에서 하는 축구로 시작했다(만든 해는 자료마다 조금 다름). 국제축구연맹(FIFA)은 1989년부터 풋살 국제 대회를 열었다.' }],
-      },
-      {
-        title: '경기장 · 인원 · 시간',
-        items: [
-          { t: '터치라인 25~42 m, 골라인(엔드라인) 16~25 m. 국제 경기는 38~42 m × 20~25 m.', ref: 'Law 1' },
-          { t: '한 팀 5명까지(골키퍼 1명 포함). 3명보다 적으면 시작하거나 다시 할 수 없다. 교체는 몇 번이든.', ref: 'Law 3' },
-          { t: '실제 경기 시간 20분씩 두 번(공이 멈추면 시계도 멈춤).', ref: 'Law 7' },
-          { t: '작전시간: 피리어드마다 1분 1번(연장전에는 없음).', ref: 'Law 7' },
-        ],
-      },
-      {
-        title: '경기 방법 · 반칙',
-        items: [
-          { t: '오프사이드가 없다.', ref: 'Law 11' },
-          { t: '공이 터치라인 밖으로 나가면 발로 차서 넣는 킥인으로 다시 한다.', ref: 'Law 15' },
-          { t: '4초 규칙: 킥인 · 프리킥 · 코너킥 · 골 클리어런스는 준비된 뒤 4초 안에. 골키퍼는 자기 진영에서 공을 4초 넘게 가지고 있으면 안 된다.', ref: 'Law 12~17' },
-          { t: '누적 파울: 직접 프리킥 반칙을 팀마다 피리어드별로 센다. 6번째부터는 벽 없이 10 m 마크(또는 반칙한 곳)에서 직접 프리킥, 페널티 에어리어 안이면 페널티킥.', ref: 'Law 13' },
-        ],
-      },
-    ],
-    sources: [FUTSAL],
-    league: { kind: 'goals', allowDraw: true, points: { win: 3, draw: 1, loss: 0, forfeit: 0 } },
-    pointsNote: '많이 쓰는 방식(승 3 · 무 1 · 패 0). 경기 규칙서에는 승점이 없어 교사가 바꿀 수 있어요',
-    scoreSteps: [1],
-  },
-  {
     id: 'badminton',
     group: 'net',
     bracket: {
@@ -405,9 +221,6 @@ export const SPORTS: SportGuide[] = [
 
 /** 자료를 준비 중인 종목 (2026-10-27 교사 요청 목록). 공식 규칙서 · 자료를 확인하는 대로 SPORTS로 옮긴다 */
 export const UPCOMING: { id: string; name: string; emoji: string; group: SportGroup; note?: string }[] = [
-  { id: 'netball', name: '넷볼', emoji: '🏀', group: 'invasion' },
-  { id: 'tchoukball', name: '츄크볼', emoji: '🤾', group: 'invasion', note: '교과서마다 분류가 다를 수 있어요' },
-  { id: 'ultimate', name: '플라잉디스크 얼티미트', emoji: '🥏', group: 'invasion' },
   { id: 'bigvolleyball', name: '빅발리볼', emoji: '🏐', group: 'net' },
   { id: 'tabletennis', name: '탁구', emoji: '🏓', group: 'net' },
   { id: 'pickleball', name: '피클볼', emoji: '🏓', group: 'net' },

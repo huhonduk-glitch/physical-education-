@@ -77,15 +77,15 @@ export default function SlidesPage() {
         </div>
       </div>
       <div className="flex items-center gap-2 px-3 pt-1 pb-[max(env(safe-area-inset-bottom),8px)] print:hidden">
-        <button type="button" className="btn btn-soft min-h-[52px] flex-1" onClick={() => go(-1)} disabled={i === 0} aria-label="이전 장">
+        <button type="button" className="btn btn-soft min-h-[52px] flex-1 whitespace-nowrap" onClick={() => go(-1)} disabled={i === 0} aria-label="이전 장">
           <Icon name="chevronLeft" /> 이전
         </button>
-        <div className="flex gap-1" aria-hidden>
+        <div className="hidden gap-1 sm:flex" aria-hidden>
           {slides.map((_, k) => (
             <span key={k} className={`h-1.5 rounded-full ${k === i ? 'w-4 bg-brand' : 'w-1.5 bg-fill-2'}`} />
           ))}
         </div>
-        <button type="button" className="btn btn-primary min-h-[52px] flex-1" onClick={() => go(1)} disabled={i === slides.length - 1} aria-label="다음 장">
+        <button type="button" className="btn btn-primary min-h-[52px] flex-1 whitespace-nowrap" onClick={() => go(1)} disabled={i === slides.length - 1} aria-label="다음 장">
           다음 <Icon name="chevronRight" />
         </button>
       </div>

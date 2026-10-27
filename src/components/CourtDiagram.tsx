@@ -61,24 +61,24 @@ function Basketball() {
         <path d={`M ${X(b)} ${7.5 - 1.25} A 1.25 1.25 0 0 ${flip ? 0 : 1} ${X(b)} ${7.5 + 1.25}`} fill="none" stroke={LINE} strokeWidth={lw * 0.8} />
         <line x1={X(1.2)} y1={7.5 - 0.9} x2={X(1.2)} y2={7.5 + 0.9} stroke={INK} strokeWidth={0.12} />
         <circle cx={X(b)} cy={7.5} r={0.23} fill="none" stroke="#f97316" strokeWidth={0.08} />
-        <text x={X(b + 0.6 * s)} y={7.5 - 1.6} fontSize={0.7} fill={LINE} textAnchor="middle">
+        <text x={X(b + 0.6 * s)} y={7.5 - 1.6} fontSize={0.95} fill={LINE} textAnchor="middle">
           링
         </text>
       </g>
     )
   }
   return (
-    <Frame w={W} h={H} m={3} title="농구 코트 28 m × 15 m">
+    <Frame w={W} h={H} m={5} title="농구 코트 28 m × 15 m">
       <rect x={0} y={0} width={W} height={H} fill="#d39a5f" stroke={LINE} strokeWidth={lw} />
       <line x1={14} y1={0} x2={14} y2={H} stroke={LINE} strokeWidth={lw} />
       <circle cx={14} cy={7.5} r={1.8} fill="none" stroke={LINE} strokeWidth={lw} />
       {end(false)}
       {end(true)}
-      <Dim x1={0} y1={-1.3} x2={W} y2={-1.3} label="28 m" size={0.9} dy={-0.7} />
-      <Dim x1={-1.3} y1={0} x2={-1.3} y2={H} label="15 m" size={0.9} dx={-0.7} />
-      <Dim x1={0} y1={H + 1.3} x2={5.8} y2={H + 1.3} label="자유투 선 5.8 m" size={0.75} dy={0.75} />
-      <Dim x1={1.575} y1={7.5} x2={1.575 + 6.75} y2={7.5} label="3점 6.75 m" size={0.6} dy={-0.55} />
-      <text x={W - 7} y={H + 2.1} fontSize={0.75} fill={INK} textAnchor="middle">
+      <Dim x1={0} y1={-1.76} x2={W} y2={-1.76} label="28 m" size={1.22} dy={-0.94} />
+      <Dim x1={-1.76} y1={0} x2={-1.76} y2={H} label="15 m" size={1.22} dx={-0.94} />
+      <Dim x1={0} y1={H + 1.76} x2={5.8} y2={H + 1.76} label="자유투 선 5.8 m" size={1.01} dy={1.01} />
+      <Dim x1={1.575} y1={7.5} x2={1.575 + 6.75} y2={7.5} label="3점 6.75 m" size={0.81} dy={-0.74} />
+      <text x={W - 7} y={H + 2.84} fontSize={1.01} fill={INK} textAnchor="middle">
         링 높이 3.05 m · 중앙 원 반지름 1.8 m
       </text>
     </Frame>
@@ -106,7 +106,7 @@ function Football() {
     )
   }
   return (
-    <Frame w={W} h={H} m={13} title="축구 경기장">
+    <Frame w={W} h={H} m={19} title="축구 경기장">
       <rect x={0} y={0} width={W} height={H} fill="#3e8e4f" stroke={LINE} strokeWidth={lw} />
       <line x1={W / 2} y1={0} x2={W / 2} y2={H} stroke={LINE} strokeWidth={lw} />
       <circle cx={W / 2} cy={H / 2} r={9.15} fill="none" stroke={LINE} strokeWidth={lw} />
@@ -120,12 +120,12 @@ function Football() {
       ))}
       {end(false)}
       {end(true)}
-      <Dim x1={0} y1={-5} x2={W} y2={-5} label="길이 90~120 m (그림은 105 m)" size={3} dy={-2.6} />
-      <Dim x1={-6} y1={0} x2={-6} y2={H} label="너비 45~90 m (68 m)" size={3} dx={-2.6} />
-      <Dim x1={0} y1={H + 4} x2={16.5} y2={H + 4} label="16.5 m" size={2.6} dy={2.4} />
-      <Dim x1={W - 11} y1={H + 4} x2={W} y2={H + 4} label="페널티 마크 11 m" size={2.6} dy={2.4} />
-      <Dim x1={W / 2} y1={H / 2} x2={W / 2 + 9.15} y2={H / 2} label="9.15 m" size={2.4} dy={-1.8} />
-      <text x={W / 2} y={H + 11.5} fontSize={2.8} fill={INK} textAnchor="middle">
+      <Dim x1={0} y1={-6.75} x2={W} y2={-6.75} label="길이 90~120 m (그림은 105 m)" size={4.05} dy={-3.51} />
+      <Dim x1={-8.1} y1={0} x2={-8.1} y2={H} label="너비 45~90 m (68 m)" size={4.05} dx={-3.51} />
+      <Dim x1={0} y1={H + 5.4} x2={16.5} y2={H + 5.4} label="16.5 m" size={3.51} dy={3.24} />
+      <Dim x1={W - 11} y1={H + 5.4} x2={W} y2={H + 5.4} label="페널티 마크 11 m" size={3.51} dy={3.24} />
+      <Dim x1={W / 2} y1={H / 2} x2={W / 2 + 9.15} y2={H / 2} label="9.15 m" size={3.24} dy={-2.43} />
+      <text x={W / 2} y={H + 15.53} fontSize={3.78} fill={INK} textAnchor="middle">
         골대 7.32 m × 2.44 m · 골 에어리어 5.5 m · 코너 아크 1 m
       </text>
     </Frame>
@@ -153,7 +153,7 @@ function Futsal() {
     )
   }
   return (
-    <Frame w={W} h={H} m={5} title="풋살 경기장">
+    <Frame w={W} h={H} m={8} title="풋살 경기장">
       <rect x={0} y={0} width={W} height={H} fill="#2f6fb0" stroke={LINE} strokeWidth={lw} />
       <line x1={W / 2} y1={0} x2={W / 2} y2={H} stroke={LINE} strokeWidth={lw} />
       <circle cx={W / 2} cy={H / 2} r={3} fill="none" stroke={LINE} strokeWidth={lw} />
@@ -161,16 +161,16 @@ function Futsal() {
       {end(true)}
       {/* 교체 지역: 하프라인에서 5 m 떨어진 곳부터 5 m */}
       {[W / 2 - 10, W / 2 - 5, W / 2 + 5, W / 2 + 10].map((x) => (
-        <line key={x} x1={x} y1={H - 0.4} x2={x} y2={H + 0.4} stroke={INK} strokeWidth={0.1} />
+        <line key={x} x1={x} y1={H - 0.4} x2={x} y2={H + 0.54} stroke={INK} strokeWidth={0.1} />
       ))}
-      <Dim x1={0} y1={-1.8} x2={W} y2={-1.8} label="길이 25~42 m (그림은 40 m)" size={1.2} dy={-1} />
-      <Dim x1={-2} y1={0} x2={-2} y2={H} label="너비 16~25 m (20 m)" size={1.1} dx={-1} />
-      <Dim x1={0} y1={H + 1.6} x2={6} y2={H + 1.6} label="6 m" size={1} dy={0.9} />
-      <Dim x1={0} y1={H + 3.4} x2={10} y2={H + 3.4} label="10 m 마크" size={1} dy={0.9} />
-      <text x={W / 2} y={H + 1.5} fontSize={0.9} fill={INK} textAnchor="middle">
+      <Dim x1={0} y1={-2.43} x2={W} y2={-2.43} label="길이 25~42 m (그림은 40 m)" size={1.62} dy={-1.35} />
+      <Dim x1={-2.7} y1={0} x2={-2.7} y2={H} label="너비 16~25 m (20 m)" size={1.49} dx={-1.35} />
+      <Dim x1={0} y1={H + 2.16} x2={6} y2={H + 2.16} label="6 m" size={1.35} dy={1.22} />
+      <Dim x1={0} y1={H + 4.59} x2={10} y2={H + 4.59} label="10 m 마크" size={1.35} dy={1.22} />
+      <text x={W / 2} y={H + 2.03} fontSize={1.22} fill={INK} textAnchor="middle">
         ↑ 교체 지역 5 m
       </text>
-      <text x={W - 9} y={H + 4} fontSize={1} fill={INK} textAnchor="middle">
+      <text x={W - 9} y={H + 5.4} fontSize={1.35} fill={INK} textAnchor="middle">
         골대 3 m × 2 m · 중앙 원 반지름 3 m
       </text>
     </Frame>
@@ -182,7 +182,7 @@ function Netball() {
   const H = 15.25
   const lw = 0.1
   return (
-    <Frame w={W} h={H} m={3} title="넷볼 코트 30.5 m × 15.25 m">
+    <Frame w={W} h={H} m={5} title="넷볼 코트 30.5 m × 15.25 m">
       <rect x={0} y={0} width={W} height={H} fill="#3b82c4" stroke={LINE} strokeWidth={lw} />
       <line x1={W / 3} y1={0} x2={W / 3} y2={H} stroke={LINE} strokeWidth={lw} />
       <line x1={(W * 2) / 3} y1={0} x2={(W * 2) / 3} y2={H} stroke={LINE} strokeWidth={lw} />
@@ -192,17 +192,17 @@ function Netball() {
       <circle cx={0} cy={H / 2} r={0.25} fill="#f97316" />
       <circle cx={W} cy={H / 2} r={0.25} fill="#f97316" />
       {['골 서드', '센터 서드', '골 서드'].map((t, i) => (
-        <text key={i} x={(W / 6) * (i * 2 + 1)} y={1.4} fontSize={0.85} fill={LINE} textAnchor="middle">
+        <text key={i} x={(W / 6) * (i * 2 + 1)} y={1.4} fontSize={1.15} fill={LINE} textAnchor="middle">
           {t}
         </text>
       ))}
-      <text x={2.6} y={H / 2 + 0.3} fontSize={0.7} fill={LINE} textAnchor="middle">
+      <text x={2.6} y={H / 2 + 0.3} fontSize={0.95} fill={LINE} textAnchor="middle">
         골 서클
       </text>
-      <Dim x1={0} y1={-1.3} x2={W} y2={-1.3} label="30.5 m" size={0.9} dy={-0.7} />
-      <Dim x1={-1.3} y1={0} x2={-1.3} y2={H} label="15.25 m" size={0.9} dx={-0.7} />
-      <Dim x1={0} y1={H + 1.3} x2={4.9} y2={H + 1.3} label="반지름 4.9 m" size={0.75} dy={0.75} />
-      <text x={W - 8} y={H + 2.1} fontSize={0.75} fill={INK} textAnchor="middle">
+      <Dim x1={0} y1={-1.76} x2={W} y2={-1.76} label="30.5 m" size={1.22} dy={-0.94} />
+      <Dim x1={-1.76} y1={0} x2={-1.76} y2={H} label="15.25 m" size={1.22} dx={-0.94} />
+      <Dim x1={0} y1={H + 1.76} x2={4.9} y2={H + 1.76} label="반지름 4.9 m" size={1.01} dy={1.01} />
+      <text x={W - 8} y={H + 2.84} fontSize={1.01} fill={INK} textAnchor="middle">
         골대 높이 3.05 m · 중앙 원 지름 0.9 m
       </text>
     </Frame>
@@ -215,22 +215,22 @@ function Tchoukball() {
   const H = 16
   const lw = 0.1
   return (
-    <Frame w={W} h={H} m={3} title="츄크볼 경기장">
+    <Frame w={W} h={H} m={5} title="츄크볼 경기장">
       <rect x={0} y={0} width={W} height={H} fill="#4f7fbf" stroke={LINE} strokeWidth={lw} />
       <line x1={W / 2} y1={0} x2={W / 2} y2={H} stroke={LINE} strokeWidth={lw} />
       <path d={`M 0 ${H / 2 - 3} A 3 3 0 0 1 0 ${H / 2 + 3}`} fill="#c2410c" stroke={LINE} strokeWidth={lw} />
       <path d={`M ${W} ${H / 2 - 3} A 3 3 0 0 0 ${W} ${H / 2 + 3}`} fill="#c2410c" stroke={LINE} strokeWidth={lw} />
       <rect x={0.2} y={H / 2 - 0.5} width={0.5} height={1} fill="#111827" />
       <rect x={W - 0.7} y={H / 2 - 0.5} width={0.5} height={1} fill="#111827" />
-      <text x={1.6} y={H / 2 - 3.5} fontSize={0.7} fill={LINE} textAnchor="middle">
+      <text x={0.4} y={H / 2 - 3.5} fontSize={0.95} fill={LINE} textAnchor="start">
         금지 구역
       </text>
-      <text x={2.4} y={H / 2 + 0.25} fontSize={0.6} fill={LINE} textAnchor="start">
+      <text x={2.4} y={H / 2 + 0.25} fontSize={0.81} fill={LINE} textAnchor="start">
         ← 프레임
       </text>
-      <Dim x1={0} y1={-1.3} x2={W} y2={-1.3} label="길이 26~29 m (그림은 28 m)" size={0.85} dy={-0.7} />
-      <Dim x1={-1.3} y1={0} x2={-1.3} y2={H} label="너비 15~17 m" size={0.85} dx={-0.7} />
-      <Dim x1={W - 3} y1={H + 1.2} x2={W} y2={H + 1.2} label="반지름 3 m" size={0.75} dy={0.75} />
+      <Dim x1={0} y1={-1.76} x2={W} y2={-1.76} label="길이 26~29 m (그림은 28 m)" size={1.15} dy={-0.94} />
+      <Dim x1={-1.76} y1={0} x2={-1.76} y2={H} label="너비 15~17 m" size={1.15} dx={-0.94} />
+      <Dim x1={W - 3} y1={H + 1.62} x2={W} y2={H + 1.62} label="반지름 3 m" size={1.01} dy={1.01} />
     </Frame>
   )
 }
@@ -240,7 +240,7 @@ function Ultimate() {
   const H = 37
   const lw = 0.3
   return (
-    <Frame w={W} h={H} m={8} title="얼티미트 경기장 100 m × 37 m">
+    <Frame w={W} h={H} m={12} title="얼티미트 경기장 100 m × 37 m">
       <rect x={0} y={0} width={W} height={H} fill="#3e8e4f" stroke={LINE} strokeWidth={lw} />
       <rect x={0} y={0} width={18} height={H} fill="#2f7a40" stroke={LINE} strokeWidth={lw} />
       <rect x={W - 18} y={0} width={18} height={H} fill="#2f7a40" stroke={LINE} strokeWidth={lw} />
@@ -250,22 +250,22 @@ function Ultimate() {
           <line x1={x - 1} y1={H / 2 + 1} x2={x + 1} y2={H / 2 - 1} />
         </g>
       ))}
-      <text x={9} y={H / 2} fontSize={2.6} fill={LINE} textAnchor="middle">
+      <text x={9} y={H / 2} fontSize={3.51} fill={LINE} textAnchor="middle">
         엔드존
       </text>
-      <text x={W - 9} y={H / 2} fontSize={2.6} fill={LINE} textAnchor="middle">
+      <text x={W - 9} y={H / 2} fontSize={3.51} fill={LINE} textAnchor="middle">
         엔드존
       </text>
-      <text x={W / 2} y={H / 2} fontSize={2.8} fill={LINE} textAnchor="middle">
+      <text x={W / 2} y={H / 2} fontSize={3.78} fill={LINE} textAnchor="middle">
         센트럴 존
       </text>
-      <text x={36} y={H / 2 + 4} fontSize={2} fill={LINE} textAnchor="middle">
+      <text x={36} y={H / 2 + 4} fontSize={2.7} fill={LINE} textAnchor="middle">
         브릭 마크
       </text>
-      <Dim x1={0} y1={-3} x2={W} y2={-3} label="100 m" size={2.6} dy={-2} />
-      <Dim x1={-3} y1={0} x2={-3} y2={H} label="37 m" size={2.6} dx={-2} />
-      <Dim x1={0} y1={H + 3} x2={18} y2={H + 3} label="18 m" size={2.4} dy={2} />
-      <Dim x1={18} y1={H + 3} x2={W - 18} y2={H + 3} label="64 m" size={2.4} dy={2} />
+      <Dim x1={0} y1={-4.05} x2={W} y2={-4.05} label="100 m" size={3.51} dy={-2.7} />
+      <Dim x1={-4.05} y1={0} x2={-4.05} y2={H} label="37 m" size={3.51} dx={-2.7} />
+      <Dim x1={0} y1={H + 4.05} x2={18} y2={H + 4.05} label="18 m" size={3.24} dy={2.7} />
+      <Dim x1={18} y1={H + 4.05} x2={W - 18} y2={H + 4.05} label="64 m" size={3.24} dy={2.7} />
     </Frame>
   )
 }
