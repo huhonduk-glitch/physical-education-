@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 import Icon from './Icon'
+import { UpdatePreview } from './WhatsNew'
 
 /**
  * 새 버전 알림. 앱은 오프라인에서도 열리도록 파일을 기기에 저장해 두기 때문에,
@@ -22,13 +24,19 @@ export default function UpdateBanner() {
       setInterval(check, 30 * 60 * 1000)
     },
   })
-
+  const [preview, setPreview] = useState(false)
 
   if (!needRefresh) return null
+  // 소식 창을 연 동안에는 띠를 숨긴다(창이 띠 밑에 깔리지 않게)
+  if (preview) return <UpdatePreview onUpdate={() => updateServiceWorker(true)} onClose={() => setPreview(false)} />
   return (
     <div className="print:hidden anim-pop fixed inset-x-3 top-[calc(env(safe-area-inset-top)+8px)] z-[80] mx-auto flex max-w-xl items-center gap-3 rounded-2xl bg-brand px-4 py-2.5 text-white shadow-[var(--shadow-float)]" role="status">
       <Icon name="download" />
-      <span className="flex-1 font-bold">새 버전이 나왔어요</span>
+      {/* 글자 칸 전체가 버튼 (엄지로 누르기 쉽게) */}
+      <button type="button" className="min-h-[48px] min-w-0 flex-1 text-left" onClick={() => setPreview(true)}>
+        <b className="block">새 버전이 나왔어요</b>
+        <span className="block text-sm font-semibold text-white/90 underline underline-offset-2">무엇이 바뀌나요?</span>
+      </button>
       <button type="button" className="btn min-h-[40px] bg-white px-4 text-brand" onClick={() => updateServiceWorker(true)}>
         업데이트
       </button>

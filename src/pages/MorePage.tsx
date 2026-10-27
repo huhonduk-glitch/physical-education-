@@ -55,6 +55,7 @@ const GROUPS: { title: string; items: MenuItem[] }[] = [
     title: '도움',
     items: [
       { to: '/help', label: '사용법', desc: '하루 수업 흐름 · 자주 묻는 질문', icon: 'info', tone: 'bg-brand-light text-brand' },
+      { to: '/more/changelog', label: '업데이트 소식', desc: '새로 생기고 바뀐 기능', icon: 'bolt', tone: 'bg-brand-light text-brand' },
       { to: '/more/terms', label: '이용 안내', desc: '자료 보관 · 개인정보', icon: 'lock', tone: 'bg-brand-light text-brand' },
     ],
   },
