@@ -3,6 +3,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Navigate, Route, Routes } from 'react-router-dom'
 import BottomNav from './components/BottomNav'
 import DemoBanner from './components/DemoBanner'
+import { AfterUpdate } from './components/WhatsNew'
 import MiniTimer from './components/MiniTimer'
 import { IS_DEMO } from './lib/demo'
 import { TimerProvider } from './state/TimerContext'
@@ -33,6 +34,7 @@ const AssessFromPlanPage = lazy(() => import('./pages/AssessFromPlanPage'))
 const TeamAppsPage = lazy(() => import('./pages/tools/TeamAppsPage'))
 const VideoPage = lazy(() => import('./pages/tools/VideoPage'))
 const SportsPage = lazy(() => import('./pages/sports/SportsPage'))
+const ChangelogPage = lazy(() => import('./pages/ChangelogPage'))
 const SportGuidePage = lazy(() => import('./pages/sports/SportGuidePage'))
 const LeagueSetupPage = lazy(() => import('./pages/sports/LeagueSetupPage'))
 const LeaguePage = lazy(() => import('./pages/sports/LeaguePage'))
@@ -150,6 +152,7 @@ export default function App() {
       <MiniTimer />
       <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-60 print:p-0">
         <DemoBanner />
+        <AfterUpdate />
         <Suspense fallback={<div className="p-6 text-ink-3">불러오는 중…</div>}>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -172,6 +175,7 @@ export default function App() {
           <Route path="/tools/apps" element={<TeamAppsPage />} />
           <Route path="/tools/video" element={<VideoPage />} />
           <Route path="/sports" element={<SportsPage />} />
+          <Route path="/more/changelog" element={<ChangelogPage />} />
           <Route path="/sports/:sport" element={<SportGuidePage />} />
           <Route path="/leagues/new" element={<LeagueSetupPage />} />
           <Route path="/leagues/:id" element={<LeaguePage />} />
