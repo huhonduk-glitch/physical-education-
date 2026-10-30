@@ -29,8 +29,28 @@ export function saveText(db: PeDatabase, key: { schoolYear: number; groupId: str
 }
 
 /** AI가 다듬은 글을 받아 씀: 그 글을 기억해 두고, 교사 확인을 처음부터 다시 받는다 */
-export function applyAi(db: PeDatabase, key: { schoolYear: number; groupId: string; studentId: string }, aiText: string) {
-  return upsert(db, key, { text: aiText, aiText, aiUsed: true, aiConfirm: AI_CONFIRM_ITEMS.map(() => false), status: 'draft' })
+export function applyAi(db: PeDatabase, key: { schoolYear: number; groupId: string; studentId: string }, aiText: string, basisKey?: string) {
+  return upsert(db, key, { text: aiText, aiText, aiUsed: true, aiConfirm: AI_CONFIRM_ITEMS.map(() => false), status: 'draft', ...(basisKey !== undefined ? { basisKey } : {}) })
+}
+
+/** 틀 초안을 넣었을 때 근거 모양을 같이 남긴다 (근거가 바뀌면 다시 만들기 알림) */
+export function saveDraftFromBasis(db: PeDatabase, key: { schoolYear: number; groupId: string; studentId: string }, text: string, basisKey: string) {
+  return upsert(db, key, { text, basisKey, status: 'draft' })
+}
+
+/** 교사가 정한 수준 (undefined = 앱 제안을 따름) */
+export function setLevel(db: PeDatabase, key: { schoolYear: number; groupId: string; studentId: string }, level: number | undefined) {
+  return upsert(db, key, { level })
+}
+
+/** 근거 표시: 중요 · 빼기 (id 하나를 켜고 끔) */
+export async function toggleMark(db: PeDatabase, key: { schoolYear: number; groupId: string; studentId: string }, field: 'important' | 'excluded', id: string) {
+  const cur = await getDraft(db, key.groupId, key.studentId)
+  const list = cur?.[field] ?? []
+  const other = field === 'important' ? 'excluded' : 'important'
+  const next = list.includes(id) ? list.filter((x) => x !== id) : [...list, id]
+  // 중요와 빼기는 같이 켤 수 없다
+  return upsert(db, key, { [field]: next, [other]: (cur?.[other] ?? []).filter((x) => x !== id) })
 }
 
 export function setAiConfirm(db: PeDatabase, key: { schoolYear: number; groupId: string; studentId: string }, aiConfirm: boolean[]) {
