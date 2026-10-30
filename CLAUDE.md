@@ -700,6 +700,33 @@ lessons         { id, schoolYear, groupId, date, period?, unit?, activity, note?
 - **전체 체육 시간표** `/timetable/pe`(더보기 · 홈 표 머리): 나이스 공개 자료로 학교 전체 한 주 시간표를 받아 체육 과목 칸만(`looksLikePe`) 요일 × 교시로. 같은 시각에 따로 하는 체육 수업 묶음이 2개 이상이면 빨강(겹침), 내 시간표 칸은 테두리. 받은 주는 기기에 저장(`settings.neisPeWeek`). 계산 `src/lib/peTimetable.ts`(테스트 `tests/peTimetable.test.ts`)
 - **컴시간 연동** (2026-10-26 교사 결정, 브랜치 `comcigan`): 나이스에는 선생님 이름이 없어 컴시간알리미를 씀. comci.net은 http만 되고 CORS가 없어 **교사 Cloudflare 계정의 Worker 중계**(`relay/`, 무료 하루 10만 요청 · 10분 캐시)를 거침. 전체 체육 시간표 화면에 [컴시간 · 선생님 이름](기본)/[나이스] 탭: 학교 찾기 → 내 이름 → 이번 주/다음 주 받기 → 체육 선생님(과목 · 체육관/운동장 교실로 먼저 고름, 칩으로 고침) 요일 × 교시 표(이름 · 반 · 교실, 같은 교실 '같이 씀', 바뀐 수업 '변경') → [내 시간표로 넣기](나이스와 같은 `applyNeisTimetable`). 받은 주는 `settings.comciWeek`. 해석 `src/lib/comcigan.ts`(comcigan-parser MIT 동작 참고, 새로 씀). 주소: `/{경로}?` + base64(`{접두}{학교코드}_0_{주번호}`), 주번호 = 일자자료 번호(1 이번 주). 이름을 가린 학교(김*수)도 찾음. 테스트 `tests/comcigan.test.ts`(실제 응답을 교사01…·시연고등학교로 가린 fixture) · `tests/comciRelay.test.ts`. 컴시간 구조가 바뀌면 [나이스] 탭으로. 중계 배포됨(2026-10-27): `https://pelog-comcigan.huhonduk.workers.dev` (교사 Cloudflare 계정, `cd relay && npx wrangler deploy`로 다시 올림, 앱 기본값 `COMCI_RELAY_DEFAULT`). 실제 학교로 시연 모드에서 찾기 → 받기 → 겹침 표 → 내 시간표로 넣기 확인
 
+
+### 6-6. 지금 상태 · 인계 메모 (2026-10-28, 다음 세션은 다른 Claude 계정으로 이어 감)
+
+**지금 상태**
+- **main = 배포본 최신** (`13bd6ab`, PR #27, GitHub Pages 배포 성공, 2026-10-27). 테스트 643개 통과
+- 오늘까지 main에 들어간 것: 교과 진도표 · 평가계획서 읽기 · 세특 쓰기(AI) · 이번 주 시간표 · 전체 체육 시간표(나이스 · **컴시간**) · 나이스 공용 인증키 · 업데이트 소식 팝업 · 앱 이름 '체육수업 종합 플랫폼' · **종목 탭(영역형 6종목 자세한 자료 · 경기장 그림 · 사진 · 슬라이드 · PPT)** · 교시 시각 자동
+- 이 메모는 `docs-handoff-1027` 브랜치(GitHub에 올림). main에 합치는 것은 교사 허락 뒤
+
+**외부 서비스 (교사 계정)**
+- Cloudflare Worker 중계 `https://pelog-comcigan.huhonduk.workers.dev` (컴시간 `?p=` · 나이스 공용 키 `?neis=`). 다시 올리기: `cd relay && npx wrangler deploy` (이 PC에 wrangler 로그인이 남아 있음. 안 되면 교사가 `! cd relay && npx wrangler login`)
+- 나이스 인증키는 Cloudflare 비밀 값 `NEIS_KEY`(`npx wrangler secret put NEIS_KEY`). **키가 대화에 한 번 붙여졌으니 교사가 원하면 새 키로 바꿈**
+- workers.dev 하위 도메인 `huhonduk` 등록함
+
+**앞으로 할 일 (순서대로)**
+1. **네트형 자료** — 배구 · 배드민턴(지금 짧은 자료를 영역형처럼 자세히, 해요체로) · 탁구(ITTF Handbook) · 피클볼(USA Pickleball/UPA-A 규칙서) · 킨볼(FIKB 규칙) · 빅발리볼(국내 학교 스포츠 — 공식 규정 못 찾으면 **멈추고 교사에게 협회 규정집 요청**)
+2. **필드형 자료** — 야구(WBSC/KBO 공식야구규칙) · 티볼(WBSC 또는 국내 연맹 규정) · 플레이트 야구(국내 학교 스포츠 — 자료 없으면 교사에게 요청)
+3. **기술형 자료** — 체조 맨몸(물구나무서기 · 핸드스프링 · 구르기: 경기 규칙서가 아닌 동작 설명이라 근거 자료를 교사와 정함) · 육상 50m · 이어달리기(World Athletics 규칙, 50m는 공식 종목 아님을 밝힘) · 플라잉디스크 골프(PDGA 규칙)
+4. 남은 것: 평가계획서 세부 채점표 양식 실제 PDF 확인 · 나이스 수행평가 내보내기 확인 · 2015 개정 성취기준 목록(교사 파일 필요) · 킨볼/츄크볼 분류 교사 확인 · 폰 세로 화면 슬라이드가 빽빽함(빔 · 가로는 괜찮음)
+
+**종목 자료 만드는 방법 (영역형에서 한 그대로)**
+- 공식 규칙서 PDF를 내려받아(작업 폴더 scratchpad, 저장소 밖) `pdfjs-dist/legacy/build/pdf.mjs`로 글자를 뽑아 읽는다(그림 속 숫자는 이미지로 뽑아 확인). **지어내지 않고, 줄마다 조항(ref)**. 최신 판인지 꼭 확인(농구는 2024 → 2026 판으로 바뀐 것을 작업 중 발견)
+- 형마다 파일 하나: `src/data/sportsInvasion.ts` 처럼 `sportsNet.ts` · `sportsField.ts` · `sportsSkill.ts`를 만들고 `sports.ts`의 `SPORTS`에 펼쳐 넣고 `UPCOMING`에서 뺀다(배구 · 배드민턴은 지금 `sports.ts` 안에 있음 → 네트형 파일로 옮김)
+- 절 순서: 한눈에 보기 → 역사 → 경기장(`figure: court` + `specs`) → 용구(공 규격 · 공기압 `specs` + 사진) → 경기 진행 → 주요 규칙 → 반칙과 벌칙 → 심판 신호. 말투는 해요체(수업에서 설명하듯). `bracket`(SPORTS BRACKET 설정 안내)도 넣음
+- 경기장 그림: `src/components/CourtDiagram.tsx`에 `CourtId`를 더하고 미터 단위로 그림(글자 크기는 기존 것과 비슷하게, 그린 뒤 6종을 한 장에 띄워 눈으로 확인)
+- 사진: 위키미디어 공용 API(`generator=search&gsrnamespace=6&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=800`, User-Agent 넣고 **4초 간격** — 빠르면 막힘)로 Public domain · CC0 · CC BY · CC BY-SA만. 받아서 Python(`C:/Users/user/AppData/Local/Programs/Python/Python312/python.exe`, Pillow)으로 800px JPG(품질 82)로 줄여 `public/sports/`에, 저작자 · 라이선스 · 주소는 `src/data/sportPhotos.ts`. 사진 내용을 눈으로 확인하고 쓴다
+- 배포 전: `public/changelog.json` 맨 위에 소식 한 줄 · 사용법 확인 · 테스트(`tests/sportSlides.test.ts`가 사진 등록 · 출처를 검사) · 헤드리스 Chrome(CDP)으로 종목 화면 · 슬라이드 · [PPT로 받기] 실제 확인
+
 ---
 
 ## 7. references/ 폴더 (교사가 준비)
