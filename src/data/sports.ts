@@ -1,6 +1,7 @@
 import type { CourtId } from '../components/CourtDiagram'
 import type { LeagueRules, SportId } from '../lib/league'
 import { INVASION } from './sportsInvasion'
+import { NET } from './sportsNet'
 
 /**
  * 종목 수업자료 (6-5 ④, 2026-10-27).
@@ -217,14 +218,12 @@ export const SPORTS: SportGuide[] = [
     pointsNote: '많이 쓰는 방식(승 2 · 패 1). 규칙서에는 승점이 없어 교사가 바꿀 수 있어요',
     scoreSteps: [1],
   },
+  ...NET,
 ]
 
 /** 자료를 준비 중인 종목 (2026-10-27 교사 요청 목록). 공식 규칙서 · 자료를 확인하는 대로 SPORTS로 옮긴다 */
 export const UPCOMING: { id: string; name: string; emoji: string; group: SportGroup; note?: string }[] = [
   { id: 'bigvolleyball', name: '빅발리볼', emoji: '🏐', group: 'net' },
-  { id: 'tabletennis', name: '탁구', emoji: '🏓', group: 'net' },
-  { id: 'pickleball', name: '피클볼', emoji: '🏓', group: 'net' },
-  { id: 'kinball', name: '킨볼', emoji: '🔵', group: 'net', note: '교과서마다 분류가 다를 수 있어요' },
   { id: 'baseball', name: '야구', emoji: '⚾', group: 'field' },
   { id: 'teeball', name: '티볼', emoji: '⚾', group: 'field' },
   { id: 'platebaseball', name: '플레이트 야구', emoji: '⚾', group: 'field' },

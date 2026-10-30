@@ -147,6 +147,45 @@ export const REF_BOARDS: Record<string, RefBoard> = {
       { id: 'let', name: '렛', words: '다시 하기 다른 셔틀 들어옴 방해', kind: 'restart', verdict: '그 랠리를 세지 않고 다시', restart: '같은 서브로 다시', tell: '', ref: '14' },
     ],
   },
+  // 네트형 추가 (2026-10-30): ITTF 2026 · USA Pickleball 2026 · IKBF 2024 원문 확인
+  tabletennis: {
+    scoreSteps: [1],
+    calls: [
+      { id: 'netserve', name: '서브 네트 맞음', words: '서브 네트 닿음 렛', kind: 'restart', verdict: '렛 — 다시 서브 (맞게 들어갔을 때)', restart: '같은 사람이 다시 서브', tell: '', ref: '2.9.1.1' },
+      { id: 'toss', name: '서브 토스 반칙', words: '던지기 낮음 16 손가락 쥠 회전', kind: 'violation', verdict: '상대 1점', restart: '2점마다 서브 차례대로', tell: '손바닥을 펴고 16 cm 이상 똑바로 던져 올려요.', ref: '2.6.1 · 2.6.2 · 2.10.1.1' },
+      { id: 'servebounce', name: '서브가 내 코트에 안 튐', words: '바로 넘김 한 번 튀기', kind: 'violation', verdict: '상대 1점', restart: '2점마다 서브 차례대로', tell: '서브는 내 코트에 한 번 튀기고 넘겨요.', ref: '2.6.3 · 2.10.1.1' },
+      { id: 'out', name: '아웃 · 네트', words: '밖 넘어감 안 넘어감 네트 걸림', kind: 'violation', verdict: '상대 1점', restart: '2점마다 서브 차례대로', tell: '', ref: '2.10.1.2 ~ 2.10.1.5' },
+      { id: 'double', name: '두 번 치기', words: '연달아 두 번', kind: 'violation', verdict: '일부러 두 번 쳤으면 상대 1점', restart: '2점마다 서브 차례대로', tell: '', ref: '2.10.1.7' },
+      { id: 'table', name: '탁구대 · 네트 건드림', words: '손 짚음 몸 닿음 탁구대 움직임', kind: 'violation', verdict: '상대 1점', restart: '2점마다 서브 차례대로', tell: '치지 않는 손은 탁구대에 짚지 않아요.', ref: '2.10.1.9 ~ 2.10.1.11' },
+      { id: 'order', name: '복식 차례 어김', words: '복식 순서 짝 차례', kind: 'violation', verdict: '상대 1점', restart: '서브한 사람 → 받은 사람 → 서브한 사람 짝 → 받은 사람 짝', tell: '', ref: '2.8.2 · 2.10.1.12' },
+      { id: 'deuce', name: '10-10', words: '듀스 2점 차', kind: 'restart', verdict: '2점 앞설 때까지 해요', restart: '서브는 1점마다 번갈아', tell: '', ref: '2.11.1 · 2.13.3' },
+    ],
+  },
+  pickleball: {
+    scoreSteps: [1],
+    calls: [
+      { id: 'kitchen', name: '키친 발리', words: '키친 논발리 바로 쳤음 밟음 쏠림', kind: 'violation', verdict: '폴트 — 그 랠리를 잃어요', restart: '서브 쪽이 잃으면 다음 서버(또는 사이드 아웃)', tell: '발리는 키친 밖에서. 친 뒤 몸이 쏠리지 않게.', ref: '11.A.1 · 11.A.2' },
+      { id: 'twobounce', name: '투 바운스 어김', words: '안 튀기고 바로 침 리턴 발리', kind: 'violation', verdict: '폴트 — 그 랠리를 잃어요', restart: '서브 쪽이 잃으면 다음 서버(또는 사이드 아웃)', tell: '서브와 리턴은 한 번씩 튀긴 뒤 쳐요.', ref: '10.A' },
+      { id: 'serve', name: '서브 동작 반칙', words: '언더핸드 허리 위 내려침', kind: 'violation', verdict: '폴트 — 서브 쪽이 랠리를 잃어요', restart: '다음 서버(또는 사이드 아웃)', tell: '아래에서 위로, 공은 허리 아래에서.', ref: '7.C.1 ~ 7.C.3' },
+      { id: 'servekitchen', name: '서브가 키친에', words: '서브 짧음 키친 선', kind: 'violation', verdict: '폴트 — 서브 쪽이 랠리를 잃어요', restart: '다음 서버(또는 사이드 아웃)', tell: '서브는 키친(선 포함)을 넘겨요.', ref: '7.E.2' },
+      { id: 'out', name: '아웃 · 네트', words: '밖 안 넘어감 두 번 튐', kind: 'violation', verdict: '폴트 — 그 랠리를 잃어요', restart: '서브 쪽이 잃으면 다음 서버(또는 사이드 아웃)', tell: '', ref: '10.B · 10.C' },
+      { id: 'side', name: '서브 위치', words: '오른쪽 왼쪽 짝수 홀수', kind: 'restart', verdict: '서버 점수 0 · 짝수면 오른쪽, 홀수면 왼쪽 (단식)', restart: '대각선 서비스 코트로', tell: '', ref: '5.A.1 · 5.B.3' },
+      { id: 'sideout', name: '사이드 아웃', words: '서브 넘어감 복식 두 명', kind: 'restart', verdict: '복식은 두 명이 다 랠리를 잃어야 서브가 넘어가요 (게임 처음 팀은 한 명만)', restart: '오른쪽에 선 사람부터 서브', tell: '', ref: '5.B · 5.B.2' },
+    ],
+  },
+  kinball: {
+    scoreSteps: [1],
+    calls: [
+      { id: 'call', name: '부르기 반칙', words: '옴니킨 색 틀림 늦음 안 부름', kind: 'violation', verdict: '반칙 — 나머지 두 팀 1점씩', restart: '반칙한 팀이 그 자리에서 다시 쳐요 (5초)', tell: '"옴니킨 + 색"을 공을 잡은 뒤, 치기 전에 또렷하게.', ref: '6.1 · 5.2.4' },
+      { id: 'contact', name: '접촉 빠짐', words: '네 명 다 안 닿음 한 명 떨어짐', kind: 'violation', verdict: '반칙 — 나머지 두 팀 1점씩', restart: '반칙한 팀이 그 자리에서 다시 쳐요', tell: '칠 때 4명 모두 공에 손을 대요.', ref: '6.2.1 · 5.2.4' },
+      { id: 'drop', name: '공 떨어뜨림', words: '못 받음 바닥 닿음', kind: 'violation', verdict: '불린 팀 반칙 — 나머지 두 팀 1점씩', restart: '반칙한 팀이 그 자리에서 다시 쳐요', tell: '', ref: '6.3.1 · 5.2.4' },
+      { id: 'out', name: '아웃', words: '밖 떨어짐 코트 밖', kind: 'violation', verdict: '친 팀 반칙 — 나머지 두 팀 1점씩', restart: '반칙한 팀이 다시 쳐요', tell: '', ref: '6.4.1 · 5.2.4' },
+      { id: 'down', name: '아래로 친 공', words: '내리꽂기 위로 안 감', kind: 'violation', verdict: '친 팀 반칙 — 나머지 두 팀 1점씩', restart: '반칙한 팀이 그 자리에서 다시 쳐요', tell: '공은 위로 올라가는 궤적이 있어야 해요.', ref: '6.5 · 5.2.4' },
+      { id: 'short', name: '너무 짧은 공', words: '가까이 공격 구역 못 벗어남', kind: 'violation', verdict: '친 팀 반칙 — 나머지 두 팀 1점씩', restart: '반칙한 팀이 그 자리에서 다시 쳐요', tell: '공격 구역(공에서 1.8 m)을 다 벗어나게.', ref: '6.6 · 5.2.4' },
+      { id: 'time', name: '시간 반칙', words: '10초 5초 늦음', kind: 'violation', verdict: '반칙 — 나머지 두 팀 1점씩', restart: '반칙한 팀이 다시 쳐요', tell: '받으면 10초, 다시 칠 때는 5초 안에.', ref: '6.8.1 · 6.8.2' },
+      { id: 'critical', name: '9점 (목표 − 2)', words: '한 팀 나감 두 팀만', kind: 'restart', verdict: '가장 점수 낮은 팀이 나가고 두 팀이 겨뤄요', restart: '두 팀 중 점수 낮은 팀이 가운데에서 쳐요', tell: '', ref: '5.2.5 · 5.2.6' },
+    ],
+  },
 }
 
 /** 찾기: 이름 · 학생 말 · 판정에서 낱말이 모두 들어간 버튼 */

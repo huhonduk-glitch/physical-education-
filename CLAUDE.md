@@ -754,6 +754,8 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
   - 빠른 판정판 `src/data/refCalls.ts`: 종목마다 반칙 · 상황 버튼 7~10개(판정 · 다시 시작 · 심판 신호 · 학생에게 한마디 · 조항 · 팀 파울). 다시 시작(벌칙)은 원문 확인: FIBA 2026 제22조 · World Netball 2024 각 Sanction(접촉 · 방해 = 페널티 패스, 재소유 · 풋워크 · 3초 · 오프사이드 · 오버 어 서드 · 쇼트 패스 = 프리 패스) · FITB 7.2 브레이크다운 · WFDF 13.7 · 17.2 · 18.1.3 · 18.2.5 · IFAB 풋살 Law 15(킥인 4초 → 상대 킥인) · FIVB 8.3 · 6.1.3. `searchCalls`로 학생 말로 찾기
   - 화면 `/sports/:sport/referee`(점수 · 시간 5/7/10분 · 팀 파울과 알림(농구 제42조 5번째 · 풋살 Law 13 6번째) · 판정 버튼 → 큰 판정 창 · 우리 반 규칙(`settings.refHouseRules`) · AI에게 묻기 · 이번 경기 기록(sessionStorage)), `/referee`(종목 고르기, 도구 탭 카드). 종목 화면에 [보조심판]
   - AI `src/lib/refAi.ts`: `ruleDigest`(절 · 핵심 규칙 · 판정판을 조항과 함께) → `refPrompt`(요약 · 우리 반 규칙만 근거, 없으면 unsure, JSON 하나) → `parseRefAnswer`(JSON 꺼내기, `knownRefs`/`refTokens`로 앱 자료에 없는 조항 = '확인 필요'). 테스트 `tests/referee.test.ts`
+- **네트형 3종목 (브랜치 `sports-more`, 2026-10-31)**: 탁구(ITTF 2026 규칙 — 잉글랜드탁구협회 게시본) · 피클볼(USA Pickleball 2026 공식 규칙서) · 킨볼(IKBF 2024 공식 규칙서) 원문을 받아 읽고 `src/data/sportsNet.ts`(조항), 핵심 규칙 · 퀴즈(`sportKeys.ts`), 보조심판 판정판(`refCalls.ts`), 경기장 그림 3개(`CourtDiagram.tsx` — 탁구대 · 피클볼 키친 · 킨볼 공격 구역), 핵심 그림 7개(키친 · 투 바운스 · 언더핸드 · 16 cm 토스 · 옴니킨 부르기 · 4명 모두 닿기 · 세 팀 점수), 표지 사진 3장(위키미디어 CC BY-SA). **빅발리볼은 공식 규정을 못 찾아 멈춤 — 교사에게 협회 규정집 요청**
+  - 주의: 경기장 SVG를 미터 단위로 그리면 글자 크기가 1보다 작아져 Chrome이 글자를 깨뜨린다(탁구대 '2.74 m'가 'm 47.2'로). 작은 경기장은 cm · dm 단위로 그린다
 - **수업 출결**: 수업반 보드 네 번째 칸 [출결]. 카드 누르기 = 출석 → 결석 → 지각 → 조퇴 → 결과 → 출석. 사유는 [사유 보기]를 눌러야(건강 정보). 결석·결과는 그날 '참여'에서 빠짐. 반 누적 기록 · 엑셀 · 학생 화면에 횟수. 저장 v9 `attendance`(자동 백업 `UPGRADE_TO = 9`, 백업 형식 6). 계산 `src/lib/attendance.ts`, 저장 `src/db/attendanceRepo.ts`, 화면 `src/pages/groups/AttendView.tsx`, 테스트 `tests/attendance.test.ts`. 시연 자료에도 출결 몇 줄
 ---
 
