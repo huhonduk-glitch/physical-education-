@@ -297,6 +297,14 @@ export interface SeteukDraft {
   /** AI 도움을 받았을 때 교사 확인 (AI_CONFIRM_ITEMS 순서) */
   aiConfirm?: boolean[]
   status: 'draft' | 'confirmed'
+  /** 교사가 정한 수준 (1~수준 수, 높을수록 잘함). 없으면 그때그때 계산한 앱 제안을 쓴다 (6-7) */
+  level?: number
+  /** 중요 표시한 근거 id (초안 · AI에서 먼저 살림) */
+  important?: string[]
+  /** 초안에서 뺀 근거 id */
+  excluded?: string[]
+  /** 초안을 만들 때 근거 모양 — 근거가 바뀌면 '다시 만들기'를 알린다 */
+  basisKey?: string
   confirmedText?: string
   confirmedAt?: number
   updatedAt: number

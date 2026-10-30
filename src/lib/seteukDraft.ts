@@ -40,6 +40,8 @@ export interface DraftInput {
 export interface DraftPart {
   kind: 'praise' | 'keyword' | 'note' | 'captain' | 'assess'
   text: string
+  /** 근거 id (메모 = 기록 id, 수행평가 = 'assess:평가id:요소id') — 중요 · 빼기 표시에 쓴다 */
+  id: string
 }
 
 export function draftParts(inp: DraftInput, opts: { maxNotes?: number } = {}): DraftPart[] {
@@ -49,29 +51,29 @@ export function draftParts(inp: DraftInput, opts: { maxNotes?: number } = {}): D
   const praise = new Map<string, number>()
   for (const r of inp.records) if (r.type === 'exemplary' && r.category !== '기타') praise.set(r.category, (praise.get(r.category) ?? 0) + 1)
   const topPraise = [...praise.entries()].filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([c]) => c)
-  if (topPraise.length) parts.push({ kind: 'praise', text: sentence(`수업 중 ${topPraise.join('·')} 면에서 꾸준히 모범을 보임`) })
+  if (topPraise.length) parts.push({ kind: 'praise', id: 'praise', text: sentence(`수업 중 ${topPraise.join(', ')} 면에서 꾸준히 모범을 보임`) })
   // 2) 키워드 (칭찬 · 관찰 · 부장 활동에 붙인 것, 많이 붙은 순 3개)
   const kc = new Map<string, number>()
   for (const r of inp.records) if (r.type !== 'unprepared') for (const id of r.keywordIds) if (kw.has(id)) kc.set(kw.get(id)!, (kc.get(kw.get(id)!) ?? 0) + 1)
   const topKw = [...kc.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([l]) => l)
-  if (topKw.length) parts.push({ kind: 'keyword', text: sentence(`${iGa(topKw.join(', '))} 돋보임`) })
+  if (topKw.length) parts.push({ kind: 'keyword', id: 'keyword', text: sentence(`${iGa(topKw.join(', '))} 돋보임`) })
   // 3) 체육부장 활동
   const capCats = [...new Set(inp.records.filter((r) => r.type === 'captain' && r.category !== '기타').map((r) => r.category))].slice(0, 3)
-  if (inp.captainRoles.length) parts.push({ kind: 'captain', text: sentence(capCats.length ? `${euroRo(inp.captainRoles[0])}서 ${eulReul(capCats.join('·'))} 맡아 수행함` : `${euroRo(inp.captainRoles[0])} 활동함`) })
+  if (inp.captainRoles.length) parts.push({ kind: 'captain', id: 'captain', text: sentence(capCats.length ? `${euroRo(inp.captainRoles[0])}서 ${eulReul(capCats.join(', '))} 맡아 수행함` : `${euroRo(inp.captainRoles[0])} 활동함`) })
   // 4) 교사가 적은 메모 (관찰 · 칭찬 · 부장 활동, 최근 순) — 교사 문장 그대로
   const notes = inp.records
     .filter((r) => r.type !== 'unprepared' && r.note?.trim())
     .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
     .slice(0, opts.maxNotes ?? 4)
     .reverse()
-  for (const r of notes) parts.push({ kind: 'note', text: sentence(r.note!) })
+  for (const r of notes) parts.push({ kind: 'note', id: r.id, text: sentence(r.note!) })
   // 5) 수행평가: 등급표 요소에서 받은 등급의 판단 기준(루브릭 · 계획서 문장)
   for (const { a, items, scores } of inp.assessments) {
     for (const it of items) {
       if (it.method !== 'level') continue
       const got = scores?.[it.id]
       const lv = it.levels?.find((l) => l.label === String(got))
-      if (lv?.desc) parts.push({ kind: 'assess', text: sentence(`「${a.title}」에서 ${lv.desc.replace(/[.]\s*$/, '')}`) })
+      if (lv?.desc) parts.push({ kind: 'assess', id: `assess:${a.id}:${it.id}`, text: sentence(`「${a.title}」에서 ${lv.desc.replace(/[.]\s*$/, '')}`) })
     }
   }
   return parts
@@ -80,3 +82,18 @@ export function draftParts(inp: DraftInput, opts: { maxNotes?: number } = {}): D
 export function draftText(parts: readonly DraftPart[]): string {
   return parts.map((p) => p.text).join(' ')
 }
+
+/**
+ * 수준 틀로 고른 초안 문장 (6-7): 뺀 근거는 빼고, 중요 표시한 근거를 먼저, 수준 틀의 문장 수까지.
+ * 순서는 원래 짜임(칭찬 → 키워드 → 부장 → 메모 → 수행평가)을 지킨다. 기록에 없는 문장은 더하지 않는다.
+ */
+export function partsForLevel(parts: readonly DraftPart[], o: { maxParts: number; important?: readonly string[]; excluded?: readonly string[] }): DraftPart[] {
+  const imp = new Set(o.important ?? [])
+  const ex = new Set(o.excluded ?? [])
+  const pool = parts.filter((p) => !ex.has(p.id))
+  const keep = new Set([...pool.filter((p) => imp.has(p.id)), ...pool.filter((p) => !imp.has(p.id))].slice(0, Math.max(1, o.maxParts)).map((p) => p.id))
+  return pool.filter((p) => keep.has(p.id))
+}
+
+/** 근거 모양 (id 목록) — 초안을 만든 뒤 근거가 바뀌었는지 비교 */
+export const basisKeyOf = (ids: readonly string[]) => [...ids].sort().join('|')

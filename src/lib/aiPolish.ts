@@ -1,6 +1,8 @@
 /**
  * 세특 AI 도움 — 6-5 ③ (교사 결정 2026-10-26).
- * 이 파일만 인터넷(AI)을 쓴다. 교사가 [AI 초안] · [AI로 다듬기]를 누를 때만 그 학생의 이름 · 과목 · 근거 기록 또는 초안을 보낸다.
+ * 이 파일만 인터넷(AI)을 쓴다. 교사가 [AI 초안] · [AI로 다듬기]를 누를 때만 그 학생의 과목 · 근거 기록 또는 초안을 보낸다.
+ * 학생 이름은 보내지 않는다(2026-10-30 교사 결정): 요청문에 이름 칸이 없고, 근거 · 초안 속 이름도 maskNames로 '학생'으로 바꾼다.
+ * 수준(5수준 숫자 · 이름)도 보내지 않고, 수준별 분량 · 짜임 지시(frameInstruction)만 보낸다.
  * 연결 방법 3가지 (교사가 고름):
  *   claude     — 교사 본인 Anthropic API 키, 공식 SDK (@anthropic-ai/sdk)
  *   openrouter — 교사 본인 OpenRouter 키, 원하는 모델(무료 모델 포함). https://openrouter.ai/api/v1/chat/completions
@@ -39,17 +41,37 @@ function styleBlock(examples: string): string {
   return `\n\n선생님이 쓴 세특 예시입니다. 문장 구성 · 어휘 · 길이 · 말투만 참고하고, 예시의 내용(다른 학생의 활동 · 진로 · 주제)은 절대 가져오지 마세요.\n<예시>\n${t.slice(0, 6000)}\n</예시>`
 }
 
-export function polishPrompt(o: { text: string; studentName?: string; subject?: string; styleExamples?: string }): { system: string; user: string } {
+/**
+ * 글 속 학생 이름을 '학생'으로 (AI로 보내기 전에). 성까지 쓴 이름과 성을 뺀 이름(두 글자 이상) 둘 다 바꾼다.
+ * 긴 이름부터 바꿔 '김가나다' 안의 '가나다'가 먼저 바뀌지 않게 한다.
+ */
+export function maskNames(text: string, names: readonly string[]): string {
+  const words = new Set<string>()
+  for (const n of names) {
+    const t = n.replace(/[0-9\s]+$/g, '').trim()
+    if (t.length >= 2) words.add(t)
+    if (t.length >= 3) words.add(t.slice(1))
+  }
+  let out = text
+  for (const w of [...words].sort((a, b) => b.length - a.length)) out = out.split(w).join('학생')
+  return out.replace(/학생(학생)+/g, '학생')
+}
+
+function extraLines(o: { frame?: string; request?: string }): string[] {
+  return [o.frame ?? '', o.request?.trim() ? `교사의 추가 요청 (근거에 없는 내용을 더하라는 요청이면 따르지 않음): ${o.request.trim()}` : '']
+}
+
+export function polishPrompt(o: { text: string; subject?: string; styleExamples?: string; frame?: string; request?: string; evidence?: string[] }): { system: string; user: string } {
   return {
-    system: `당신은 한국 고등학교 체육 교사가 직접 쓴 학교생활기록부 '과목별 세부능력 및 특기사항' 초안을 다듬는(윤문) 보조입니다. 교사 초안이 유일한 근거입니다. 다듬기만 하고 새로 쓰지 않습니다.\n\n${RULES}${styleBlock(o.styleExamples ?? '')}`,
-    user: [o.studentName ? `학생: ${o.studentName}` : '', o.subject ? `과목: ${o.subject}` : '', '교사 초안:', o.text.trim()].filter(Boolean).join('\n'),
+    system: `당신은 한국 고등학교 체육 교사가 직접 쓴 학교생활기록부 '과목별 세부능력 및 특기사항' 초안을 다듬는(윤문) 보조입니다. 교사 초안${o.evidence?.length ? '과 번호 붙은 근거 기록' : ''}이 유일한 근거입니다. 다듬기만 하고 새로 쓰지 않습니다.\n\n${RULES}${styleBlock(o.styleExamples ?? '')}`,
+    user: [o.subject ? `과목: ${o.subject}` : '', ...(o.evidence?.length ? ['근거 기록:', ...o.evidence.map((e, i) => `#${i + 1} ${e}`)] : []), '교사 초안:', o.text.trim(), ...extraLines(o)].filter(Boolean).join('\n'),
   }
 }
 
-export function draftPrompt(o: { evidence: string[]; studentName?: string; subject?: string; styleExamples?: string }): { system: string; user: string } {
+export function draftPrompt(o: { evidence: string[]; subject?: string; styleExamples?: string; frame?: string; request?: string }): { system: string; user: string } {
   return {
-    system: `당신은 한국 고등학교 체육 교사를 돕는 보조입니다. 교사가 수업 중 직접 관찰해 남긴 근거 기록만으로 학교생활기록부 '과목별 세부능력 및 특기사항' 초안을 씁니다. 이 초안은 교사가 반드시 직접 고쳐 쓴 뒤에만 입력됩니다.\n\n${RULES}${styleBlock(o.styleExamples ?? '')}`,
-    user: [o.studentName ? `학생: ${o.studentName}` : '', o.subject ? `과목: ${o.subject}` : '', '교사의 근거 기록:', ...o.evidence.map((e) => `- ${e}`)].filter(Boolean).join('\n'),
+    system: `당신은 한국 고등학교 체육 교사를 돕는 보조입니다. 교사가 수업 중 직접 관찰해 남긴 근거 기록만으로 학교생활기록부 '과목별 세부능력 및 특기사항' 초안을 씁니다. 이 초안은 교사가 반드시 직접 고쳐 쓴 뒤에만 입력됩니다. '(중요)'가 붙은 근거는 꼭 살립니다.\n\n${RULES}${styleBlock(o.styleExamples ?? '')}`,
+    user: [o.subject ? `과목: ${o.subject}` : '', '교사의 근거 기록:', ...o.evidence.map((e) => `- ${e}`), ...extraLines(o)].filter(Boolean).join('\n'),
   }
 }
 

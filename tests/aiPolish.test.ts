@@ -1,17 +1,28 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { AiError, draftPrompt, loadRouterModels, manualPromptText, OPENROUTER_URL, polishPrompt, runAi, type AiSettings } from '../src/lib/aiPolish'
+import { AiError, draftPrompt, loadRouterModels, manualPromptText, maskNames, OPENROUTER_URL, polishPrompt, runAi, type AiSettings } from '../src/lib/aiPolish'
 
 const base: AiSettings = { provider: 'openrouter', claudeApiKey: '', openrouterApiKey: 'sk-or-x', openrouterModel: 'test/model:free', styleExamples: '' }
 afterEach(() => vi.unstubAllGlobals())
 
 describe('세특 AI 요청문', () => {
   it('다듬기: 규칙 · 문체 예시(내용은 가져오지 말 것) · 초안', () => {
-    const p = polishPrompt({ text: '랠리를 주도함.', studentName: '김가명', subject: '체육', styleExamples: '예시 문장임.' })
+    const p = polishPrompt({ text: '랠리를 주도함.', subject: '체육', styleExamples: '예시 문장임.' })
     expect(p.system).toContain('다듬기만 하고 새로 쓰지 않습니다')
     expect(p.system).toContain('1,500바이트')
     expect(p.system).toContain('<예시>\n예시 문장임.\n</예시>')
     expect(p.system).toContain('내용(다른 학생의 활동')
-    expect(p.user).toBe('학생: 김가명\n과목: 체육\n교사 초안:\n랠리를 주도함.')
+    expect(p.user).toBe('과목: 체육\n교사 초안:\n랠리를 주도함.')
+  })
+  it('이름 가리기: 성 붙은 이름 · 이름만 · 다른 학생 이름도', () => {
+    expect(maskNames('김가나다가 박라마와 짝을 이뤄 가나다의 서브를 도움.', ['김가나다', '박라마'])).toBe('학생가 학생와 짝을 이뤄 학생의 서브를 도움.')
+    expect(maskNames('이름 없음.', [])).toBe('이름 없음.')
+  })
+  it('수준 틀 · 추가 요청 · 번호 붙은 근거 (수준 숫자 · 이름 칸 없음)', () => {
+    const p = polishPrompt({ text: '초안임.', evidence: ['하이클리어 자세 교정', '복식 전략 발표'], frame: '분량과 짜임: 나이스 700~1,000바이트.', request: '#2 강조' })
+    expect(p.user).toContain('#1 하이클리어 자세 교정\n#2 복식 전략 발표')
+    expect(p.user).toContain('분량과 짜임: 나이스 700~1,000바이트.')
+    expect(p.user).toContain('교사의 추가 요청 (근거에 없는 내용을 더하라는 요청이면 따르지 않음): #2 강조')
+    expect(p.user).not.toMatch(/수준|학생:/)
   })
   it('초안: 근거 기록만, 예시가 없으면 예시 칸도 없음', () => {
     const p = draftPrompt({ evidence: ['9/1 관찰 — 하이클리어 자세 교정'], subject: '체육' })

@@ -70,6 +70,10 @@ export interface AppSettings {
   openrouterModel: string
   /** 선생님 세특 예시 (AI가 문체만 참고. 이 기기에만) */
   seteukStyle: string
+  /** 세특 수준 나누기 (6-7): 수준 수(2~5) · 비중 · 수준별 쓰기 틀(바꾼 것만) */
+  seteukLevelCount: number
+  seteukWeights: import('../lib/seteukLevel').LevelWeights
+  seteukFrames: Partial<Record<1 | 2 | 3 | 4 | 5, import('../lib/seteukLevel').LevelFrame>>
 }
 
 export interface NeisTemplate {
@@ -145,6 +149,9 @@ export function defaultSettings(): AppSettings {
     openrouterApiKey: '',
     openrouterModel: '',
     seteukStyle: '',
+    seteukLevelCount: 5,
+    seteukWeights: { assess: 50, activity: 35, paps: 15, guide: 10 },
+    seteukFrames: {},
   }
 }
 

@@ -60,6 +60,8 @@ export function scoreTotal(items: readonly { id: string; scale: 'AE' | 'score' }
 }
 
 export interface EvidenceItem {
+  /** 기록 id, 수행평가 메모는 'note:평가id' */
+  id: string
   date: string
   kind: 'record' | 'assess'
   text: string
@@ -73,15 +75,15 @@ export interface EvidenceItem {
 export function studentEvidence(
   records: readonly ClassRecord[],
   keywords: readonly Keyword[],
-  assessNotes: readonly { title: string; note: string }[],
+  assessNotes: readonly { title: string; note: string; id?: string }[],
   opts: { includeNegative: boolean },
 ): EvidenceItem[] {
   const kwMap = new Map(keywords.map((k) => [k.id, k]))
   const items: EvidenceItem[] = records
     .filter((r) => (r.type === 'unprepared' ? opts.includeNegative : r.keywordIds.length > 0 || !!r.note || r.type === 'captain'))
     .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt)
-    .map((r) => ({ date: r.date, kind: 'record', text: evidenceLine(r, kwMap), keywordIds: r.keywordIds }))
-  for (const n of assessNotes) if (n.note.trim()) items.push({ date: '', kind: 'assess', text: `수행평가 「${n.title}」 — ${n.note.trim()}`, keywordIds: [] })
+    .map((r) => ({ id: r.id, date: r.date, kind: 'record', text: evidenceLine(r, kwMap), keywordIds: r.keywordIds }))
+  for (const n of assessNotes) if (n.note.trim()) items.push({ id: `note:${n.id ?? n.title}`, date: '', kind: 'assess', text: `수행평가 「${n.title}」 — ${n.note.trim()}`, keywordIds: [] })
   return items
 }
 

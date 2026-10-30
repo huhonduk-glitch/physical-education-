@@ -169,6 +169,16 @@ export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?
   const sym = [...new Set(text.match(/[^\p{L}\p{N}\s.,\-'‘’[\]]/gu) ?? [])]
   if (sym.length) hits.push({ id: 'symbol', level: 'warn', title: '특수 기호 (최소화)', basis: '기재요령 28~30쪽: 온점 · 쉼표 · 하이픈 · 작은따옴표 · 대괄호만', words: sym })
   if (/ {2,}/.test(text)) hits.push({ id: 'space', level: 'warn', title: '공백 두 칸', basis: '학교 연수자료: 자주 틀리는 오류', words: ['두 칸 띄어쓰기'] })
+  // 나이스로 옮길 때 자주 걸리는 형식 오류 (2026-10-30, 살핌의 오타 표시를 참고해 넣음)
+  const typo = [
+    ...[...new Set(text.match(/[ㄱ-ㅎㅏ-ㅣ]+/g) ?? [])].map((w) => `낱자 '${w}'`),
+    / [.,]/.test(text) ? '문장부호 앞 띄어쓰기' : '',
+    /\.{2,}|,{2,}/.test(text) ? "'..' 겹친 문장부호" : '',
+    /[\t]/.test(text) ? '탭 문자' : '',
+    /\n/.test(text.trim()) ? '줄바꿈 (나이스 2바이트 · 한 문단 권장)' : '',
+    text !== text.trim() && text.trim() ? '앞뒤 빈칸' : '',
+  ].filter(Boolean)
+  if (typo.length) hits.push({ id: 'typo', level: 'warn', title: '형식 오류 · 오타', basis: '나이스 입력 형식 (자주 틀리는 오류)', words: typo })
   const sens = text.split(/(?<=[.])\s+/).map((x) => x.trim()).filter((x) => x.length >= 12)
   const dup = [...new Set(sens.filter((x, i) => sens.indexOf(x) !== i))]
   if (dup.length) hits.push({ id: 'repeat', level: 'warn', title: '같은 문장 반복', basis: '학교 연수자료: 자주 틀리는 오류 (같은 내용 반복 복사)', words: dup.map((x) => `${x.slice(0, 20)}…`) })
