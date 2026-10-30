@@ -74,6 +74,8 @@ export interface AppSettings {
   seteukLevelCount: number
   seteukWeights: import('../lib/seteukLevel').LevelWeights
   seteukFrames: Partial<Record<1 | 2 | 3 | 4 | 5, import('../lib/seteukLevel').LevelFrame>>
+  /** 보조심판 '우리 반 규칙' (종목 id → 글). 공식 규칙을 줄여 쓰는 수업 규칙 */
+  refHouseRules: Record<string, string>
 }
 
 export interface NeisTemplate {
@@ -152,6 +154,7 @@ export function defaultSettings(): AppSettings {
     seteukLevelCount: 5,
     seteukWeights: { assess: 50, activity: 35, paps: 15, guide: 10 },
     seteukFrames: {},
+    refHouseRules: {},
   }
 }
 
