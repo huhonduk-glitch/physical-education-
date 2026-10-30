@@ -3,6 +3,7 @@ import Collapse from '../../components/Collapse'
 import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
 import { sportOf } from '../../data/sports'
+import { REF_BOARDS } from '../../data/refCalls'
 import { SPORT_KEYS } from '../../data/sportKeys'
 import { FigureView, KeyVisual } from './SlideView'
 
@@ -23,6 +24,16 @@ export default function SportGuidePage() {
           </span>
           <Icon name="chevronRight" />
         </Link>
+        {REF_BOARDS[s.id] && (
+          <Link to={`/sports/${s.id}/referee`} className="flex min-h-[56px] items-center gap-3 rounded-3xl bg-white px-5 shadow-[var(--shadow-card)] active:scale-[0.99]">
+            <Icon name="flag" className="text-brand" />
+            <span className="min-w-0 flex-1">
+              <b className="block">보조심판</b>
+              <span className="text-sm font-semibold text-ink-3">판정 버튼 · 점수 · 팀 파울 · AI에게 묻기</span>
+            </span>
+            <Icon name="chevronRight" className="text-ink-3" />
+          </Link>
+        )}
         {SPORT_KEYS[s.id] && (
           <section className="space-y-2">
             <p className="card-title px-1">{s.name}다운 핵심 규칙</p>

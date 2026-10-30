@@ -49,6 +49,17 @@ export default function ToolsPage() {
           </span>
           <Icon name="chevronRight" className="text-ink-3" />
         </Link>
+        {/* 보조심판 (2026-10-30): 판정 버튼 · 점수 · 팀 파울 · AI에게 묻기 */}
+        <Link to="/referee" className="card flex min-h-[72px] items-center gap-3 p-4 transition-transform active:scale-[0.99]">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">
+            <Icon name="flag" size={22} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <b className="block">보조심판</b>
+            <span className="text-xs font-semibold text-ink-3">반칙 버튼 → 판정 · 다시 시작 · 조항, 점수 · 팀 파울, AI에게 묻기</span>
+          </span>
+          <Icon name="chevronRight" className="text-ink-3" />
+        </Link>
         {/* 동작 영상 피드백 (B-3): 영상은 기기 메모리에만 */}
         <Link to="/tools/video" className="card flex min-h-[72px] items-center gap-3 p-4 transition-transform active:scale-[0.99]">
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">

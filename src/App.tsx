@@ -37,6 +37,8 @@ const SportsPage = lazy(() => import('./pages/sports/SportsPage'))
 const ChangelogPage = lazy(() => import('./pages/ChangelogPage'))
 const SportGuidePage = lazy(() => import('./pages/sports/SportGuidePage'))
 const SlidesPage = lazy(() => import('./pages/sports/SlidesPage'))
+const RefereePage = lazy(() => import('./pages/sports/RefereePage'))
+const RefereePick = lazy(() => import('./pages/sports/RefereePage').then((m) => ({ default: m.RefereePick })))
 const LeaguePage = lazy(() => import('./pages/sports/LeaguePage'))
 const HelpPage = lazy(() => import('./pages/HelpPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
@@ -178,6 +180,8 @@ export default function App() {
           <Route path="/more/changelog" element={<ChangelogPage />} />
           <Route path="/sports/:sport" element={<SportGuidePage />} />
           <Route path="/sports/:sport/slides" element={<SlidesPage />} />
+          <Route path="/sports/:sport/referee" element={<RefereePage />} />
+          <Route path="/referee" element={<RefereePick />} />
           {/* 리그전 새로 만들기는 SPORTS BRACKET으로 (2026-10-27 교사 결정). 이미 만든 리그전은 /leagues/:id 로 계속 본다 */}
           <Route path="/leagues/new" element={<Navigate to="/sports" replace />} />
           <Route path="/leagues/:id" element={<LeaguePage />} />
