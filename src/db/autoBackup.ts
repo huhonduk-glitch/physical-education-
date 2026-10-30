@@ -14,7 +14,7 @@ import { BACKUP_FORMAT, BACKUP_TABLES, type BackupFile } from './backup'
 export const MAIN_DB = 'pe-records'
 export const AUTO_DB = 'pe-records-autobackup'
 /** 이 버전으로 올라갈 때 자동 백업한다 (Dexie 버전. IndexedDB 안에서는 ×10으로 보인다) */
-export const UPGRADE_TO = 8 // db.ts의 마지막 version()과 같게
+export const UPGRADE_TO = 9 // db.ts의 마지막 version()과 같게
 /** 자동 백업했다는 알림을 홈에 한 번 보여 주려고 남겨 두는 표시 (localStorage) */
 export const AUTO_BACKUP_NOTICE_KEY = 'pelog.autoBackupNotice'
 /** 자동 백업은 최근 이만큼만 남긴다 */
@@ -87,7 +87,7 @@ export type PrepareResult =
  * 실패하면 status 'failed' + 읽은 자료(file)를 돌려준다 → 화면에서 파일로라도 받게 한다.
  */
 export async function prepareUpgrade(opts: { mainDb?: string; autoDb?: string; upgradeTo?: number; reason?: string } = {}): Promise<PrepareResult> {
-  const { mainDb = MAIN_DB, autoDb = AUTO_DB, upgradeTo = UPGRADE_TO, reason = '리그전 업데이트 전' } = opts
+  const { mainDb = MAIN_DB, autoDb = AUTO_DB, upgradeTo = UPGRADE_TO, reason = '출결 업데이트 전' } = opts
   if (typeof indexedDB === 'undefined') return { status: 'none' }
   let idb: IDBDatabase | null = null
   let file: BackupFile | null = null

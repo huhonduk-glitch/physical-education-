@@ -12,7 +12,7 @@ import { TERMS_VERSION } from '../lib/terms'
 import { ensureKeywordSeed } from './recordsRepo'
 import type { PeDatabase } from './db'
 import { currentSchoolYear, defaultSettings, saveSettings, type TimetableEntry } from './settings'
-import type { Absence, Assessment, AssessmentScore, Captain, ClassGroup, ClassRecord, Lesson, PapsResult, PapsRound, ProgressPlan, Student } from './types'
+import type { Absence, Assessment, Attendance, AssessmentScore, Captain, ClassGroup, ClassRecord, Lesson, PapsResult, PapsRound, ProgressPlan, Student } from './types'
 import { itemsFromUnits, meetings, schedule } from '../lib/progressPlan'
 
 export const DEMO_SEEDED_KEY = 'demoSeeded'
@@ -121,6 +121,7 @@ export async function seedDemo(db: PeDatabase, opts: DemoSeedOptions = {}): Prom
   // ── 최근 4주 수업 날짜마다 누가기록
   const records: ClassRecord[] = []
   const absences: Absence[] = []
+  const attendance: Attendance[] = []
   const lessons: Lesson[] = []
   const praise = ['정리정돈', '용구 정리', '친구 도움', '리더십', '안전 지킴', '적극 참여']
   const guide = ['체육복', '실내화', '교구']
@@ -156,6 +157,14 @@ export async function seedDemo(db: PeDatabase, opts: DemoSeedOptions = {}): Prom
         const s = pick(list)
         absentToday.add(s.id)
         absences.push({ id: id('a'), schoolYear: year, studentId: s.id, date, period: t.period, reason: pick(['부상', '질병', '기타', '부상'] as const), altTaskDone: chance(0.5), groupId: g.id })
+      }
+      if (chance(0.35)) {
+        const s = pick(list)
+        if (!absentToday.has(s.id)) {
+          absentToday.add(s.id)
+          const at = new Date(`${date}T09:00:00`).getTime()
+          attendance.push({ id: id('t'), schoolYear: year, groupId: g.id, studentId: s.id, date, period: t.period, status: pick(['absent', 'late', 'late', 'early', 'result'] as const), reason: pick(['질병', '인정', '미인정', '기타'] as const), createdAt: at, updatedAt: at })
+        }
       }
       for (const s of list) {
         if (absentToday.has(s.id)) continue
@@ -293,11 +302,12 @@ export async function seedDemo(db: PeDatabase, opts: DemoSeedOptions = {}): Prom
   }
 
   const pin = opts.pin ?? (await hashPin('0000'))
-  await db.transaction('rw', [db.students, db.groups, db.records, db.absences, db.lessons, db.captains, db.papsConfigs, db.papsRounds, db.papsResults, db.assessments, db.assessmentScores, db.progressPlans, db.settings], async () => {
+  await db.transaction('rw', [db.students, db.groups, db.records, db.absences, db.lessons, db.captains, db.papsConfigs, db.papsRounds, db.papsResults, db.assessments, db.assessmentScores, db.progressPlans, db.attendance, db.settings], async () => {
     await db.students.bulkAdd(students)
     await db.groups.bulkAdd(groups)
     await db.records.bulkAdd(records)
     await db.absences.bulkAdd(absences)
+    await db.attendance.bulkAdd(attendance)
     await db.lessons.bulkAdd(lessons)
     await db.captains.bulkAdd(captains)
     await db.papsConfigs.bulkAdd(papsConfigs)

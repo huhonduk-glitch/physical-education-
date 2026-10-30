@@ -334,3 +334,21 @@ export interface Lesson {
   createdAt: number
   updatedAt: number
 }
+
+/** 수업 출결 (v9, 2026-10-30 교사 요청). 출석이 기본이라 결석 · 지각 · 조퇴 · 결과만 한 줄씩 저장한다 (나이스 출결 용어) */
+export type AttendStatus = 'absent' | 'late' | 'early' | 'result'
+export type AttendReason = '질병' | '인정' | '미인정' | '기타'
+export interface Attendance {
+  id: string
+  schoolYear: number
+  groupId: string
+  studentId: string
+  date: string
+  /** 그날 이 반 수업이 두 교시면 교시마다 따로 (없으면 그날 한 번) */
+  period?: number
+  status: AttendStatus
+  /** 건강 정보일 수 있어 목록에서는 가린다 */
+  reason?: AttendReason
+  createdAt: number
+  updatedAt: number
+}

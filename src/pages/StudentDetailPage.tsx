@@ -1,3 +1,4 @@
+import { ATTEND_LABEL, attendTally, tallyText } from '../lib/attendance'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState, type ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -50,13 +51,14 @@ export default function StudentDetailPage() {
   const data = useLiveQuery(async () => {
     const student = await db.students.get(id)
     if (!student) return { student: null }
-    const [records, absences, captains, keywords] = await Promise.all([
+    const [records, absences, captains, keywords, attendance] = await Promise.all([
       db.records.where('studentId').equals(id).toArray(),
       db.absences.where('studentId').equals(id).toArray(),
       db.captains.where('studentId').equals(id).toArray(),
       db.keywords.toArray(),
+      db.attendance.where('studentId').equals(id).toArray(),
     ])
-    return { student, records, absences, captains, keywords }
+    return { student, records, absences, captains, keywords, attendance }
   }, [id])
   const [openKw, setOpenKw] = useState<string | null>(null)
 
@@ -68,7 +70,7 @@ export default function StudentDetailPage() {
       </>
     )
   }
-  const { student: s, records, absences, captains, keywords } = data
+  const { student: s, records, absences, captains, keywords, attendance } = data
   const unprepared = records.filter((r) => r.type === 'unprepared')
   const exemplary = records.filter((r) => r.type === 'exemplary')
   const observations = records.filter((r) => r.type === 'observation').sort((a, b) => b.date.localeCompare(a.date))
@@ -173,6 +175,28 @@ export default function StudentDetailPage() {
                   </li>
                 ))}
             </ul>
+          )}
+        </Card>
+
+        <Card title={`📋 출결 ${attendance.length}회`}>
+          {attendance.length === 0 ? (
+            <p className="hint">결석 · 지각 · 조퇴 · 결과가 없어요</p>
+          ) : (
+            <>
+              <p className="font-bold">{tallyText(attendTally(attendance).get(s.id))}</p>
+              <ul className="space-y-1">
+                {[...attendance]
+                  .sort((a, b) => b.date.localeCompare(a.date) || (b.period ?? 0) - (a.period ?? 0))
+                  .map((a) => (
+                    <li key={a.id} className="flex items-center gap-3">
+                      <span className="w-24 tabular-nums">{shortDateLabel(a.date)}</span>
+                      <span className="w-14 font-bold">{a.period ? `${a.period}교시` : ''}</span>
+                      <span className="font-bold text-danger">{ATTEND_LABEL[a.status]}</span>
+                      {a.reason && <Masked text={a.reason} />}
+                    </li>
+                  ))}
+              </ul>
+            </>
           )}
         </Card>
 

@@ -335,6 +335,11 @@ function GroupDates({
 }) {
   const doneSet = new Set(done)
   const pr = groupProgress(sched, done, today)
+  // 앞쪽의 끝낸 차시는 접어 두고 바로 앞 차시부터 보여 준다 (51줄을 내리지 않게)
+  const firstOpen = sched.findIndex((s) => !doneSet.has(s.item.id))
+  const hideN = Math.max(0, (firstOpen < 0 ? sched.length : firstOpen) - 1)
+  const [showAll, setShowAll] = useState(false)
+  const shown = showAll ? sched : sched.slice(hideN)
   if (noSlots)
     return (
       <section className="card space-y-2">
@@ -351,18 +356,23 @@ function GroupDates({
         {[
           { l: '끝낸 차시', n: pr.lastDone, c: 'text-ink' },
           { l: '오늘까지 계획', n: pr.planned, c: 'text-ink-2' },
-          { l: pr.diff < 0 ? '늦음' : '빠름', n: Math.abs(pr.diff), c: pr.diff < 0 ? 'text-danger' : 'text-brand' },
+          { l: pr.diff < 0 ? '늦음' : pr.diff > 0 ? '빠름' : '진도', n: pr.diff === 0 ? '계획대로' : Math.abs(pr.diff), c: pr.diff < 0 ? 'text-danger' : pr.diff > 0 ? 'text-brand' : 'text-ok' },
         ].map((x) => (
           <div key={x.l} className="rounded-2xl bg-fill py-3">
-            <p className={`text-2xl font-extrabold tabular-nums ${x.c}`}>{x.n}</p>
+            <p className={`${typeof x.n === 'string' ? 'py-1 text-lg' : 'text-2xl'} font-extrabold tabular-nums ${x.c}`}>{x.n}</p>
             <p className="text-[0.75rem] font-bold text-ink-3">{x.l}</p>
           </div>
         ))}
       </section>
       <p className="hint px-1">행사·휴강으로 수업이 빠지면 그 줄의 [빠짐]을 누르세요. 뒤 차시가 한 칸씩 밀려요. 다시 누르면 되돌아와요.</p>
       <section className="card overflow-hidden p-0">
+        {hideN > 0 && (
+          <button type="button" className="list-row w-full justify-center font-bold text-brand" aria-expanded={showAll} onClick={() => setShowAll((v) => !v)}>
+            {showAll ? '끝낸 차시 접기' : `끝낸 차시 ${hideN}개 더 보기 (1~${hideN}차시)`}
+          </button>
+        )}
         <ul>
-          {sched.map((s) => {
+          {shown.map((s) => {
             const isToday = s.meeting?.date === today
             const on = doneSet.has(s.item.id)
             return (

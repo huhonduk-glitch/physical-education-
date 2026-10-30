@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
 import { db } from '../../db/db'
+import { ATTEND_LABEL, ATTEND_ORDER, attendTally } from '../../lib/attendance'
 import { checkItems, checkKey, inRange, PERIOD_LABEL, periodRange, tallyByStudent, type Period } from '../../lib/checkBoard'
 import { todayStr } from '../../lib/dates'
 import { saveXlsx } from '../../lib/download'
@@ -13,7 +14,7 @@ import { useGroups } from '../../state/useGroups'
 
 type SortKey = 'no' | 'plus' | 'minus' | 'absent'
 
-/** 수업반 누적: 학생별 칭찬·지도·견학 합계와 항목별 횟수 (기간 선택 · 엑셀) */
+/** 수업반 누적: 학생별 칭찬·지도·견학·출결 합계와 항목별 횟수 (기간 선택 · 엑셀) */
 export default function GroupStatsPage() {
   const { id = '' } = useParams()
   const { settings } = useApp()
@@ -26,13 +27,14 @@ export default function GroupStatsPage() {
   const range = useMemo((): [string, string] => [from, to], [from, to])
 
   const data = useLiveQuery(async () => {
-    const [r, a] = await Promise.all([db.records.where('groupId').equals(id).toArray(), db.absences.where('groupId').equals(id).toArray()])
-    return { records: r, absences: a }
+    const [r, a, at] = await Promise.all([db.records.where('groupId').equals(id).toArray(), db.absences.where('groupId').equals(id).toArray(), db.attendance.where('groupId').equals(id).toArray()])
+    return { records: r, absences: a, attendance: at }
   }, [id])
   const tally = useMemo(
     () => tallyByStudent((data?.records ?? []).filter((r) => inRange(r.date, range)), (data?.absences ?? []).filter((a) => inRange(a.date, range))),
     [data, range],
   )
+  const attend = useMemo(() => attendTally((data?.attendance ?? []).filter((a) => inRange(a.date, range))), [data, range])
   const days = useMemo(() => new Set((data?.records ?? []).filter((r) => inRange(r.date, range)).map((r) => r.date)).size, [data, range])
 
   // 표 열: 설정의 체크 항목 + 기간 안에 기록이 있는 예전 항목(이름을 바꾼 항목 등)
@@ -59,9 +61,9 @@ export default function GroupStatsPage() {
   if (!group) return <PageHeader title="누적 기록" back />
 
   const exportXlsx = () => {
-    const head = ['번호', '학번', '이름', '칭찬 합계', '지도 합계', '견학 일수', '관찰 메모', ...columns.map((c) => `${c.type === 'unprepared' ? '지도' : '칭찬'}: ${c.label}`)]
-    const body = rows.map(({ s, t }) => [memberNo(group, s), s.studentCode, s.name, t?.plus ?? 0, t?.minus ?? 0, t?.absent ?? 0, t?.notes ?? 0, ...columns.map((c) => t?.byKey.get(c.key) ?? 0)])
-    void saveXlsx(`누가기록_${group.name}_${PERIOD_LABEL[period]}.xlsx`, [{ name: '누적', rows: [[`${group.name} · ${PERIOD_LABEL[period]} (${range[0]} ~ ${range[1]})`], head, ...body], widths: [6, 8, 10, 9, 9, 9, 9, ...columns.map(() => 12)] }])
+    const head = ['번호', '학번', '이름', '칭찬 합계', '지도 합계', '견학 일수', ...ATTEND_ORDER.map((st) => ATTEND_LABEL[st]), '관찰 메모', ...columns.map((c) => `${c.type === 'unprepared' ? '지도' : '칭찬'}: ${c.label}`)]
+    const body = rows.map(({ s, t }) => [memberNo(group, s), s.studentCode, s.name, t?.plus ?? 0, t?.minus ?? 0, t?.absent ?? 0, ...ATTEND_ORDER.map((st) => attend.get(s.id)?.[st] ?? 0), t?.notes ?? 0, ...columns.map((c) => t?.byKey.get(c.key) ?? 0)])
+    void saveXlsx(`누가기록_${group.name}_${PERIOD_LABEL[period]}.xlsx`, [{ name: '누적', rows: [[`${group.name} · ${PERIOD_LABEL[period]} (${range[0]} ~ ${range[1]})`], head, ...body], widths: [6, 8, 10, 9, 9, 9, ...ATTEND_ORDER.map(() => 6), 9, ...columns.map(() => 12)] }])
   }
 
   const head = (k: SortKey, label: string, cls = '') => (
@@ -109,6 +111,11 @@ export default function GroupStatsPage() {
                 {head('plus', '칭찬', 'text-brand')}
                 {head('minus', '지도', 'text-danger')}
                 {head('absent', '견학', 'text-ink-3')}
+                {ATTEND_ORDER.map((st) => (
+                  <th key={st} className="px-1.5 py-2 text-sm font-bold whitespace-nowrap text-danger">
+                    {ATTEND_LABEL[st]}
+                  </th>
+                ))}
                 {columns.map((c) => (
                   <th key={c.key} className={`min-w-[56px] px-1 py-2 text-[0.72rem] leading-tight font-bold ${c.type === 'unprepared' ? 'text-danger' : 'text-brand'}`}>
                     {c.label}
@@ -128,6 +135,11 @@ export default function GroupStatsPage() {
                   <td className="border-t border-line px-2 font-extrabold text-brand tabular-nums">{t?.plus || ''}</td>
                   <td className="border-t border-line px-2 font-extrabold text-danger tabular-nums">{t?.minus || ''}</td>
                   <td className="border-t border-line px-2 font-bold text-ink-3 tabular-nums">{t?.absent || ''}</td>
+                  {ATTEND_ORDER.map((st) => (
+                    <td key={st} className="border-t border-line px-1.5 font-bold text-danger tabular-nums">
+                      {attend.get(s.id)?.[st] || ''}
+                    </td>
+                  ))}
                   {columns.map((c) => (
                     <td key={c.key} className="border-t border-line px-1 tabular-nums">
                       {t?.byKey.get(c.key) || ''}
@@ -140,6 +152,11 @@ export default function GroupStatsPage() {
                 {(['plus', 'minus', 'absent'] as const).map((k) => (
                   <td key={k} className="border-t-2 border-line px-2 font-extrabold tabular-nums">
                     {rows.reduce((n, r) => n + (r.t?.[k] ?? 0), 0) || ''}
+                  </td>
+                ))}
+                {ATTEND_ORDER.map((st) => (
+                  <td key={st} className="border-t-2 border-line px-1.5 font-extrabold tabular-nums">
+                    {rows.reduce((n, r) => n + (attend.get(r.s.id)?.[st] ?? 0), 0) || ''}
                   </td>
                 ))}
                 {columns.map((c) => (
