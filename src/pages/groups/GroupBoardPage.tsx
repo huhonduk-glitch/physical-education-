@@ -9,8 +9,10 @@ import RecordSheet from '../../components/RecordSheet'
 import TeamSendSheet from '../../components/TeamSendSheet'
 import UndoToast from '../../components/UndoToast'
 import { db } from '../../db/db'
+import { cycleAttendance, setAttendReason, setAttendance } from '../../db/attendanceRepo'
 import { toggleCheck, undo, type UndoToken } from '../../db/recordsRepo'
 import type { Student } from '../../db/types'
+import { dayStatus, isMissing } from '../../lib/attendance'
 import { cellCounts, checkItems, type CheckItem } from '../../lib/checkBoard'
 import { todayStr } from '../../lib/dates'
 import { memberNo, saveLastGroup, SEMESTER_LABEL } from '../../lib/groups'
@@ -18,15 +20,16 @@ import { pointTally, summarizeDay } from '../../lib/recordStats'
 import { classForNow } from '../../lib/timetable'
 import { useApp } from '../../state/AppContext'
 import { useGroups } from '../../state/useGroups'
+import { AttendView } from './AttendView'
 import ClassToolsSheet from './ClassToolsSheet'
 import { ItemCheckView, TableCheckView } from './CheckViews'
 
-type BoardMode = 'cards' | 'items' | 'table'
+type BoardMode = 'cards' | 'items' | 'table' | 'attend'
 const MODE_KEY = 'pe.boardMode'
 const readMode = (): BoardMode => {
   try {
     const m = localStorage.getItem(MODE_KEY)
-    return m === 'items' || m === 'table' ? m : 'cards'
+    return m === 'items' || m === 'table' || m === 'attend' ? m : 'cards'
   } catch {
     return 'cards'
   }
@@ -47,13 +50,15 @@ export default function GroupBoardPage() {
   const list: Student[] = useMemo(() => (group ? membersOf(group) : []), [group, membersOf])
 
   const dayData = useLiveQuery(async () => {
-    const [records, absences, lesson] = await Promise.all([
+    const [records, absences, lesson, attendance] = await Promise.all([
       db.records.where('[groupId+date]').equals([id, date]).toArray(),
       db.absences.where('[groupId+date]').equals([id, date]).toArray(),
       db.lessons.where('[groupId+date]').equals([id, date]).first(),
+      db.attendance.where('[groupId+date]').equals([id, date]).toArray(),
     ])
-    return { summary: summarizeDay(records, absences), counts: cellCounts(records), absentIds: new Set(absences.map((a) => a.studentId)), lesson }
+    return { summary: summarizeDay(records, absences), counts: cellCounts(records), absentIds: new Set(absences.map((a) => a.studentId)), lesson, attendance }
   }, [date, id])
+  const attend = useMemo(() => dayStatus(dayData?.attendance ?? [], nowHere?.period), [dayData?.attendance, nowHere?.period])
   const day = dayData?.summary
   const items = useMemo(() => checkItems(settings.recordButtons), [settings.recordButtons])
   const [mode, setModeState] = useState<BoardMode>(readMode)
@@ -67,6 +72,7 @@ export default function GroupBoardPage() {
       /* 무시 */
     }
   }
+  const attendKey = (s: Student) => ({ schoolYear: settings.schoolYear, groupId: id, studentId: s.id, date, period: nowHere?.period })
   const onToggle = (s: Student, item: CheckItem) => {
     void toggleCheck(db, { schoolYear: settings.schoolYear, groupId: id, studentId: s.id, date, period: nowHere?.period, type: item.type, category: item.label })
   }
@@ -111,15 +117,20 @@ export default function GroupBoardPage() {
     let absent = 0
     let unprepared = 0
     let exemplary = 0
+    let missing = 0
     for (const s of list) {
+      if (isMissing(attend.get(s.id)?.status)) {
+        missing++
+        continue
+      }
       const d = day?.get(s.id)
       if (!d) continue
       if (d.absent) absent++
       if (d.unprepared) unprepared++
       if (d.exemplary) exemplary++
     }
-    return { absent, unprepared, exemplary, present: list.length - absent }
-  }, [list, day])
+    return { absent, unprepared, exemplary, missing, present: list.length - absent - missing }
+  }, [list, day, attend])
 
   if (groups && !group) {
     return (
@@ -188,6 +199,7 @@ export default function GroupBoardPage() {
               ['cards', '학생 카드'],
               ['items', '항목 체크'],
               ['table', '체크표'],
+              ['attend', '출결'],
             ] as const
           ).map(([m, label]) => (
             <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}>
@@ -196,9 +208,10 @@ export default function GroupBoardPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-4 gap-2 text-center" aria-label="이 반 요약">
+        <div className={`grid ${stats.missing ? 'grid-cols-5' : 'grid-cols-4'} gap-2 text-center`} aria-label="이 반 요약">
           {[
             { label: '참여', n: stats.present, cls: 'text-ink' },
+            ...(stats.missing ? [{ label: '결석·결과', n: stats.missing, cls: 'text-danger' }] : []),
             { label: '견학', n: stats.absent, cls: 'text-ink-3' },
             { label: '지도', n: stats.unprepared, cls: 'text-danger' },
             { label: '칭찬', n: stats.exemplary, cls: 'text-brand' },
@@ -223,7 +236,20 @@ export default function GroupBoardPage() {
           </div>
         )}
 
-        {group && list.length > 0 && mode !== 'cards' && (
+        {group && list.length > 0 && mode === 'attend' && (
+          <AttendView
+            group={group}
+            list={list}
+            status={attend}
+            absentIds={dayData?.absentIds ?? new Set()}
+            period={nowHere?.period}
+            readOnly={readOnly}
+            onCycle={(s) => void cycleAttendance(db, attendKey(s))}
+            onSet={(s, st) => void setAttendance(db, attendKey(s), st)}
+            onReason={(row, reason) => void setAttendReason(db, row.id, reason)}
+          />
+        )}
+        {group && list.length > 0 && (mode === 'items' || mode === 'table') && (
           <>
             {mode === 'items' ? (
               <ItemCheckView group={group} list={list} items={items} counts={dayData?.counts ?? new Map()} absentIds={dayData?.absentIds ?? new Set()} readOnly={readOnly} onToggle={onToggle} />

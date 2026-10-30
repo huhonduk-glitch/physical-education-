@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie'
 import type {
   Absence,
+  Attendance,
   Assessment,
   AssessmentScore,
   Captain,
@@ -45,6 +46,7 @@ export class PeDatabase extends Dexie {
   progressPlans!: EntityTable<ProgressPlan, 'id'>
   seteukDrafts!: EntityTable<SeteukDraft, 'id'>
   leagues!: EntityTable<League, 'id'>
+  attendance!: EntityTable<Attendance, 'id'>
 
   constructor(name = 'pe-records') {
     super(name)
@@ -90,6 +92,8 @@ export class PeDatabase extends Dexie {
     this.version(7).stores({ seteukDrafts: 'id, schoolYear, studentId, groupId, [groupId+studentId]' })
     // v8: 리그전 (6-5 ④). 표 하나만 더한다. 열기 전에 자동 백업
     this.version(8).stores({ leagues: 'id, schoolYear, groupId' })
+    // v9: 수업 출결. 표 하나만 더한다. 열기 전에 자동 백업
+    this.version(9).stores({ attendance: 'id, schoolYear, studentId, groupId, [groupId+date]' })
   }
 }
 

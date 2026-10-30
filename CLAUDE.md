@@ -98,6 +98,8 @@ groups          { id, schoolYear, semester: 0|1|2, kind: 'homeroom'|'elective', 
                 // v2 자료는 저장소를 열 때 학적반 수업반을 만들어 자동으로 옮긴다(지우는 자료 없음). 옛 백업을 복원해도 같은 이전을 한다.
 lessons         { id, schoolYear, groupId, date, period?, unit?, activity, note?, createdAt, updatedAt }
                 // 재설계 5단계(v4) 수업 일지. 수업반·날짜마다 한 줄. 그날 칭찬·지도·견학 수는 기록에서 세어 붙인다(저장 안 함)
+attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'absent'|'late'|'early'|'result', reason?: '질병'|'인정'|'미인정'|'기타', createdAt, updatedAt }
+                // v9 수업 출결(2026-10-30). 출석은 저장하지 않고 결석·지각·조퇴·결과만(나이스 용어). 같은 학생·교시는 한 줄
 ```
 
 - `studentCode`는 학년+반(2자리)+번호(2자리)로 자동 생성한다. 예: 1학년 3반 12번 → `10312`
@@ -727,6 +729,13 @@ lessons         { id, schoolYear, groupId, date, period?, unit?, activity, note?
 - 사진: 위키미디어 공용 API(`generator=search&gsrnamespace=6&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=800`, User-Agent 넣고 **4초 간격** — 빠르면 막힘)로 Public domain · CC0 · CC BY · CC BY-SA만. 받아서 Python(`C:/Users/user/AppData/Local/Programs/Python/Python312/python.exe`, Pillow)으로 800px JPG(품질 82)로 줄여 `public/sports/`에, 저작자 · 라이선스 · 주소는 `src/data/sportPhotos.ts`. 사진 내용을 눈으로 확인하고 쓴다
 - 배포 전: `public/changelog.json` 맨 위에 소식 한 줄 · 사용법 확인 · 테스트(`tests/sportSlides.test.ts`가 사진 등록 · 출처를 검사) · 헤드리스 Chrome(CDP)으로 종목 화면 · 슬라이드 · [PPT로 받기] 실제 확인
 
+
+### 6-7. 기능 개선 (2026-10-30 교사 요청 · 순서 승인: 점검 → 세특 → 종목 → 심판)
+- 교사 요청 4가지: ① 종목 수업자료를 PPT처럼(참고 https://kimju1416.github.io/pe-lecture/ — 검은 화면 · 큰 사진 · 하나씩 나타나기 · SVG 그림 · 빈칸) **처음부터 다시** ② 세특 작성기 고도화: 누가기록·수행평가·PAPS 등으로 **최대 5수준**으로 나눠 수준별로 쓰기, 금지어·유의어·분량 검사 ③ 종목 규칙으로 **AI 보조심판** ④ 진도표 · 나이스 시간표 · 출결 점검
+- 교사 결정: 세특 AI로 보낼 때 **이름을 가린다**(0-4 예외의 '이름까지'를 바꿈 — 세특 단계에서 0절도 고침) · 수준 근거 = 수행평가 점수 + 칭찬·관찰 + PAPS 종합등급 + 지도(감점, 문장에는 안 넣음) · 출결은 **새로 만든다**
+- **살핌(salpeem, 교사들이 만든 생기부 데스크톱 앱 v1.2.13)을 참고**: 교사 PC에 설치된 앱을 직접 켜서 써 보고(가명 3명, AI 끔) 설명서·저장 구조를 봄. 코드·AI 지시문은 가져오지 않는다. 가져올 생각: 원문↔문장 한 쌍 · 수정됨 표시 · 기록 중요도(높음·보통·낮음, 바이트 줄일 때 낮음부터) · 영역(폴더 묶음) · 학생별 완성 화면(#1·#2 근거, 제외, "#2 강조" 대화식 고치기, 근거가 바뀌면 다시 만들기 표시) · 여러 학생 한 번에 + 공통 요청 · 오타 밑줄 · 설문 엑셀 → 초안 · 이름 가리기. 살핌에 없는 것(우리가 앞설 곳): 수준 나누기 · 수준별 쓰기 · 체육 자료(수행평가 · PAPS · 칭찬) 연결 · 기재요령 검사 · 폰만으로 사용
+- **④ 점검 결과 (브랜치 `check-attendance`)**: 시연 모드 · 폰 크기로 진도표(빠짐 밀기 · 되돌리기 · 학기 안에 자리 없음 · 일지 '다음 진도'), 나이스(학교 찾기 · 학급 22개 · 한 주 시간표 · 학사일정 166개, 공용 키 중계), 컴시간(학교 찾기 · 이번 주 · 체육 선생님 비교)을 실제로 눌러 봄 → 모두 정상. 고친 것: 진도표 [날짜 · 진도]에서 끝낸 차시를 접고 오늘 근처부터 · 계획대로면 '계획대로'(예전엔 '빠름 0')
+- **수업 출결**: 수업반 보드 네 번째 칸 [출결]. 카드 누르기 = 출석 → 결석 → 지각 → 조퇴 → 결과 → 출석. 사유는 [사유 보기]를 눌러야(건강 정보). 결석·결과는 그날 '참여'에서 빠짐. 반 누적 기록 · 엑셀 · 학생 화면에 횟수. 저장 v9 `attendance`(자동 백업 `UPGRADE_TO = 9`, 백업 형식 6). 계산 `src/lib/attendance.ts`, 저장 `src/db/attendanceRepo.ts`, 화면 `src/pages/groups/AttendView.tsx`, 테스트 `tests/attendance.test.ts`. 시연 자료에도 출결 몇 줄
 ---
 
 ## 7. references/ 폴더 (교사가 준비)
