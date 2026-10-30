@@ -3,7 +3,8 @@ import Collapse from '../../components/Collapse'
 import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
 import { sportOf } from '../../data/sports'
-import { FigureView } from './SlideView'
+import { SPORT_KEYS } from '../../data/sportKeys'
+import { FigureView, KeyVisual } from './SlideView'
 
 /** 종목 한 개: 공식 규칙서를 줄인 요약. 줄마다 조항, 맨 아래 출처(규칙서 판) */
 export default function SportGuidePage() {
@@ -22,6 +23,29 @@ export default function SportGuidePage() {
           </span>
           <Icon name="chevronRight" />
         </Link>
+        {SPORT_KEYS[s.id] && (
+          <section className="space-y-2">
+            <p className="card-title px-1">{s.name}다운 핵심 규칙</p>
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {SPORT_KEYS[s.id].keys.map((k, i) => (
+                <li key={k.title} className="overflow-hidden rounded-3xl bg-[#000] text-white shadow-[var(--shadow-card)]">
+                  <div className="p-2">
+                    <KeyVisual k={k} />
+                  </div>
+                  <div className="px-4 pb-4">
+                    <p className="text-lg font-black">
+                      <span className="mr-1.5 text-[#2997ff]">{i + 1}</span>
+                      {k.title}
+                    </p>
+                    <p className="mt-1 leading-relaxed font-semibold text-white/90">{k.line}</p>
+                    {k.why && <p className="mt-1 text-sm leading-relaxed text-[#a1a1a6]">{k.why}</p>}
+                    <p className="mt-1.5 text-xs font-bold text-[#86868b]">[{k.ref}]</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
         <p className="hint px-1">공식 규칙서를 직접 읽고 쉬운 말로 줄였어요. 작은 글씨 [ ]가 규칙서 조항이에요. 학교 수업에서는 시간 · 점수를 줄여 써도 돼요.</p>
         {s.sections.map((sec, i) => (
           <Collapse key={sec.title} title={<b className="text-ink">{sec.title}</b>} sub={`${sec.items.length}가지`} defaultOpen={i < 2} className="card px-2 py-1">

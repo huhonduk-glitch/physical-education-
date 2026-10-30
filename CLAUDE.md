@@ -742,6 +742,12 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
   - `SeteukDraft`에 선택 필드 `level`(교사가 정한 수준, 없으면 제안) · `important` · `excluded`(근거 id) · `basisKey`(초안 만든 때 근거 — 바뀌면 '근거 바뀜'). 저장 구조 버전은 안 바꿈
   - 화면 `src/pages/SeteukWritePage.tsx`(목록 · 수준 칩 · 여러 명 AI 초안 + 공통 요청), `src/pages/seteuk/LevelSheet.tsx`(비중 · 학생별 근거 표 · 수준 고치기 · 틀 고치기), `SeteukEditor.tsx`(#번호 근거 · ☆중요 · 빼기 · 수준 틀 초안 · 목표 바이트 막대 · '#2 강조' 추가 요청), `AiSetupCard.tsx`, `seteukShared.ts`
   - 검사기에 형식 오류(낱자 · 문장부호 앞 띄어쓰기 · '..' · 줄바꿈 · 앞뒤 빈칸) 더함. 틀 초안의 '·' 연결을 쉼표로 바꿈(검사기에 걸리던 것)
+- **종목 수업자료 다시 짬 (브랜치 `sports-deck`)**: 교사 지적 — 넷볼의 가장 기초적인 규칙(몸싸움 없음 · 드리블 없음 · 포지션 구역)이 안 보임. 참고 사이트(kimju1416.github.io/pe-lecture)처럼 검은 화면 · 큰 사진 · 큰 제목 · 누를 때마다 한 줄씩
+  - 핵심 규칙 `src/data/sportKeys.ts`: 종목마다 3~5개(제목 · 한 줄 · 왜 · 조항 · 그림) + O/X 퀴즈. 내용은 이미 조항을 단 규칙서 요약에서 골랐고, 넷볼 규칙 11.6(재소유 금지 = 드리블 없음)은 World Netball Rules 2024 원문을 다시 읽고 넣음(넷볼 '주요 규칙'에도 한 줄 더함). 츄크볼 퀴즈 근거는 FITB 기본 규칙
+  - 그림 `src/components/RuleVisual.tsx`(직접 그린 SVG 22가지: 타이머 · 넷볼 구역(규칙 3 그림: GS 1·2 · GA 1·2·3 · WA 2·3 · C 2·3·4 · WD 3·4 · GD 3·4·5 · GK 4·5, 포지션을 누르면 구역이 밝아짐) · 0.9 m 거리 · 몸싸움 · 드리블 · 트래블링 · 점수 · 파울 · 오프사이드 · 킥인 · 프레임 · 축발 · 스피릿 · 턴오버 · 3번 터치 · 로테이션 · 서브 높이 · 서브 위치 등)
+  - 슬라이드 `src/lib/sportSlides.ts`: 표지(사진 + 핵심 규칙 칩) → 핵심 규칙 한눈에 → 핵심 한 장씩 → 절마다(장 번호) → 퀴즈 → 출처. `stepsOf` = 그 장에서 [다음]을 몇 번(절은 줄 수 + 규격 칸, 핵심은 1~2, 퀴즈는 정답 1). 화면 `SlideView.tsx`(검은 화면) · `SlidesPage.tsx`(누르기 · 키 → ← O F Esc, 전체 보기). 종목 안내 화면 맨 위에 핵심 규칙 카드
+  - PPT `src/lib/sportPptx.ts`: 같은 목록 · 같은 검은 디자인(줄은 모두 보인 상태), 핵심 그림 · 경기장은 SVG → PNG. 넷볼 PPT 1.36 MB 만들어짐 확인
+  - 남은 것: 네트(탁구 · 피클볼 · 킨볼 · 빅발리볼) · 필드 · 기술형은 공식 규칙서를 받아 같은 방식으로 (6-6 앞으로 할 일)
 - **수업 출결**: 수업반 보드 네 번째 칸 [출결]. 카드 누르기 = 출석 → 결석 → 지각 → 조퇴 → 결과 → 출석. 사유는 [사유 보기]를 눌러야(건강 정보). 결석·결과는 그날 '참여'에서 빠짐. 반 누적 기록 · 엑셀 · 학생 화면에 횟수. 저장 v9 `attendance`(자동 백업 `UPGRADE_TO = 9`, 백업 형식 6). 계산 `src/lib/attendance.ts`, 저장 `src/db/attendanceRepo.ts`, 화면 `src/pages/groups/AttendView.tsx`, 테스트 `tests/attendance.test.ts`. 시연 자료에도 출결 몇 줄
 ---
 
