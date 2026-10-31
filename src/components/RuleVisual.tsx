@@ -173,6 +173,21 @@ function Zones({ pos }: { pos?: NetballPos | null }) {
 }
 
 function Distance({ label, note }: { label: string; note?: string }) {
+  // 설명(note)이 있으면 사람 대신 시작 · 끝 표시만 (넷볼 0.9 m 말고 다른 종목의 거리)
+  if (note)
+    return (
+      <Svg label={`${label} — ${note}`}>
+        <line x1={70} y1={70} x2={70} y2={190} stroke={C.yellow} strokeWidth={5} />
+        <line x1={330} y1={70} x2={330} y2={190} stroke={C.yellow} strokeWidth={5} />
+        <line x1={78} y1={130} x2={322} y2={130} stroke={C.ink} strokeWidth={3} markerStart="url(#rv-arr)" markerEnd="url(#rv-arr)" />
+        <Txt x={200} y={108} size={34} w={900}>
+          {label}
+        </Txt>
+        <Txt x={200} y={225} size={17} color={C.mute}>
+          {note}
+        </Txt>
+      </Svg>
+    )
   return (
     <Svg label={`${label} 거리`}>
       <circle cx={130} cy={130} r={92} fill={C.blue} opacity={0.12} stroke={C.blue} strokeDasharray="6 6" strokeWidth={2} />
@@ -184,7 +199,7 @@ function Distance({ label, note }: { label: string; note?: string }) {
         {label}
       </Txt>
       <Txt x={200} y={30} size={16} color={C.mute}>
-        {note ?? '공 가진 선수의 발에서 재요'}
+        공 가진 선수의 발에서 재요
       </Txt>
     </Svg>
   )

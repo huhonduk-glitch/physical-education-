@@ -233,6 +233,29 @@ export const REF_BOARDS: Record<string, RefBoard> = {
       { id: 'order', name: '루 건너뜀', words: '루 안 밟음 순서', kind: 'violation', verdict: '수비가 어필하면 그 주자 아웃', restart: '다음 플레이 전에 어필해야 해요', tell: '루는 1 → 2 → 3 → 홈 순서로 밟아요.', ref: '10.1 · 11.1' },
     ],
   },
+  // 필드형 나머지 (2026-10-31)
+  softball: {
+    scoreSteps: [1],
+    calls: [
+      { id: 'pitch', name: '투구 반칙', words: '위로 던짐 엉덩이 위 팔 두 바퀴', kind: 'violation', verdict: '반칙 투구 — 타자에게 볼 1개 (주자는 한 루씩)', restart: '다음 투구', tell: '손이 엉덩이 아래로 지나가며 놓아요.', ref: '4.3' },
+      { id: 'walk', name: '볼넷', words: '볼 4개', kind: 'restart', verdict: '타자는 1루로', restart: '다음 타자', tell: '', ref: '제5장' },
+      { id: 'strikeout', name: '삼진', words: '스트라이크 3개', kind: 'restart', verdict: '타자 아웃', restart: '다음 타자', tell: '', ref: '제5장' },
+      { id: 'double', name: '더블 베이스', words: '1루 두 칸 부딪힘', kind: 'restart', verdict: '수비는 안쪽 칸, 타자 주자는 바깥 칸', restart: '이어서', tell: '1루에서는 바깥 칸을 밟아요.', ref: '5.6' },
+      { id: 'force', name: '포스 · 태그 아웃', words: '루 밟음 터치 송구', kind: 'restart', verdict: '꼭 가야 하는 주자는 루를 밟아 아웃, 아니면 공으로 태그해야 아웃', restart: '이어서', tell: '', ref: '제5장' },
+      { id: 'fly', name: '플라이 아웃', words: '뜬공 잡음', kind: 'restart', verdict: '타자 아웃 — 먼저 출발한 주자는 원래 루로 돌아가 밟아야 해요', restart: '이어서', tell: '', ref: '5.10' },
+    ],
+  },
+  teeball: {
+    scoreSteps: [1],
+    calls: [
+      { id: 'foul3', name: '파울 3번', words: '파울 세 번', kind: 'restart', verdict: '타자 아웃 (학교 규칙)', restart: '다음 타자', tell: '', ref: '플레이북' },
+      { id: 'steal', name: '먼저 뛰기', words: '도루 리드 미리 출발', kind: 'violation', verdict: '공이 맞기 전에 떠난 주자는 원래 루로 (또는 아웃 — 미리 정한 대로)', restart: '다시 타격', tell: '주자는 공이 맞은 뒤 출발해요.', ref: '플레이북' },
+      { id: 'fly', name: '플라이 아웃', words: '뜬공 잡음', kind: 'restart', verdict: '타자 아웃', restart: '이어서', tell: '', ref: '플레이북' },
+      { id: 'force', name: '포스 아웃', words: '루 먼저 밟음', kind: 'restart', verdict: '꼭 가야 하는 주자보다 공을 가진 수비가 루를 먼저 밟으면 아웃', restart: '이어서', tell: '', ref: '플레이북' },
+      { id: 'tag', name: '태그 아웃', words: '공으로 터치', kind: 'restart', verdict: '루를 떠난 주자를 공으로 건드리면 아웃', restart: '이어서', tell: '', ref: '플레이북' },
+      { id: 'bat', name: '배트 던짐', words: '배트 던지기 위험', kind: 'card', verdict: '경고 (거듭되면 아웃 — 학교 규칙)', restart: '이어서', tell: '치고 나면 배트를 내려놓고 달려요.', ref: '플레이북' },
+    ],
+  },
 }
 
 /** 찾기: 이름 · 학생 말 · 판정에서 낱말이 모두 들어간 버튼 */

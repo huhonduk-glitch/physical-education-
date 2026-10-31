@@ -3,6 +3,7 @@ import type { LeagueRules, SportId } from '../lib/league'
 import { INVASION } from './sportsInvasion'
 import { NET } from './sportsNet'
 import { MORE } from './sportsMore'
+import { SKILL } from './sportsSkill'
 import { COACHING, PLAYBOOK } from './sportsCoaching'
 
 /**
@@ -222,16 +223,13 @@ const RULES: SportGuide[] = [
   },
   ...NET,
   ...MORE,
+  ...SKILL,
 ]
 
 /** 자료를 준비 중인 종목 (2026-10-27 교사 요청 목록). 공식 규칙서 · 자료를 확인하는 대로 SPORTS로 옮긴다 */
 export const UPCOMING: { id: string; name: string; emoji: string; group: SportGroup; note?: string }[] = [
   { id: 'bigvolleyball', name: '빅발리볼', emoji: '🏐', group: 'net' },
-  { id: 'teeball', name: '티볼', emoji: '⚾', group: 'field' },
   { id: 'platebaseball', name: '플레이트 야구', emoji: '⚾', group: 'field' },
-  { id: 'gymnastics', name: '체조 (맨몸)', emoji: '🤸', group: 'skill' },
-  { id: 'athletics', name: '육상 (50m · 이어달리기)', emoji: '🏃', group: 'skill' },
-  { id: 'discgolf', name: '플라잉디스크 골프', emoji: '🥏', group: 'skill' },
 ]
 
 /** 규칙서 요약 뒤에 수업 지도 내용(포지션 · 기술 · 전술 · 안전 · 생각해 봅시다)을 이어 붙인다 (2026-10-31) */

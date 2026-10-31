@@ -38,7 +38,7 @@ export function buildSlides(g: SportGuide): Slide[] {
   const keys = k?.keys ?? []
   const out: Slide[] = [{ kind: 'cover', title: g.name, sub: g.summary, group: SPORT_GROUPS.find((x) => x.id === g.group)?.name ?? '', cover: g.cover ? PHOTOS[g.cover] : undefined, keys: keys.map((x) => x.title) }]
   if (keys.length) {
-    out.push({ kind: 'keys', title: `${g.name}다운 규칙 ${keys.length}가지`, keys })
+    out.push({ kind: 'keys', title: `${g.name.replace(/\s*\(.*\)\s*$/, '')}다운 규칙 ${keys.length}가지`, keys })
     keys.forEach((key, i) => out.push({ kind: 'key', no: i + 1, total: keys.length, key }))
   }
   g.sections.forEach((s, si) => {
