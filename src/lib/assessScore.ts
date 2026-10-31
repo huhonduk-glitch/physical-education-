@@ -1,4 +1,4 @@
-import type { AssessItem, Assessment, RubricItem } from '../db/types'
+import type { AssessItem, Assessment, AssessmentScore, RubricItem } from '../db/types'
 
 type Gender = 'M' | 'F' | null
 
@@ -75,6 +75,60 @@ export function totalOf(items: readonly AssessItem[], scores: Record<string, str
     }
   }
   return { total: Math.round(total * 100) / 100, max, complete: done === items.length && items.length > 0, done }
+}
+
+/**
+ * 평가 전체 점수: 제출 구분(백지 제출 · 미응시 …)을 골랐으면 그 점수, 아니면 요소 점수의 합.
+ * 제출 구분 점수도 채점이 끝난 것으로 본다(나이스로 보낼 수 있음).
+ */
+export function areaTotal(
+  a: Assessment,
+  sc: Pick<AssessmentScore, 'scores' | 'status'> | undefined,
+  gender?: Gender,
+  items: readonly AssessItem[] = itemsOf(a),
+): AssessTotal & { status?: string } {
+  const t = totalOf(items, sc?.scores, gender)
+  const sp = sc?.status ? a.specials?.find((x) => x.label === sc.status) : undefined
+  if (!sp) return t
+  return { total: sp.points, max: t.max, complete: true, done: items.length, status: sp.label }
+}
+
+/** 성취 수준: 합계 ÷ 만점 × 100이 min 이상인 첫 수준 (min 높은 순). 수준을 안 쓰면 '' */
+export function levelOf(cuts: readonly { label: string; min: number }[] | undefined, total: number, max: number): string {
+  if (!cuts?.length || max <= 0) return ''
+  const pct = (total / max) * 100
+  const hit = [...cuts].sort((x, y) => y.min - x.min).find((c) => pct >= c.min - 1e-9)
+  return hit?.label ?? ''
+}
+
+/** 성취 수준 기본안 */
+export const LEVEL_CUT_PRESETS: Record<'3' | '5', { label: string; min: number }[]> = {
+  '3': [
+    { label: '상', min: 90 },
+    { label: '중', min: 60 },
+    { label: '하', min: 0 },
+  ],
+  '5': [
+    { label: 'A', min: 90 },
+    { label: 'B', min: 80 },
+    { label: 'C', min: 70 },
+    { label: 'D', min: 60 },
+    { label: 'E', min: 0 },
+  ],
+}
+
+/** 체크리스트 항목 하나를 켜고 끈다 → 새 목록(번호 순)과 만족한 개수 */
+export function toggleCheck(list: readonly number[] | undefined, idx: number): { list: number[]; count: number } {
+  const set = new Set(list ?? [])
+  if (set.has(idx)) set.delete(idx)
+  else set.add(idx)
+  const next = [...set].sort((x, y) => x - y)
+  return { list: next, count: next.length }
+}
+
+/** 체크리스트 개수별 점수: 0개 = base, 1개마다 step점 (예: 30 + 개수 × 10) */
+export function checklistBands(n: number, base: number, step: number): { limit: number; points: number }[] {
+  return Array.from({ length: n }, (_, i) => ({ limit: n - i, points: Math.round((base + (n - i) * step) * 100) / 100 }))
 }
 
 /** 예전 방식(rubric) 평가를 새 채점 요소로 바꾼다. id를 그대로 둬서 예전 점수가 그대로 읽힌다. 등급 점수는 교사가 정한다 */

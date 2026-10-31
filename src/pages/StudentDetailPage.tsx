@@ -12,7 +12,7 @@ import { monthLabel, shortDateLabel } from '../lib/dates'
 import { countByCategory, countByMonth, keywordSummary } from '../lib/recordStats'
 import { genderLabel } from '../lib/text'
 import { eventName, fixed } from '../lib/paps'
-import { appliesTo, fmtNum, itemPoints, itemsOf, totalOf } from '../lib/assessScore'
+import { areaTotal, appliesTo, fmtNum, itemPoints, itemsOf } from '../lib/assessScore'
 import type { Student } from '../db/types'
 import { useApp } from '../state/AppContext'
 import { usePapsClass } from '../state/usePapsClass'
@@ -333,7 +333,7 @@ function AssessCard({ student }: { student: Student }) {
           {data.list.map((a) => {
             const sc = data.scores.get(a.id)
             const items = itemsOf(a)
-            const t = totalOf(items, sc?.scores, student.gender)
+            const t = areaTotal(a, sc, student.gender, items)
             return (
               <li key={a.id} className="rounded-xl bg-fill px-3 py-2">
                 <p className="font-bold">

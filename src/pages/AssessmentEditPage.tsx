@@ -5,7 +5,8 @@ import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import { db, newId } from '../db/db'
 import type { AssessItem, AssessMethod, Assessment } from '../db/types'
-import { assessmentProblems, itemMax, itemsOf, levelPreset } from '../lib/assessScore'
+import { ASSESS_TEMPLATES } from '../data/assessTemplates'
+import { assessmentProblems, checklistBands, fmtNum, itemMax, itemsOf, LEVEL_CUT_PRESETS, levelPreset } from '../lib/assessScore'
 import { GROUP_COLORS, SEMESTER_LABEL } from '../lib/groups'
 import { useApp } from '../state/AppContext'
 import { useGroups } from '../state/useGroups'
@@ -30,14 +31,20 @@ const newItem = (method: AssessMethod = 'level'): AssessItem => ({
 export default function AssessmentEditPage() {
   const { id } = useParams()
   const nav = useNavigate()
-  const fromRubric = new URLSearchParams(useLocation().search).get('from') === 'rubric'
+  const query = new URLSearchParams(useLocation().search)
+  const fromRubric = query.get('from') === 'rubric'
+  const tpl = !id ? ASSESS_TEMPLATES.find((t) => t.id === query.get('tpl')) : undefined
+  const [tplData] = useState(() => tpl?.build(newId))
   const { settings, readOnly } = useApp()
   const { groups } = useGroups()
   const existing = useLiveQuery(async () => (id ? db.assessments.get(id) : undefined), [id])
-  const [title, setTitle] = useState('')
+  const [title, setTitle] = useState(tplData?.title ?? '')
   const [semester, setSemester] = useState<0 | 1 | 2>(0)
   const [groupIds, setGroupIds] = useState<string[]>([])
-  const [items, setItems] = useState<AssessItem[]>([newItem()])
+  const [items, setItems] = useState<AssessItem[]>(tplData?.items ?? [newItem()])
+  const [specials, setSpecials] = useState<{ label: string; points: number }[]>(tplData?.specials ?? [])
+  const [texts, setTexts] = useState<string[]>(tplData?.texts ?? [])
+  const [levelCuts, setLevelCuts] = useState<{ label: string; min: number }[]>(tplData?.levelCuts ?? [])
   const [altTask, setAltTask] = useState(true)
   const [loaded, setLoaded] = useState(!id)
   const [errors, setErrors] = useState<string[]>([])
@@ -48,6 +55,9 @@ export default function AssessmentEditPage() {
     setSemester(existing.semester ?? 0)
     setItems(itemsOf(existing))
     setAltTask(existing.altTaskEnabled)
+    setSpecials(existing.specials ?? [])
+    setTexts(existing.texts ?? [])
+    setLevelCuts(existing.levelCuts ?? [])
     setGroupIds(existing.groupIds ?? (groups ?? []).filter((g) => g.kind === 'homeroom' && g.grade === existing.grade).map((g) => g.id))
     setLoaded(true)
   }, [existing, loaded, groups])
@@ -57,6 +67,10 @@ export default function AssessmentEditPage() {
 
   const save = async () => {
     const probs = assessmentProblems(title, items)
+    if (specials.some((x) => !x.label.trim())) probs.push('제출 구분 이름을 적어 주세요')
+    if (new Set(specials.map((x) => x.label.trim())).size !== specials.length) probs.push('같은 제출 구분 이름이 있어요')
+    if (texts.some((x) => !x.trim()) || new Set(texts.map((x) => x.trim())).size !== texts.length) probs.push('글 칸 이름이 비었거나 겹쳐요')
+    if (levelCuts.some((x) => !x.label.trim())) probs.push('성취 수준 이름을 적어 주세요')
     if (groupIds.length === 0) probs.push('이 평가를 하는 수업반을 골라 주세요')
     setErrors(probs)
     if (probs.length) return window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -73,6 +87,9 @@ export default function AssessmentEditPage() {
       semester,
       ...(existing?.standards ? { standards: existing.standards } : {}),
       ...(existing?.plan ? { plan: existing.plan } : {}),
+      ...(specials.length ? { specials: specials.map((x) => ({ ...x, label: x.label.trim() })) } : {}),
+      ...(texts.length ? { texts: texts.map((x) => x.trim()) } : {}),
+      ...(levelCuts.length ? { levelCuts: levelCuts.map((x) => ({ ...x, label: x.label.trim() })) } : {}),
     }
     await db.assessments.put(a)
     nav(`/more/assessments/${a.id}`, { replace: true })
@@ -92,6 +109,9 @@ export default function AssessmentEditPage() {
     <>
       <PageHeader title={id ? '평가 고치기' : '새 수행평가'} back />
       <div className="page space-y-4 pb-36">
+        {tpl && errors.length === 0 && (
+          <p className="rounded-2xl bg-ok-light p-4 font-bold text-ok">'{tpl.name}' 예시로 채웠어요. 평가 이름 · 요소 · 점수를 우리 평가에 맞게 고치고, 수업반을 골라 [저장]을 눌러 주세요.</p>
+        )}
         {fromRubric && errors.length === 0 && (
           <p className="rounded-2xl bg-ok-light p-4 font-bold text-ok">루브릭으로 평가를 만들었어요. 이 평가를 하는 수업반을 고르고 [저장]을 눌러 주세요.</p>
         )}
@@ -190,6 +210,9 @@ export default function AssessmentEditPage() {
             <Icon name="plus" /> 채점 요소 더하기
           </button>
         )}
+
+        <h2 className="px-1 text-lg font-extrabold">기록표 칸</h2>
+        <SheetOptions readOnly={readOnly} texts={texts} setTexts={setTexts} specials={specials} setSpecials={setSpecials} levelCuts={levelCuts} setLevelCuts={setLevelCuts} />
 
         {existing && !readOnly && (
           <button type="button" className="btn btn-danger-soft w-full" onClick={remove}>
@@ -367,16 +390,7 @@ function ItemEditor({
               </>
             )}
           </label>
-          {item.checks?.length ? (
-            <div className="rounded-xl bg-fill px-3 py-2 text-sm">
-              <p className="font-bold text-ink-2">체크리스트 (기록 = 만족한 개수)</p>
-              <ol className="mt-1 list-decimal space-y-0.5 pl-5 text-ink-2">
-                {item.checks.map((c) => (
-                  <li key={c}>{c}</li>
-                ))}
-              </ol>
-            </div>
-          ) : null}
+          <ChecklistEditor item={item} readOnly={readOnly} onChange={onChange} />
         </div>
       )}
 
@@ -433,5 +447,174 @@ function NumInput({ value, onValue, className, ...rest }: { value: number | unde
         }
       }}
     />
+  )
+}
+
+/** 체크리스트: 평가 요소 목록 + 개수별 점수 채우기. 채점표에서 항목마다 체크하면 만족한 개수가 기록이 된다 */
+function ChecklistEditor({ item, readOnly, onChange }: { item: AssessItem; readOnly: boolean; onChange: (p: Partial<AssessItem>) => void }) {
+  const checks = item.checks
+  const sorted = [...(item.bands ?? [])].sort((a, b) => a.limit - b.limit)
+  const [base, setBase] = useState(String(item.basePoints ?? 0))
+  const [step, setStep] = useState(String(sorted.length >= 1 ? sorted[0].points - (item.basePoints ?? 0) : 10))
+  if (!checks) {
+    if (readOnly) return null
+    return (
+      <button type="button" className="btn btn-ghost w-full text-sm" onClick={() => onChange({ checks: [''], unit: '개', better: 'higher', bands: checklistBands(1, 30, 10), basePoints: 30 })}>
+        + 체크리스트로 채점 (평가 요소를 하나씩 체크 → 만족한 개수로 점수)
+      </button>
+    )
+  }
+  const setChecks = (next: string[]) => onChange({ checks: next })
+  const fill = () => {
+    const b = Number(base)
+    const st = Number(step)
+    if (!Number.isFinite(b) || !Number.isFinite(st)) return
+    onChange({ bands: checklistBands(checks.length, b, st), basePoints: b })
+  }
+  return (
+    <div className="space-y-2 rounded-xl bg-fill p-3">
+      <p className="text-sm font-extrabold text-ink-2">체크리스트 평가 요소 (기록 = 만족한 개수)</p>
+      {checks.map((c, k) => (
+        <div key={k} className="flex items-start gap-2">
+          <span className="mt-3 w-5 shrink-0 text-center font-bold text-ink-3">{k + 1}</span>
+          <textarea
+            className="field min-h-[48px] flex-1 py-2 text-[0.92rem]"
+            value={c}
+            placeholder="예: 참고자료나 사례를 표기하였는가?"
+            aria-label={`평가 요소 ${k + 1}`}
+            disabled={readOnly}
+            onChange={(e) => setChecks(checks.map((x, j) => (j === k ? e.target.value : x)))}
+          />
+          {!readOnly && (
+            <button type="button" className="btn btn-ghost mt-1 px-2 text-ink-3" aria-label={`평가 요소 ${k + 1} 빼기`} onClick={() => setChecks(checks.filter((_, j) => j !== k))}>
+              <Icon name="close" size={18} />
+            </button>
+          )}
+        </div>
+      ))}
+      {!readOnly && (
+        <>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="btn btn-soft" onClick={() => setChecks([...checks, ''])}>
+              <Icon name="plus" size={18} /> 평가 요소
+            </button>
+            <button type="button" className="btn btn-ghost text-sm text-ink-3" onClick={() => onChange({ checks: undefined })}>
+              체크리스트 끄기
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 border-t border-line pt-2 text-sm">
+            <span className="font-bold text-ink-2">개수별 점수:</span>
+            0개
+            <input className="field w-16 text-center" inputMode="decimal" value={base} onChange={(e) => setBase(e.target.value)} aria-label="0개일 때 점수" />점 + 1개마다
+            <input className="field w-16 text-center" inputMode="decimal" value={step} onChange={(e) => setStep(e.target.value)} aria-label="1개마다 더할 점수" />점
+            <button type="button" className="btn btn-soft text-sm" onClick={fill}>
+              채우기 ({checks.length}개 → {fmtNum(Number(base) + checks.length * Number(step) || 0)}점)
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+/** 기록표 칸: 글 칸 · 제출 구분 · 성취 수준 (평가마다 고름) */
+function SheetOptions({
+  readOnly,
+  texts,
+  setTexts,
+  specials,
+  setSpecials,
+  levelCuts,
+  setLevelCuts,
+}: {
+  readOnly: boolean
+  texts: string[]
+  setTexts: (v: string[]) => void
+  specials: { label: string; points: number }[]
+  setSpecials: (v: { label: string; points: number }[]) => void
+  levelCuts: { label: string; min: number }[]
+  setLevelCuts: (v: { label: string; min: number }[]) => void
+}) {
+  const levelMode =
+    levelCuts.length === 0 ? 'off' : levelCuts.length === 3 && levelCuts[0].label === '상' ? '3' : levelCuts.length === 5 && levelCuts[0].label === 'A' ? '5' : 'custom'
+  return (
+    <section className="card space-y-5">
+      <div className="space-y-2">
+        <p className="font-extrabold">글 칸</p>
+        <p className="hint">학생마다 적어 둘 칸이에요 (예: 탐구주제, 발표 주제). 점수에는 들어가지 않아요.</p>
+        {texts.map((t, k) => (
+          <div key={k} className="flex items-center gap-2">
+            <input className="field flex-1" value={t} placeholder="예: 탐구주제" aria-label={`글 칸 ${k + 1} 이름`} disabled={readOnly} onChange={(e) => setTexts(texts.map((x, j) => (j === k ? e.target.value : x)))} />
+            {!readOnly && (
+              <button type="button" className="btn btn-ghost px-2 text-ink-3" aria-label="글 칸 빼기" onClick={() => setTexts(texts.filter((_, j) => j !== k))}>
+                <Icon name="close" size={18} />
+              </button>
+            )}
+          </div>
+        ))}
+        {!readOnly && (
+          <button type="button" className="btn btn-soft" onClick={() => setTexts([...texts, ''])}>
+            <Icon name="plus" size={18} /> 글 칸
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-2 border-t border-line pt-4">
+        <p className="font-extrabold">제출 구분</p>
+        <p className="hint">고르면 요소 점수 대신 이 점수가 평가 점수가 돼요 (예: 백지 제출 20점, 미응시(미인정) 15점).</p>
+        {specials.map((x, k) => (
+          <div key={k} className="flex items-center gap-2">
+            <input className="field flex-1" value={x.label} placeholder="예: 백지 제출" aria-label={`제출 구분 ${k + 1} 이름`} disabled={readOnly} onChange={(e) => setSpecials(specials.map((y, j) => (j === k ? { ...y, label: e.target.value } : y)))} />
+            <NumInput className="field w-20 text-right tabular-nums" value={x.points} aria-label={`${x.label} 점수`} disabled={readOnly} onValue={(v) => setSpecials(specials.map((y, j) => (j === k ? { ...y, points: v } : y)))} />
+            <span className="text-ink-3">점</span>
+            {!readOnly && (
+              <button type="button" className="btn btn-ghost px-2 text-ink-3" aria-label="제출 구분 빼기" onClick={() => setSpecials(specials.filter((_, j) => j !== k))}>
+                <Icon name="close" size={18} />
+              </button>
+            )}
+          </div>
+        ))}
+        {!readOnly && (
+          <button type="button" className="btn btn-soft" onClick={() => setSpecials([...specials, { label: '', points: 0 }])}>
+            <Icon name="plus" size={18} /> 제출 구분
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-2 border-t border-line pt-4">
+        <p className="font-extrabold">성취 수준</p>
+        <div className="segment" role="radiogroup" aria-label="성취 수준">
+          {(
+            [
+              ['off', '안 씀'],
+              ['3', '상·중·하'],
+              ['5', 'A~E'],
+            ] as const
+          ).map(([m, label]) => (
+            <button key={m} type="button" role="radio" aria-checked={levelMode === m} disabled={readOnly} onClick={() => setLevelCuts(m === 'off' ? [] : LEVEL_CUT_PRESETS[m].map((c) => ({ ...c })))}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {levelCuts.length > 0 && (
+          <>
+            <p className="hint">합계가 만점의 몇 % 이상이면 그 수준인지 정해요 (만점 100점이면 % = 점수).</p>
+            {levelCuts.map((c, k) => (
+              <div key={k} className="flex items-center gap-2">
+                <input className="field w-20 text-center font-bold" value={c.label} aria-label={`수준 ${k + 1} 이름`} disabled={readOnly} onChange={(e) => setLevelCuts(levelCuts.map((y, j) => (j === k ? { ...y, label: e.target.value } : y)))} />
+                {k === levelCuts.length - 1 ? (
+                  <span className="text-sm text-ink-3">그 밖</span>
+                ) : (
+                  <>
+                    <NumInput className="field w-20 text-right tabular-nums" value={c.min} aria-label={`${c.label} 기준 %`} disabled={readOnly} onValue={(v) => setLevelCuts(levelCuts.map((y, j) => (j === k ? { ...y, min: v } : y)))} />
+                    <span className="text-sm text-ink-3">% 이상</span>
+                  </>
+                )}
+              </div>
+            ))}
+          </>
+        )}
+      </div>
+    </section>
   )
 }

@@ -210,6 +210,12 @@ export interface Assessment {
   standards?: { code: string; text: string }[]
   /** 6-5 ②: 평가계획서에서 읽은 정보 (평가요소 · 평가방법 · 시기 · 반영비율 · 성취수준별 수행 특성) */
   plan?: { elements?: string; methods?: string[]; when?: string; ratio?: string; levelDescs?: { label: string; desc: string }[] }
+  /** 제출 구분 (평가 전체 점수): 백지 제출 20점 · 미응시(미인정) 15점처럼. 고르면 요소 점수 대신 이 점수 */
+  specials?: { label: string; points: number }[]
+  /** 학생마다 적는 글 칸 (예: 탐구주제) */
+  texts?: string[]
+  /** 성취 수준: 합계가 만점의 min% 이상이면 이 수준 (예: 상 90 · 중 60 · 하 0) */
+  levelCuts?: { label: string; min: number }[]
 }
 
 export interface AssessmentScore {
@@ -218,6 +224,12 @@ export interface AssessmentScore {
   studentId: string
   scores: Record<string, string | number>
   note?: string
+  /** 체크리스트 요소에서 만족한 항목 번호(0부터). scores에는 만족한 개수도 함께 둔다 */
+  checks?: Record<string, number[]>
+  /** 제출 구분 (Assessment.specials의 label) */
+  status?: string
+  /** 글 칸 (Assessment.texts 이름 → 내용) */
+  texts?: Record<string, string>
 }
 
 export interface TimerPreset {
