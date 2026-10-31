@@ -1,0 +1,21 @@
+# main 브랜치에 push되면 포트폴리오 사이트에 다시 만들기를 요청한다.
+# 주소는 저장소 Settings → Secrets and variables → Actions의 PORTFOLIO_DEPLOY_HOOK에 둔다.
+name: 포트폴리오 알림
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 포트폴리오 사이트 다시 만들기 요청
+        env:
+          HOOK: ${{ secrets.PORTFOLIO_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "PORTFOLIO_DEPLOY_HOOK Secret이 없어 건너뜁니다."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK"
