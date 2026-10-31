@@ -2,6 +2,7 @@ import type { CourtId } from '../components/CourtDiagram'
 import type { LeagueRules, SportId } from '../lib/league'
 import { INVASION } from './sportsInvasion'
 import { NET } from './sportsNet'
+import { MORE } from './sportsMore'
 import { COACHING, PLAYBOOK } from './sportsCoaching'
 
 /**
@@ -220,12 +221,12 @@ const RULES: SportGuide[] = [
     scoreSteps: [1],
   },
   ...NET,
+  ...MORE,
 ]
 
 /** 자료를 준비 중인 종목 (2026-10-27 교사 요청 목록). 공식 규칙서 · 자료를 확인하는 대로 SPORTS로 옮긴다 */
 export const UPCOMING: { id: string; name: string; emoji: string; group: SportGroup; note?: string }[] = [
   { id: 'bigvolleyball', name: '빅발리볼', emoji: '🏐', group: 'net' },
-  { id: 'baseball', name: '야구', emoji: '⚾', group: 'field' },
   { id: 'teeball', name: '티볼', emoji: '⚾', group: 'field' },
   { id: 'platebaseball', name: '플레이트 야구', emoji: '⚾', group: 'field' },
   { id: 'gymnastics', name: '체조 (맨몸)', emoji: '🤸', group: 'skill' },

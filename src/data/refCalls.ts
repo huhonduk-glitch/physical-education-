@@ -186,6 +186,53 @@ export const REF_BOARDS: Record<string, RefBoard> = {
       { id: 'critical', name: '9점 (목표 − 2)', words: '한 팀 나감 두 팀만', kind: 'restart', verdict: '가장 점수 낮은 팀이 나가고 두 팀이 겨뤄요', restart: '두 팀 중 점수 낮은 팀이 가운데에서 쳐요', tell: '', ref: '5.2.5 · 5.2.6' },
     ],
   },
+  // 체육 플레이북 참고로 더한 종목 (2026-10-31)
+  handball: {
+    scoreSteps: [1],
+    calls: [
+      { id: 'steps', name: '걸음 반칙', words: '네 걸음 오래 걸음 트래블링', kind: 'violation', verdict: '상대 프리 스로', restart: '반칙한 자리에서 상대가 던져 시작', tell: '공을 들고는 3걸음까지.', ref: '7:3 · 13:1' },
+      { id: 'sec3', name: '3초', words: '오래 들고 있음', kind: 'violation', verdict: '상대 프리 스로', restart: '반칙한 자리에서', tell: '3초 안에 패스 · 슛 · 드리블.', ref: '7:2 · 13:1' },
+      { id: 'area-att', name: '골 에어리어 (공격)', words: '선 밟음 들어감 공격수', kind: 'violation', verdict: '상대 골키퍼 공 (골 무효)', restart: '골키퍼가 골 에어리어에서 던져 시작', tell: '선을 밟지 말고 뛰어올라 공중에서 던져요.', ref: '6:2 a · 12:1' },
+      { id: 'area-def', name: '골 에어리어 (수비)', words: '수비 들어감 골 에어리어 막음', kind: 'foul', verdict: '이득을 봤으면 프리 스로, 확실한 골 기회를 막았으면 7 m 던지기', restart: '프리 스로는 반칙한 자리, 7 m 던지기는 7 m 선에서', tell: '수비도 골 에어리어 밖에서 막아요.', ref: '6:2 b · c' },
+      { id: 'push', name: '밀기 · 잡기', words: '밀기 잡기 팔 몸싸움 공 잡아채기', kind: 'foul', verdict: '상대 프리 스로 (거듭되면 경고 → 2분 퇴장)', restart: '반칙한 자리에서', tell: '굽힌 팔로 따라가고, 밀거나 잡지 않아요.', ref: '8:2 · 8:3' },
+      { id: 'seven', name: '7 m 던지기', words: '골 기회 막음 페널티', kind: 'foul', verdict: '7 m 던지기', restart: '7 m 선에서 골키퍼와 1대1', tell: '', ref: '14:1' },
+      { id: 'foot', name: '발로 공 다룸', words: '발 차기 무릎 아래', kind: 'violation', verdict: '상대 프리 스로', restart: '반칙한 자리에서', tell: '무릎 아래로는 공을 다루지 않아요.', ref: '7:8' },
+    ],
+  },
+  floorball: {
+    scoreSteps: [1],
+    calls: [
+      { id: 'high', name: '하이 스틱', words: '스틱 높이 허리 위 휘두르기', kind: 'violation', verdict: '상대 프리 히트', restart: '반칙한 자리에서', tell: '스틱 날은 허리 아래로.', ref: '507 3)' },
+      { id: 'knee', name: '무릎 위 플레이', words: '공 높이 무릎 위 발', kind: 'violation', verdict: '상대 프리 히트', restart: '반칙한 자리에서', tell: '공은 무릎 아래에서만 쳐요(허벅지로 멈추기는 OK).', ref: '507 4)' },
+      { id: 'stick', name: '스틱 치기', words: '스틱 때림 들어올림 막음', kind: 'foul', verdict: '상대 프리 히트', restart: '반칙한 자리에서', tell: '상대 스틱은 건드리지 않고 공만 노려요.', ref: '507 1)' },
+      { id: 'push', name: '밀기 · 잡기', words: '밀기 잡기 몸싸움 부딪힘', kind: 'foul', verdict: '상대 프리 히트', restart: '반칙한 자리에서', tell: '어깨끼리 맞대는 것까지만.', ref: '507 2) · 6)' },
+      { id: 'jump', name: '점프해서 멈춤', words: '뛰어서 공 멈춤', kind: 'violation', verdict: '상대 프리 히트', restart: '반칙한 자리에서', tell: '한 발은 바닥에 두고 멈춰요.', ref: '507 11)' },
+      { id: 'crease', name: '골키퍼 구역 들어감', words: '골키퍼 구역 골대 앞', kind: 'violation', verdict: '상대 프리 히트', restart: '반칙한 자리에서', tell: '', ref: '507 8)' },
+    ],
+  },
+  tennis: {
+    scoreSteps: [1],
+    calls: [
+      { id: 'fault', name: '서브 폴트', words: '서브 밖 네트 안 들어감', kind: 'violation', verdict: '첫 서브면 세컨드 서브, 두 번째면 더블 폴트(상대 1점)', restart: '같은 자리에서 다시 서브', tell: '', ref: '19 · 20 · 24' },
+      { id: 'foot', name: '풋 폴트', words: '끝줄 밟음 걸어감', kind: 'violation', verdict: '서브 폴트로 처리', restart: '세컨드 서브(또는 더블 폴트)', tell: '서브할 때 끝줄을 밟지 않아요.', ref: '18' },
+      { id: 'let', name: '렛 (서브 네트)', words: '네트 맞고 들어감', kind: 'restart', verdict: '그 서브만 다시', restart: '같은 서브 차례로 다시', tell: '', ref: '22' },
+      { id: 'line', name: '선에 닿음', words: '라인 인 아웃', kind: 'score', verdict: '선에 닿으면 인', restart: '이어서', tell: '', ref: '12' },
+      { id: 'net', name: '네트 터치', words: '라켓 몸 네트 닿음 넘어감', kind: 'violation', verdict: '공이 경기 중이면 그 선수가 1점 잃음', restart: '다음 포인트', tell: '', ref: '24' },
+      { id: 'deuce', name: '듀스', words: '40 40 어드밴티지', kind: 'restart', verdict: '2점 연속으로 이겨야 게임', restart: '듀스 다음 점수는 어드밴티지', tell: '', ref: '5a' },
+    ],
+  },
+  baseball: {
+    scoreSteps: [1],
+    calls: [
+      { id: 'walk', name: '볼넷', words: '볼 4개', kind: 'restart', verdict: '타자는 1루로', restart: '다음 타자', tell: '', ref: '10.2.10' },
+      { id: 'strikeout', name: '삼진', words: '스트라이크 3개', kind: 'restart', verdict: '타자 아웃', restart: '다음 타자', tell: '', ref: '9.10' },
+      { id: 'foul', name: '파울', words: '선 밖 공', kind: 'restart', verdict: '스트라이크 2개까지는 스트라이크로 셈 (주자는 원래 루로)', restart: '다시 투구', tell: '', ref: '6.34' },
+      { id: 'fly', name: '플라이 아웃', words: '뜬 공 잡음', kind: 'restart', verdict: '타자 아웃 — 주자는 원래 루를 밟고(태그 업) 뛰어요', restart: '이어서', tell: '', ref: '9.10 · 10.7' },
+      { id: 'force', name: '포스 아웃', words: '루 밟음 송구 먼저', kind: 'restart', verdict: '꼭 가야 하는 주자: 수비가 공을 갖고 그 루를 먼저 밟으면 아웃', restart: '이어서', tell: '', ref: '6.32 · 10.7' },
+      { id: 'tag', name: '태그 아웃', words: '공으로 터치 주자', kind: 'restart', verdict: '루를 떠난 주자를 공(공 든 글러브)으로 태그하면 아웃', restart: '이어서', tell: '', ref: '10.7' },
+      { id: 'order', name: '루 건너뜀', words: '루 안 밟음 순서', kind: 'violation', verdict: '수비가 어필하면 그 주자 아웃', restart: '다음 플레이 전에 어필해야 해요', tell: '루는 1 → 2 → 3 → 홈 순서로 밟아요.', ref: '10.1 · 11.1' },
+    ],
+  },
 }
 
 /** 찾기: 이름 · 학생 말 · 판정에서 낱말이 모두 들어간 버튼 */

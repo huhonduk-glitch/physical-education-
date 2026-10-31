@@ -8,7 +8,7 @@ import type { ReactNode } from 'react'
 export type Visual =
   | { kind: 'timer'; n: number; unit: string; label?: string }
   | { kind: 'zones'; pos?: NetballPos | null }
-  | { kind: 'distance'; label: string }
+  | { kind: 'distance'; label: string; note?: string }
   | { kind: 'noContact' }
   | { kind: 'noDribble' }
   | { kind: 'travel' }
@@ -35,6 +35,7 @@ export type Visual =
   | { kind: 'kinCall' }
   | { kind: 'allTouch' }
   | { kind: 'threeTeams' }
+  | { kind: 'highStick' }
 
 export const C = { ink: '#f5f5f7', mute: '#a1a1a6', line: '#3a3a3c', blue: '#2997ff', red: '#ff453a', green: '#30d158', orange: '#ff9f0a', yellow: '#ffd60a', court: '#1c3a2e', wood: '#3b2a1a', floor: '#1d1d1f' }
 
@@ -171,7 +172,7 @@ function Zones({ pos }: { pos?: NetballPos | null }) {
   )
 }
 
-function Distance({ label }: { label: string }) {
+function Distance({ label, note }: { label: string; note?: string }) {
   return (
     <Svg label={`${label} 거리`}>
       <circle cx={130} cy={130} r={92} fill={C.blue} opacity={0.12} stroke={C.blue} strokeDasharray="6 6" strokeWidth={2} />
@@ -183,7 +184,7 @@ function Distance({ label }: { label: string }) {
         {label}
       </Txt>
       <Txt x={200} y={30} size={16} color={C.mute}>
-        공 가진 선수의 발에서 재요
+        {note ?? '공 가진 선수의 발에서 재요'}
       </Txt>
     </Svg>
   )
@@ -755,6 +756,33 @@ function ThreeTeams() {
   )
 }
 
+function HighStick() {
+  return (
+    <Svg label="스틱은 허리 아래">
+      <line x1={40} y1={130} x2={360} y2={130} stroke={C.yellow} strokeWidth={2} strokeDasharray="8 6" />
+      <Txt x={355} y={116} size={14} color={C.yellow} anchor="end">
+        허리
+      </Txt>
+      <Person x={110} y={200} color={C.blue} />
+      <line x1={110} y1={200} x2={160} y2={225} stroke={C.ink} strokeWidth={5} strokeLinecap="round" />
+      <Ball x={172} y={228} r={7} color={C.ink} />
+      <Check x={110} y={150} s={28} />
+      <Txt x={110} y={250} size={13} color={C.green}>
+        낮게 치기
+      </Txt>
+      <Person x={290} y={200} color={C.blue} />
+      <line x1={290} y1={200} x2={320} y2={80} stroke={C.red} strokeWidth={5} strokeLinecap="round" />
+      <Cross x={340} y={60} s={26} />
+      <Txt x={290} y={250} size={13} color={C.red}>
+        허리 위로 휘두르기
+      </Txt>
+      <Txt x={200} y={28} size={15}>
+        상대 스틱 · 몸을 치지 않아요
+      </Txt>
+    </Svg>
+  )
+}
+
 export default function RuleVisual({ v }: { v: Visual }) {
   switch (v.kind) {
     case 'timer':
@@ -762,7 +790,7 @@ export default function RuleVisual({ v }: { v: Visual }) {
     case 'zones':
       return <Zones pos={v.pos} />
     case 'distance':
-      return <Distance label={v.label} />
+      return <Distance label={v.label} note={v.note} />
     case 'noContact':
       return <NoContact />
     case 'noDribble':
@@ -815,5 +843,7 @@ export default function RuleVisual({ v }: { v: Visual }) {
       return <AllTouch />
     case 'threeTeams':
       return <ThreeTeams />
+    case 'highStick':
+      return <HighStick />
   }
 }
