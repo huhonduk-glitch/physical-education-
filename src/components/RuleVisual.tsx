@@ -8,7 +8,7 @@ import type { ReactNode } from 'react'
 export type Visual =
   | { kind: 'timer'; n: number; unit: string; label?: string }
   | { kind: 'zones'; pos?: NetballPos | null }
-  | { kind: 'distance'; label: string }
+  | { kind: 'distance'; label: string; note?: string }
   | { kind: 'noContact' }
   | { kind: 'noDribble' }
   | { kind: 'travel' }
@@ -28,6 +28,14 @@ export type Visual =
   | { kind: 'rotation' }
   | { kind: 'serveHeight' }
   | { kind: 'serveSide' }
+  | { kind: 'kitchen' }
+  | { kind: 'twoBounce' }
+  | { kind: 'underhand' }
+  | { kind: 'toss' }
+  | { kind: 'kinCall' }
+  | { kind: 'allTouch' }
+  | { kind: 'threeTeams' }
+  | { kind: 'highStick' }
 
 export const C = { ink: '#f5f5f7', mute: '#a1a1a6', line: '#3a3a3c', blue: '#2997ff', red: '#ff453a', green: '#30d158', orange: '#ff9f0a', yellow: '#ffd60a', court: '#1c3a2e', wood: '#3b2a1a', floor: '#1d1d1f' }
 
@@ -164,7 +172,22 @@ function Zones({ pos }: { pos?: NetballPos | null }) {
   )
 }
 
-function Distance({ label }: { label: string }) {
+function Distance({ label, note }: { label: string; note?: string }) {
+  // 설명(note)이 있으면 사람 대신 시작 · 끝 표시만 (넷볼 0.9 m 말고 다른 종목의 거리)
+  if (note)
+    return (
+      <Svg label={`${label} — ${note}`}>
+        <line x1={70} y1={70} x2={70} y2={190} stroke={C.yellow} strokeWidth={5} />
+        <line x1={330} y1={70} x2={330} y2={190} stroke={C.yellow} strokeWidth={5} />
+        <line x1={78} y1={130} x2={322} y2={130} stroke={C.ink} strokeWidth={3} markerStart="url(#rv-arr)" markerEnd="url(#rv-arr)" />
+        <Txt x={200} y={108} size={34} w={900}>
+          {label}
+        </Txt>
+        <Txt x={200} y={225} size={17} color={C.mute}>
+          {note}
+        </Txt>
+      </Svg>
+    )
   return (
     <Svg label={`${label} 거리`}>
       <circle cx={130} cy={130} r={92} fill={C.blue} opacity={0.12} stroke={C.blue} strokeDasharray="6 6" strokeWidth={2} />
@@ -565,6 +588,216 @@ function ServeSide() {
   )
 }
 
+function Kitchen() {
+  return (
+    <Svg label="키친에서는 발리 금지">
+      <rect x={20} y={40} width={360} height={180} fill={C.court} />
+      <rect x={140} y={40} width={60} height={180} fill={C.orange} opacity={0.45} />
+      <rect x={200} y={40} width={60} height={180} fill={C.orange} opacity={0.45} />
+      <line x1={200} y1={30} x2={200} y2={230} stroke={C.ink} strokeWidth={4} />
+      <Txt x={200} y={20} size={14} color={C.orange}>
+        키친 (네트에서 2.13 m)
+      </Txt>
+      <Person x={170} y={150} color={C.blue} />
+      <Ball x={187} y={112} />
+      <Cross x={170} y={78} s={28} />
+      <Person x={70} y={150} color={C.blue} />
+      <Ball x={88} y={112} />
+      <Check x={70} y={78} s={28} />
+      <Txt x={70} y={196} size={13} color={C.green}>
+        밖에서 바로 치기
+      </Txt>
+      <Txt x={170} y={240} size={13} color={C.red}>
+        키친 안에서 바로 치기
+      </Txt>
+      <Txt x={320} y={120} size={13} color={C.mute}>
+        튄 공은
+      </Txt>
+      <Txt x={320} y={140} size={13} color={C.mute}>
+        키친에서도 OK
+      </Txt>
+    </Svg>
+  )
+}
+
+function TwoBounce() {
+  return (
+    <Svg label="투 바운스">
+      <line x1={200} y1={60} x2={200} y2={230} stroke={C.ink} strokeWidth={4} />
+      <line x1={20} y1={230} x2={380} y2={230} stroke={C.mute} strokeWidth={2} />
+      <path d="M 40 150 Q 200 30 300 230" stroke={C.orange} strokeWidth={3} fill="none" />
+      <circle cx={300} cy={228} r={7} fill={C.yellow} />
+      <Txt x={300} y={212} size={14} w={900} color={C.yellow}>
+        ①
+      </Txt>
+      <path d="M 300 228 Q 330 140 350 170" stroke={C.orange} strokeWidth={3} fill="none" />
+      <path d="M 350 170 Q 220 40 110 230" stroke={C.blue} strokeWidth={3} fill="none" strokeDasharray="7 5" />
+      <circle cx={110} cy={228} r={7} fill={C.yellow} />
+      <Txt x={110} y={212} size={14} w={900} color={C.yellow}>
+        ②
+      </Txt>
+      <Txt x={200} y={30} size={17} w={900}>
+        서브 한 번 튀고 · 리턴 한 번 튀고
+      </Txt>
+      <Txt x={200} y={250} size={13} color={C.mute}>
+        그다음부터 바로 치기(발리) 가능
+      </Txt>
+    </Svg>
+  )
+}
+
+function Underhand() {
+  return (
+    <Svg label="언더핸드 서브">
+      <line x1={60} y1={150} x2={340} y2={150} stroke={C.yellow} strokeWidth={2} strokeDasharray="8 6" />
+      <Txt x={345} y={136} size={14} color={C.yellow} anchor="end">
+        허리
+      </Txt>
+      <path d="M 120 220 Q 160 230 210 175" stroke={C.green} strokeWidth={5} fill="none" markerEnd="url(#rv-arr)" />
+      <circle cx={215} cy={170} r={8} fill={C.orange} />
+      <Check x={160} y={110} s={30} />
+      <Txt x={160} y={250} size={14} color={C.green}>
+        아래에서 위로 · 허리 아래
+      </Txt>
+      <path d="M 300 60 Q 330 100 300 140" stroke={C.red} strokeWidth={4} fill="none" strokeDasharray="6 6" />
+      <circle cx={300} cy={56} r={8} fill={C.orange} />
+      <Cross x={340} y={60} s={26} />
+      <Txt x={300} y={30} size={14} color={C.red}>
+        위에서 내려치기
+      </Txt>
+    </Svg>
+  )
+}
+
+function Toss() {
+  return (
+    <Svg label="16 cm 이상 던져 올리기">
+      <rect x={40} y={190} width={320} height={14} fill="#1d4e89" />
+      <line x1={200} y1={170} x2={200} y2={204} stroke={C.ink} strokeWidth={3} />
+      <ellipse cx={90} cy={170} rx={26} ry={8} fill={C.mute} />
+      <line x1={90} y1={162} x2={90} y2={64} stroke={C.orange} strokeWidth={3} strokeDasharray="5 5" markerEnd="url(#rv-arr)" />
+      <circle cx={90} cy={56} r={9} fill={C.ink} />
+      <line x1={55} y1={162} x2={55} y2={90} stroke={C.yellow} strokeWidth={2} markerStart="url(#rv-arr)" markerEnd="url(#rv-arr)" />
+      <Txt x={48} y={126} size={15} w={900} color={C.yellow} anchor="end">
+        16cm
+      </Txt>
+      <path d="M 110 150 Q 140 210 150 196 Q 210 120 280 196" stroke={C.blue} strokeWidth={3} fill="none" />
+      <circle cx={150} cy={194} r={5} fill={C.yellow} />
+      <circle cx={280} cy={194} r={5} fill={C.yellow} />
+      <Txt x={215} y={235} size={14}>
+        내 코트 한 번 → 상대 코트 한 번
+      </Txt>
+      <Txt x={260} y={50} size={14} color={C.mute}>
+        손바닥 펴고 · 회전 없이 · 거의 똑바로
+      </Txt>
+    </Svg>
+  )
+}
+
+function KinCall() {
+  return (
+    <Svg label="옴니킨 부르기">
+      <circle cx={110} cy={150} r={62} fill="#f3d34a" />
+      {[0, 1, 2, 3].map((i) => {
+        const a = (i / 4) * Math.PI * 2 + Math.PI / 4
+        return <circle key={i} cx={110 + Math.cos(a) * 75} cy={150 + Math.sin(a) * 75} r={13} fill={C.blue} />
+      })}
+      <rect x={200} y={66} width={184} height={74} rx={14} fill={C.ink} />
+      <Txt x={292} y={92} size={20} w={900} color="#000">
+        옴니킨 — 그리!
+      </Txt>
+      <Txt x={292} y={120} size={13} color="#333">
+        (옴니킨 + 받을 팀 색)
+      </Txt>
+      <rect x={240} y={190} width={130} height={36} rx={10} fill="#6b7280" />
+      <Txt x={305} y={208} size={15} w={900}>
+        회색 팀이 받기
+      </Txt>
+    </Svg>
+  )
+}
+
+function AllTouch() {
+  return (
+    <Svg label="4명 모두 공에 닿기">
+      <circle cx={200} cy={125} r={70} fill="#f3d34a" />
+      {[0, 1, 2, 3].map((i) => {
+        const a = (i / 4) * Math.PI * 2 + Math.PI / 4
+        const x = 200 + Math.cos(a) * 95
+        const y = 125 + Math.sin(a) * 85
+        return (
+          <g key={i}>
+            <line x1={x} y1={y} x2={200 + Math.cos(a) * 66} y2={125 + Math.sin(a) * 60} stroke={C.ink} strokeWidth={4} />
+            <Person x={x} y={y} color={C.blue} label={String(i + 1)} r={15} />
+          </g>
+        )
+      })}
+      <Txt x={200} y={125} size={18} w={900} color="#000">
+        4명 모두!
+      </Txt>
+      <Txt x={200} y={243} size={14} color={C.mute}>
+        한 명이라도 떨어져 있으면 반칙(접촉 빠짐)
+      </Txt>
+    </Svg>
+  )
+}
+
+function ThreeTeams() {
+  const t = [
+    ['#2563eb', '파랑', '반칙'],
+    ['#6b7280', '회색', '+1'],
+    ['#3a3a3c', '검정', '+1'],
+  ] as const
+  return (
+    <Svg label="반칙하면 나머지 두 팀이 1점">
+      {t.map(([c, name, mark], i) => (
+        <g key={name}>
+          <rect x={25 + i * 122} y={60} width={106} height={120} rx={14} fill={c} stroke={i === 2 ? C.mute : 'none'} />
+          <Txt x={78 + i * 122} y={100} size={20} w={900}>
+            {name}
+          </Txt>
+          <Txt x={78 + i * 122} y={145} size={30} w={900} color={i === 0 ? C.red : C.green}>
+            {mark}
+          </Txt>
+        </g>
+      ))}
+      <Txt x={200} y={30} size={16} w={900}>
+        세 팀이 함께 · 한 팀 4명
+      </Txt>
+      <Txt x={200} y={214} size={15}>
+        반칙한 팀 말고 두 팀이 1점씩
+      </Txt>
+    </Svg>
+  )
+}
+
+function HighStick() {
+  return (
+    <Svg label="스틱은 허리 아래">
+      <line x1={40} y1={130} x2={360} y2={130} stroke={C.yellow} strokeWidth={2} strokeDasharray="8 6" />
+      <Txt x={355} y={116} size={14} color={C.yellow} anchor="end">
+        허리
+      </Txt>
+      <Person x={110} y={200} color={C.blue} />
+      <line x1={110} y1={200} x2={160} y2={225} stroke={C.ink} strokeWidth={5} strokeLinecap="round" />
+      <Ball x={172} y={228} r={7} color={C.ink} />
+      <Check x={110} y={150} s={28} />
+      <Txt x={110} y={250} size={13} color={C.green}>
+        낮게 치기
+      </Txt>
+      <Person x={290} y={200} color={C.blue} />
+      <line x1={290} y1={200} x2={320} y2={80} stroke={C.red} strokeWidth={5} strokeLinecap="round" />
+      <Cross x={340} y={60} s={26} />
+      <Txt x={290} y={250} size={13} color={C.red}>
+        허리 위로 휘두르기
+      </Txt>
+      <Txt x={200} y={28} size={15}>
+        상대 스틱 · 몸을 치지 않아요
+      </Txt>
+    </Svg>
+  )
+}
+
 export default function RuleVisual({ v }: { v: Visual }) {
   switch (v.kind) {
     case 'timer':
@@ -572,7 +805,7 @@ export default function RuleVisual({ v }: { v: Visual }) {
     case 'zones':
       return <Zones pos={v.pos} />
     case 'distance':
-      return <Distance label={v.label} />
+      return <Distance label={v.label} note={v.note} />
     case 'noContact':
       return <NoContact />
     case 'noDribble':
@@ -611,5 +844,21 @@ export default function RuleVisual({ v }: { v: Visual }) {
       return <ServeHeight />
     case 'serveSide':
       return <ServeSide />
+    case 'kitchen':
+      return <Kitchen />
+    case 'twoBounce':
+      return <TwoBounce />
+    case 'underhand':
+      return <Underhand />
+    case 'toss':
+      return <Toss />
+    case 'kinCall':
+      return <KinCall />
+    case 'allTouch':
+      return <AllTouch />
+    case 'threeTeams':
+      return <ThreeTeams />
+    case 'highStick':
+      return <HighStick />
   }
 }

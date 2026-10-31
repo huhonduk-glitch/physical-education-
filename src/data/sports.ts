@@ -1,6 +1,10 @@
 import type { CourtId } from '../components/CourtDiagram'
 import type { LeagueRules, SportId } from '../lib/league'
 import { INVASION } from './sportsInvasion'
+import { NET } from './sportsNet'
+import { MORE } from './sportsMore'
+import { SKILL } from './sportsSkill'
+import { COACHING, PLAYBOOK } from './sportsCoaching'
 
 /**
  * 종목 수업자료 (6-5 ④, 2026-10-27).
@@ -89,7 +93,7 @@ const BWF: GuideSource = {
 }
 const OLY = (sport: string, path: string): GuideSource => ({ label: `올림픽 공식 누리집 — ${sport}`, edition: '역사 참고', url: `https://www.olympics.com/en/sports/${path}/` })
 
-export const SPORTS: SportGuide[] = [
+const RULES: SportGuide[] = [
   ...INVASION,
   {
     id: 'volleyball',
@@ -217,20 +221,22 @@ export const SPORTS: SportGuide[] = [
     pointsNote: '많이 쓰는 방식(승 2 · 패 1). 규칙서에는 승점이 없어 교사가 바꿀 수 있어요',
     scoreSteps: [1],
   },
+  ...NET,
+  ...MORE,
+  ...SKILL,
 ]
 
 /** 자료를 준비 중인 종목 (2026-10-27 교사 요청 목록). 공식 규칙서 · 자료를 확인하는 대로 SPORTS로 옮긴다 */
 export const UPCOMING: { id: string; name: string; emoji: string; group: SportGroup; note?: string }[] = [
   { id: 'bigvolleyball', name: '빅발리볼', emoji: '🏐', group: 'net' },
-  { id: 'tabletennis', name: '탁구', emoji: '🏓', group: 'net' },
-  { id: 'pickleball', name: '피클볼', emoji: '🏓', group: 'net' },
-  { id: 'kinball', name: '킨볼', emoji: '🔵', group: 'net', note: '교과서마다 분류가 다를 수 있어요' },
-  { id: 'baseball', name: '야구', emoji: '⚾', group: 'field' },
-  { id: 'teeball', name: '티볼', emoji: '⚾', group: 'field' },
   { id: 'platebaseball', name: '플레이트 야구', emoji: '⚾', group: 'field' },
-  { id: 'gymnastics', name: '체조 (맨몸)', emoji: '🤸', group: 'skill' },
-  { id: 'athletics', name: '육상 (50m · 이어달리기)', emoji: '🏃', group: 'skill' },
-  { id: 'discgolf', name: '플라잉디스크 골프', emoji: '🥏', group: 'skill' },
 ]
+
+/** 규칙서 요약 뒤에 수업 지도 내용(포지션 · 기술 · 전술 · 안전 · 생각해 봅시다)을 이어 붙인다 (2026-10-31) */
+function withCoaching(g: SportGuide): SportGuide {
+  const c = COACHING[g.id]
+  return c ? { ...g, sections: [...g.sections, ...c], sources: [...g.sources, PLAYBOOK] } : g
+}
+export const SPORTS: SportGuide[] = RULES.map(withCoaching)
 
 export const sportOf = (id: string): SportGuide | undefined => SPORTS.find((s) => s.id === id)

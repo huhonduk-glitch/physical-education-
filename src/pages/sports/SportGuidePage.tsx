@@ -36,7 +36,7 @@ export default function SportGuidePage() {
         )}
         {SPORT_KEYS[s.id] && (
           <section className="space-y-2">
-            <p className="card-title px-1">{s.name}다운 핵심 규칙</p>
+            <p className="card-title px-1">{s.name.replace(/\s*\(.*\)\s*$/, '')}다운 핵심 규칙</p>
             <ul className="grid gap-2 sm:grid-cols-2">
               {SPORT_KEYS[s.id].keys.map((k, i) => (
                 <li key={k.title} className="overflow-hidden rounded-3xl bg-[#000] text-white shadow-[var(--shadow-card)]">

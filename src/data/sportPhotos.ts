@@ -25,4 +25,7 @@ export const PHOTOS: Record<string, SportPhoto> = {
   "tb-frame": { src: "sports/tb-frame.jpg", credit: "Vimiye", license: "Public domain", url: "https://commons.wikimedia.org/wiki/File:Tchoukball_vimi.jpg" },
   "ut-game": { src: "sports/ut-game.jpg", credit: "Drpoulette from Mexico City, Mexico", license: "CC BY 2.0", url: "https://commons.wikimedia.org/wiki/File:Ultimate_frisbee_10.jpg" },
   "ut-disc": { src: "sports/ut-disc.jpg", credit: "작자 미상", license: "CC BY-SA 4.0", url: "https://commons.wikimedia.org/wiki/File:Discraft_UltraStar_Sportdisc_Ultimate_FrisbeeA.jpg" },
+  "tt-match": { src: "sports/tt-match.jpg", credit: "Marcus Cyron", license: "CC BY-SA 3.0", url: "https://commons.wikimedia.org/wiki/File:Table_tennis_at_the_2018_Summer_Youth_Olympics_%E2%80%93_Women%27s_Singles_Bronze_Medal_Match_052.jpg" },
+  "pb-court": { src: "sports/pb-court.jpg", credit: "Michael Barera", license: "CC BY-SA 4.0", url: "https://commons.wikimedia.org/wiki/File:Milwaukee_November_2022_34_(Plankinton_Arcade_pickleball_court).jpg" },
+  "kb-touch": { src: "sports/kb-touch.jpg", credit: "Pierre-Yves Beaudouin", license: "CC BY-SA 4.0", url: "https://commons.wikimedia.org/wiki/File:20e_journ%C3%A9e_du_championnat_de_france_2013-2014_de_Kin-Ball_009.jpg" },
 }

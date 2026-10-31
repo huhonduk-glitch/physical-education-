@@ -6,8 +6,8 @@ import { knownRefs, parseRefAnswer, refPrompt, refTokens, ruleDigest } from '../
 const netball = SPORTS.find((g) => g.id === 'netball')!
 
 describe('빠른 판정판', () => {
-  it('자료가 있는 종목마다 판정 버튼 6개 이상, 칸이 다 차 있고 id가 겹치지 않음', () => {
-    for (const g of SPORTS) {
+  it('경기 종목(기술형 빼고)마다 판정 버튼 6개 이상, 칸이 다 차 있고 id가 겹치지 않음', () => {
+    for (const g of SPORTS.filter((x) => x.group !== 'skill')) {
       const b = REF_BOARDS[g.id]
       expect(b, g.id).toBeTruthy()
       expect(b.calls.length).toBeGreaterThanOrEqual(6)

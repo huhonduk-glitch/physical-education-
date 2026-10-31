@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
  * 경기장 그림 (2026-10-27): 공식 규칙서 치수 그대로 미터 단위로 그린다(사진 · 남의 그림을 쓰지 않음 → 저작권 걱정 없음).
  * 숫자 출처는 src/data/sports.ts 각 종목 '경기장' 절의 조항. PPT로 내보낼 때도 이 SVG를 그림으로 바꿔 쓴다.
  */
-export type CourtId = 'basketball' | 'football' | 'futsal' | 'netball' | 'tchoukball' | 'ultimate'
+export type CourtId = 'basketball' | 'football' | 'futsal' | 'netball' | 'tchoukball' | 'ultimate' | 'tabletennis' | 'pickleball' | 'kinball'
 
 const INK = '#1f2937'
 const LINE = '#ffffff'
@@ -270,6 +270,98 @@ function Ultimate() {
   )
 }
 
+function TableTennis() {
+  // cm 단위로 그림(글자가 너무 작으면 브라우저가 깨뜨림). 274 × 152.5 cm, 흰 선 2 cm, 가운데 선 3 mm, 네트 15.25 cm (2.1 · 2.2)
+  const W = 274
+  const H = 152.5
+  return (
+    <Frame w={W} h={H} m={55} title="탁구대 2.74 m × 1.525 m">
+      <rect x={0} y={0} width={W} height={H} fill="#1d4e89" />
+      <rect x={1} y={1} width={W - 2} height={H - 2} fill="none" stroke={LINE} strokeWidth={2} />
+      <line x1={0} y1={H / 2} x2={W} y2={H / 2} stroke={LINE} strokeWidth={0.6} strokeDasharray="3 2" />
+      <line x1={W / 2} y1={-15.25} x2={W / 2} y2={H + 15.25} stroke="#111827" strokeWidth={2.5} />
+      <text x={W / 2 + 4} y={-6} fontSize={8} fill={INK} textAnchor="start">
+        네트 높이 15.25 cm
+      </text>
+      <text x={W * 0.25} y={H * 0.42} fontSize={7.5} fill={LINE} textAnchor="middle">
+        복식 가운데 선(점선)
+      </text>
+      <Dim x1={0} y1={-30} x2={W} y2={-30} label="2.74 m" size={10} dy={-8} />
+      <Dim x1={-30} y1={0} x2={-30} y2={H} label="1.525 m" size={10} dx={-8} />
+      <text x={W / 2} y={H + 38} fontSize={9} fill={INK} textAnchor="middle">
+        높이 76 cm · 공 지름 40 mm
+      </text>
+    </Frame>
+  )
+}
+
+function Pickleball() {
+  // dm 단위(×10). 20 × 44 피트 = 6.10 m × 13.41 m, 키친 7 피트 = 2.13 m (3.A.1 · 3.A.4.c)
+  const W = 134.1
+  const H = 61
+  const k = 21.3
+  const lw = 0.5
+  return (
+    <Frame w={W} h={H} m={24} title="피클볼 코트 6.10 m × 13.41 m">
+      <rect x={0} y={0} width={W} height={H} fill="#2f6f9f" stroke={LINE} strokeWidth={lw} />
+      <rect x={W / 2 - k} y={0} width={k * 2} height={H} fill="#e07b39" stroke={LINE} strokeWidth={lw} />
+      <line x1={0} y1={H / 2} x2={W / 2 - k} y2={H / 2} stroke={LINE} strokeWidth={lw} />
+      <line x1={W / 2 + k} y1={H / 2} x2={W} y2={H / 2} stroke={LINE} strokeWidth={lw} />
+      <line x1={W / 2} y1={-3} x2={W / 2} y2={H + 3} stroke="#111827" strokeWidth={0.9} />
+      <text x={W / 2 - k / 2} y={H / 2} fontSize={4.2} fill={LINE} textAnchor="middle" dominantBaseline="middle">
+        키친
+      </text>
+      <text x={W / 2 + k / 2} y={H / 2} fontSize={4.2} fill={LINE} textAnchor="middle" dominantBaseline="middle">
+        키친
+      </text>
+      <text x={(W / 2 - k) / 2} y={H / 4} fontSize={3.6} fill={LINE} textAnchor="middle">
+        서비스 코트
+      </text>
+      <Dim x1={0} y1={-9} x2={W} y2={-9} label="13.41 m (44 피트)" size={4.8} dy={-3.8} />
+      <Dim x1={-9} y1={0} x2={-9} y2={H} label="6.10 m (20 피트)" size={4.8} dx={-3.8} />
+      <Dim x1={W / 2} y1={H + 8} x2={W / 2 + k} y2={H + 8} label="2.13 m" size={4.2} dy={3.8} />
+      <text x={W / 2} y={H + 20} fontSize={4} fill={INK} textAnchor="middle">
+        네트 높이 가장자리 91 cm · 가운데 86 cm
+      </text>
+    </Frame>
+  )
+}
+
+function Kinball() {
+  // dm 단위(×10). 공식 코트 20 m × 20 m, 공 지름 1.2 m, 공격 구역 = 공에서 1.8 m (제2조 · 2.4.1 · 제7조)
+  const W = 200
+  const c = 100
+  const p = (n: number) => n * 10
+  return (
+    <Frame w={W} h={W} m={32} title="킨볼 코트 20 m × 20 m">
+      <rect x={0} y={0} width={W} height={W} fill="#c9a26b" stroke={LINE} strokeWidth={1.2} />
+      <circle cx={c} cy={c} r={p(0.6 + 1.8)} fill="#ffffff" opacity={0.35} stroke={LINE} strokeWidth={0.8} strokeDasharray="4 3" />
+      <circle cx={c} cy={c} r={p(0.6)} fill="#f3d34a" stroke="#111827" strokeWidth={0.6} />
+      {[0, 1, 2, 3].map((i) => {
+        const a = (i / 4) * Math.PI * 2 + Math.PI / 4
+        return <circle key={i} cx={c + Math.cos(a) * p(1.05)} cy={c + Math.sin(a) * p(1.05)} r={p(0.34)} fill="#2563eb" />
+      })}
+      {(['#6b7280', '#111827'] as const).map((col, t) =>
+        [0, 1, 2, 3].map((i) => <circle key={`${t}-${i}`} cx={(t === 0 ? 40 : 160) + (i % 2) * 14} cy={(t === 0 ? 45 : 150) + Math.floor(i / 2) * 14} r={p(0.34)} fill={col} />),
+      )}
+      <text x={c} y={c - 30} fontSize={7} fill={INK} textAnchor="middle">
+        공격 구역 (공에서 1.8 m)
+      </text>
+      <text x={47} y={33} fontSize={7} fill={INK} textAnchor="middle">
+        회색 팀
+      </text>
+      <text x={167} y={186} fontSize={7} fill={INK} textAnchor="middle">
+        검정 팀
+      </text>
+      <text x={c} y={c + 31} fontSize={7} fill={INK} textAnchor="middle">
+        파랑 팀 (치는 팀 4명 모두 공에)
+      </text>
+      <Dim x1={0} y1={-14} x2={W} y2={-14} label="20 m" size={8.5} dy={-7.5} />
+      <Dim x1={-14} y1={0} x2={-14} y2={W} label="20 m" size={8.5} dx={-7.5} />
+    </Frame>
+  )
+}
+
 export default function CourtDiagram({ court }: { court: CourtId }) {
   switch (court) {
     case 'basketball':
@@ -284,5 +376,11 @@ export default function CourtDiagram({ court }: { court: CourtId }) {
       return <Tchoukball />
     case 'ultimate':
       return <Ultimate />
+    case 'tabletennis':
+      return <TableTennis />
+    case 'pickleball':
+      return <Pickleball />
+    case 'kinball':
+      return <Kinball />
   }
 }
