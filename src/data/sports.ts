@@ -2,6 +2,7 @@ import type { CourtId } from '../components/CourtDiagram'
 import type { LeagueRules, SportId } from '../lib/league'
 import { INVASION } from './sportsInvasion'
 import { NET } from './sportsNet'
+import { COACHING, PLAYBOOK } from './sportsCoaching'
 
 /**
  * 종목 수업자료 (6-5 ④, 2026-10-27).
@@ -90,7 +91,7 @@ const BWF: GuideSource = {
 }
 const OLY = (sport: string, path: string): GuideSource => ({ label: `올림픽 공식 누리집 — ${sport}`, edition: '역사 참고', url: `https://www.olympics.com/en/sports/${path}/` })
 
-export const SPORTS: SportGuide[] = [
+const RULES: SportGuide[] = [
   ...INVASION,
   {
     id: 'volleyball',
@@ -231,5 +232,12 @@ export const UPCOMING: { id: string; name: string; emoji: string; group: SportGr
   { id: 'athletics', name: '육상 (50m · 이어달리기)', emoji: '🏃', group: 'skill' },
   { id: 'discgolf', name: '플라잉디스크 골프', emoji: '🥏', group: 'skill' },
 ]
+
+/** 규칙서 요약 뒤에 수업 지도 내용(포지션 · 기술 · 전술 · 안전 · 생각해 봅시다)을 이어 붙인다 (2026-10-31) */
+function withCoaching(g: SportGuide): SportGuide {
+  const c = COACHING[g.id]
+  return c ? { ...g, sections: [...g.sections, ...c], sources: [...g.sources, PLAYBOOK] } : g
+}
+export const SPORTS: SportGuide[] = RULES.map(withCoaching)
 
 export const sportOf = (id: string): SportGuide | undefined => SPORTS.find((s) => s.id === id)

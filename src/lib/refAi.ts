@@ -25,7 +25,8 @@ export interface RefAnswer {
 export function ruleDigest(g: SportGuide): string {
   const lines: string[] = []
   for (const s of g.sections) {
-    if (/역사/.test(s.title)) continue
+    // 역사 · 수업 지도 내용(포지션 · 기술 · 전술 · 안전 · 탐구)은 판정 근거가 아니라서 뺀다
+    if (/역사|^포지션$|^기술$|^전술$|안전 · 준비운동|생각해 봅시다/.test(s.title)) continue
     lines.push(`## ${s.title}`)
     for (const sp of s.specs ?? []) lines.push(`- ${sp.label}: ${sp.value}${sp.ref ? ` [${sp.ref}]` : ''}`)
     for (const it of s.items) lines.push(`- ${it.t}${it.ref ? ` [${it.ref}]` : ''}`)
