@@ -107,7 +107,8 @@ export default function SlidesPage() {
           touch.current = null
         }}
       >
-        <div className="absolute inset-0 m-auto aspect-video max-h-full max-w-full">
+        {/* 가로 화면 = 16:9 상자, 폰 세로 화면 = 화면 전체(세로 배치는 SlideView의 tall:) */}
+        <div className="absolute inset-0 m-auto aspect-video max-h-full max-w-full [container-name:slide] [container-type:size] portrait:aspect-auto portrait:h-full portrait:w-full">
           <SlideView key={i} slide={slides[i]} step={step} />
         </div>
       </div>
@@ -148,7 +149,7 @@ export default function SlidesPage() {
             {slides.map((s, k) => (
               <li key={k}>
                 <button type="button" className={`block w-full overflow-hidden rounded-xl text-left ring-2 ${k === i ? 'ring-[#2997ff]' : 'ring-transparent'}`} onClick={() => jump(k)}>
-                  <div className="pointer-events-none aspect-video w-full overflow-hidden">
+                  <div className="pointer-events-none aspect-video w-full overflow-hidden [container-name:slide] [container-type:size]">
                     <div className="h-[400%] w-[400%] origin-top-left scale-[0.25]">
                       <SlideView slide={s} />
                     </div>

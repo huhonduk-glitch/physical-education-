@@ -720,7 +720,7 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 1. **네트형 자료** — 배구 · 배드민턴(지금 짧은 자료를 영역형처럼 자세히, 해요체로) · 탁구(ITTF Handbook) · 피클볼(USA Pickleball/UPA-A 규칙서) · 킨볼(FIKB 규칙) · 빅발리볼(국내 학교 스포츠 — 공식 규정 못 찾으면 **멈추고 교사에게 협회 규정집 요청**)
 2. **필드형 자료** — 야구(WBSC/KBO 공식야구규칙) · 티볼(WBSC 또는 국내 연맹 규정) · 플레이트 야구(국내 학교 스포츠 — 자료 없으면 교사에게 요청)
 3. **기술형 자료** — 체조 맨몸(물구나무서기 · 핸드스프링 · 구르기: 경기 규칙서가 아닌 동작 설명이라 근거 자료를 교사와 정함) · 육상 50m · 이어달리기(World Athletics 규칙, 50m는 공식 종목 아님을 밝힘) · 플라잉디스크 골프(PDGA 규칙)
-4. 남은 것: 평가계획서 세부 채점표 양식 실제 PDF 확인 · 나이스 수행평가 내보내기 확인 · 2015 개정 성취기준 목록(교사 파일 필요) · 킨볼/츄크볼 분류 교사 확인 · 폰 세로 화면 슬라이드가 빽빽함(빔 · 가로는 괜찮음)
+4. 남은 것: 평가계획서 세부 채점표 양식 실제 PDF 확인 · 나이스 수행평가 내보내기 확인 · 2015 개정 성취기준 목록(교사 파일 필요) · 킨볼/츄크볼 분류 교사 확인 · ~~폰 세로 화면 슬라이드가 빽빽함~~ → 고침(2026-11-02, 아래)
 
 **종목 자료 만드는 방법 (영역형에서 한 그대로)**
 - 공식 규칙서 PDF를 내려받아(작업 폴더 scratchpad, 저장소 밖) `pdfjs-dist/legacy/build/pdf.mjs`로 글자를 뽑아 읽는다(그림 속 숫자는 이미지로 뽑아 확인). **지어내지 않고, 줄마다 조항(ref)**. 최신 판인지 꼭 확인(농구는 2024 → 2026 판으로 바뀐 것을 작업 중 발견)
@@ -766,7 +766,7 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - 교사 결정(추천 승인): 예시 틀에 교사 시트 문장 그대로 · 수준 기본 상 90 · 중 60(3수준), A~E(90/80/70/60) 고를 수 있음
 - 시트 구조: ① 번호 · 성명 · 탐구주제 · ①~⑦ 체크 · 만족 수 · 제출 구분 · 점수(30 + 개수 × 10, 백지 제출 20, 미응시(미인정) 15) ② 번호 · 이름 · 융합성 40 · 전문성 30 · 결론/제언 30 · 합계 · 수준(≥90 상 ≥60 중) · 비고, 요소별 점수 기준 문장, 미응시 25
 - **된 것 (커밋됨)**: 선택 필드 `Assessment.specials`(제출 구분 → 평가 전체 점수) · `texts`(글 칸) · `levelCuts`(수준, 만점 대비 %) / `AssessmentScore.checks`(체크한 항목 번호) · `status` · `texts`. 저장 구조 버전 안 바꿈. `assessScore.ts`: `areaTotal`(제출 구분 반영 — 모든 합계 호출을 이걸로 바꿈: 채점표 · 나이스 내보내기 · 학생 화면 · 리포트 · 세특 수준) · `levelOf` · `LEVEL_CUT_PRESETS` · `toggleCheck` · `checklistBands`. `src/lib/assessSheet.ts`(`sheetColumns` · `recordSheet`(빈 기록지 옵션) · `criteriaLines`) · `src/data/assessTemplates.ts`(예시 틀 2개) · 테스트 `tests/assessSheet.test.ts`. 고치기 화면(`AssessmentEditPage`): `?tpl=checklist|rubric`으로 예시 채우기, 체크리스트 편집(`ChecklistEditor`, 개수별 점수 채우기), 기록표 칸(`SheetOptions`: 글 칸 · 제출 구분 · 성취 수준). 테스트 680개 통과
-- **2단계 (2026-11-02)**: 채점 화면 — 체크리스트 요소는 학생마다 ①~⑦ 버튼(`toggleCheck` → `checks` + 만족 수) · [0개], [글 칸 · 제출 구분] 탭, 합계 표에 제출 구분 · 수준, 엑셀 = `recordSheet`(기록표) + `criteriaLines`(채점 기준 시트), 대체과제는 비고 앞에(`sheetStudents`). 인쇄 화면 `/more/assessments/:id/sheet?g=`(`AssessSheetPrintPage.tsx`: 채점 기준 + 기록지, 빈 기록지 · 가로 인쇄 선택, 묶음 머리글). 수행평가 목록에 '예시로 만들기' 카드 2개. 사용법 · 업데이트 소식 · CHANGELOG v1.5.0. 시연 모드 폰 화면 · 인쇄 화면 확인. **남은 것: PR → main은 교사 허락 뒤**
+- **2단계 (2026-11-02)**: 채점 화면 — 체크리스트 요소는 학생마다 ①~⑦ 버튼(`toggleCheck` → `checks` + 만족 수) · [0개], [글 칸 · 제출 구분] 탭, 합계 표에 제출 구분 · 수준, 엑셀 = `recordSheet`(기록표) + `criteriaLines`(채점 기준 시트), 대체과제는 비고 앞에(`sheetStudents`). 인쇄 화면 `/more/assessments/:id/sheet?g=`(`AssessSheetPrintPage.tsx`: 채점 기준 + 기록지, 빈 기록지 · 가로 인쇄 선택, 묶음 머리글). 수행평가 목록에 '예시로 만들기' 카드 2개. 사용법 · 업데이트 소식 · CHANGELOG v1.5.0. 시연 모드 폰 화면 · 인쇄 화면 확인. main 병합 · 배포 `6ff6a16` (PR #34, 2026-11-02)
 
 ---
 
@@ -818,3 +818,10 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 
 6. **보안**
    - 토큰·키·비밀번호는 코드나 문서에 쓰지 않고 환경변수로만 관리한다.
+
+### 6-9. 종목 슬라이드 폰 세로 화면 (2026-11-02, 브랜치 `slides-portrait`)
+- 문제: 슬라이드 상자를 늘 16:9로 두어서 폰 세로(390×844)에서는 390×219 상자에 그림 · 제목 · 줄이 겹쳤다
+- 고침: `SlidesPage` 상자를 **화면이 세로(`portrait:`)면 화면 전체**로, 상자에 `container-name: slide · container-type: size`. `index.css`의 `@custom-variant tall` = `@container slide (orientation: portrait)` — **상자 모양**으로 판단하므로 '전체 보기' 미리보기(가로 상자) · 빔 · 가로 화면 · PPT는 그대로
+- `SlideView`의 `tall:` 배치: 표지 · 사진 절 = 사진을 위 띠(42% · 34%)로, 글은 아래(`pt-[44cqh]`·`[38cqh]`). 핵심 한눈에 = 2열. 핵심 규칙 = 그림 위 · 글 아래(그림 폭 `max-w-[60cqh]`). 경기장 절 = 그림을 위로(`order-first`), 긴 장은 위아래로 밀어 보기(`overflow-y-auto`)
+- 확인: 헤드리스 Chrome 390×844로 넷볼 23장 중 앞 14장을 줄이 다 나온 상태로 봄 + 1280×720 가로 · 전체 보기 미리보기 그대로
+
