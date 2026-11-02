@@ -24,6 +24,15 @@ export default function SlidesPage() {
   const [err, setErr] = useState('')
   const touch = useRef<number | null>(null)
   const root = useRef<HTMLDivElement>(null)
+  // 같은 화면에서 종목만 바뀌면(주소만 바뀜) 처음 장부터 — 예전 장 번호가 남아 없는 장을 찾지 않게
+  const [shownSport, setShownSport] = useState(sport)
+  if (shownSport !== sport) {
+    setShownSport(sport)
+    setI(0)
+    setStep(0)
+    setOverview(false)
+  }
+  const stale = shownSport !== sport
 
   const next = useCallback(() => {
     if (!slides.length) return
@@ -75,6 +84,7 @@ export default function SlidesPage() {
   }, [])
 
   if (!g) return <Navigate to="/sports" replace />
+  if (stale || !slides[i]) return null
 
   const download = async () => {
     setBusy(true)

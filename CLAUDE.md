@@ -824,4 +824,6 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - 고침: `SlidesPage` 상자를 **화면이 세로(`portrait:`)면 화면 전체**로, 상자에 `container-name: slide · container-type: size`. `index.css`의 `@custom-variant tall` = `@container slide (orientation: portrait)` — **상자 모양**으로 판단하므로 '전체 보기' 미리보기(가로 상자) · 빔 · 가로 화면 · PPT는 그대로
 - `SlideView`의 `tall:` 배치: 표지 · 사진 절 = 사진을 위 띠(42% · 34%)로, 글은 아래(`pt-[44cqh]`·`[38cqh]`). 핵심 한눈에 = 2열. 핵심 규칙 = 그림 위 · 글 아래(그림 폭 `max-w-[60cqh]`). 경기장 절 = 그림을 위로(`order-first`), 긴 장은 위아래로 밀어 보기(`overflow-y-auto`)
 - 확인: 헤드리스 Chrome 390×844로 넷볼 23장 중 앞 14장을 줄이 다 나온 상태로 봄 + 1280×720 가로 · 전체 보기 미리보기 그대로
+- **가로 화면 넘침 (2026-11-02, 브랜치 `slides-fit`)**: 21종목 전체 슬라이드를 1280×720에서 자동 검사(줄 목록 `overflow:hidden`의 넘친 높이 · 상자 밖 글) → 경기장 · 용구처럼 그림 + 규격 칸 + 긴 제목인 10장이 잘림(농구 경기장 · 공, 축구 경기장 · 공, 풋살 · 넷볼 · 탁구 · 피클볼 경기장, 츄크볼 한눈에 · 경기장). `SlideView`의 절 장을 `SectionSlide`로 떼고 `useFitColumn`: 줄 목록이 넘치면 글 칸에 CSS `zoom`을 0.05씩 줄임(최소 0.65, 숨은 줄의 translate 14px은 무시, 상자 너비가 바뀌면 다시). 세로(tall)는 밀어 보기라 줄이지 않음. 결과: 그 10장만 0.75~0.95, 나머지 그대로, 넘침 0
+- 같이 고친 버그: 슬라이드 화면에서 주소의 종목만 바뀌면 예전 장 번호가 남아 `slides[i]`가 없어 화면이 멈춤 → 종목이 바뀌면 처음 장으로(`shownSport`). 출처 장 key 중복(같은 주소 두 번) 경고
 

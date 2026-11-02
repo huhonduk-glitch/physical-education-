@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import CourtDiagram from '../../components/CourtDiagram'
 import RuleVisual, { NETBALL_AREAS, NETBALL_ORDER, type NetballPos } from '../../components/RuleVisual'
 import type { Figure } from '../../data/sports'
@@ -203,8 +203,8 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
         <Eyebrow label="자료" />
         <H>{slide.title}</H>
         <ul className="mt-4 space-y-2 text-[clamp(0.85rem,1.6vw,1.2rem)]">
-          {slide.sources.map((s) => (
-            <li key={s.url}>
+          {slide.sources.map((s, i) => (
+            <li key={`${i}-${s.url}`}>
               <b>{s.label}</b> <span className="text-[#a1a1a6]">({s.edition})</span>
               <span className="block break-all text-sm text-[#86868b]">{s.url}</span>
             </li>
@@ -226,6 +226,49 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
       </div>
     )
 
+  return <SectionSlide slide={slide} step={step} />
+}
+
+/**
+ * 넘치면 글 칸을 줄인다 (2026-11-02): 제목이 길거나 규격 칸 · 줄이 많은 장(경기장 · 용구)이 가로 화면에서 아래가 잘렸다.
+ * 아직 안 나온 줄도 자리를 차지하므로 처음 한 번 맞춘 크기가 끝까지 같다. 세로 화면(tall)은 밀어 보기라 줄이지 않는다.
+ */
+const FIT_MIN = 0.65
+function useFitColumn(dep: unknown) {
+  const col = useRef<HTMLDivElement>(null)
+  const list = useRef<HTMLUListElement>(null)
+  useLayoutEffect(() => {
+    const c = col.current
+    const ul = list.current
+    if (!c || !ul) return
+    const fit = () => {
+      c.style.zoom = '1'
+      if (getComputedStyle(ul).overflowY !== 'hidden') return
+      // 숨은 줄의 살짝 내려간 자리(translate) 만큼은 넘친 것으로 보지 않는다
+      const over = () => ul.scrollHeight - ul.clientHeight > 14
+      let z = 1
+      while (over() && z > FIT_MIN) {
+        z = Math.round((z - 0.05) * 100) / 100
+        c.style.zoom = String(z)
+      }
+    }
+    fit()
+    const box = c.closest('[class*="container-name:slide"]') ?? c.parentElement
+    if (!box || typeof ResizeObserver === 'undefined') return
+    let w = box.clientWidth
+    const ro = new ResizeObserver(() => {
+      if (box.clientWidth === w) return
+      w = box.clientWidth
+      fit()
+    })
+    ro.observe(box)
+    return () => ro.disconnect()
+  }, [dep])
+  return { col, list }
+}
+
+function SectionSlide({ slide, step }: { slide: Extract<Slide, { kind: 'section' }>; step: number }) {
+  const { col, list } = useFitColumn(slide)
   // 절 (장 번호 · 큰 제목 · 하나씩 나타나는 줄 · 큰 숫자 칸 · 그림)
   const photo = slide.figure?.kind === 'photo' ? slide.figure : null
   const court = slide.figure?.kind === 'court' ? slide.figure : null
@@ -236,7 +279,7 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
       <div
         className={`relative grid h-full gap-[3%] p-[3.5%] tall:overflow-y-auto tall:p-[5%] ${photo ? 'ml-[46%] tall:ml-0 tall:pt-[38cqh]' : court ? 'md:grid-cols-[1fr_1.1fr] tall:grid-cols-1! tall:content-start' : ''}`}
       >
-        <div className="flex min-h-0 flex-col">
+        <div ref={col} className="flex min-h-0 flex-col">
           <Eyebrow n={slide.chapter} label={slide.part ? `${slide.title} · ${slide.part}` : slide.title} />
           <H>{slide.lead ?? slide.title}</H>
           {slide.specs && slide.specs.length > 0 && (
@@ -249,7 +292,7 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
               ))}
             </div>
           )}
-          <ul className="mt-[3%] min-h-0 space-y-[1.2%] overflow-hidden pb-1 tall:overflow-visible tall:pb-4">
+          <ul ref={list} className="mt-[3%] min-h-0 space-y-[1.2%] overflow-hidden pb-1 tall:overflow-visible tall:pb-4">
             {slide.items.map((it, i) => (
               <li key={it.t} className={`flex gap-3 text-[clamp(1rem,2vw,1.5rem)] leading-snug font-semibold text-[#f5f5f7] ${show(step >= specOffset + i + 1)}`}>
                 <span className="mt-[0.45em] h-2.5 w-2.5 shrink-0 rounded-full bg-[#2997ff]" aria-hidden />
