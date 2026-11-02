@@ -51,4 +51,12 @@ describe('AI 보조심판', () => {
     expect(parseRefAnswer('모르겠어요', known)).toBeNull()
     expect(parseRefAnswer('{"verdict":"","refs":[]}', known)).toBeNull()
   })
+  it('공식 규칙서가 없는 학교 종목(빅발리볼 · 플레이트 야구)은 요청문 맨 앞에 "대회 요강 · 우리 반 규칙 우선" 알림', () => {
+    for (const id of ['bigvolleyball', 'platebaseball']) {
+      const d = ruleDigest(SPORTS.find((g) => g.id === id)!)
+      expect(d.startsWith('## 알림')).toBe(true)
+      expect(d).toContain('우리 반 규칙이 있으면 그것이 우선')
+    }
+    expect(ruleDigest(netball).startsWith('## 알림')).toBe(false)
+  })
 })

@@ -274,6 +274,7 @@ export const SPORT_KEYS: Record<string, SportKeys> = {
   },
   bigvolleyball: {
     keys: [
+      { title: '큰 공 · 낮은 네트', line: '지름 약 50 cm의 아주 가벼운 공(배구공의 약 두 배)으로, 배구보다 훨씬 낮은 네트(1.55~1.75 m)에서 해요.', why: '공이 천천히 날아와 누구나 받을 수 있어요.', ref: '한산신문 · 경남 블로그', visual: { kind: 'bigBall' } },
       { title: '5번 안에 넘기기', line: '우리 팀은 5번 안에 공을 상대 코트로 넘기면 돼요. 같은 사람이 연달아 두 번은 안 돼요.', ref: '한산신문', visual: { kind: 'touches', n: 5 } },
       { title: '언더핸드 서브', line: '배드민턴 서브 라인 뒤에서, 공을 던져 올리지 않고 네트보다 낮은 곳에서 아래로 쳐 넣어요.', ref: '발리볼FUN · 경남 블로그', visual: { kind: 'underhand' } },
       { title: '15점 · 2점 차 · 17점까지', line: '세트는 15점, 2점 차로 이겨야 해요. 14 : 14면 계속하되 17점에서 끝내요. 2세트를 먼저 따면 이겨요.', ref: '한산신문', visual: { kind: 'points', items: [{ n: '15', label: '점이면 세트' }, { n: '2', label: '점 차' }, { n: '17', label: '점에서 끝' }] } },
@@ -287,7 +288,7 @@ export const SPORT_KEYS: Record<string, SportKeys> = {
   },
   platebaseball: {
     keys: [
-      { title: '굴린 공을 튀겨서 치기', line: '투수가 바닥으로 굴린 공이 경사판(플레이트)을 타고 튀어 오르면 타자가 쳐요.', ref: 'EBS', visual: { kind: 'points', items: [{ n: '굴리기', label: '투수' }, { n: '튀어 오름', label: '플레이트' }, { n: '치기', label: '타자' }] } },
+      { title: '굴린 공을 튀겨서 치기', line: '투수가 바닥으로 굴린 공이 경사판(플레이트)을 타고 튀어 오르면 타자가 쳐요.', ref: 'EBS', visual: { kind: 'plateRoll' } },
       { title: '투수는 우리 편', line: '투수는 공격하는 우리 팀이 맡아요. 치기 좋게 굴려 주는 게 투수의 일이에요.', ref: 'EBS · 수업 자료', visual: { kind: 'points', items: [{ n: '우리', label: '투수' }, { n: '우리', label: '타자' }, { n: '상대', label: '수비' }] } },
       { title: '최대 2루까지', line: '홈런이 아니면 한 번에 2루까지만 가요. 슬라이딩 · 충돌은 금지예요.', ref: '수업 자료', visual: { kind: 'noContact' } },
     ],

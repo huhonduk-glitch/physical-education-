@@ -10,6 +10,7 @@ import type { GuideSource, SportGuide } from './sports'
 const HANSAN: GuideSource = { label: '한산신문 — 학생들을 위한 뉴스포츠, 빅발리볼! (충렬여고 학생기자, 2023-06-09)', edition: '2023', url: 'http://www.hansannews.com/news/articleView.html?idxno=84126' }
 const IDOMIN: GuideSource = { label: '경남도민일보 — 밀양교육장배 빅발리볼대회 성황 (2024-12-23)', edition: '2024', url: 'https://www.idomin.com/news/articleView.html?idxno=927347' }
 const GN_BLOG: GuideSource = { label: '경상남도 블로그 「괜찮네 경남」 — 누구나 안전하게 재밌게 즐길 수 있는 빅발리볼 (2023-12)', edition: '2023', url: 'https://www.welfarehello.com/community/hometownNews/1ea3131e-19b3-4322-b806-115bc2158adc' }
+const BWF_COURT: GuideSource = { label: 'BWF 배드민턴 경기 규칙 제1조 (코트 · 짧은 서비스 라인 1.98 m) — 빅발리볼 코트 그림', edition: '2023 v2.1', url: 'https://corporate.bwfbadminton.com/statutes/' }
 const VFUN: GuideSource = { label: '발리볼FUN — 빅발리볼 규칙 정리 (2026-06)', edition: '2026', url: 'https://volleyball-fun.com/big-volleyball-tips/' }
 
 const H = '한산신문'
@@ -22,6 +23,7 @@ const BIGVOLLEYBALL: SportGuide = {
   name: '빅발리볼',
   emoji: '🏐',
   group: 'net',
+  unofficial: '공식 국제 규칙서 · 공개된 협회 규정집이 없어 대회 · 수업 자료에서 같게 나오는 내용만 모았어요. 대회 요강이나 우리 반 규칙이 있으면 그것이 우선이에요.',
   summary: '지름 50 cm 가벼운 큰 공, 배드민턴 코트 · 낮은 네트, 5번 안에 넘기기',
   sections: [
     {
@@ -43,6 +45,7 @@ const BIGVOLLEYBALL: SportGuide = {
     },
     {
       title: '경기장 · 공',
+      figure: { kind: 'court', court: 'bigvolleyball', caption: '빅발리볼 코트 — 배드민턴 복식 코트(BWF 규칙 제1조 치수)에 낮은 네트' },
       specs: [
         { label: '코트', value: '배드민턴 복식 코트 13.4 m × 6.1 m', ref: `${B} · ${D}` },
         { label: '네트 높이', value: '1.55 m (초 · 여중) ~ 1.75 m (남고)', ref: `${H} · ${B}` },
@@ -74,7 +77,7 @@ const BIGVOLLEYBALL: SportGuide = {
       ],
     },
   ],
-  sources: [HANSAN, IDOMIN, GN_BLOG, VFUN],
+  sources: [HANSAN, IDOMIN, GN_BLOG, VFUN, BWF_COURT],
   bracket: {
     formats: '📊 리그전 또는 🏅 조별+토너먼트',
     scoreMode: '3세트제',
@@ -96,6 +99,7 @@ const PLATEBASEBALL: SportGuide = {
   name: '플레이트 야구',
   emoji: '⚾',
   group: 'field',
+  unofficial: '공식 국제 규칙서 · 공개된 협회 규정집이 없어 대회 · 수업 자료에서 같게 나오는 내용만 모았어요. 대회 요강이나 우리 반 규칙이 있으면 그것이 우선이에요.',
   summary: '투수(우리 편)가 굴린 공이 경사판에서 튀어 오르면 쳐요, 최대 2루까지',
   sections: [
     {
@@ -109,6 +113,7 @@ const PLATEBASEBALL: SportGuide = {
     },
     {
       title: '경기장 · 용구 · 진행',
+      figure: { kind: 'court', court: 'platebaseball', caption: '플레이트 야구 배치 — 크기는 학교 운동장에 맞춰요' },
       specs: [
         { label: '용구', value: '플레이트(경사판) · 티볼 공 · 티볼 배트 또는 라켓', ref: Z },
         { label: '인원', value: '한 팀 9~10명', ref: Z },
