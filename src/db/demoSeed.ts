@@ -4,7 +4,8 @@
  * 날짜는 '오늘'을 기준으로 만들어서 언제 열어도 최근 수업처럼 보인다. 같은 씨앗(seed)이면 늘 같은 반이 만들어진다.
  *
  * 들어가는 것: 남녀공학 고등학교 · 1학년 1·2반, 2학년 1반(학적반) + 배드민턴 수강반 · 시간표 ·
- * 최근 4주 누가기록(칭찬·지도·관찰) · 견학 · 체육부장 · 수업 일지 · PAPS(1-1반 2회차, 1-2반 1회차) · 수행평가 1개
+ * 최근 4주 누가기록(칭찬·지도·관찰) · 견학 · 체육부장 · 수업 일지 · PAPS(1-1반 2회차, 1-2반 1회차) ·
+ * 수행평가 3개(1-1 레이업 등급표 · 1-2 루브릭형 탐구보고서 · 2-1 체크리스트형 안전탐구활동, 2026-11-02 예시 틀)
  */
 import { addDays, todayStr } from '../lib/dates'
 import { hashPin, PIN_SETTING_KEY, type StoredPin } from '../lib/pin'
@@ -14,6 +15,7 @@ import type { PeDatabase } from './db'
 import { currentSchoolYear, defaultSettings, saveSettings, type TimetableEntry } from './settings'
 import type { Absence, Assessment, Attendance, AssessmentScore, Captain, ClassGroup, ClassRecord, Lesson, PapsResult, PapsRound, ProgressPlan, Student } from './types'
 import { itemsFromUnits, meetings, schedule } from '../lib/progressPlan'
+import { ASSESS_TEMPLATES } from '../data/assessTemplates'
 
 export const DEMO_SEEDED_KEY = 'demoSeeded'
 export const DEMO_SCHOOL = '시연고등학교 (가상)'
@@ -266,6 +268,27 @@ export async function seedDemo(db: PeDatabase, opts: DemoSeedOptions = {}): Prom
     scores: { 'demo-item-1': pick(['A', 'A', 'B', 'B', 'B', 'C', 'C', 'D']), 'demo-item-2': Math.floor(between(2, 11)) },
   }))
 
+  // ── 평가 기록표 예시 (2026-11-02): 교사 시트 구조의 예시 틀로 — 탐구주제는 지어낸 값
+  const tpl = (tid: string) => ASSESS_TEMPLATES.find((t) => t.id === tid)!.build(() => id('it'))
+  const safety: Assessment = { id: id('as'), schoolYear: year, grade: 2, rubric: [], altTaskEnabled: false, groupIds: [g21.id], semester: 2, ...tpl('checklist') }
+  const sItem = safety.items![0]
+  const topics = ['체육관 바닥 미끄럼', '운동장 배수구 덮개', '농구 골대 받침 모서리', '체육 창고 문 경첩', '계단 끝 미끄럼 방지 띠', '탈의실 바닥 물기', '배구 네트 지주 고정', '철봉 아래 모래 깊이', '운동장 야간 조명', '공 보관 바구니 바퀴']
+  const c21 = classOf(2, 1)
+  const safetyScores: AssessmentScore[] = c21.map((s, i) => {
+    if (i === 6) return { id: id('sc'), assessmentId: safety.id, studentId: s.id, scores: {}, status: '백지 제출' }
+    if (i === 13) return { id: id('sc'), assessmentId: safety.id, studentId: s.id, scores: {}, status: '미응시(미인정)' }
+    const n = Math.floor(between(3, 8))
+    const on = Array.from({ length: 7 }, (_, k) => k).sort(() => r() - 0.5).slice(0, n).sort((x, y) => x - y)
+    return { id: id('sc'), assessmentId: safety.id, studentId: s.id, scores: { [sItem.id]: on.length }, checks: { [sItem.id]: on }, texts: { 탐구주제: topics[i % topics.length] } }
+  })
+  const mega: Assessment = { id: id('as'), schoolYear: year, grade: 1, rubric: [], altTaskEnabled: false, groupIds: [g12.id], semester: 2, ...tpl('rubric') }
+  const megaNotes = ['월드컵 경기장 활용 사례를 근거로 들어 설명함', '올림픽 개최 도시의 관광 변화를 자료로 비교함', '발표 때 질문에 근거를 들어 답함']
+  const megaScores: AssessmentScore[] = classOf(1, 2).map((s, i) => {
+    const sc: Record<string, string> = {}
+    for (const it of mega.items!) sc[it.id] = pick(it.levels!.slice(0, 4)).label
+    return { id: id('sc'), assessmentId: mega.id, studentId: s.id, scores: sc, ...(i < 3 ? { note: megaNotes[i] } : {}) }
+  })
+
   // ── 교과 진도표 (1학년 체육1 · 1-1 · 1-2). 학기는 4주 전에 시작, 1-1은 계획대로, 1-2는 2차시 늦음
   const planStart = addDays(today, -28)
   const planItems = itemsFromUnits([
@@ -313,8 +336,8 @@ export async function seedDemo(db: PeDatabase, opts: DemoSeedOptions = {}): Prom
     await db.papsConfigs.bulkAdd(papsConfigs)
     await db.papsRounds.bulkAdd([...round1, round2])
     await db.papsResults.bulkAdd(papsResults)
-    await db.assessments.add(assessment)
-    await db.assessmentScores.bulkAdd(scores)
+    await db.assessments.bulkAdd([assessment, safety, mega])
+    await db.assessmentScores.bulkAdd([...scores, ...safetyScores, ...megaScores])
     await db.progressPlans.add(plan)
     await saveSettings(db, {
       ...defaultSettings(),
