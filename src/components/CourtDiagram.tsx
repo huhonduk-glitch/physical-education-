@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
  * 경기장 그림 (2026-10-27): 공식 규칙서 치수 그대로 미터 단위로 그린다(사진 · 남의 그림을 쓰지 않음 → 저작권 걱정 없음).
  * 숫자 출처는 src/data/sports.ts 각 종목 '경기장' 절의 조항. PPT로 내보낼 때도 이 SVG를 그림으로 바꿔 쓴다.
  */
-export type CourtId = 'basketball' | 'football' | 'futsal' | 'netball' | 'tchoukball' | 'ultimate' | 'tabletennis' | 'pickleball' | 'kinball'
+export type CourtId = 'basketball' | 'football' | 'futsal' | 'netball' | 'tchoukball' | 'ultimate' | 'tabletennis' | 'pickleball' | 'kinball' | 'bigvolleyball' | 'platebaseball'
 
 const INK = '#1f2937'
 const LINE = '#ffffff'
@@ -362,6 +362,72 @@ function Kinball() {
   )
 }
 
+function BigVolleyball() {
+  // dm 단위(×10). 배드민턴 복식 코트 13.40 m × 6.10 m, 짧은 서비스 라인은 네트에서 1.98 m (BWF 경기 규칙 제1조) — 빅발리볼은 이 코트를 그대로 쓴다
+  const W = 134
+  const H = 61
+  const s = 19.8
+  const lw = 0.5
+  return (
+    <Frame w={W} h={H} m={24} title="빅발리볼 코트 (배드민턴 복식 코트 13.4 m × 6.1 m)">
+      <rect x={0} y={0} width={W} height={H} fill="#3a7d5c" stroke={LINE} strokeWidth={lw} />
+      <line x1={W / 2 - s} y1={0} x2={W / 2 - s} y2={H} stroke={LINE} strokeWidth={lw} />
+      <line x1={W / 2 + s} y1={0} x2={W / 2 + s} y2={H} stroke={LINE} strokeWidth={lw} />
+      <line x1={W / 2} y1={-3} x2={W / 2} y2={H + 3} stroke="#111827" strokeWidth={1} />
+      {[0, 1].map((side) =>
+        [0, 1, 2, 3, 4, 5].map((i) => (
+          <circle key={`${side}-${i}`} cx={side === 0 ? 14 + (i % 3) * 13 : W - 14 - (i % 3) * 13} cy={H / 4 + Math.floor(i / 3) * (H / 2)} r={2.6} fill={side === 0 ? '#2563eb' : '#e07b39'} />
+        )),
+      )}
+      <text x={W / 2 - s / 2} y={H / 2} fontSize={3.6} fill={LINE} textAnchor="middle" dominantBaseline="middle">
+        네트 앞
+      </text>
+      <text x={W / 2 - s - 2} y={H / 2} fontSize={3.4} fill={LINE} textAnchor="end" dominantBaseline="middle">
+        서브는 이 줄 뒤에서 →
+      </text>
+      <Dim x1={0} y1={-9} x2={W} y2={-9} label="13.4 m" size={4.8} dy={-3.8} />
+      <Dim x1={-9} y1={0} x2={-9} y2={H} label="6.1 m" size={4.8} dx={-3.8} />
+      <Dim x1={W / 2} y1={H + 8} x2={W / 2 + s} y2={H + 8} label="1.98 m" size={4.2} dy={3.8} />
+      <text x={W / 2} y={H + 20} fontSize={4} fill={INK} textAnchor="middle">
+        네트 1.55 m(초 · 여중) ~ 1.75 m(남고) · 한 팀 6명
+      </text>
+    </Frame>
+  )
+}
+
+function PlateBaseball() {
+  // 크기는 학교 운동장에 맞춘다(공식 규격 없음) — 배치만 그림
+  const c = 100
+  const d = 62
+  const home = { x: c, y: 180 }
+  const base = (dx: number, dy: number) => ({ x: home.x + dx, y: home.y + dy })
+  const b1 = base(d, -d)
+  const b2 = base(0, -2 * d)
+  const b3 = base(-d, -d)
+  return (
+    <Frame w={200} h={200} m={14} title="플레이트 야구 경기장 (배치만, 크기는 운동장에 맞춤)">
+      <path d={`M ${home.x} ${home.y} L ${b1.x + 60} ${b1.y - 60} A 170 170 0 0 0 ${b3.x - 60} ${b3.y - 60} Z`} fill="#86b97a" />
+      <path d={`M ${home.x} ${home.y} L ${b1.x} ${b1.y} L ${b2.x} ${b2.y} L ${b3.x} ${b3.y} Z`} fill="#c9a26b" stroke={LINE} strokeWidth={1.2} />
+      {[b1, b2, b3].map((b, i) => (
+        <rect key={i} x={b.x - 4} y={b.y - 4} width={8} height={8} fill={LINE} transform={`rotate(45 ${b.x} ${b.y})`} />
+      ))}
+      <path d={`M ${home.x - 5} ${home.y} L ${home.x + 5} ${home.y} L ${home.x + 5} ${home.y + 4} L ${home.x} ${home.y + 8} L ${home.x - 5} ${home.y + 4} Z`} fill={LINE} />
+      <rect x={home.x - 7} y={home.y - 20} width={14} height={9} fill="#e07b39" stroke="#111827" strokeWidth={0.6} />
+      <circle cx={c} cy={home.y - 70} r={4} fill="#2563eb" />
+      <line x1={c} y1={home.y - 64} x2={c} y2={home.y - 24} stroke="#2563eb" strokeWidth={1.2} strokeDasharray="3 2" markerEnd="url(#arr)" />
+      <circle cx={home.x - 12} cy={home.y + 2} r={4} fill="#2563eb" />
+      <text x={b1.x + 8} y={b1.y + 4} fontSize={7} fill={INK}>1루</text>
+      <text x={b2.x} y={b2.y - 8} fontSize={7} fill={INK} textAnchor="middle">2루</text>
+      <text x={b3.x - 8} y={b3.y + 4} fontSize={7} fill={INK} textAnchor="end">3루</text>
+      <text x={c - 7} y={home.y - 70} fontSize={6.5} fill={INK} textAnchor="end" dominantBaseline="middle">투수(우리 편)</text>
+      <text x={c + 4} y={home.y - 44} fontSize={6} fill={INK} dominantBaseline="middle">굴림</text>
+      <text x={home.x + 10} y={home.y - 15} fontSize={6.5} fill={INK} dominantBaseline="middle">플레이트(경사판)</text>
+      <text x={home.x - 18} y={home.y + 2} fontSize={6.5} fill={INK} textAnchor="end" dominantBaseline="middle">타자</text>
+      <text x={c} y={8} fontSize={6.5} fill={INK} textAnchor="middle">크기는 운동장에 맞춰요 · 최대 2루까지</text>
+    </Frame>
+  )
+}
+
 export default function CourtDiagram({ court }: { court: CourtId }) {
   switch (court) {
     case 'basketball':
@@ -382,5 +448,9 @@ export default function CourtDiagram({ court }: { court: CourtId }) {
       return <Pickleball />
     case 'kinball':
       return <Kinball />
+    case 'bigvolleyball':
+      return <BigVolleyball />
+    case 'platebaseball':
+      return <PlateBaseball />
   }
 }

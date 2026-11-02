@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest'
+import pages from './fixtures/samsung-health-pages.json'
+import { readAssessPlan } from '../src/lib/assessPlanCells'
+import { buildCells, type PdfPage } from '../src/lib/pdfTable'
 import { findStandards, guessCurriculum, standardByCode, STANDARDS } from '../src/lib/standards'
 
 describe('2015 개정 성취기준 (2026-11-02, 교육부 고시 제2015-74호 [별책 11] 원문)', () => {
@@ -28,5 +31,15 @@ describe('2015 개정 성취기준 (2026-11-02, 교육부 고시 제2015-74호 [
   })
   it('학교급 · 과목으로 찾기', () => {
     expect(findStandards(STANDARDS, { school: '고', subject: '운동과 건강 (2015)' })).toHaveLength(10)
+  })
+  it('2015 개정 학교의 평가계획서(삼성여고 운동과 건강 공시본): 판을 2015로 가리고 성취기준 문장이 채워진다', () => {
+    const cells = (pages as unknown as PdfPage[]).map((p) => buildCells(p).cells)
+    const list = readAssessPlan(cells)
+    const codes = list.flatMap((a) => a.standards)
+    expect(codes).toEqual(['[12운건02-03]', '[12운건02-04]', '[12운건03-03]'])
+    const cur = guessCurriculum(STANDARDS, codes)
+    expect(cur).toBe('2015')
+    for (const c of codes) expect(standardByCode(STANDARDS, c, cur)?.curriculum, c).toBe('2015')
+    expect(standardByCode(STANDARDS, '[12운건02-03]', cur)?.text).toMatch(/^건강한 삶을 위한 체력의 중요성/)
   })
 })

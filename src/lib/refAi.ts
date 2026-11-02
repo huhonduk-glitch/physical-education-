@@ -24,6 +24,7 @@ export interface RefAnswer {
 /** 그 종목 규칙 요약 (AI 근거): 절마다 '- 내용 [조항]' + 핵심 규칙 + 빠른 판정판 */
 export function ruleDigest(g: SportGuide): string {
   const lines: string[] = []
+  if (g.unofficial) lines.push('## 알림', `- ${g.unofficial}`)
   for (const s of g.sections) {
     // 역사 · 수업 지도 내용(포지션 · 기술 · 전술 · 안전 · 탐구)은 판정 근거가 아니라서 뺀다
     if (/역사|^포지션$|^기술$|^전술$|안전 · 준비운동|생각해 봅시다/.test(s.title)) continue

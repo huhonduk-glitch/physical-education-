@@ -80,6 +80,8 @@ export interface SportGuide {
   league?: LeagueRules
   pointsNote?: string
   scoreSteps?: number[]
+  /** 공식 국제 규칙서가 없는 학교 종목: 근거가 보도 · 수업 자료라는 알림 (보조심판 AI 요청문 맨 앞에도 붙는다) */
+  unofficial?: string
 }
 
 const FIVB: GuideSource = {

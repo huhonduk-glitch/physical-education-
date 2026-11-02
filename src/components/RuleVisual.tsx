@@ -36,6 +36,8 @@ export type Visual =
   | { kind: 'allTouch' }
   | { kind: 'threeTeams' }
   | { kind: 'highStick' }
+  | { kind: 'plateRoll' }
+  | { kind: 'bigBall' }
 
 export const C = { ink: '#f5f5f7', mute: '#a1a1a6', line: '#3a3a3c', blue: '#2997ff', red: '#ff453a', green: '#30d158', orange: '#ff9f0a', yellow: '#ffd60a', court: '#1c3a2e', wood: '#3b2a1a', floor: '#1d1d1f' }
 
@@ -798,6 +800,60 @@ function HighStick() {
   )
 }
 
+/** 플레이트 야구: 우리 편 투수가 굴린 공 → 경사판 → 튀어 오른 공을 타자가 친다 (옆에서 본 모습) */
+function PlateRoll() {
+  return (
+    <Svg label="굴린 공이 경사판에서 튀어 오르면 치기">
+      <line x1={20} y1={200} x2={380} y2={200} stroke={C.mute} strokeWidth={3} />
+      <Person x={60} y={170} color={C.blue} label="투" />
+      <path d="M 80 196 L 250 196" stroke={C.blue} strokeWidth={3} strokeDasharray="8 6" markerEnd="url(#rv-arr-b)" />
+      <Ball x={150} y={191} r={7} />
+      <path d="M 250 200 L 300 200 L 300 178 Z" fill={C.orange} />
+      <path d="M 300 178 Q 312 120 322 110" stroke={C.yellow} strokeWidth={3} fill="none" strokeDasharray="6 5" markerEnd="url(#rv-arr)" />
+      <Ball x={324} y={104} r={8} />
+      <Person x={352} y={150} color={C.blue} label="타" />
+      <line x1={344} y1={140} x2={320} y2={96} stroke={C.ink} strokeWidth={5} strokeLinecap="round" />
+      <Txt x={60} y={122} size={14} color={C.blue}>
+        굴리기
+      </Txt>
+      <Txt x={278} y={228} size={14} color={C.orange}>
+        플레이트(경사판)
+      </Txt>
+      <Txt x={200} y={36} size={16}>
+        투수 · 타자 모두 우리 편
+      </Txt>
+    </Svg>
+  )
+}
+
+/** 빅발리볼: 배구공보다 훨씬 큰 공, 배구보다 낮은 네트 */
+function BigBall() {
+  return (
+    <Svg label="큰 공 · 낮은 네트">
+      <line x1={20} y1={220} x2={380} y2={220} stroke={C.mute} strokeWidth={3} />
+      <line x1={110} y1={220} x2={110} y2={60} stroke={C.mute} strokeWidth={3} strokeDasharray="6 5" />
+      <Txt x={110} y={46} size={13} color={C.mute}>
+        배구 네트 2.24 ~ 2.43 m
+      </Txt>
+      <line x1={110} y1={220} x2={110} y2={130} stroke={C.ink} strokeWidth={6} />
+      <Txt x={118} y={140} size={14} color={C.yellow} anchor="start">
+        빅발리볼 1.55 ~ 1.75 m
+      </Txt>
+      <circle cx={200} cy={200} r={14} fill={C.mute} />
+      <Txt x={200} y={175} size={13} color={C.mute}>
+        배구공 약 21 cm
+      </Txt>
+      <circle cx={318} cy={160} r={46} fill={C.orange} opacity={0.9} />
+      <Txt x={318} y={160} size={15} color="#fff">
+        약 50 cm
+      </Txt>
+      <Txt x={318} y={96} size={13} color={C.yellow}>
+        약 200 g · 아주 가벼워요
+      </Txt>
+    </Svg>
+  )
+}
+
 export default function RuleVisual({ v }: { v: Visual }) {
   switch (v.kind) {
     case 'timer':
@@ -848,6 +904,10 @@ export default function RuleVisual({ v }: { v: Visual }) {
       return <Kitchen />
     case 'twoBounce':
       return <TwoBounce />
+    case 'plateRoll':
+      return <PlateRoll />
+    case 'bigBall':
+      return <BigBall />
     case 'underhand':
       return <Underhand />
     case 'toss':
