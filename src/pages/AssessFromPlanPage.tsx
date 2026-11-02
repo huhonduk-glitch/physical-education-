@@ -7,7 +7,7 @@ import { db, newId } from '../db/db'
 import type { AssessItem, Assessment } from '../db/types'
 import { readAssessPlan, planTotals, type PlannedAssessment } from '../lib/assessPlanCells'
 import { fmtNum, itemMax } from '../lib/assessScore'
-import { STANDARDS, findStandards } from '../lib/standards'
+import { guessCurriculum, standardByCode, STANDARDS } from '../lib/standards'
 import { useApp } from '../state/AppContext'
 import { useGroups } from '../state/useGroups'
 
@@ -44,7 +44,8 @@ export default function AssessFromPlanPage() {
   const make = async () => {
     if (!chosen.length || !groupIds.length) return
     const firstGroup = (groups ?? []).find((g) => groupIds.includes(g.id))
-    const all = findStandards(STANDARDS, {})
+    // 계획서 전체 성취기준 번호로 2015 · 2022 판을 가린다 (중학교 · 운동과 건강은 두 판의 번호가 겹침)
+    const cur = guessCurriculum(STANDARDS, chosen.flatMap((a) => a.standards))
     const rows: Assessment[] = chosen.map((a) => {
       const item: AssessItem = a.item ? { ...a.item, id: newId() } : { id: newId(), label: a.title, method: 'direct', max: a.max ?? 0 }
       return {
@@ -57,7 +58,7 @@ export default function AssessFromPlanPage() {
         groupIds,
         items: [item],
         semester,
-        standards: a.standards.map((code) => ({ code, text: all.find((s) => s.code === code)?.text ?? '' })),
+        standards: a.standards.map((code) => ({ code, text: standardByCode(STANDARDS, code, cur)?.text ?? '' })),
         plan: { elements: a.elements, methods: a.methods, when: a.when, ratio: a.ratio, levelDescs: a.levelDescs },
       }
     })
