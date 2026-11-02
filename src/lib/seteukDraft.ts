@@ -73,7 +73,7 @@ export function draftParts(inp: DraftInput, opts: { maxNotes?: number } = {}): D
       if (it.method !== 'level') continue
       const got = scores?.[it.id]
       const lv = it.levels?.find((l) => l.label === String(got))
-      if (lv?.desc) parts.push({ kind: 'assess', id: `assess:${a.id}:${it.id}`, text: sentence(`「${a.title}」에서 ${lv.desc.replace(/[.]\s*$/, '')}`) })
+      if (lv?.desc) parts.push({ kind: 'assess', id: `assess:${a.id}:${it.id}`, text: sentence(`${a.title}에서 ${lv.desc.replace(/[.]\s*$/, '')}`) })
     }
   }
   // 6) 평가 기록표 (2026-11-02): 글 칸(탐구주제 등) · 만족한 체크리스트 평가 요소. 백지 제출 · 미응시 같은 제출 구분이면 넣지 않는다. 점수 · 수준은 넣지 않는다
@@ -83,14 +83,14 @@ export function draftParts(inp: DraftInput, opts: { maxNotes?: number } = {}): D
       const v = score.texts?.[name]?.trim()
       if (!v) continue
       const josa = eulReul(v).slice(v.length)
-      const text = /주제/.test(name) ? `「${a.title}」에서 ‘${v}’${josa} 주제로 탐구함` : `「${a.title}」 ${name}: ${v}`
+      const text = /주제/.test(name) ? `${a.title}에서 ‘${v}’${josa} 주제로 탐구함` : `${a.title} ${name}: ${v}`
       parts.push({ kind: 'assess', id: `assess:${a.id}:text:${name}`, text: sentence(text) })
     }
     for (const it of items) {
       const on = score.checks?.[it.id]
       if (!it.checks?.length || !on?.length) continue
       const said = on.slice(0, 3).map((k) => checkStatement(it.checks![k] ?? '')).filter(Boolean)
-      if (said.length) parts.push({ kind: 'assess', id: `assess:${a.id}:checks:${it.id}`, text: sentence(`「${a.title}」에서 ${said.join(', ')}`) })
+      if (said.length) parts.push({ kind: 'assess', id: `assess:${a.id}:checks:${it.id}`, text: sentence(`${a.title}에서 ${said.join(', ')}`) })
     }
   }
   return parts

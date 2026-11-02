@@ -66,8 +66,8 @@ describe('세특 근거에 기록표 내용 (탐구주제 · 만족한 평가 �
     const it0 = a.items![0]
     const parts = draftParts({ records: [], keywords: [], captainRoles: [], assessments: [{ a, items: a.items!, scores: { [it0.id]: 2 }, score: { texts: { 탐구주제: '체육관 바닥 미끄럼' }, checks: { [it0.id]: [0, 2] } } }] })
     expect(parts.map((p) => p.text)).toEqual([
-      '「학교체육시설 안전탐구활동」에서 ‘체육관 바닥 미끄럼’을 주제로 탐구함.',
-      '「학교체육시설 안전탐구활동」에서 학교 생활 및 체육 환경과 관련된 요소를 선정함, 개선방향의 현실성이 있음.',
+      '학교체육시설 안전탐구활동에서 ‘체육관 바닥 미끄럼’을 주제로 탐구함.',
+      '학교체육시설 안전탐구활동에서 학교 생활 및 체육 환경과 관련된 요소를 선정함, 개선방향의 현실성이 있음.',
     ])
     const none = draftParts({ records: [], keywords: [], captainRoles: [], assessments: [{ a, items: a.items!, scores: {}, score: { status: '백지 제출', texts: { 탐구주제: 'x' } } }] })
     expect(none).toEqual([])
@@ -76,5 +76,16 @@ describe('세특 근거에 기록표 내용 (탐구주제 · 만족한 평가 �
     expect(checkStatement('참고자료나 사례를 표기하였는가?')).toBe('참고자료나 사례를 표기함')
     expect(checkStatement('자신만의 생각이나 아이디어가 포함되어 있는가?')).toBe('자신만의 생각이나 아이디어가 포함되어 있음')
     expect(checkStatement('뚜렷한 안전 저해요소를 포함하였는가?')).toBe('뚜렷한 안전 저해요소를 포함함')
+  })
+})
+
+describe('세특 초안 문장은 기재요령 검사기에 기호로 걸리지 않는다 (2026-11-03 — 낫표 「」 뺌)', () => {
+  it('평가 이름을 낫표 없이', async () => {
+    const { checkSeteuk } = await import('../src/lib/seteukCheck')
+    const a = make('checklist')
+    const it0 = a.items![0]
+    const parts = draftParts({ records: [], keywords: [], captainRoles: [], assessments: [{ a, items: a.items!, scores: { [it0.id]: 2 }, score: { texts: { 탐구주제: '체육관 바닥 미끄럼' }, checks: { [it0.id]: [0, 2] } } }] })
+    const hits = checkSeteuk(parts.map((p) => p.text).join(' '))
+    expect(hits.find((h) => h.id === 'symbol')).toBeUndefined()
   })
 })
