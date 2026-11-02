@@ -272,6 +272,30 @@ export const SPORT_KEYS: Record<string, SportKeys> = {
       { q: '소프트볼 정규 경기는 7이닝이다.', a: true, why: '야구(9이닝)보다 짧아요.', ref: '1.2.1' },
     ],
   },
+  bigvolleyball: {
+    keys: [
+      { title: '5번 안에 넘기기', line: '우리 팀은 5번 안에 공을 상대 코트로 넘기면 돼요. 같은 사람이 연달아 두 번은 안 돼요.', ref: '한산신문', visual: { kind: 'touches', n: 5 } },
+      { title: '언더핸드 서브', line: '배드민턴 서브 라인 뒤에서, 공을 던져 올리지 않고 네트보다 낮은 곳에서 아래로 쳐 넣어요.', ref: '발리볼FUN · 경남 블로그', visual: { kind: 'underhand' } },
+      { title: '15점 · 2점 차 · 17점까지', line: '세트는 15점, 2점 차로 이겨야 해요. 14 : 14면 계속하되 17점에서 끝내요. 2세트를 먼저 따면 이겨요.', ref: '한산신문', visual: { kind: 'points', items: [{ n: '15', label: '점이면 세트' }, { n: '2', label: '점 차' }, { n: '17', label: '점에서 끝' }] } },
+      { title: '연달아 두 번 금지', line: '한 사람이 공을 연속으로 두 번 치면 반칙이에요. 서브를 받는 첫 터치를 오버핸드로 바로 넘겨도 반칙이에요.', ref: '한산신문', visual: { kind: 'noDouble' } },
+    ],
+    quiz: [
+      { q: '빅발리볼은 배구처럼 3번 안에 넘겨야 한다.', a: false, why: '5번 안에 넘기면 돼요.', ref: '한산신문' },
+      { q: '서브는 공을 위로 던져 올린 뒤 쳐도 된다.', a: false, why: '공을 손에 든 채 네트보다 낮은 곳에서 쳐요.', ref: '발리볼FUN' },
+      { q: '14 : 14가 되면 2점 차가 날 때까지 하되, 17점에서 끝난다.', a: true, why: '세트 상한은 17점이에요.', ref: '한산신문' },
+    ],
+  },
+  platebaseball: {
+    keys: [
+      { title: '굴린 공을 튀겨서 치기', line: '투수가 바닥으로 굴린 공이 경사판(플레이트)을 타고 튀어 오르면 타자가 쳐요.', ref: 'EBS', visual: { kind: 'points', items: [{ n: '굴리기', label: '투수' }, { n: '튀어 오름', label: '플레이트' }, { n: '치기', label: '타자' }] } },
+      { title: '투수는 우리 편', line: '투수는 공격하는 우리 팀이 맡아요. 치기 좋게 굴려 주는 게 투수의 일이에요.', ref: 'EBS · 수업 자료', visual: { kind: 'points', items: [{ n: '우리', label: '투수' }, { n: '우리', label: '타자' }, { n: '상대', label: '수비' }] } },
+      { title: '최대 2루까지', line: '홈런이 아니면 한 번에 2루까지만 가요. 슬라이딩 · 충돌은 금지예요.', ref: '수업 자료', visual: { kind: 'noContact' } },
+    ],
+    quiz: [
+      { q: '플레이트 야구의 투수는 상대 팀 선수다.', a: false, why: '공격하는 우리 팀이 투수를 맡아 치기 좋게 굴려 줘요.', ref: 'EBS' },
+      { q: '홈런이 아니면 한 번에 최대 2루까지 갈 수 있다.', a: true, why: '안전과 경기 흐름을 위해 2루까지로 정해요.', ref: '수업 자료' },
+    ],
+  },
   teeball: {
     keys: [
       { title: '투수 없음 · 티 위의 공', line: '받침대(티)에 공을 올려놓고 쳐요. 누구나 공을 칠 수 있어요.', ref: '플레이북', visual: { kind: 'points', items: [{ n: '0', label: '투수' }, { n: '1', label: '티 위의 공' }, { n: '3', label: '파울이면 아웃' }] } },
