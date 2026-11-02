@@ -14,6 +14,22 @@ export interface SheetStudent {
   score?: AssessmentScore
 }
 
+/** 엑셀 · 인쇄용 학생 줄: 대체과제(제출 여부)를 비고 앞에 붙인다 */
+export function sheetStudents<S extends { id: string; name: string; gender: 'M' | 'F' | null }>(
+  list: readonly S[],
+  label: (s: S) => string,
+  byStudent: ReadonlyMap<string, AssessmentScore>,
+  altIds?: ReadonlyMap<string, boolean>,
+): SheetStudent[] {
+  return list.map((s) => {
+    const sc = byStudent.get(s.id)
+    const alt = altIds?.get(s.id)
+    const note = [alt === undefined ? '' : `대체과제${alt ? '(제출)' : '(미제출)'}`, sc?.note ?? ''].filter(Boolean).join(' / ')
+    const score = sc ? { ...sc, note: note || undefined } : note ? { id: '', assessmentId: '', studentId: s.id, scores: {}, note } : undefined
+    return { no: label(s), name: s.name, gender: s.gender, score }
+  })
+}
+
 export interface SheetCol {
   /** 위 머리글 (요소 이름 등). 같은 값이 이어지면 한 묶음 */
   group: string

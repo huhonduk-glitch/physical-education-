@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { ASSESS_TEMPLATES } from '../src/data/assessTemplates'
 import type { Assessment, AssessmentScore } from '../src/db/types'
 import { areaTotal, checklistBands, itemPoints, levelOf, toggleCheck } from '../src/lib/assessScore'
-import { criteriaLines, recordSheet } from '../src/lib/assessSheet'
+import { criteriaLines, recordSheet, sheetStudents } from '../src/lib/assessSheet'
 
 let n = 0
 const newId = () => `id${++n}`
@@ -66,5 +66,24 @@ describe('루브릭형 (교사 탐구보고서: 융합성 40 · 전문성 30 · 
     expect(c[0].title).toBe('융합성 (40점)')
     expect(c[0].lines[0]).toBe('40점 메가 이벤트 요소와 진로 희망 분야를 연계한 구체적 키워드 3개 이상 포함')
     expect(c.at(-1)!.lines).toEqual(['상: 만점의 90% 이상', '중: 만점의 60% 이상', '하: 그 밖'])
+  })
+})
+
+describe('기록표 학생 줄 (엑셀 · 인쇄)', () => {
+  it('대체과제 표시를 비고 앞에, 채점 없는 학생도 줄이 생김', () => {
+    const list = [
+      { id: 'p', name: '학생A', gender: 'F' as const },
+      { id: 'q', name: '학생B', gender: 'M' as const },
+      { id: 'r', name: '학생C', gender: null },
+    ]
+    const by = new Map([['p', score({ studentId: 'p', note: '보고서 우수' })]])
+    const rows = sheetStudents(list, (s) => s.id.toUpperCase(), by, new Map([['p', true], ['q', false]]))
+    expect(rows.map((r) => r.no)).toEqual(['P', 'Q', 'R'])
+    expect(rows[0].score?.note).toBe('대체과제(제출) / 보고서 우수')
+    expect(rows[1].score?.note).toBe('대체과제(미제출)')
+    expect(rows[2].score).toBeUndefined()
+    const a = make('checklist')
+    const sheet = recordSheet(a, a.items!, rows)
+    expect(sheet.at(-3)!.at(-1)).toBe('대체과제(제출) / 보고서 우수')
   })
 })

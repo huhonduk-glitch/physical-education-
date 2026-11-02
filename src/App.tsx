@@ -64,6 +64,7 @@ const AiGuidePage = lazy(() => import('./pages/AiGuidePage'))
 const PeTimetablePage = lazy(() => import('./pages/PeTimetablePage'))
 const AssessmentsPage = lazy(() => import('./pages/AssessmentsPage'))
 const AssessmentGradePage = lazy(() => import('./pages/AssessmentGradePage'))
+const AssessSheetPrintPage = lazy(() => import('./pages/AssessSheetPrintPage'))
 const AssessmentEditPage = lazy(() => import('./pages/AssessmentEditPage'))
 const AssessExportPage = lazy(() => import('./pages/AssessExportPage'))
 const ClassSummaryPage = lazy(() => import('./pages/ClassSummaryPage'))
@@ -212,6 +213,7 @@ export default function App() {
           <Route path="/more/assessments/from-plan" element={<AssessFromPlanPage />} />
           <Route path="/more/assessments/export" element={<AssessExportPage />} />
           <Route path="/more/assessments/:id/edit" element={<AssessmentEditPage />} />
+          <Route path="/more/assessments/:id/sheet" element={<AssessSheetPrintPage />} />
           <Route path="/more/assessments/:id" element={<AssessmentGradePage />} />
           <Route path="/more/captains" element={<CaptainsPage />} />
           <Route path="/more/absences" element={<AbsencesPage />} />
