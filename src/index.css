@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* 슬라이드 상자가 세로로 길 때(폰 세로 화면)만 쓰는 배치 — 상자 크기로 판단해서 '전체 보기' 미리보기(가로 상자)는 그대로 */
+@custom-variant tall {
+  @container slide (orientation: portrait) {
+    @slot;
+  }
+}
+
 /*
  * 디자인 기준 (CLAUDE.md 1장): 햇빛 아래에서도 잘 보이는 고대비 + 큰 글씨 + 누르는 곳 48px 이상.
  * 요즘 국내 앱처럼 연회색 바탕 위에 흰 카드, 진한 파랑 강조색, Pretendard 글꼴(앱 안에 포함 → 오프라인 OK).

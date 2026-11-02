@@ -77,14 +77,18 @@ const Eyebrow = ({ n, label }: { n?: string | number; label: string }) => (
 const H = ({ children }: { children: ReactNode }) => <h2 className="mt-1 text-[clamp(1.7rem,4.2vw,3.4rem)] leading-[1.15] font-black tracking-tight text-white">{children}</h2>
 const Ref = ({ r }: { r: string }) => <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-[clamp(0.75rem,1.3vw,1rem)] font-bold text-[#a1a1a6]">[{r}]</span>
 
+/** 사진 띠: 가로 화면은 왼쪽에 크게 깔고 오른쪽으로, 세로 화면(tall)은 위에 깔고 아래로 검게 녹인다 */
+const BLEED = 'absolute inset-y-0 left-0 tall:inset-x-0 tall:top-0 tall:bottom-auto tall:w-full'
+const BLEED_FADE = 'absolute inset-0 bg-gradient-to-r tall:bg-gradient-to-b'
+
 /** 사진을 왼쪽에 크게 깔고 오른쪽으로 검게 녹이기 (참고 강의 사이트 방식) */
 function PhotoBleed({ photo, caption }: { photo: string; caption?: string }) {
   const p = PHOTOS[photo]
   if (!p) return null
   return (
-    <div className="absolute inset-y-0 left-0 w-[58%]">
+    <div className={`${BLEED} w-[58%] tall:h-[34%]`}>
       <img src={`${BASE}${p.src}`} alt={caption ?? ''} className="h-full w-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/30 to-black" />
+      <div className={`${BLEED_FADE} from-transparent via-black/30 to-black`} />
       <p className="absolute bottom-2 left-3 text-[0.65rem] text-white/60">
         사진: {p.credit} · {p.license} · 위키미디어 공용
       </p>
@@ -98,15 +102,15 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
     return (
       <div className="relative h-full overflow-hidden bg-black">
         {slide.cover && (
-          <div className="absolute inset-y-0 left-0 w-[62%]">
+          <div className={`${BLEED} w-[62%] tall:h-[42%]`}>
             <img src={`${BASE}${slide.cover.src}`} alt="" className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/40 to-black" />
+            <div className={`${BLEED_FADE} from-transparent via-black/40 to-black`} />
             <p className="absolute bottom-2 left-3 text-[0.65rem] text-white/60">
               사진: {slide.cover.credit} · {slide.cover.license}
             </p>
           </div>
         )}
-        <div className={`relative flex h-full flex-col justify-center p-[5%] ${slide.cover ? 'ml-[48%]' : ''}`}>
+        <div className={`relative flex h-full flex-col justify-center p-[5%] ${slide.cover ? 'ml-[48%] tall:ml-0 tall:justify-start tall:pt-[44cqh]' : ''}`}>
           <Eyebrow label={slide.group} />
           <h1 className="mt-2 text-[clamp(2.8rem,8vw,6.5rem)] leading-none font-black tracking-tight text-white">{slide.title}</h1>
           <p className="mt-4 text-[clamp(1rem,2.2vw,1.7rem)] font-semibold text-[#a1a1a6]">{slide.sub}</p>
@@ -130,7 +134,7 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
       <div className="flex h-full flex-col bg-black p-[3.5%]">
         <Eyebrow n="★" label="핵심 규칙 한눈에" />
         <H>{slide.title}</H>
-        <div className={`mt-[2%] grid min-h-0 flex-1 gap-[1.5%] ${slide.keys.length > 4 ? 'grid-cols-3' : 'grid-cols-2'} ${slide.keys.length > 4 ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
+        <div className={`mt-[2%] grid min-h-0 flex-1 gap-[1.5%] ${slide.keys.length > 4 ? 'grid-cols-3' : 'grid-cols-2'} ${slide.keys.length > 4 ? 'md:grid-cols-5' : 'md:grid-cols-4'} tall:grid-cols-2! tall:gap-2`}>
           {slide.keys.map((k, i) => (
             <div key={k.title} className="flex min-h-0 flex-col rounded-2xl bg-[#1d1d1f] p-[4%]">
               <div className="flex min-h-0 flex-1 items-center overflow-hidden">{k.visual.kind === 'zones' ? <RuleVisual v={{ kind: 'zones' }} /> : <RuleVisual v={k.visual} />}</div>
@@ -146,8 +150,8 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
 
   if (slide.kind === 'key')
     return (
-      <div className="grid h-full grid-cols-1 items-center gap-[4%] bg-black p-[4%] md:grid-cols-[1.15fr_1fr]">
-        <div className="min-h-0">
+      <div className="grid h-full grid-cols-1 items-center gap-[4%] overflow-y-auto bg-black p-[4%] md:grid-cols-[1.15fr_1fr] tall:grid-cols-1! tall:content-center tall:gap-[3cqh] tall:p-[5%]">
+        <div className="min-h-0 tall:mx-auto tall:w-full tall:max-w-[60cqh]">
           <KeyVisual k={slide.key} />
         </div>
         <div className="min-h-0">
@@ -229,7 +233,9 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
   return (
     <div className="relative h-full overflow-hidden bg-black">
       {photo && <PhotoBleed photo={photo.photo} caption={photo.caption} />}
-      <div className={`relative grid h-full gap-[3%] p-[3.5%] ${photo ? 'ml-[46%]' : court ? 'md:grid-cols-[1fr_1.1fr]' : ''}`}>
+      <div
+        className={`relative grid h-full gap-[3%] p-[3.5%] tall:overflow-y-auto tall:p-[5%] ${photo ? 'ml-[46%] tall:ml-0 tall:pt-[38cqh]' : court ? 'md:grid-cols-[1fr_1.1fr] tall:grid-cols-1! tall:content-start' : ''}`}
+      >
         <div className="flex min-h-0 flex-col">
           <Eyebrow n={slide.chapter} label={slide.part ? `${slide.title} · ${slide.part}` : slide.title} />
           <H>{slide.lead ?? slide.title}</H>
@@ -243,7 +249,7 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
               ))}
             </div>
           )}
-          <ul className="mt-[3%] min-h-0 space-y-[1.2%] overflow-hidden pb-1">
+          <ul className="mt-[3%] min-h-0 space-y-[1.2%] overflow-hidden pb-1 tall:overflow-visible tall:pb-4">
             {slide.items.map((it, i) => (
               <li key={it.t} className={`flex gap-3 text-[clamp(1rem,2vw,1.5rem)] leading-snug font-semibold text-[#f5f5f7] ${show(step >= specOffset + i + 1)}`}>
                 <span className="mt-[0.45em] h-2.5 w-2.5 shrink-0 rounded-full bg-[#2997ff]" aria-hidden />
@@ -256,7 +262,7 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
           </ul>
         </div>
         {court && (
-          <figure className="flex min-h-0 flex-col justify-center">
+          <figure className="flex min-h-0 flex-col justify-center tall:order-first">
             <div className="overflow-hidden rounded-2xl">
               <CourtDiagram court={court.court} />
             </div>
