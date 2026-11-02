@@ -70,12 +70,12 @@ describe('성취기준 목록 찾기', () => {
 
 
 describe('성취기준 목록 (교육부 고시 제2022-33호 별책 11·21에서 옮김)', () => {
-  const all = STANDARDS.subjects.flatMap((s) => s.areas.flatMap((a) => a.standards.map((x) => ({ ...x, subject: s.subject, school: s.school }))))
+  const all = STANDARDS.subjects.filter((s) => s.curriculum === '2022').flatMap((s) => s.areas.flatMap((a) => a.standards.map((x) => ({ ...x, subject: s.subject, school: s.school }))))
   it('중학교 체육 51개 + 고등학교 20과목, 모두 190개, 코드 겹침 없음', () => {
     expect(all).toHaveLength(190)
     expect(new Set(all.map((s) => s.code)).size).toBe(190)
     expect(all.filter((s) => s.school === '중')).toHaveLength(51)
-    expect(STANDARDS.subjects.filter((s) => s.school === '고').map((s) => s.subject)).toHaveLength(20)
+    expect(STANDARDS.subjects.filter((s) => s.school === '고' && s.curriculum === '2022').map((s) => s.subject)).toHaveLength(20)
     for (const s of all) {
       expect(s.code).toMatch(/^\[(9|12)[가-힣]+\d*(-\d{2})?-\d{2}\]$/)
       expect(s.text.endsWith('다.')).toBe(true)
