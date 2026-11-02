@@ -1,7 +1,7 @@
 import type { PeDatabase } from './db'
 import { loadReports } from './reportRepo'
 import type { Assessment, AssessmentScore, ClassGroup, ClassRecord, Keyword, Student } from './types'
-import { appliesTo, itemsOf, totalOf } from '../lib/assessScore'
+import { areaTotal, appliesTo, itemsOf } from '../lib/assessScore'
 import type { FlexMode, PapsStandards } from '../lib/paps'
 import { studentEvidence, type EvidenceItem } from '../lib/seteuk'
 import { draftParts, type DraftPart } from '../lib/seteukDraft'
@@ -52,7 +52,7 @@ export function basisOf(
   let got = 0
   let max = 0
   for (const a of mine) {
-    const t = totalOf(itemsOf(a), myScores.find((x) => x.assessmentId === a.id)?.scores, s.gender)
+    const t = areaTotal(a, myScores.find((x) => x.assessmentId === a.id), s.gender)
     if (t.done === 0 || t.max <= 0) continue
     got += t.total
     max += t.max

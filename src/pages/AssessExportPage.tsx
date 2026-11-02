@@ -6,7 +6,7 @@ import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import { db } from '../db/db'
 import type { Assessment, AssessmentScore } from '../db/types'
-import { fmtNum, itemMax, itemsOf, totalOf } from '../lib/assessScore'
+import { areaTotal, fmtNum, itemMax, itemsOf, totalOf } from '../lib/assessScore'
 import { saveBlob } from '../lib/download'
 import {
   assessWorkbook,
@@ -57,7 +57,7 @@ export default function AssessExportPage() {
   }, [linked.map((a) => a.id).join(',')])
   const [mode, setMode] = useState<'template' | 'new'>('template')
 
-  const scoreOf = (a: Assessment, studentId: string) => totalOf(itemsOf(a), scores?.get(a.id)?.get(studentId)?.scores, members.find((s) => s.id === studentId)?.gender)
+  const scoreOf = (a: Assessment, studentId: string) => areaTotal(a, scores?.get(a.id)?.get(studentId), members.find((s) => s.id === studentId)?.gender)
 
   return (
     <>

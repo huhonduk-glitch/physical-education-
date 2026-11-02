@@ -760,6 +760,14 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
   - 그쪽에만 있던 종목 추가: 핸드볼(IHF 2025-07) · 플로어볼(IFF 2026) · 테니스(ITF 2026, 테니스캐나다 규정집판 — ITF 원본은 자동 다운로드 막힘) · 야구(WBSC 2025-2026) → `src/data/sportsMore.ts` + 핵심 규칙 · 퀴즈 · 보조심판 · 지도 내용. 그 뒤(교사: '플레이북을 근거로 써, 소프트볼은 이탈리아어판 번역'): `src/data/sportsSkill.ts` — 소프트볼(WBSC 2026-2029 이탈리아어 번역판을 번역: 7이닝 1.2.1 · 언더핸드 4.3.3 · 루 18.29 m · 투수 13.11/14.02 m 부록 F · 더블 베이스 5.6) · 티볼 · 육상(단거리 · 이어달리기 · 높이뛰기 · 멀리뛰기) · 체조(매트 · 뜀틀) · 줄넘기(조항 칸 '플레이북') · 플라잉디스크 골프(PDGA 간이 규칙 2025-09). 플레이북의 'PAPS 줄넘기 선택'은 공식 PAPS와 달라 뺌. 기술형은 보조심판 판정판 없음(테스트도 기술형 제외). 거리 그림은 설명(note)이 있으면 사람 대신 시작 · 끝 표시. 핵심 규칙 제목은 괄호 뺀 이름('육상다운 규칙'). **남은 종목: 플레이트 야구 · 빅발리볼(공식 규정 없음 — 교사 자료 기다림)**
   - 주의: 경기장 SVG를 미터 단위로 그리면 글자 크기가 1보다 작아져 Chrome이 글자를 깨뜨린다(탁구대 '2.74 m'가 'm 47.2'로). 작은 경기장은 cm · dm 단위로 그린다
 - **수업 출결**: 수업반 보드 네 번째 칸 [출결]. 카드 누르기 = 출석 → 결석 → 지각 → 조퇴 → 결과 → 출석. 사유는 [사유 보기]를 눌러야(건강 정보). 결석·결과는 그날 '참여'에서 빠짐. 반 누적 기록 · 엑셀 · 학생 화면에 횟수. 저장 v9 `attendance`(자동 백업 `UPGRADE_TO = 9`, 백업 형식 6). 계산 `src/lib/attendance.ts`, 저장 `src/db/attendanceRepo.ts`, 화면 `src/pages/groups/AttendView.tsx`, 테스트 `tests/attendance.test.ts`. 시연 자료에도 출결 몇 줄
+
+### 6-8. 평가 기록표 (2026-10-31 교사 요청, 브랜치 `assess-sheets`, 진행 중 · 인계 메모)
+- 교사 요청: 세부 채점표는 평가계획서 양식에 없을 수 있음. 교사 구글 시트 2개(2026 3학년 운동과 건강 '안전탐구활동 평가기록지' = 체크리스트형, '탐구활동 평가지' = 루브릭형 탐구보고서)를 참고해서, **평가 설정에 맞게 바뀌는** 채점표 · 기록지를 만든다. 시트 주소는 교사가 대화에서 줌(학생 실명 있음 → 구조와 평가 요소 문장만 씀, 저장소에 학생 정보 넣지 않음)
+- 교사 결정(추천 승인): 예시 틀에 교사 시트 문장 그대로 · 수준 기본 상 90 · 중 60(3수준), A~E(90/80/70/60) 고를 수 있음
+- 시트 구조: ① 번호 · 성명 · 탐구주제 · ①~⑦ 체크 · 만족 수 · 제출 구분 · 점수(30 + 개수 × 10, 백지 제출 20, 미응시(미인정) 15) ② 번호 · 이름 · 융합성 40 · 전문성 30 · 결론/제언 30 · 합계 · 수준(≥90 상 ≥60 중) · 비고, 요소별 점수 기준 문장, 미응시 25
+- **된 것 (커밋됨)**: 선택 필드 `Assessment.specials`(제출 구분 → 평가 전체 점수) · `texts`(글 칸) · `levelCuts`(수준, 만점 대비 %) / `AssessmentScore.checks`(체크한 항목 번호) · `status` · `texts`. 저장 구조 버전 안 바꿈. `assessScore.ts`: `areaTotal`(제출 구분 반영 — 모든 합계 호출을 이걸로 바꿈: 채점표 · 나이스 내보내기 · 학생 화면 · 리포트 · 세특 수준) · `levelOf` · `LEVEL_CUT_PRESETS` · `toggleCheck` · `checklistBands`. `src/lib/assessSheet.ts`(`sheetColumns` · `recordSheet`(빈 기록지 옵션) · `criteriaLines`) · `src/data/assessTemplates.ts`(예시 틀 2개) · 테스트 `tests/assessSheet.test.ts`. 고치기 화면(`AssessmentEditPage`): `?tpl=checklist|rubric`으로 예시 채우기, 체크리스트 편집(`ChecklistEditor`, 개수별 점수 채우기), 기록표 칸(`SheetOptions`: 글 칸 · 제출 구분 · 성취 수준). 테스트 680개 통과
+- **2단계 (2026-11-02)**: 채점 화면 — 체크리스트 요소는 학생마다 ①~⑦ 버튼(`toggleCheck` → `checks` + 만족 수) · [0개], [글 칸 · 제출 구분] 탭, 합계 표에 제출 구분 · 수준, 엑셀 = `recordSheet`(기록표) + `criteriaLines`(채점 기준 시트), 대체과제는 비고 앞에(`sheetStudents`). 인쇄 화면 `/more/assessments/:id/sheet?g=`(`AssessSheetPrintPage.tsx`: 채점 기준 + 기록지, 빈 기록지 · 가로 인쇄 선택, 묶음 머리글). 수행평가 목록에 '예시로 만들기' 카드 2개. 사용법 · 업데이트 소식 · CHANGELOG v1.5.0. 시연 모드 폰 화면 · 인쇄 화면 확인. **남은 것: PR → main은 교사 허락 뒤**
+
 ---
 
 ## 7. references/ 폴더 (교사가 준비)

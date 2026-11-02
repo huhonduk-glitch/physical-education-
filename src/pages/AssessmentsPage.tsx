@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Link } from 'react-router-dom'
 import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
+import { ASSESS_TEMPLATES } from '../data/assessTemplates'
 import { db } from '../db/db'
 import { itemMax, itemsOf } from '../lib/assessScore'
 import { GROUP_COLORS, SEMESTER_LABEL } from '../lib/groups'
@@ -62,6 +63,26 @@ export default function AssessmentsPage() {
             </span>
             <Icon name="chevronRight" className="text-ink-3" />
           </Link>
+        )}
+
+        {!readOnly && (
+          <section className="space-y-2">
+            <h2 className="px-1 text-sm font-bold text-ink-3">예시로 만들기 · 기록지가 평가 설정에 맞게 만들어져요</h2>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {ASSESS_TEMPLATES.map((t) => (
+                <Link key={t.id} to={`/more/assessments/new?tpl=${t.id}`} className="card flex min-h-[72px] items-center gap-3 p-4 transition-transform active:scale-[0.99]">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand-light text-brand">
+                    <Icon name={t.id === 'checklist' ? 'check' : 'list'} size={22} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <b className="block">{t.name}</b>
+                    <span className="hint">{t.summary}</span>
+                  </span>
+                  <Icon name="chevronRight" className="text-ink-3" />
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
 
         {list && list.length === 0 && (

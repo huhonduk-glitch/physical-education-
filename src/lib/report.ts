@@ -1,5 +1,5 @@
 import type { Absence, Assessment, AssessmentScore, Captain, ClassGroup, ClassRecord, Keyword, Student } from '../db/types'
-import { appliesTo, fmtNum, itemPoints, itemsOf, totalOf } from './assessScore'
+import { areaTotal, appliesTo, fmtNum, itemPoints, itemsOf } from './assessScore'
 import { countByCategory, keywordSummary } from './recordStats'
 import type { StudentPaps } from './paps'
 
@@ -63,7 +63,7 @@ export function buildReport(
       .map((a) => {
         const items = itemsOf(a)
         const sc = scoreBy.get(a.id)
-        const t = totalOf(items, sc?.scores, student.gender)
+        const t = areaTotal(a, sc, student.gender, items)
         return {
           title: a.title,
           score: t.done ? `${fmtNum(t.total)} / ${t.max}점` : '미채점',

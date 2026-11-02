@@ -9,7 +9,8 @@ import PageHeader from '../components/PageHeader'
 import { db, newId } from '../db/db'
 import { addRecords } from '../db/recordsRepo'
 import type { AssessItem, Assessment, AssessmentScore, Student } from '../db/types'
-import { directProblem, fmtNum, itemMax, itemPoints, itemsOf, NON_PART, totalOf } from '../lib/assessScore'
+import { areaTotal, directProblem, fmtNum, itemMax, itemPoints, itemsOf, levelOf, NON_PART, toggleCheck } from '../lib/assessScore'
+import { circled, criteriaLines, recordSheet, sheetStudents } from '../lib/assessSheet'
 import { todayStr } from '../lib/dates'
 import { saveXlsx } from '../lib/download'
 import { memberNo } from '../lib/groups'
@@ -17,6 +18,9 @@ import { useApp } from '../state/AppContext'
 import { useGroups } from '../state/useGroups'
 
 const SUM = '__sum__'
+const EXTRA = '__extra__'
+
+type ScorePatch = Partial<Pick<AssessmentScore, 'scores' | 'checks' | 'status' | 'texts'>>
 
 /** 수업반 채점표 (재설계 3단계): 요소를 고르고 학생마다 입력 → 합계 자동 */
 export default function AssessmentGradePage() {
@@ -34,7 +38,8 @@ export default function AssessmentGradePage() {
   const group = linked.find((g) => g.id === gid)
   const list = useMemo(() => (group ? membersOf(group) : []), [group, membersOf])
   const [tab, setTab] = useState<string>('')
-  const curTab = tab === SUM || items.some((i) => i.id === tab) ? tab : (items[0]?.id ?? SUM)
+  const hasExtra = !!(a?.specials?.length || a?.texts?.length)
+  const curTab = tab === SUM || (tab === EXTRA && hasExtra) || items.some((i) => i.id === tab) ? tab : (items[0]?.id ?? SUM)
   const scores = useLiveQuery(() => db.assessmentScores.where('assessmentId').equals(id).toArray(), [id])
   const byStudent = useMemo(() => new Map((scores ?? []).map((s) => [s.studentId, s])), [scores])
   const absences = useLiveQuery(() => (list.length ? db.absences.where('studentId').anyOf(list.map((s) => s.id)).toArray() : []), [list.map((s) => s.id).join(',')])
@@ -42,27 +47,46 @@ export default function AssessmentGradePage() {
 
   if (!a) return <PageHeader title="불러오는 중…" back />
   const maxTotal = items.reduce((n, it) => n + itemMax(it), 0)
-  const doneCount = list.filter((s) => totalOf(items, byStudent.get(s.id)?.scores, s.gender).complete).length
+  const doneCount = list.filter((s) => areaTotal(a, byStudent.get(s.id), s.gender, items).complete).length
+  const label = (s: Student) => (group ? memberNo(group, s) : String(s.number))
+  const altIds = new Map((absences ?? []).filter((x) => x.altTaskId === a.id).map((x) => [x.studentId, x.altTaskDone]))
 
+  /** 학생 채점 한 줄 고치기 (없으면 새로) */
+  const patch = async (s: Student, p: ScorePatch) => {
+    const cur = byStudent.get(s.id)
+    if (cur) await db.assessmentScores.update(cur.id, p)
+    else await db.assessmentScores.add({ id: newId(), assessmentId: a.id, studentId: s.id, scores: {}, ...p })
+  }
   const setScore = async (s: Student, itemId: string, v: string | number) => {
     const cur = byStudent.get(s.id)
     const next = { ...(cur?.scores ?? {}), [itemId]: v }
     if (v === '') delete next[itemId]
-    if (cur) await db.assessmentScores.update(cur.id, { scores: next })
-    else await db.assessmentScores.add({ id: newId(), assessmentId: a.id, studentId: s.id, scores: next })
+    const checks = { ...(cur?.checks ?? {}) }
+    // 개수를 직접 넣거나 지우면 체크 표시는 맞지 않으니 뺀다
+    if (checks[itemId] && checks[itemId].length !== v) delete checks[itemId]
+    await patch(s, { scores: next, checks })
+  }
+  /** 체크리스트 항목 켜고 끄기 → 체크 목록 + 만족 수(점수 칸) */
+  const setCheck = async (s: Student, itemId: string, idx: number) => {
+    const cur = byStudent.get(s.id)
+    const { list: on, count } = toggleCheck(cur?.checks?.[itemId], idx)
+    const scores = { ...(cur?.scores ?? {}), [itemId]: count }
+    const checks = { ...(cur?.checks ?? {}), [itemId]: on }
+    if (count === 0) {
+      delete scores[itemId]
+      delete checks[itemId]
+    }
+    await patch(s, { scores, checks })
   }
 
   const exportXlsx = async () => {
     if (!group) return
-    const head = ['번호', '학번', '이름', ...items.map((it) => `${it.label}(${itemMax(it)}점)`), `합계(${maxTotal}점)`, '비고']
-    const body = list.map((s) => {
-      const sc = byStudent.get(s.id)?.scores
-      const t = totalOf(items, sc, s.gender)
-      const alt = absences?.find((x) => x.studentId === s.id && x.altTaskId === a.id)
-      const memo = [alt ? `대체과제${alt.altTaskDone ? '(제출)' : '(미제출)'}` : '', byStudent.get(s.id)?.note ?? ''].filter(Boolean).join(' / ')
-      return [memberNo(group, s), s.studentCode, s.name, ...items.map((it) => itemPoints(it, sc?.[it.id], s.gender) ?? ''), t.done ? t.total : '', memo]
-    })
-    await saveXlsx(`수행평가_${a.title}_${group.name}.xlsx`, [{ name: '채점표', rows: [head, ...body] }])
+    const rows = recordSheet(a, items, sheetStudents(list, label, byStudent, altIds))
+    const crit = criteriaLines(a, items).flatMap((c) => [[c.title], ...c.lines.map((l) => ['', l]), []])
+    await saveXlsx(`수행평가_${a.title}_${group.name}.xlsx`, [
+      { name: '기록표', rows },
+      { name: '채점 기준', rows: [[`${a.title} 채점 기준`], [], ...crit], widths: [28, 80] },
+    ])
   }
 
   return (
@@ -78,7 +102,10 @@ export default function AssessmentGradePage() {
                 <Icon name="edit" size={20} />
               </Link>
             )}
-            <button type="button" className="btn btn-soft px-3" onClick={exportXlsx} disabled={list.length === 0} aria-label="채점표 엑셀">
+            <Link to={`/more/assessments/${a.id}/sheet${gid ? `?g=${gid}` : ''}`} className="btn btn-soft px-3" aria-label="기록지 인쇄">
+              <Icon name="file" size={20} />
+            </Link>
+            <button type="button" className="btn btn-soft px-3" onClick={exportXlsx} disabled={list.length === 0} aria-label="기록표 엑셀">
               <Icon name="download" size={20} />
             </button>
           </>
@@ -105,13 +132,20 @@ export default function AssessmentGradePage() {
               </button>
             )
           })}
+          {hasExtra && (
+            <button type="button" role="tab" aria-selected={curTab === EXTRA} className="chip shrink-0" onClick={() => setTab(EXTRA)}>
+              {[a.texts?.length ? a.texts.join(' · ') : '', a.specials?.length ? '제출 구분' : ''].filter(Boolean).join(' · ')}
+            </button>
+          )}
           <button type="button" role="tab" aria-selected={curTab === SUM} className="chip shrink-0" onClick={() => setTab(SUM)}>
             <Icon name="list" size={18} /> 합계
           </button>
         </div>
 
         {curTab === SUM ? (
-          <SumTable a={a} items={items} list={list} byStudent={byStudent} memberLabel={(s) => (group ? memberNo(group, s) : String(s.number))} onNote={setNote} readOnly={readOnly} />
+          <SumTable a={a} items={items} list={list} byStudent={byStudent} memberLabel={label} onNote={setNote} readOnly={readOnly} />
+        ) : curTab === EXTRA ? (
+          <ExtraColumn key={gid} a={a} list={list} byStudent={byStudent} memberLabel={label} readOnly={readOnly} onPatch={patch} />
         ) : (
           (() => {
             const it = items.find((x) => x.id === curTab)
@@ -122,11 +156,12 @@ export default function AssessmentGradePage() {
                 item={it}
                 list={list}
                 byStudent={byStudent}
-                memberLabel={(s) => (group ? memberNo(group, s) : String(s.number))}
+                memberLabel={label}
                 absentIds={new Set((absences ?? []).map((x) => x.studentId))}
-                altIds={new Map((absences ?? []).filter((x) => x.altTaskId === a.id).map((x) => [x.studentId, x.altTaskDone]))}
+                altIds={altIds}
                 readOnly={readOnly}
                 onSet={setScore}
+                onCheck={setCheck}
               />
             )
           })()
@@ -147,6 +182,7 @@ function ItemColumn({
   altIds,
   readOnly,
   onSet,
+  onCheck,
 }: {
   item: AssessItem
   list: Student[]
@@ -156,6 +192,7 @@ function ItemColumn({
   altIds: Map<string, boolean>
   readOnly: boolean
   onSet: (s: Student, itemId: string, v: string | number) => Promise<void>
+  onCheck: (s: Student, itemId: string, idx: number) => Promise<void>
 }) {
   const refs = useRef<(HTMLInputElement | null)[]>([])
   return (
@@ -165,17 +202,19 @@ function ItemColumn({
           ? '등급을 누르세요 (다시 누르면 지워져요)'
           : item.method === 'record'
             ? item.checks?.length
-              ? `만족한 평가 요소 개수(0~${item.checks.length})를 넣으면 점수가 정해져요 · 엔터 → 다음 학생`
+              ? `만족한 평가 요소 번호를 누르세요 (다시 누르면 풀려요). 만족 수로 점수가 정해져요 · 하나도 없으면 [0개]`
               : `기록(${item.unit ?? ''})을 넣으면 점수가 정해져요${item.bandsF?.length ? ' · 남녀 기준이 달라요' : ''} · 엔터 → 다음 학생`
             : `점수를 넣으세요 (0~${item.max ?? 0}점) · 엔터 → 다음 학생`}
         {item.checks?.length ? (
           <details className="mt-1 font-normal text-ink-2">
             <summary className="cursor-pointer font-bold text-brand">평가 요소 {item.checks.length}개 보기</summary>
-            <ol className="mt-1 list-decimal space-y-0.5 pl-5">
-              {item.checks.map((c) => (
-                <li key={c}>{c}</li>
+            <ul className="mt-1 space-y-0.5">
+              {item.checks.map((c, k) => (
+                <li key={k}>
+                  <b className="text-ink">{circled(k)}</b> {c}
+                </li>
               ))}
-            </ol>
+            </ul>
           </details>
         ) : null}
         {item.method === 'level' && item.levels?.some((l) => l.desc) && (
@@ -192,9 +231,11 @@ function ItemColumn({
         )}
       </li>
       {list.map((s, i) => {
-        const raw = byStudent.get(s.id)?.scores[item.id]
+        const sc = byStudent.get(s.id)
+        const raw = sc?.scores[item.id]
         const pts = itemPoints(item, raw, s.gender)
         const alt = altIds.get(s.id)
+        const on = sc?.checks?.[item.id] ?? []
         return (
           <li key={s.id} className="flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2.5">
             <span className="min-w-7 shrink-0 font-extrabold tabular-nums">{memberLabel(s)}</span>
@@ -202,8 +243,39 @@ function ItemColumn({
               {s.name}
               {absentIds.has(s.id) && <span className="ml-1 badge bg-fill-2 text-ink-3">견학</span>}
               {alt !== undefined && <span className={`ml-1 badge ${alt ? 'bg-ok-light text-ok' : 'bg-caution-light text-caution'}`}>대체과제</span>}
+              {sc?.status && <span className="ml-1 badge bg-ink text-white">{sc.status}</span>}
             </span>
-            {item.method === 'level' ? (
+            {item.checks?.length ? (
+              <div className="flex w-full flex-wrap gap-1">
+                {item.checks.map((c, k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    disabled={readOnly}
+                    aria-pressed={on.includes(k)}
+                    aria-label={`${s.name} ${k + 1}번 ${c}`}
+                    title={c}
+                    className={`h-11 min-w-11 rounded-xl px-2 text-lg font-extrabold ${on.includes(k) ? 'bg-brand text-white' : 'bg-fill text-ink-2'}`}
+                    onClick={() => onCheck(s, item.id, k)}
+                  >
+                    {circled(k)}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  disabled={readOnly}
+                  aria-pressed={raw === 0}
+                  className={`h-11 rounded-xl px-2 text-sm font-bold ${raw === 0 ? 'bg-ink text-white' : 'bg-fill text-ink-3'}`}
+                  onClick={() => onSet(s, item.id, raw === 0 ? '' : 0)}
+                >
+                  0개
+                </button>
+                <span className="ml-auto self-center text-right tabular-nums">
+                  {raw !== undefined && raw !== NON_PART && <span className="mr-1.5 text-sm font-bold text-ink-3">{raw}개</span>}
+                  <span className={`font-extrabold ${pts === null ? 'text-ink-3' : 'text-brand'}`}>{pts === null ? '—' : `${fmtNum(pts)}점`}</span>
+                </span>
+              </div>
+            ) : item.method === 'level' ? (
               <div className="flex flex-wrap gap-1">
                 {(item.levels ?? []).map((l) => (
                   <button
@@ -241,7 +313,7 @@ function ItemColumn({
                 미참여
               </button>
             )}
-            {item.method !== 'direct' && (
+            {item.method !== 'direct' && !item.checks?.length && (
               <span className={`w-12 shrink-0 text-right font-extrabold tabular-nums ${pts === null ? 'text-ink-3' : 'text-brand'}`}>{pts === null ? '—' : `${fmtNum(pts)}점`}</span>
             )}
           </li>
@@ -334,14 +406,17 @@ function SumTable({
                 <span className="block font-semibold text-ink-3">{itemMax(it)}점</span>
               </th>
             ))}
+            {a.specials?.length ? <th className="px-2 py-2 text-sm text-ink-2">제출 구분</th> : null}
             <th className="px-2 py-2 text-sm font-extrabold">합계</th>
+            {a.levelCuts?.length ? <th className="px-2 py-2 text-sm font-extrabold">수준</th> : null}
             <th className="px-2 py-2 text-sm text-ink-3">메모</th>
           </tr>
         </thead>
         <tbody>
           {list.map((s) => {
             const sc = byStudent.get(s.id)
-            const t = totalOf(items, sc?.scores, s.gender)
+            const t = areaTotal(a, sc, s.gender, items)
+            const max = items.reduce((n, it) => n + itemMax(it), 0)
             return (
               <tr key={s.id}>
                 <th className="sticky left-0 z-10 border-t border-line bg-white px-2 py-2 text-left text-sm font-semibold whitespace-nowrap">
@@ -356,7 +431,9 @@ function SumTable({
                     </td>
                   )
                 })}
+                {a.specials?.length ? <td className="border-t border-line px-2 text-sm font-bold whitespace-nowrap">{sc?.status ?? ''}</td> : null}
                 <td className={`border-t border-line px-2 font-extrabold tabular-nums ${t.complete ? 'text-brand' : 'text-caution'}`}>{t.done ? fmtNum(t.total) : '—'}</td>
+                {a.levelCuts?.length ? <td className="border-t border-line px-2 font-extrabold">{t.complete ? levelOf(a.levelCuts, t.total, max) : ''}</td> : null}
                 <td className="border-t border-line px-1">
                   <button type="button" className="btn btn-ghost min-h-[40px] px-2 text-ink-3" disabled={readOnly} onClick={() => onNote(s)} aria-label={`${s.name} 메모`}>
                     <Icon name={sc?.note ? 'note' : 'tag'} size={18} />
@@ -369,6 +446,77 @@ function SumTable({
       </table>
       <p className="hint mt-2 px-1">주황 합계는 아직 채점하지 않은 요소가 있는 학생이에요. ({a.title})</p>
     </div>
+  )
+}
+
+/** 글 칸(탐구주제 등) · 제출 구분(백지 제출 · 미응시 → 평가 전체 점수)을 학생마다 */
+function ExtraColumn({
+  a,
+  list,
+  byStudent,
+  memberLabel,
+  readOnly,
+  onPatch,
+}: {
+  a: Assessment
+  list: Student[]
+  byStudent: Map<string, AssessmentScore>
+  memberLabel: (s: Student) => string
+  readOnly: boolean
+  onPatch: (s: Student, p: ScorePatch) => Promise<void>
+}) {
+  return (
+    <ul className="card divide-y divide-line p-0">
+      <li className="px-4 py-2.5 text-sm font-bold text-ink-3">
+        {a.specials?.length ? `제출 구분을 고르면 요소 점수 대신 그 점수가 평가 점수가 돼요 (${a.specials.map((x) => `${x.label} ${fmtNum(x.points)}점`).join(' · ')}). 다시 누르면 풀려요.` : ''}
+        {a.texts?.length ? ` 글 칸은 적고 다른 곳을 누르면 저장돼요.` : ''}
+      </li>
+      {list.map((s) => {
+        const sc = byStudent.get(s.id)
+        return (
+          <li key={s.id} className="space-y-2 px-3 py-2.5">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="min-w-7 font-extrabold tabular-nums">{memberLabel(s)}</span>
+              <span className="flex-1 font-semibold whitespace-nowrap">{s.name}</span>
+              {a.specials?.map((x) => (
+                <button
+                  key={x.label}
+                  type="button"
+                  disabled={readOnly}
+                  aria-pressed={sc?.status === x.label}
+                  aria-label={`${s.name} ${x.label}`}
+                  className={`h-11 rounded-xl px-2.5 text-sm font-bold ${sc?.status === x.label ? 'bg-ink text-white' : 'bg-fill text-ink-2'}`}
+                  onClick={() => onPatch(s, { status: sc?.status === x.label ? undefined : x.label })}
+                >
+                  {x.label}
+                </button>
+              ))}
+            </div>
+            {a.texts?.map((t) => (
+              <TextCell key={t} label={t} name={s.name} value={sc?.texts?.[t] ?? ''} readOnly={readOnly} onCommit={(v) => onPatch(s, { texts: { ...(sc?.texts ?? {}), [t]: v } })} />
+            ))}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
+function TextCell({ label, name, value, readOnly, onCommit }: { label: string; name: string; value: string; readOnly: boolean; onCommit: (v: string) => void }) {
+  const [text, setText] = useState(value)
+  useEffect(() => setText(value), [value])
+  return (
+    <label className="flex items-center gap-2">
+      <span className="w-20 shrink-0 text-sm font-bold text-ink-3">{label}</span>
+      <input
+        className="field min-h-[44px] flex-1"
+        value={text}
+        disabled={readOnly}
+        aria-label={`${name} ${label}`}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => text.trim() !== value && onCommit(text.trim())}
+      />
+    </label>
   )
 }
 
