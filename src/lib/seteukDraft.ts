@@ -1,4 +1,4 @@
-import type { AssessItem, Assessment, ClassRecord, Keyword } from '../db/types'
+import type { AssessItem, Assessment, AssessmentScore, ClassRecord, Keyword } from '../db/types'
 
 /**
  * 세특 틀 초안 (6-5 ③). 순수 함수. 인터넷 안 씀.
@@ -33,7 +33,7 @@ export interface DraftInput {
   records: readonly ClassRecord[]
   keywords: readonly Keyword[]
   /** 이 학생이 받은 평가와 채점값 */
-  assessments: readonly { a: Assessment; items: readonly AssessItem[]; scores: Record<string, string | number> | undefined }[]
+  assessments: readonly { a: Assessment; items: readonly AssessItem[]; scores: Record<string, string | number> | undefined; score?: Pick<AssessmentScore, 'checks' | 'texts' | 'status'> }[]
   captainRoles: readonly string[]
 }
 
@@ -76,7 +76,43 @@ export function draftParts(inp: DraftInput, opts: { maxNotes?: number } = {}): D
       if (lv?.desc) parts.push({ kind: 'assess', id: `assess:${a.id}:${it.id}`, text: sentence(`「${a.title}」에서 ${lv.desc.replace(/[.]\s*$/, '')}`) })
     }
   }
+  // 6) 평가 기록표 (2026-11-02): 글 칸(탐구주제 등) · 만족한 체크리스트 평가 요소. 백지 제출 · 미응시 같은 제출 구분이면 넣지 않는다. 점수 · 수준은 넣지 않는다
+  for (const { a, items, score } of inp.assessments) {
+    if (!score || score.status) continue
+    for (const name of a.texts ?? []) {
+      const v = score.texts?.[name]?.trim()
+      if (!v) continue
+      const josa = eulReul(v).slice(v.length)
+      const text = /주제/.test(name) ? `「${a.title}」에서 ‘${v}’${josa} 주제로 탐구함` : `「${a.title}」 ${name}: ${v}`
+      parts.push({ kind: 'assess', id: `assess:${a.id}:text:${name}`, text: sentence(text) })
+    }
+    for (const it of items) {
+      const on = score.checks?.[it.id]
+      if (!it.checks?.length || !on?.length) continue
+      const said = on.slice(0, 3).map((k) => checkStatement(it.checks![k] ?? '')).filter(Boolean)
+      if (said.length) parts.push({ kind: 'assess', id: `assess:${a.id}:checks:${it.id}`, text: sentence(`「${a.title}」에서 ${said.join(', ')}`) })
+    }
+  }
   return parts
+}
+
+/**
+ * 체크리스트 평가 요소(질문)를 서술로: '…선정하였는가?' → '…선정함', '…있는가?' → '…있음'.
+ * 교사가 적은 요소 문장을 그대로 쓰고 끝만 바꾼다(없는 내용을 만들지 않음).
+ */
+export function checkStatement(q: string): string {
+  const t = q.trim().replace(/\s+/g, ' ')
+  if (!t) return ''
+  const rules: [RegExp, string][] = [
+    [/(하였|했)는가\??$/, '함'],
+    [/되었는가\??$/, '됨'],
+    [/있는가\??$/, '있음'],
+    [/없는가\??$/, '없음'],
+    [/인가\??$/, '임'],
+    [/는가\??$/, '음'],
+  ]
+  for (const [re, end] of rules) if (re.test(t)) return t.replace(re, end)
+  return t.replace(/[?？]$/, '')
 }
 
 export function draftText(parts: readonly DraftPart[]): string {

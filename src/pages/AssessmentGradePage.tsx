@@ -10,6 +10,7 @@ import { db, newId } from '../db/db'
 import { addRecords } from '../db/recordsRepo'
 import type { AssessItem, Assessment, AssessmentScore, Student } from '../db/types'
 import { areaTotal, directProblem, fmtNum, itemMax, itemPoints, itemsOf, levelOf, NON_PART, toggleCheck } from '../lib/assessScore'
+import { readPaste, type PasteRow } from '../lib/assessPaste'
 import { circled, criteriaLines, recordSheet, sheetStudents } from '../lib/assessSheet'
 import { todayStr } from '../lib/dates'
 import { saveXlsx } from '../lib/download'
@@ -44,6 +45,7 @@ export default function AssessmentGradePage() {
   const byStudent = useMemo(() => new Map((scores ?? []).map((s) => [s.studentId, s])), [scores])
   const absences = useLiveQuery(() => (list.length ? db.absences.where('studentId').anyOf(list.map((s) => s.id)).toArray() : []), [list.map((s) => s.id).join(',')])
   const [note, setNote] = useState<Student | null>(null)
+  const [pasting, setPasting] = useState(false)
 
   if (!a) return <PageHeader title="불러오는 중…" back />
   const maxTotal = items.reduce((n, it) => n + itemMax(it), 0)
@@ -119,6 +121,12 @@ export default function AssessmentGradePage() {
         )}
         {linked.length > 1 && <GroupPicker groups={linked} value={gid ?? null} onChange={(g) => setSp({ g }, { replace: true })} />}
         {linked.length === 0 && <p className="card">이 평가에 연결된 수업반이 없어요. [고치기]에서 수업반을 골라 주세요.</p>}
+        {!readOnly && list.length > 0 && (
+          <button type="button" className="btn btn-soft w-full justify-start gap-2" onClick={() => setPasting(true)}>
+            <Icon name="copy" size={18} /> 구글 시트 · 엑셀에서 붙여넣기
+            <span className="ml-auto text-xs font-semibold text-ink-3">이미 채점한 표를 그대로</span>
+          </button>
+        )}
 
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none]" role="tablist" aria-label="채점 요소">
           {items.map((it) => {
@@ -168,6 +176,38 @@ export default function AssessmentGradePage() {
         )}
       </div>
       {note && <NoteSheet a={a} s={note} score={byStudent.get(note.id)} onClose={() => setNote(null)} />}
+      {pasting && (
+        <PasteSheet
+          a={a}
+          items={items}
+          list={list}
+          byStudent={byStudent}
+          onApply={async (rows) => {
+            for (const r of rows) {
+              const st = list.find((x) => x.id === r.studentId)
+              if (!st) continue
+              const cur = byStudent.get(st.id)
+              const p = r.patch
+              await patch(st, {
+                scores: { ...(cur?.scores ?? {}), ...p.scores },
+                checks: { ...(cur?.checks ?? {}), ...p.checks },
+                texts: { ...(cur?.texts ?? {}), ...p.texts },
+                ...(p.status === undefined ? {} : { status: p.status || undefined }),
+              })
+              if (p.note !== undefined) {
+                const now = byStudent.get(st.id)
+                if (now) await db.assessmentScores.update(now.id, { note: p.note })
+                else {
+                  const again = await db.assessmentScores.where('assessmentId').equals(a.id).filter((x) => x.studentId === st.id).first()
+                  if (again) await db.assessmentScores.update(again.id, { note: p.note })
+                }
+              }
+            }
+            setPasting(false)
+          }}
+          onClose={() => setPasting(false)}
+        />
+      )}
     </>
   )
 }
@@ -541,6 +581,76 @@ function NoteSheet({ a, s, score, onClose }: { a: Assessment; s: Student; score?
         <p className="hint">키워드를 붙이면 관찰 기록으로도 남아 세특 키워드 엑셀에 들어가요.</p>
         <button type="button" className="btn btn-primary w-full" onClick={save}>
           저장
+        </button>
+      </div>
+    </BottomSheet>
+  )
+}
+
+/** 구글 시트 · 엑셀에서 복사한 채점 결과 붙여넣기 (2026-11-02): 머리글 이름으로 열을 맞추고, 미리 보고 넣는다 */
+function PasteSheet({
+  a,
+  items,
+  list,
+  byStudent,
+  onApply,
+  onClose,
+}: {
+  a: Assessment
+  items: AssessItem[]
+  list: Student[]
+  byStudent: Map<string, AssessmentScore>
+  onApply: (rows: PasteRow[]) => Promise<void>
+  onClose: () => void
+}) {
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const res = useMemo(() => (text.trim() ? readPaste(text, a, items, list.map((s) => ({ id: s.id, name: s.name, no: String(s.number) }))) : null), [text, a, items, list])
+  const overwrite = res ? res.rows.filter((r) => {
+    const cur = byStudent.get(r.studentId)
+    return !!cur && (Object.keys(cur.scores).length > 0 || !!cur.status || Object.keys(cur.texts ?? {}).length > 0)
+  }).length : 0
+  return (
+    <BottomSheet title="시트에서 붙여넣기" sub={a.title} onClose={onClose}>
+      <div className="space-y-3">
+        <p className="hint">
+          구글 시트나 엑셀에서 <b>머리글 줄(번호 · 이름 …)부터</b> 학생 줄까지 골라 복사한 뒤 아래에 붙여 넣으세요. 머리글 이름으로 칸을 맞춰요: 이름 · 번호, 글 칸(예: 탐구주제), 요소 이름(예: ①융합성), ①~⑦ 체크(TRUE · O = 만족), 제출구분, 비고. 만족 수 · 점수 · 합계 · 수준은 앱이 다시 계산해요.
+        </p>
+        <textarea className="field min-h-[8rem] py-2 font-mono text-xs" value={text} onChange={(e) => setText(e.target.value)} placeholder="시트에서 복사한 표를 여기에 붙여 넣기 (머리글 줄부터)" aria-label="붙여넣을 표" />
+        {res && (
+          <div className="space-y-2 rounded-xl bg-fill p-3 text-sm">
+            {res.columns.length > 0 && (
+              <ul className="space-y-0.5 text-ink-2">
+                {res.columns.map((c) => (
+                  <li key={c}>· {c}</li>
+                ))}
+              </ul>
+            )}
+            <p className="font-bold">
+              학생 {res.rows.length}명을 찾았어요{overwrite ? ` · 이미 채점한 ${overwrite}명은 덮어써요` : ''}.
+            </p>
+            {res.problems.length > 0 && (
+              <ul className="space-y-0.5 font-semibold text-danger">
+                {res.problems.slice(0, 12).map((p) => (
+                  <li key={p}>{p}</li>
+                ))}
+                {res.problems.length > 12 && <li>… 외 {res.problems.length - 12}개</li>}
+              </ul>
+            )}
+          </div>
+        )}
+        <button
+          type="button"
+          className="btn btn-primary w-full"
+          disabled={!res || res.rows.length === 0 || busy}
+          onClick={async () => {
+            if (!res) return
+            setBusy(true)
+            await onApply(res.rows)
+            setBusy(false)
+          }}
+        >
+          {busy ? '넣는 중…' : `${res?.rows.length ?? 0}명 넣기`}
         </button>
       </div>
     </BottomSheet>
