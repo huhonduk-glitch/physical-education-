@@ -245,6 +245,30 @@ export const REF_BOARDS: Record<string, RefBoard> = {
       { id: 'fly', name: '플라이 아웃', words: '뜬공 잡음', kind: 'restart', verdict: '타자 아웃 — 먼저 출발한 주자는 원래 루로 돌아가 밟아야 해요', restart: '이어서', tell: '', ref: '5.10' },
     ],
   },
+  bigvolleyball: {
+    scoreSteps: [1],
+    calls: [
+      { id: 'touch6', name: '6번째 터치', words: '다섯 번 넘김 못함 많이 침', kind: 'violation', verdict: '반칙 — 상대 1점 (5번 안에 넘겨야 해요)', restart: '상대가 서브', tell: '세면서 쳐요: 하나 · 둘 · … · 다섯 안에 넘기기.', ref: '한산신문' },
+      { id: 'double', name: '연달아 두 번', words: '두번 연속 같은 사람 더블', kind: 'violation', verdict: '반칙 — 상대 1점', restart: '상대가 서브', tell: '한 번 쳤으면 다음은 친구가.', ref: '한산신문' },
+      { id: 'serve', name: '서브 반칙', words: '던져서 침 높은 데서 라인 밟음', kind: 'violation', verdict: '서브 실패 — 상대 1점', restart: '상대가 서브', tell: '서브 라인 뒤에서, 공을 든 채 네트보다 낮게 쳐요.', ref: '발리볼FUN' },
+      { id: 'first', name: '서브 첫 터치 오버핸드', words: '서브 받자마자 위로 넘김', kind: 'violation', verdict: '반칙 — 상대 1점 (첫 터치는 언더핸드로)', restart: '상대가 서브', tell: '서브는 언더핸드로 받아요.', ref: '한산신문' },
+      { id: 'net', name: '네트 터치', words: '몸 네트 닿음 기둥 지주대', kind: 'violation', verdict: '반칙 — 상대 1점', restart: '상대가 서브', tell: '네트와 기둥에서 한 발 떨어져요.', ref: '한산신문 · 발리볼FUN' },
+      { id: 'over', name: '넘어가서 치기', words: '손 넘어감 상대 쪽 공격', kind: 'violation', verdict: '공이 아직 우리 쪽에 절반 넘게 있을 때 상대 쪽으로 손을 뻗어 치면 반칙 — 상대 1점 (막는 블로킹은 괜찮아요)', restart: '상대가 서브', tell: '공이 넘어오기 전에는 손을 넘기지 않아요.', ref: '한산신문' },
+      { id: 'out', name: '아웃', words: '밖 라인 넘어 떨어짐', kind: 'restart', verdict: '마지막에 친 팀의 상대가 1점', restart: '점수 낸 팀이 서브', tell: '', ref: '한산신문' },
+    ],
+  },
+  platebaseball: {
+    scoreSteps: [1],
+    calls: [
+      { id: 'strike', name: '스트라이크', words: '안 침 헛스윙 벗어남 파울', kind: 'restart', verdict: '스트라이크 1개 (치지 않음 · 헛스윙 · 플레이트 벗어남 · 파울)', restart: '다시 굴리기', tell: '', ref: '수업 자료' },
+      { id: 'k', name: '삼진', words: '스트라이크 세 번', kind: 'restart', verdict: '타자 아웃', restart: '다음 타자', tell: '', ref: '수업 자료' },
+      { id: 'fly', name: '플라이 아웃', words: '뜬공 잡음', kind: 'restart', verdict: '타자 아웃', restart: '이어서', tell: '', ref: '수업 자료' },
+      { id: 'force', name: '포스 아웃', words: '루 먼저 밟음', kind: 'restart', verdict: '꼭 가야 하는 주자보다 공을 가진 수비가 루를 먼저 밟으면 아웃', restart: '이어서', tell: '', ref: '수업 자료' },
+      { id: 'tag', name: '태그 아웃', words: '공으로 터치', kind: 'restart', verdict: '꼭 가지 않아도 되는 주자는 공을 든 손 · 글러브로 건드려야 아웃', restart: '이어서', tell: '', ref: '수업 자료' },
+      { id: 'third', name: '3루까지 뜀', words: '2루 넘어 더 감', kind: 'restart', verdict: '홈런이 아니면 2루까지 — 2루로 돌아가요', restart: '이어서', tell: '한 번에 2루까지예요.', ref: '수업 자료' },
+      { id: 'slide', name: '슬라이딩 · 충돌', words: '미끄러짐 부딪힘 태클 세게 태그', kind: 'card', verdict: '경고 (다치게 하면 아웃 — 우리 반 규칙)', restart: '이어서', tell: '서서 달려 루를 밟아요.', ref: '수업 자료' },
+    ],
+  },
   teeball: {
     scoreSteps: [1],
     calls: [
