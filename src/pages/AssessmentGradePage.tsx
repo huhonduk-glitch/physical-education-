@@ -124,7 +124,7 @@ export default function AssessmentGradePage() {
         {!readOnly && list.length > 0 && (
           <button type="button" className="btn btn-soft w-full justify-start gap-2" onClick={() => setPasting(true)}>
             <Icon name="copy" size={18} /> 구글 시트 · 엑셀에서 붙여넣기
-            <span className="ml-auto text-xs font-semibold text-ink-3">이미 채점한 표를 그대로</span>
+            <span className="ml-auto hidden text-xs font-semibold text-ink-3 sm:inline">이미 채점한 표를 그대로</span>
           </button>
         )}
 

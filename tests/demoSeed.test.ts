@@ -29,8 +29,21 @@ describe('시연용 가상 자료', () => {
     expect(await db.records.count()).toBeGreaterThan(40)
     expect(await db.lessons.count()).toBeGreaterThan(5)
     expect(await db.captains.count()).toBe(2)
-    expect(await db.assessments.count()).toBe(1)
-    expect(await db.assessmentScores.count()).toBe(16)
+    expect(await db.assessments.count()).toBe(3)
+    expect(await db.assessmentScores.count()).toBe(16 + 20 + 20)
+    // 평가 기록표 예시: 체크리스트형(탐구주제 · 체크 · 백지 제출 · 미응시) · 루브릭형(상 · 중 · 하)
+    const all = await db.assessments.toArray()
+    const safety = all.find((a) => a.title === '학교체육시설 안전탐구활동')!
+    const mega = all.find((a) => a.title === '스포츠 메가 이벤트 융합 탐구보고서')!
+    expect(safety.texts).toEqual(['탐구주제'])
+    expect(mega.levelCuts?.map((c) => c.label)).toEqual(['상', '중', '하'])
+    const ss = (await db.assessmentScores.toArray()).filter((x) => x.assessmentId === safety.id)
+    expect(ss.filter((x) => x.status).map((x) => x.status).sort()).toEqual(['미응시(미인정)', '백지 제출'])
+    for (const x of ss.filter((y) => !y.status)) {
+      const on = x.checks![safety.items![0].id]
+      expect(on.length).toBe(x.scores[safety.items![0].id])
+      expect(x.texts?.탐구주제).toBeTruthy()
+    }
     const s = await loadSettings(db)
     expect(s.schoolName).toBe(DEMO_SCHOOL)
     expect(s.timetable.length).toBe(12)
