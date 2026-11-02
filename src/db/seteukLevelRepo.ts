@@ -57,7 +57,7 @@ export function basisOf(
     got += t.total
     max += t.max
   }
-  const parts = draftParts({ records: recs, keywords: d.keywords, captainRoles: d.captains, assessments: mine.map((a) => ({ a, items: itemsOf(a), scores: myScores.find((x) => x.assessmentId === a.id)?.scores })) })
+  const parts = draftParts({ records: recs, keywords: d.keywords, captainRoles: d.captains, assessments: mine.map((a) => { const sc = myScores.find((x) => x.assessmentId === a.id); return { a, items: itemsOf(a), scores: sc?.scores, score: sc } }) })
   const notes = myScores.filter((x) => x.note).map((x) => ({ id: x.assessmentId, title: mine.find((a) => a.id === x.assessmentId)?.title ?? '수행평가', note: x.note! }))
   const evidence = studentEvidence(recs, d.keywords, notes, { includeNegative: false })
   const signals: LevelSignals = {
