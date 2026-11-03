@@ -274,10 +274,10 @@ function Points({ items }: { items: { n: string; label: string }[] }) {
       {items.map((it, i) => (
         <g key={it.n + it.label}>
           <rect x={20 + i * w + 6} y={40} width={w - 12} height={170} rx={16} fill={[C.blue, C.green, C.orange, C.red][i % 4]} opacity={0.18} stroke={[C.blue, C.green, C.orange, C.red][i % 4]} strokeWidth={2} />
-          <Txt x={20 + i * w + w / 2} y={115} size={items.length > 3 ? 46 : 64} w={900} color={[C.blue, C.green, C.orange, C.red][i % 4]}>
+          <Txt x={20 + i * w + w / 2} y={115} size={Math.min(items.length > 3 ? 46 : 64, ((w - 24) / Math.max(...items.map((x) => x.n.length))) * 1.6)} w={900} color={[C.blue, C.green, C.orange, C.red][i % 4]}>
             {it.n}
           </Txt>
-          <Txt x={20 + i * w + w / 2} y={180} size={15} w={700}>
+          <Txt x={20 + i * w + w / 2} y={180} size={Math.min(15, ((w - 16) / Math.max(...items.map((x) => x.label.length))) * 1.15)} w={700}>
             {it.label}
           </Txt>
         </g>

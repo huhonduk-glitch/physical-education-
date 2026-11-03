@@ -2,19 +2,21 @@ import type { Figure, GuideItem, GuideSource, Spec, SportGuide } from '../data/s
 import { SPORT_GROUPS } from '../data/sports'
 import { SPORT_KEYS, type KeyRule, type Quiz } from '../data/sportKeys'
 import { PHOTOS, type SportPhoto } from '../data/sportPhotos'
+import { SPORT_POSTERS, type Poster } from '../data/sportPosters'
 
 /**
  * 종목 자료 → 슬라이드 (2026-10-30 다시 짬: 교사가 준 강의 사이트처럼 검은 화면 · 큰 사진 · 큰 제목 · 누를 때마다 하나씩).
- * 순서: 표지 → 핵심 규칙 한눈에 → 핵심 규칙 한 장씩(그림) → 절마다(장 번호) → O/X 퀴즈 → 출처.
+ * 순서: 표지 → 한 장 그림(선생님이 만든 그림 · 앱이 그린 핵심 규칙 포스터, 2026-11-03) → 핵심 규칙 한 장씩(그림) → 절마다(장 번호) → O/X 퀴즈 → 출처.
  * 앱 안 슬라이드와 PPT 받기가 같은 목록을 쓴다. 한 장에 글이 많으면 읽히지 않으니 줄이 많은 절은 나눈다.
  */
 export type Slide =
   | { kind: 'cover'; title: string; sub: string; group: string; cover?: SportPhoto; keys: string[] }
-  | { kind: 'keys'; title: string; keys: KeyRule[] }
+  /** 한 장 그림: poster가 있으면 선생님이 만든 그림, 없으면 앱이 그린 핵심 규칙 포스터(RulePoster) */
+  | { kind: 'poster'; title: string; sportId: string; poster?: Poster }
   | { kind: 'key'; no: number; total: number; key: KeyRule }
   | { kind: 'section'; chapter: number; title: string; part?: string; lead?: string; items: GuideItem[]; specs?: Spec[]; figure?: Figure }
   | { kind: 'quiz'; no: number; total: number; quiz: Quiz }
-  | { kind: 'sources'; title: string; sources: GuideSource[]; photos: SportPhoto[] }
+  | { kind: 'sources'; title: string; sources: GuideSource[]; photos: SportPhoto[]; posters: Poster[] }
 
 export const PER_SLIDE = 5
 export const PER_SLIDE_WITH_FIGURE = 4
@@ -38,7 +40,8 @@ export function buildSlides(g: SportGuide): Slide[] {
   const keys = k?.keys ?? []
   const out: Slide[] = [{ kind: 'cover', title: g.name, sub: g.summary, group: SPORT_GROUPS.find((x) => x.id === g.group)?.name ?? '', cover: g.cover ? PHOTOS[g.cover] : undefined, keys: keys.map((x) => x.title) }]
   if (keys.length) {
-    out.push({ kind: 'keys', title: `${g.name.replace(/\s*\(.*\)\s*$/, '')}다운 규칙 ${keys.length}가지`, keys })
+    for (const p of SPORT_POSTERS[g.id] ?? []) out.push({ kind: 'poster', title: p.title, sportId: g.id, poster: p })
+    out.push({ kind: 'poster', title: `핵심 규칙 ${keys.length}가지 한 장`, sportId: g.id })
     keys.forEach((key, i) => out.push({ kind: 'key', no: i + 1, total: keys.length, key }))
   }
   g.sections.forEach((s, si) => {
@@ -63,6 +66,6 @@ export function buildSlides(g: SportGuide): Slide[] {
   const quiz = k?.quiz ?? []
   quiz.forEach((q, i) => out.push({ kind: 'quiz', no: i + 1, total: quiz.length, quiz: q }))
   const used = new Set<string>([...(g.cover ? [g.cover] : []), ...g.sections.flatMap((s) => (s.figure?.kind === 'photo' ? [s.figure.photo] : []))])
-  out.push({ kind: 'sources', title: '출처', sources: g.sources, photos: [...used].map((x) => PHOTOS[x]).filter(Boolean) })
+  out.push({ kind: 'sources', title: '출처', sources: g.sources, photos: [...used].map((x) => PHOTOS[x]).filter(Boolean), posters: SPORT_POSTERS[g.id] ?? [] })
   return out
 }

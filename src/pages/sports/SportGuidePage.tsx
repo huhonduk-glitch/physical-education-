@@ -1,8 +1,12 @@
+import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import Collapse from '../../components/Collapse'
 import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
-import { sportOf } from '../../data/sports'
+import RulePoster, { rulePosterSvg } from '../../components/RulePoster'
+import { sportOf, type SportGuide } from '../../data/sports'
+import { SPORT_POSTERS } from '../../data/sportPosters'
+import { downloadSvgPng } from '../../lib/rulePoster'
 import { REF_BOARDS } from '../../data/refCalls'
 import { SPORT_KEYS } from '../../data/sportKeys'
 import { FigureView, KeyVisual } from './SlideView'
@@ -34,6 +38,7 @@ export default function SportGuidePage() {
             <Icon name="chevronRight" className="text-ink-3" />
           </Link>
         )}
+        {SPORT_KEYS[s.id] && <PosterSection s={s} />}
         {SPORT_KEYS[s.id] && (
           <section className="space-y-2">
             <p className="card-title px-1">{s.name.replace(/\s*\(.*\)\s*$/, '')}다운 핵심 규칙</p>
@@ -156,5 +161,58 @@ export default function SportGuidePage() {
         </section>
       </div>
     </>
+  )
+}
+
+const BASE = import.meta.env.BASE_URL
+
+/** 한 장으로 보는 규칙 (2026-11-03): 선생님이 만든 그림 + 앱이 그린 핵심 규칙 포스터. 빔 · 인쇄 · 단톡방에 그림 파일로 */
+function PosterSection({ s }: { s: SportGuide }) {
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const save = async () => {
+    setBusy(true)
+    setErr('')
+    try {
+      await downloadSvgPng(rulePosterSvg(s), `${s.name} 핵심 규칙.png`)
+    } catch {
+      setErr('그림을 만들지 못했어요. 다시 눌러 보세요.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <section className="space-y-2">
+      <p className="card-title px-1">한 장으로 보는 규칙</p>
+      {(SPORT_POSTERS[s.id] ?? []).map((p) => (
+        <figure key={p.src} className="overflow-hidden rounded-3xl bg-white shadow-[var(--shadow-card)]">
+          <a href={`${BASE}${p.src}`} target="_blank" rel="noreferrer">
+            <img src={`${BASE}${p.src}`} alt={p.title} className="w-full" loading="lazy" />
+          </a>
+          <figcaption className="space-y-1.5 p-3 text-sm">
+            <p className="flex items-center gap-2">
+              <b className="min-w-0 flex-1">{p.title}</b>
+              <span className="text-ink-3">{p.credit}</span>
+              <a href={`${BASE}${p.src}`} download className="font-bold text-brand underline">
+                받기
+              </a>
+            </p>
+            {p.note && <p className="rounded-2xl bg-[#fff6d6] p-2.5 leading-relaxed font-semibold text-[#6b4e00]">바로잡기 — {p.note}</p>}
+          </figcaption>
+        </figure>
+      ))}
+      <figure className="overflow-hidden rounded-3xl bg-white shadow-[var(--shadow-card)]">
+        <div className="[&>svg]:h-auto [&>svg]:w-full">
+          <RulePoster sport={s} />
+        </div>
+        <figcaption className="flex items-center gap-2 p-3 text-sm">
+          <span className="min-w-0 flex-1 text-ink-3">아래 핵심 규칙을 PE LOG가 한 장으로 그렸어요. 빔 · 인쇄 · 단톡방에 그림으로 쓰세요.</span>
+          <button type="button" onClick={save} disabled={busy} className="btn btn-primary shrink-0 px-4">
+            <Icon name="download" /> {busy ? '만드는 중…' : '그림 받기'}
+          </button>
+        </figcaption>
+        {err && <p className="px-3 pb-3 text-sm font-bold text-danger">{err}</p>}
+      </figure>
+    </section>
   )
 }

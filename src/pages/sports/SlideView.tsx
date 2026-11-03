@@ -1,7 +1,8 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import CourtDiagram from '../../components/CourtDiagram'
+import RulePoster from '../../components/RulePoster'
 import RuleVisual, { NETBALL_AREAS, NETBALL_ORDER, type NetballPos } from '../../components/RuleVisual'
-import type { Figure } from '../../data/sports'
+import { sportOf, type Figure } from '../../data/sports'
 import { PHOTOS } from '../../data/sportPhotos'
 import type { KeyRule } from '../../data/sportKeys'
 import type { Slide } from '../../lib/sportSlides'
@@ -129,24 +130,28 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
       </div>
     )
 
-  if (slide.kind === 'keys')
+  if (slide.kind === 'poster') {
+    const sp = sportOf(slide.sportId)
     return (
-      <div className="flex h-full flex-col bg-black p-[3.5%]">
-        <Eyebrow n="★" label="핵심 규칙 한눈에" />
-        <H>{slide.title}</H>
-        <div className={`mt-[2%] grid min-h-0 flex-1 gap-[1.5%] ${slide.keys.length > 4 ? 'grid-cols-3' : 'grid-cols-2'} ${slide.keys.length > 4 ? 'md:grid-cols-5' : 'md:grid-cols-4'} tall:grid-cols-2! tall:gap-2`}>
-          {slide.keys.map((k, i) => (
-            <div key={k.title} className="flex min-h-0 flex-col rounded-2xl bg-[#1d1d1f] p-[4%]">
-              <div className="flex min-h-0 flex-1 items-center overflow-hidden">{k.visual.kind === 'zones' ? <RuleVisual v={{ kind: 'zones' }} /> : <RuleVisual v={k.visual} />}</div>
-              <p className="mt-2 text-[clamp(0.95rem,1.8vw,1.45rem)] font-black text-white">
-                <span className="mr-1.5 text-[#2997ff]">{i + 1}</span>
-                {k.title}
-              </p>
+      <div className="flex h-full flex-col items-center justify-center bg-black p-[1.5%]">
+        {slide.poster ? (
+          <>
+            <img src={`${BASE}${slide.poster.src}`} alt={slide.poster.title} className="min-h-0 w-full flex-1 object-contain" />
+            <p className="mt-1 max-w-[95%] text-center text-[clamp(0.65rem,1.1vw,0.95rem)] leading-snug text-white/70">
+              {slide.poster.credit}
+              {slide.poster.note && <span className="text-[#ffd60a]"> · 바로잡기 — {slide.poster.note}</span>}
+            </p>
+          </>
+        ) : (
+          sp && (
+            <div className="h-full w-full [&>svg]:h-full [&>svg]:w-full">
+              <RulePoster sport={sp} />
             </div>
-          ))}
-        </div>
+          )
+        )}
       </div>
     )
+  }
 
   if (slide.kind === 'key')
     return (
@@ -217,6 +222,18 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
               {slide.photos.map((p) => (
                 <li key={p.src}>
                   {p.credit} · {p.license} · <span className="break-all text-[#86868b]">{p.url}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        {slide.posters.length > 0 && (
+          <>
+            <p className="mt-5 font-bold">그림</p>
+            <ul className="mt-1 space-y-1 text-sm text-[#a1a1a6]">
+              {slide.posters.map((p) => (
+                <li key={p.src}>
+                  {p.title} — {p.credit}
                 </li>
               ))}
             </ul>

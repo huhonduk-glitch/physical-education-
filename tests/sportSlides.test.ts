@@ -38,7 +38,8 @@ describe('종목 슬라이드', () => {
       expect(k.quiz.length).toBeGreaterThanOrEqual(2)
       for (const x of [...k.keys, ...k.quiz]) expect(x.ref.trim().length, g.id).toBeGreaterThan(0)
       const s = buildSlides(g)
-      expect(s[1].kind).toBe('keys')
+      expect(s.filter((x) => x.kind === 'poster' && !x.poster).length).toBe(1)
+      expect(s[1].kind).toBe('poster')
       expect(s.filter((x) => x.kind === 'key').length).toBe(k.keys.length)
       expect(s.filter((x) => x.kind === 'quiz').length).toBe(k.quiz.length)
     }

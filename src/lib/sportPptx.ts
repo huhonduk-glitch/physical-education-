@@ -1,6 +1,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import CourtDiagram, { type CourtId } from '../components/CourtDiagram'
+import { rulePosterSvg } from '../components/RulePoster'
 import RuleVisual, { type Visual } from '../components/RuleVisual'
 import type { SportGuide } from '../data/sports'
 import { PHOTOS } from '../data/sportPhotos'
@@ -96,18 +97,15 @@ export async function downloadSportPptx(g: SportGuide): Promise<void> {
       if (s.keys.length) slide.addText(s.keys.map((k, i) => ({ text: `${i + 1} ${k}`, options: { breakLine: true } })), { x, y: 5, w: 5.8, h: 1.6, fontFace: FONT, fontSize: 15, bold: true, color: WHITE, valign: 'top' })
       continue
     }
-    if (s.kind === 'keys') {
-      eyebrow(slide, '★', '핵심 규칙 한눈에', 0.5, 0.35, 12)
-      heading(slide, s.title, 0.5, 0.8, 12, 0.9)
-      const n = s.keys.length
-      const cols = n > 4 ? 5 : 4
-      const cw = (12.3 - (cols - 1) * 0.2) / cols
-      for (const [k, key] of s.keys.entries()) {
-        const x = 0.5 + (k % cols) * (cw + 0.2)
-        const y = 2 + Math.floor(k / cols) * 2.8
-        slide.addShape(pptx.ShapeType.roundRect, { x, y, w: cw, h: 4.6, fill: { color: CARD }, line: { color: CARD }, rectRadius: 0.15 })
-        slide.addImage(fit(await visualPng(key.visual), x + 0.1, y + 0.15, cw - 0.2, 3.3))
-        slide.addText([{ text: `${k + 1} `, options: { color: BLUE } }, { text: key.title, options: { color: WHITE } }], { x: x + 0.1, y: y + 3.6, w: cw - 0.2, h: 0.8, fontFace: FONT, fontSize: 17, bold: true, fit: 'shrink' })
+    if (s.kind === 'poster') {
+      // 한 장 그림: 선생님 그림은 그대로, 앱 포스터는 SVG → PNG (1600 × 900 = 슬라이드와 같은 16:9)
+      if (s.poster) {
+        const img = await toPng(`${BASE}${s.poster.src}`, 2000)
+        slide.addImage(fit(img, 0.2, 0.15, 12.93, s.poster.note ? 6.55 : 7.2))
+        slide.addText(`${s.poster.credit}${s.poster.note ? ` · 바로잡기 — ${s.poster.note}` : ''}`, { x: 0.3, y: s.poster.note ? 6.75 : 7.05, w: 12.7, h: s.poster.note ? 0.7 : 0.35, fontFace: FONT, fontSize: 11, color: s.poster.note ? 'FFD60A' : DIM, align: 'center', valign: 'top', fit: 'shrink' })
+      } else {
+        const img = await toPng(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(rulePosterSvg(g))}`, 2400)
+        slide.addImage({ data: img.data, x: 0, y: 0, w: 13.33, h: 7.5 })
       }
       continue
     }
@@ -137,6 +135,7 @@ export async function downloadSportPptx(g: SportGuide): Promise<void> {
       const lines = [
         ...s.sources.map((x) => ({ text: `${x.label} (${x.edition})\n${x.url}`, options: { bullet: true, breakLine: true } })),
         ...s.photos.map((p) => ({ text: `사진: ${p.credit} · ${p.license} · ${p.url}`, options: { bullet: true, breakLine: true } })),
+        ...s.posters.map((p) => ({ text: `그림: ${p.title} — ${p.credit}`, options: { bullet: true, breakLine: true } })),
         { text: '경기장 · 핵심 규칙 그림은 규칙서 내용으로 PE LOG가 직접 그림. 규칙 요약은 규칙서를 읽고 쉬운 말로 줄인 것(원문 아님).', options: { breakLine: true } },
       ]
       slide.addText(lines, { x: 0.6, y: 1.3, w: 12.1, h: 5.8, fontFace: FONT, fontSize: 13, color: WHITE, valign: 'top', paraSpaceAfter: 6 })
