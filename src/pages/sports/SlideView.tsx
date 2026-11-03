@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import CourtDiagram from '../../components/CourtDiagram'
+import { Illust } from '../../components/illust'
 import RulePoster from '../../components/RulePoster'
 import RuleVisual, { NETBALL_AREAS, NETBALL_ORDER, type NetballPos } from '../../components/RuleVisual'
 import { sportOf, type Figure } from '../../data/sports'
@@ -65,6 +66,7 @@ export function ZonesPicker({ dark = true }: { dark?: boolean }) {
 
 /** 핵심 규칙 그림: 넷볼 구역은 포지션을 고를 수 있게 */
 export function KeyVisual({ k, dark = true }: { k: KeyRule; dark?: boolean }) {
+  if (k.illust) return <Illust id={k.illust} />
   return k.visual.kind === 'zones' ? <ZonesPicker dark={dark} /> : <RuleVisual v={k.visual} />
 }
 

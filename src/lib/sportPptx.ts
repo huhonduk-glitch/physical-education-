@@ -2,6 +2,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import CourtDiagram, { type CourtId } from '../components/CourtDiagram'
 import { rulePosterSvg } from '../components/RulePoster'
+import { Illust, type IllustId } from '../components/illust'
 import RuleVisual, { type Visual } from '../components/RuleVisual'
 import type { SportGuide } from '../data/sports'
 import { PHOTOS } from '../data/sportPhotos'
@@ -50,7 +51,7 @@ async function toPng(src: string, maxW: number, bg = '#000000'): Promise<Img> {
 }
 
 const svgPng = (svg: string, w: number) => toPng(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg.replace('<svg ', `<svg width="${w}" `))}`, w)
-const visualPng = (v: Visual) => svgPng(renderToStaticMarkup(createElement(RuleVisual, { v })), 1200)
+const visualPng = (v: Visual, illust?: IllustId) => svgPng(renderToStaticMarkup(illust ? createElement(Illust, { id: illust }) : createElement(RuleVisual, { v })), 1200)
 const courtPng = (court: CourtId) => svgPng(renderToStaticMarkup(createElement(CourtDiagram, { court })), 1600)
 
 /** 상자(x, y, w, h 인치) 안에 비율을 지켜 넣기 */
@@ -110,7 +111,7 @@ export async function downloadSportPptx(g: SportGuide): Promise<void> {
       continue
     }
     if (s.kind === 'key') {
-      slide.addImage(fit(await visualPng(s.key.visual), 0.4, 0.6, 6.8, 6.3))
+      slide.addImage(fit(await visualPng(s.key.visual, s.key.illust), 0.4, 0.6, 6.8, 6.3))
       eyebrow(slide, String(s.no), `핵심 규칙 · ${s.total}가지 중`, 7.6, 1.2, 5.3)
       heading(slide, s.key.title, 7.6, 1.7, 5.3, 1.2, 38)
       slide.addText(s.key.line, { x: 7.6, y: 3, w: 5.3, h: 1.8, fontFace: FONT, fontSize: 22, bold: true, color: WHITE, valign: 'top', fit: 'shrink' })
