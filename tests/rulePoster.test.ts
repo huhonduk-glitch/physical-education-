@@ -56,3 +56,23 @@ describe('핵심 규칙 한 장 그림', () => {
     }
   })
 })
+
+describe('자유 이용 삽화', () => {
+  it('붙인 절이 실제로 있고, 파일 · 저작자 · 라이선스가 있음', async () => {
+    const { SECTION_ILLUST } = await import('../src/data/sportIllustrations')
+    const { PHOTOS } = await import('../src/data/sportPhotos')
+    for (const [id, m] of Object.entries(SECTION_ILLUST)) {
+      const g = SPORTS.find((s) => s.id === id)!
+      for (const [title, f] of Object.entries(m)) {
+        const sec = g.sections.find((s) => s.title === title)
+        expect(sec, `${id} ${title}`).toBeTruthy()
+        expect(sec!.figure, `${id} ${title}`).toBeTruthy()
+        if (f.kind === 'photo') {
+          const p = PHOTOS[f.photo]
+          expect(p && existsSync(`public/${p.src}`), f.photo).toBe(true)
+          expect(/CC0|CC BY|Public domain/.test(p.license)).toBe(true)
+        }
+      }
+    }
+  })
+})

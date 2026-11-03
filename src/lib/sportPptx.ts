@@ -4,7 +4,7 @@ import CourtDiagram, { type CourtId } from '../components/CourtDiagram'
 import { rulePosterSvg } from '../components/RulePoster'
 import RuleVisual, { type Visual } from '../components/RuleVisual'
 import type { SportGuide } from '../data/sports'
-import { PHOTOS } from '../data/sportPhotos'
+import { PHOTOS, photoCredit } from '../data/sportPhotos'
 import { buildSlides } from './sportSlides'
 
 /**
@@ -88,7 +88,7 @@ export async function downloadSportPptx(g: SportGuide): Promise<void> {
         const img = await toPng(`${BASE}${s.cover.src}`, 1400)
         slide.addImage(cover(img, 0, 0, 7.6, 7.5))
         slide.addShape(pptx.ShapeType.rect, { x: 5.2, y: 0, w: 2.4, h: 7.5, fill: { color: BG, transparency: 40 }, line: { color: BG, transparency: 100 } })
-        slide.addText(`사진: ${s.cover.credit} · ${s.cover.license} · 위키미디어 공용`, { x: 0.2, y: 7.05, w: 7, h: 0.35, fontFace: FONT, fontSize: 9, color: DIM })
+        slide.addText(photoCredit(s.cover), { x: 0.2, y: 7.05, w: 7, h: 0.35, fontFace: FONT, fontSize: 9, color: DIM })
       }
       const x = s.cover ? 7.2 : 0.8
       slide.addText(s.group, { x, y: 1.7, w: 5.8, h: 0.5, fontFace: FONT, fontSize: 20, bold: true, color: MUTED })
@@ -134,7 +134,7 @@ export async function downloadSportPptx(g: SportGuide): Promise<void> {
       heading(slide, s.title, 0.6, 0.4, 12, 0.8, 30)
       const lines = [
         ...s.sources.map((x) => ({ text: `${x.label} (${x.edition})\n${x.url}`, options: { bullet: true, breakLine: true } })),
-        ...s.photos.map((p) => ({ text: `사진: ${p.credit} · ${p.license} · ${p.url}`, options: { bullet: true, breakLine: true } })),
+        ...s.photos.map((p) => ({ text: `${photoCredit(p)} · ${p.url}`, options: { bullet: true, breakLine: true } })),
         ...s.posters.map((p) => ({ text: `그림: ${p.title} — ${p.credit}`, options: { bullet: true, breakLine: true } })),
         { text: '경기장 · 핵심 규칙 그림은 규칙서 내용으로 PE LOG가 직접 그림. 규칙 요약은 규칙서를 읽고 쉬운 말로 줄인 것(원문 아님).', options: { breakLine: true } },
       ]
@@ -142,7 +142,10 @@ export async function downloadSportPptx(g: SportGuide): Promise<void> {
       continue
     }
     // 절
-    const photo = s.figure?.kind === 'photo' ? PHOTOS[s.figure.photo] : null
+    const fp = s.figure?.kind === 'photo' ? PHOTOS[s.figure.photo] : null
+    // 삽화 · 도식은 자르지 않고 오른쪽 흰 칸에 (경기장 그림처럼)
+    const ill = fp?.illust ? fp : null
+    const photo = ill ? null : fp
     const court = s.figure?.kind === 'court' ? s.figure : null
     let x = 0.6
     let w = 12.1
@@ -150,9 +153,17 @@ export async function downloadSportPptx(g: SportGuide): Promise<void> {
       const img = await toPng(`${BASE}${photo.src}`, 1400)
       slide.addImage(cover(img, 0, 0, 6, 7.5))
       slide.addShape(pptx.ShapeType.rect, { x: 4.6, y: 0, w: 1.4, h: 7.5, fill: { color: BG, transparency: 45 }, line: { color: BG, transparency: 100 } })
-      slide.addText(`사진: ${photo.credit} · ${photo.license}`, { x: 0.2, y: 7.05, w: 5.6, h: 0.35, fontFace: FONT, fontSize: 9, color: DIM })
+      slide.addText(photoCredit(photo), { x: 0.2, y: 7.05, w: 5.6, h: 0.35, fontFace: FONT, fontSize: 9, color: DIM })
       x = 6.4
       w = 6.4
+    } else if (ill && s.figure) {
+      w = 5.9
+      const img = await toPng(`${BASE}${ill.src}`, 1200, '#ffffff')
+      slide.addShape(pptx.ShapeType.roundRect, { x: 6.8, y: 1.0, w: 6, h: 5.6, fill: { color: 'FFFFFF' }, line: { color: 'FFFFFF' }, rectRadius: 0.15 })
+      const box = fit(img, 6.95, 1.15, 5.7, 5.3)
+      slide.addImage(box)
+      slide.addText(`${s.figure.caption}
+${photoCredit(ill)}`, { x: 6.8, y: 6.65, w: 6, h: 0.7, fontFace: FONT, fontSize: 10, color: DIM, align: 'center', valign: 'top', fit: 'shrink' })
     } else if (court) {
       w = 5.9
       const img = await courtPng(court.court)

@@ -3,7 +3,7 @@ import CourtDiagram from '../../components/CourtDiagram'
 import RulePoster from '../../components/RulePoster'
 import RuleVisual, { NETBALL_AREAS, NETBALL_ORDER, type NetballPos } from '../../components/RuleVisual'
 import { sportOf, type Figure } from '../../data/sports'
-import { PHOTOS } from '../../data/sportPhotos'
+import { PHOTOS, photoCredit } from '../../data/sportPhotos'
 import type { KeyRule } from '../../data/sportKeys'
 import type { Slide } from '../../lib/sportSlides'
 
@@ -26,7 +26,7 @@ export function FigureView({ figure, compact = false }: { figure: Figure; compac
       <figcaption className={`text-center text-ink-3 ${compact ? 'text-xs' : 'text-sm'}`}>
         {figure.caption}
         <span className="block text-[0.7em]">
-          사진: {p.credit} · {p.license} · 위키미디어 공용
+          {photoCredit(p)}
         </span>
       </figcaption>
     </figure>
@@ -91,7 +91,7 @@ function PhotoBleed({ photo, caption }: { photo: string; caption?: string }) {
       <img src={`${BASE}${p.src}`} alt={caption ?? ''} className="h-full w-full object-cover" />
       <div className={`${BLEED_FADE} from-transparent via-black/30 to-black`} />
       <p className="absolute bottom-2 left-3 text-[0.65rem] text-white/60">
-        사진: {p.credit} · {p.license} · 위키미디어 공용
+        {photoCredit(p)}
       </p>
     </div>
   )
@@ -107,7 +107,7 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
             <img src={`${BASE}${slide.cover.src}`} alt="" className="h-full w-full object-cover" />
             <div className={`${BLEED_FADE} from-transparent via-black/40 to-black`} />
             <p className="absolute bottom-2 left-3 text-[0.65rem] text-white/60">
-              사진: {slide.cover.credit} · {slide.cover.license}
+              {photoCredit(slide.cover)}
             </p>
           </div>
         )}
@@ -217,11 +217,11 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
         </ul>
         {slide.photos.length > 0 && (
           <>
-            <p className="mt-5 font-bold">사진 (위키미디어 공용 · 자유 이용)</p>
+            <p className="mt-5 font-bold">사진 · 그림 (자유 이용)</p>
             <ul className="mt-1 space-y-1 text-sm text-[#a1a1a6]">
               {slide.photos.map((p) => (
                 <li key={p.src}>
-                  {p.credit} · {p.license} · <span className="break-all text-[#86868b]">{p.url}</span>
+                  {photoCredit(p).replace(/^(사진|그림): /, '')} · <span className="break-all text-[#86868b]">{p.url}</span>
                 </li>
               ))}
             </ul>
@@ -287,14 +287,17 @@ function useFitColumn(dep: unknown) {
 function SectionSlide({ slide, step }: { slide: Extract<Slide, { kind: 'section' }>; step: number }) {
   const { col, list } = useFitColumn(slide)
   // 절 (장 번호 · 큰 제목 · 하나씩 나타나는 줄 · 큰 숫자 칸 · 그림)
-  const photo = slide.figure?.kind === 'photo' ? slide.figure : null
+  const fig = slide.figure?.kind === 'photo' ? slide.figure : null
+  // 삽화 · 도식은 자르지 않고 흰 카드 안에 (경기장 그림처럼 오른쪽 칸)
+  const ill = fig && PHOTOS[fig.photo]?.illust ? fig : null
+  const photo = ill ? null : fig
   const court = slide.figure?.kind === 'court' ? slide.figure : null
   const specOffset = slide.specs?.length ? 1 : 0
   return (
     <div className="relative h-full overflow-hidden bg-black">
       {photo && <PhotoBleed photo={photo.photo} caption={photo.caption} />}
       <div
-        className={`relative grid h-full gap-[3%] p-[3.5%] tall:overflow-y-auto tall:p-[5%] ${photo ? 'ml-[46%] tall:ml-0 tall:pt-[38cqh]' : court ? 'md:grid-cols-[1fr_1.1fr] tall:grid-cols-1! tall:content-start' : ''}`}
+        className={`relative grid h-full gap-[3%] p-[3.5%] tall:overflow-y-auto tall:p-[5%] ${photo ? 'ml-[46%] tall:ml-0 tall:pt-[38cqh]' : court || ill ? 'md:grid-cols-[1fr_1.1fr] tall:grid-cols-1! tall:content-start' : ''}`}
       >
         <div ref={col} className="flex min-h-0 flex-col">
           <Eyebrow n={slide.chapter} label={slide.part ? `${slide.title} · ${slide.part}` : slide.title} />
@@ -327,6 +330,17 @@ function SectionSlide({ slide, step }: { slide: Extract<Slide, { kind: 'section'
               <CourtDiagram court={court.court} />
             </div>
             <figcaption className="mt-2 text-center text-[clamp(0.7rem,1.2vw,0.95rem)] text-[#86868b]">{court.caption}</figcaption>
+          </figure>
+        )}
+        {ill && (
+          <figure className="flex min-h-0 flex-col items-center justify-center tall:order-first">
+            <div className="flex min-h-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-[3%]">
+              <img src={`${BASE}${PHOTOS[ill.photo].src}`} alt={ill.caption} className="max-h-[62cqh] w-auto object-contain tall:max-h-[36cqh]" />
+            </div>
+            <figcaption className="mt-2 text-center text-[clamp(0.7rem,1.2vw,0.95rem)] text-[#a1a1a6]">
+              {ill.caption}
+              <span className="block text-[0.8em] text-[#86868b]">{photoCredit(PHOTOS[ill.photo])}</span>
+            </figcaption>
           </figure>
         )}
       </div>

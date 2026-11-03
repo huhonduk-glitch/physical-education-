@@ -7,9 +7,27 @@ export interface SportPhoto {
   credit: string
   license: string
   url: string
+  /** 삽화 · 도식(사진 아님): 슬라이드에서 자르지 않고 흰 카드 안에 온전히 */
+  illust?: boolean
+  /** 출처 사이트 (없으면 위키미디어 공용) */
+  site?: string
 }
 
+/** '사진: 저작자 · 라이선스 · 사이트' 한 줄 */
+export const photoCredit = (p: SportPhoto) => `${p.illust ? '그림' : '사진'}: ${p.credit} · ${p.license} · ${p.site ?? '위키미디어 공용'}`
+
 export const PHOTOS: Record<string, SportPhoto> = {
+  // 자유 이용 삽화 (2026-11-03 교사 요청 "자유 이용 삽화를 최대한 찾아서") — 위키미디어 공용 · rawpixel 퍼블릭 도메인(CC0)
+  "il-bb-jumpshot": { src: "sports/il-bb-jumpshot.jpg", credit: "johnny_automatic (Open Clip Art Library)", license: "CC0", url: "https://commons.wikimedia.org/wiki/File:Basketball_player.svg", illust: true, site: "위키미디어 공용" },
+  "il-fs-22": { src: "sports/il-fs-22.jpg", credit: "Sribit", license: "CC BY-SA 4.0", url: "https://commons.wikimedia.org/wiki/File:Formasi_futsal_2-2_GK_F_F_A_P.svg", illust: true, site: "위키미디어 공용" },
+  "il-fb-offside": { src: "sports/il-fb-offside.jpg", credit: "NielsF", license: "CC BY 2.5", url: "https://commons.wikimedia.org/wiki/File:Offsidelarge.svg", illust: true, site: "위키미디어 공용" },
+  "il-jr-longrope": { src: "sports/il-jr-longrope.jpg", credit: "Ealita", license: "CC BY-SA 4.0", url: "https://commons.wikimedia.org/wiki/File:Permainan-Tradisional-Bermain-Lompat-Tali-3.svg", illust: true, site: "위키미디어 공용" },
+  "il-vb-rotation": { src: "sports/il-vb-rotation.jpg", credit: "Nesnera", license: "CC0", url: "https://commons.wikimedia.org/wiki/File:Volleyball_rotation_pattern_and_zones.svg", illust: true, site: "위키미디어 공용" },
+  "il-fb-player": { src: "sports/il-fb-player.jpg", credit: "퍼블릭 도메인 그림", license: "CC0", url: "https://www.rawpixel.com/image/6791797/vector-sticker-public-domain-blue", illust: true, site: "rawpixel" },
+  "il-tt-players": { src: "sports/il-tt-players.jpg", credit: "퍼블릭 도메인 옛 그림", license: "CC0", url: "https://www.rawpixel.com/image/6605507/vector-vintage-public-domain-person", illust: true, site: "rawpixel" },
+  "il-tn-player": { src: "sports/il-tn-player.jpg", credit: "퍼블릭 도메인 옛 그림", license: "CC0", url: "https://www.rawpixel.com/image/6449126/vector-sticker-public-domain-black", illust: true, site: "rawpixel" },
+  "il-bs-batter": { src: "sports/il-bs-batter.jpg", credit: "퍼블릭 도메인 옛 그림", license: "CC0", url: "https://www.rawpixel.com/image/6439552/vector-vintage-public-domain-black", illust: true, site: "rawpixel" },
+  "il-bs-scene": { src: "sports/il-bs-scene.jpg", credit: "퍼블릭 도메인 옛 그림", license: "CC0", url: "https://www.rawpixel.com/image/6486989/image-vintage-public-domain-people", illust: true, site: "rawpixel" },
   "bb-naismith": { src: "sports/bb-naismith.jpg", credit: "작자 미상", license: "Public domain", url: "https://commons.wikimedia.org/wiki/File:Dr._James_Naismith.jpg" },
   "bb-ball": { src: "sports/bb-ball.jpg", credit: "User: MrX", license: "CC BY-SA 3.0", url: "https://commons.wikimedia.org/wiki/File:Isolated_basketball.png" },
   "bb-shot": { src: "sports/bb-shot.jpg", credit: "noahsilliman", license: "CC0", url: "https://commons.wikimedia.org/wiki/File:Basketball_hitting_a_basketball_goal.jpg" },
