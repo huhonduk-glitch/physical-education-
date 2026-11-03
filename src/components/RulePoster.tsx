@@ -3,7 +3,6 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import type { SportGuide } from '../data/sports'
 import { SPORT_KEYS } from '../data/sportKeys'
 import { fitText, POSTER_H, POSTER_W, posterLayout, posterTitle, textWidth } from '../lib/rulePoster'
-import { Illust } from './illust'
 import RuleVisual from './RuleVisual'
 
 /**
@@ -63,7 +62,7 @@ export default function RulePoster({ sport }: { sport: SportGuide }) {
               {k.title}
             </text>
             <svg x={b.vis.x} y={b.vis.y} width={b.vis.w} height={b.vis.h} viewBox="0 0 400 260">
-              {k.illust ? <Illust id={k.illust} /> : <RuleVisual v={k.visual} />}
+              <RuleVisual v={k.visual} />
             </svg>
             <text fontSize={t.size} fontWeight="700" fill="#1f2a37">
               {t.lines.map((l, j) => (

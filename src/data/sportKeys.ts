@@ -1,4 +1,3 @@
-import type { IllustId } from '../components/illust'
 import type { Visual } from '../components/RuleVisual'
 
 /**
@@ -16,8 +15,6 @@ export interface KeyRule {
   why?: string
   ref: string
   visual: Visual
-  /** 사람이 나오는 삽화 (있으면 visual 대신) */
-  illust?: IllustId
 }
 
 /** O / X 퀴즈 (슬라이드 마지막에 하나씩 열어 보기) */
@@ -42,7 +39,6 @@ export const SPORT_KEYS: Record<string, SportKeys> = {
         why: '닿아서 상대 플레이를 방해하면 반칙(콘택트). 방해가 없는 가벼운 닿음은 그냥 넘어가요.',
         ref: '규칙 17',
         visual: { kind: 'noContact' },
-        illust: 'nbNoContact',
       },
       {
         title: '0.9 m 떨어져 막기',
@@ -50,7 +46,6 @@ export const SPORT_KEYS: Record<string, SportKeys> = {
         why: '가까이 붙어 팔을 뻗으면 방해(오브스트럭션) → 페널티 패스.',
         ref: '규칙 16',
         visual: { kind: 'distance', label: '0.9 m' },
-        illust: 'nbDistance',
       },
       {
         title: '드리블 없음',
@@ -58,7 +53,6 @@ export const SPORT_KEYS: Record<string, SportKeys> = {
         why: '공을 들고 걸을 수도 없어요(풋워크). 잡으면 3초 안에 패스 · 슛.',
         ref: '규칙 11.6 · 13',
         visual: { kind: 'noDribble' },
-        illust: 'nbNoDribble',
       },
       {
         title: '포지션마다 구역',
@@ -66,7 +60,6 @@ export const SPORT_KEYS: Record<string, SportKeys> = {
         why: '슛은 GS · GA만, 상대 골 서클 안에서만 해요. 포지션을 누르면 구역이 보여요.',
         ref: '규칙 3 · 9 · 14',
         visual: { kind: 'zones' },
-        illust: 'nbZones',
       },
       {
         title: '잡으면 3초',
@@ -74,7 +67,6 @@ export const SPORT_KEYS: Record<string, SportKeys> = {
         why: '한 서드를 건너뛰는 긴 패스(오버 어 서드)도 반칙이라, 짧고 빠른 패스가 핵심이에요.',
         ref: '규칙 11.4 · 12',
         visual: { kind: 'timer', n: 3, unit: '초', label: '잡은 순간부터' },
-        illust: 'nbThreeSec',
       },
     ],
     quiz: [
