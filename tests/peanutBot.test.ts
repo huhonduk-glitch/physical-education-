@@ -22,3 +22,7 @@ describe('땅콩이 — 길라잡이 질문 (2026-11-04)', () => {
     expect(findAnswer('학생 자기평가서 참고해도 돼요?')?.id).toBe('seteuk-student')
   })
 })
+
+it('출석률 질문 (2026-11-04)', () => {
+  expect(findAnswer('고교학점제 출석률 미이수 학생 확인')?.id).toBe('credit')
+})
