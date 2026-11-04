@@ -76,6 +76,10 @@ export interface AppSettings {
   seteukFrames: Partial<Record<1 | 2 | 3 | 4 | 5, import('../lib/seteukLevel').LevelFrame>>
   /** 보조심판 '우리 반 규칙' (종목 id → 글). 공식 규칙을 줄여 쓰는 수업 규칙 */
   refHouseRules: Record<string, string>
+  /** 체육 예산 현황 (6-11 D): 에듀파인 사업관리카드에서 읽은 항목 · 교사가 고친 고르기 · 시트 붙일 자리. 학생 정보 없음 */
+  budgetCard: { fetchedAt: number; fileName: string; card: import('../lib/budget').BudgetCard } | null
+  budgetPicks: Record<string, boolean>
+  budgetLayout: import('../lib/budget').SheetLayout
 }
 
 export interface NeisTemplate {
@@ -155,6 +159,9 @@ export function defaultSettings(): AppSettings {
     seteukWeights: { assess: 50, activity: 35, paps: 15, guide: 10 },
     seteukFrames: {},
     refHouseRules: {},
+    budgetCard: null,
+    budgetPicks: {},
+    budgetLayout: { startCell: 'N5', itemSheet: '물품구입 시트', itemCol: 'H', amountCol: 'F', firstRow: 4, withEdufine: true },
   }
 }
 

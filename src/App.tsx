@@ -70,6 +70,7 @@ const AssessmentEditPage = lazy(() => import('./pages/AssessmentEditPage'))
 const AssessExportPage = lazy(() => import('./pages/AssessExportPage'))
 const ClassSummaryPage = lazy(() => import('./pages/ClassSummaryPage'))
 const DataPage = lazy(() => import('./pages/DataPage'))
+const BudgetPage = lazy(() => import('./pages/BudgetPage'))
 const EvalPage = lazy(() => import('./pages/EvalPage'))
 const GroupsPage = lazy(() => import('./pages/groups/GroupsPage'))
 const GroupBoardPage = lazy(() => import('./pages/groups/GroupBoardPage'))
@@ -208,6 +209,7 @@ export default function App() {
           <Route path="/seteuk/ai-guide" element={<AiGuidePage />} />
           <Route path="/timetable/pe" element={<PeTimetablePage />} />
           <Route path="/more/data" element={<DataPage />} />
+          <Route path="/work/budget" element={<BudgetPage />} />
           <Route path="/more/assessments" element={<AssessmentsPage />} />
           <Route path="/more/assessments/new" element={<AssessmentEditPage />} />
           <Route path="/more/assessments/rubric" element={<RubricPage />} />

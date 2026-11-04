@@ -34,6 +34,12 @@ const GROUPS: { title: string; items: MenuItem[] }[] = [
     ],
   },
   {
+    title: '학교체육 업무',
+    items: [
+      { to: '/work/budget', label: '체육 예산 현황', desc: '에듀파인 사업관리카드 → 구글 시트 예산 표', icon: 'list', tone: 'bg-brand-light text-brand' },
+    ],
+  },
+  {
     title: '학생',
     items: [
       { to: '/students', label: '전체 학생 명렬', desc: '학적반별 명단 · 학생별 기록', icon: 'students', tone: 'bg-brand-light text-brand' },
