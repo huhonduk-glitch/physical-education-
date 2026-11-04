@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import PeanutBot from './components/PeanutBot'
-import BottomNav from './components/BottomNav'
+import BottomNav, { ContentFrame } from './components/BottomNav'
 import DemoBanner from './components/DemoBanner'
 import { AfterUpdate } from './components/WhatsNew'
 import MiniTimer from './components/MiniTimer'
@@ -155,7 +155,7 @@ export default function App() {
     <AppContext.Provider value={ctx}>
       <TimerProvider>
       <MiniTimer />
-      <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-60 print:p-0">
+      <ContentFrame>
         <DemoBanner />
         <AfterUpdate />
         <Suspense fallback={<div className="p-6 text-ink-3">불러오는 중…</div>}>
@@ -230,7 +230,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>
-      </div>
+      </ContentFrame>
       <PeanutBot />
       <BottomNav />
       </TimerProvider>

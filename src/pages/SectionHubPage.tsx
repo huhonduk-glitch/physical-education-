@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import HubStats from '../components/HubStats'
 import Icon from '../components/Icon'
 import { GroupTitle, MenuTile } from '../components/MenuTile'
 import PageHeader from '../components/PageHeader'
@@ -30,6 +31,7 @@ export default function SectionHubPage({ section }: { section: SectionId }) {
     <>
       <PageHeader title={s.label} sub={SUB[section]} wide />
       <div className="page space-y-3 pb-8 lg:max-w-[64rem]">
+        <HubStats section={section} />
         {showClasses && <MyClasses />}
         {rest.map((g) => (
           <section key={g.title} className="space-y-2">
