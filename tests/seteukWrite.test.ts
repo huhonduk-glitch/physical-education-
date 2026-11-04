@@ -144,3 +144,11 @@ describe('연수자료 분야별 확장 · 모든 학교명', () => {
     expect(ids('랠리를 끝까지 이어가며 집중함. 랠리를 끝까지 이어가며 집중함.')).toContain('repeat')
   })
 })
+
+describe('2026 길라잡이 반영 (2026-11-04)', () => {
+  it('K-MOOC는 오류, 유의어는 참고용 경고', async () => {
+    const { checkSeteuk } = await import('../src/lib/seteukCheck')
+    expect(checkSeteuk('K-MOOC 강좌를 수강함.').find((h) => h.id === 'mooc')?.level).toBe('error')
+    expect(checkSeteuk('유튜브 영상을 분석함.').find((h) => h.id === 'substitute')?.level).toBe('warn')
+  })
+})

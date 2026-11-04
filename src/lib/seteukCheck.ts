@@ -49,6 +49,8 @@ const RULES: Rule[] = [
   { id: 'mock', level: 'error', title: '모의고사 · 학력평가 성적', basis: `${P} 3-마`, re: /모의고사|모의평가|학력평가|전국연합|수능\s*(성적|점수|등급)|백분위|표준점수/g },
   // 바. 논문 · 학회 (수업 중 소논문 · 탐구 보고서는 괜찮음)
   { id: 'paper', level: 'error', title: '논문 투고 · 학회 발표', basis: `${P} 3-바`, re: /(?<!소)논문\s*(투고|게재|등재|발표)|학회|학술지|학술대회|저널에/g },
+  // 교과 세특 기재 금지: K-MOOC · MOOC (2026 기재요령 길라잡이 고등학교용)
+  { id: 'mooc', level: 'error', title: 'K-MOOC · MOOC', basis: '2026 기재요령 길라잡이 — 교과 세특 기재 금지', re: /K-?MOOC|MOOC|무크\s*강좌/gi },
   // 사. 도서 출간
   { id: 'book', level: 'error', title: '도서 출간', basis: `${P} 3-사`, re: /출간|출판|저서|책을\s*(냄|펴냄|발간)|전자책을?\s*(냄|펴냄|발간)/g },
   // 아. 지식재산권
@@ -158,7 +160,7 @@ export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?
   if (school.length) hits.push({ id: 'school', level: 'error', title: '학교를 알 수 있는 내용', basis: '기재요령 23쪽 4 고교블라인드 (학교명 · 재단명 · 축제명 · 별칭 등) · 연수자료', words: school })
   // 학교 연수자료(2026 학교생활기록부 기재요령 담임 연수, 기재요령 28~30쪽): 한글 입력 · 명사형 종결과 마침표 · 기호 최소화
   const sub = SUBSTITUTES.flatMap((x) => [...text.matchAll(x.re)].map((m) => `${m[0].trim()} → ${x.to}`))
-  if (sub.length) hits.push({ id: 'substitute', level: 'error', title: '기재 유의어 (대체어로 바꿔 주세요)', basis: '기재요령 · 학교 연수자료 ‘기재 유의어 → 대체어’', words: [...new Set(sub)] })
+  if (sub.length) hits.push({ id: 'substitute', level: 'warn', title: '기재 유의어 (대체어 예시를 참고해 바꿔 보세요)', basis: '2026 기재 유의어 대체 표현 예시 — 참고용 예시이며 절대 기준이 아님(길라잡이). 학생 활동을 정확히 드러내는 표현을 고르세요', words: [...new Set(sub)] })
   // 유의어로 이미 잡은 자리(예: 챗GPT)의 영문은 다시 걸지 않는다
   const spans = SUBSTITUTES.flatMap((x) => [...text.matchAll(x.re)].map((m) => [m.index!, m.index! + m[0].length] as const))
   const inSpan = (i: number) => spans.some(([a, b]) => i >= a && i < b)
