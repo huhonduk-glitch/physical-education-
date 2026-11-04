@@ -18,7 +18,7 @@ export default function PeanutBot() {
   const [q, setQ] = useState('')
   const end = useRef<HTMLDivElement>(null)
   useEffect(() => end.current?.scrollIntoView({ block: 'end' }), [msgs, open])
-  // 홈 · 더보기 · 사용법에만 (2026-11-04 교사 결정: 수업 중 화면에서 학생 카드 · 시간표를 가리지 않게)
+  // 홈 · 설정 · 사용법에만 (2026-11-04 교사 결정: 수업 중 화면에서 학생 카드 · 시간표를 가리지 않게)
   if (!/^\/(more|help)?$/.test(pathname)) return null
 
   const ask = (text: string, a?: BotAnswer | null) => {

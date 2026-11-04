@@ -36,7 +36,7 @@ export default function TeamAppsPage() {
             </a>
           </div>
           <p className="hint">
-            아래에서 수업반을 고르면 오늘 참여 학생 명단을 넣은 채로 열 수 있어요. 앱 주소는 [더보기 → 설정 → 연동 앱 주소]에서 바꿀 수 있어요. 앱에서 팀을 나눈 뒤 전술 보드에 팀별로 넣고 싶으면{' '}
+            아래에서 수업반을 고르면 오늘 참여 학생 명단을 넣은 채로 열 수 있어요. 앱 주소는 [설정 → 학교 정보 → 연동 앱 주소]에서 바꿀 수 있어요. 앱에서 팀을 나눈 뒤 전술 보드에 팀별로 넣고 싶으면{' '}
             <Link to="/tools/teams" className="font-bold text-brand underline">
               팀 나누기
             </Link>

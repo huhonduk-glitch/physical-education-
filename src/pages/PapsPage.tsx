@@ -115,13 +115,15 @@ export default function PapsPage() {
               {(
                 [
                   ['/paps/paste', 'clipboard', '붙여넣기 입력', '엑셀에서 복사한 기록'],
+                  ['/timer?tab=paps&aid=shuttle', 'flag', '왕복오래달리기', '신호마다 한 번 누르기'],
+                  ['/timer?tab=paps', 'volume', 'PAPS 신호음', '윗몸말아올리기 · 스텝'],
                   ['/paps/results', 'paps', '결과 · 등급', '종합점수와 등급'],
                   ['/paps/export', 'download', '나이스 내보내기', '업로드 파일 만들기'],
                   ['/paps/setup', 'settings', '측정 설정', '종목 · 나이스 양식'],
                   ['/paps/codes', 'grid', '튼튼몬 연동 코드', '학생별 코드 · QR 쪽지'],
                 ] as [string, IconName, string, string][]
               ).map(([to, icon, t, d]) => (
-                <Link key={to} to={`${to}${q}`} className="card flex flex-col gap-2 transition-transform active:scale-[0.98]">
+                <Link key={to} to={to.includes("?") ? to : `${to}${q}`} className="card flex flex-col gap-2 transition-transform active:scale-[0.98]">
                   <span className="grid h-10 w-10 place-items-center rounded-xl bg-brand-light text-brand">
                     <Icon name={icon} />
                   </span>

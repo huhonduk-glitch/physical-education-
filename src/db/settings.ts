@@ -41,7 +41,7 @@ export interface AppSettings {
   neisTemplates: Record<string, NeisTemplate>
   /** 마지막 백업 시각 (ms) */
   lastBackupAt: number
-  /** 켜 둔 기능 (끈 기능은 홈·탭·더보기에서 숨긴다. 자료는 지우지 않는다) */
+  /** 켜 둔 기능 (끈 기능은 홈·메뉴에서 숨긴다. 자료는 지우지 않는다) */
   features: Record<FeatureId, boolean>
   /** 나이스 공개 자료로 불러올 우리 학교 (학교 공개 정보만. 2026-10-10 교사 승인) */
   neisSchool: NeisSchool | null

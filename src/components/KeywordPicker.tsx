@@ -67,7 +67,7 @@ export default function KeywordPicker({ value, onChange, defaultOpen = false }: 
             </div>
           )}
           <div className="flex flex-wrap gap-1.5">{shown.map(chip)}</div>
-          {query && shown.length === 0 && <p className="hint">'{q.trim()}' 키워드가 없어요. 더보기 → 세특 키워드 → 키워드 사전에서 더할 수 있어요.</p>}
+          {query && shown.length === 0 && <p className="hint">'{q.trim()}' 키워드가 없어요. 평가 → 세특 키워드 → 키워드 사전에서 더할 수 있어요.</p>}
         </div>
       )}
     </div>

@@ -6,71 +6,16 @@ import FeatureSheet from '../components/FeatureSheet'
 import Icon, { type IconName } from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import { backupOverdue } from '../db/backup'
-import type { FeatureId } from '../db/settings'
-import { featureOn } from '../lib/features'
+import { NAV, visibleGroups } from '../lib/nav'
 import { useApp } from '../state/AppContext'
 
 const T = 'bg-brand-light text-brand'
 
-interface MenuItem {
-  to: string
-  label: string
-  desc?: string
-  icon: IconName
-  tone: string
-  feature?: FeatureId
-}
-
 /**
- * 더보기 메뉴 (2026-11-04 레이아웃 정리): 하는 일로 묶는다.
- * 위 4칸(사용법 · 기능 고르기 · 백업 · 잠그기)과 하단 탭(도구의 팀 편성)에 있는 것은 목록에서 뺐다 — 같은 메뉴가 두 번 보이지 않게.
- * 설명은 짧게. 폰에서는 이름만, 넓은 화면에서는 이름 아래 한 줄.
+ * 설정 (6-12, 예전 ‘더보기’): 기초 설정 · 앱 · 도움. 메뉴 표는 src/lib/nav.ts (PC 왼쪽 메뉴와 같은 목록).
+ * 위 4칸(사용법 · 기능 고르기 · 백업 · 잠그기)에 있는 것은 목록에서 빼 두 번 보이지 않게.
  */
-const GROUPS: { title: string; items: MenuItem[] }[] = [
-  {
-    title: '수업',
-    items: [
-      { to: '/plans', label: '교과 진도표', desc: '차시 계획 · 반별 진도', icon: 'calendar', tone: T, feature: 'plans' },
-      { to: '/more/assessments', label: '수행평가', desc: '평가 만들기 · 채점 · 나이스', icon: 'clipboard', tone: T, feature: 'assess' },
-      { to: '/seteuk/write', label: '세특 쓰기', desc: '초안 · 검사 · AI 다듬기', icon: 'edit', tone: T, feature: 'seteuk' },
-      { to: '/more/keywords', label: '세특 키워드', desc: '근거 모아보기 · 사전', icon: 'tag', tone: T, feature: 'seteuk' },
-      { to: '/more/captains', label: '체육부장', desc: '지정 · 활동 체크', icon: 'medal', tone: T, feature: 'captains' },
-      { to: '/more/absences', label: '견학', desc: '목록 · 대체 과제', icon: 'bandage', tone: T, feature: 'absences' },
-    ],
-  },
-  {
-    title: '학생',
-    items: [
-      { to: '/students', label: '전체 학생 명렬', desc: '학생별 기록', icon: 'students', tone: T },
-      { to: '/students/import', label: '명렬 올리기', desc: '나이스 파일 · 붙여넣기', icon: 'upload', tone: T },
-      { to: '/students/summary', label: '반 요약', desc: '칭찬 · 지도 상위 · 미측정', icon: 'list', tone: T, feature: 'records' },
-    ],
-  },
-  {
-    title: '학교체육 업무',
-    items: [
-      { to: '/work/team', label: '학교운동부 · 학생선수', desc: '나이스 할 일 · 규정 · 양식', icon: 'medal', tone: T },
-      { to: '/work/club', label: '학교스포츠클럽', desc: '등록 · 활동내역 · 학생부', icon: 'team', tone: T },
-      { to: '/work/budget', label: '체육 예산 현황', desc: '에듀파인 → 구글 시트', icon: 'list', tone: T },
-    ],
-  },
-  {
-    title: '시간표 · 나이스',
-    items: [
-      { to: '/more/settings/timetable', label: '내 수업 시간표', desc: '요일 · 교시마다 수업반', icon: 'calendar', tone: T },
-      { to: '/timetable/pe', label: '전체 체육 시간표', desc: '체육관 겹침 확인', icon: 'grid', tone: T },
-      { to: '/more/settings/neis', label: '나이스에서 불러오기', desc: '학급 · 시간표 · 학사일정', icon: 'download', tone: T },
-    ],
-  },
-  {
-    title: '앱',
-    items: [
-      { to: '/more/settings', label: '설정', desc: '학교 · 버튼 · PIN', icon: 'settings', tone: T },
-      { to: '/more/changelog', label: '업데이트 소식', desc: '새로 바뀐 기능', icon: 'bolt', tone: T },
-      { to: '/more/terms', label: '이용 안내', desc: '자료 보관 · 개인정보', icon: 'lock', tone: T },
-    ],
-  },
-]
+const IN_TILES = new Set(['/help', '/more/data'])
 
 function backupLabel(at: number): { text: string; warn: boolean } {
   if (!at) return { text: '아직 백업 안 함', warn: true }
@@ -85,7 +30,7 @@ export default function MorePage() {
 
   return (
     <>
-      <PageHeader title="더보기" wide />
+      <PageHeader title="설정" sub="기초 설정 · 앱 · 도움" wide />
       <div className="page space-y-5 pb-8 lg:max-w-[64rem]">
         {/* 내 정보: 학교 · 학년도 · 백업 상태를 한눈에 */}
         <Link to="/more/settings" className="card flex items-center gap-3 transition-transform active:scale-[0.99]">
@@ -108,7 +53,8 @@ export default function MorePage() {
         </div>
 
         <div className="space-y-5 md:columns-2 md:gap-5 md:space-y-0 md:[&>section]:mb-5 md:[&>section]:break-inside-avoid">
-          {GROUPS.map((g) => ({ ...g, items: g.items.filter((m) => !m.feature || featureOn(settings.features, m.feature)) }))
+          {visibleGroups(NAV.find((x) => x.id === 'settings')!, settings.features)
+            .map((g) => ({ ...g, items: g.items.filter((m) => !IN_TILES.has(m.to)) }))
             .filter((g) => g.items.length > 0)
             .map((g) => (
               <section key={g.title}>
@@ -116,7 +62,7 @@ export default function MorePage() {
                 <div className="card overflow-hidden p-0">
                   {g.items.map((m) => (
                     <Link key={m.to} to={m.to} className="list-row min-h-[58px] hover:bg-fill">
-                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${m.tone}`}>
+                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${T}`}>
                         <Icon name={m.icon} size={18} />
                       </span>
                       <span className="min-w-0 flex-1">

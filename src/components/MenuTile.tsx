@@ -16,7 +16,7 @@ export function MenuTile({ to, icon, title, desc, badge }: { to: string; icon: I
         {badge && <span className="rounded-full bg-fill px-2 py-0.5 text-xs font-bold text-ink-2">{badge}</span>}
       </span>
       <span className="min-w-0">
-        <b className="block truncate leading-snug">{title}</b>
+        <b className="line-clamp-2 block leading-snug break-keep">{title}</b>
         {desc && <span className="block truncate text-sm text-ink-3">{desc}</span>}
       </span>
     </Link>

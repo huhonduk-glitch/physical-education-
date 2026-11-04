@@ -1,68 +1,88 @@
 import { BrandLine } from './Brand'
 import { Link, useLocation } from 'react-router-dom'
-import { featureOn } from '../lib/features'
+import { activeItem, sectionOf, visibleGroups, visibleSections } from '../lib/nav'
 import { useApp } from '../state/AppContext'
-import Icon, { type IconName } from './Icon'
-
-interface Tab {
-  to: string
-  label: string
-  icon: IconName
-  /** 이 주소들로 시작하면 이 탭이 켜진 것으로 본다 */
-  match: string[]
-  show?: (f: Parameters<typeof featureOn>[0]) => boolean
-}
-
-const TABS: Tab[] = [
-  { to: '/', label: '홈', icon: 'home', match: [] },
-  { to: '/groups', label: '수업반', icon: 'class', match: ['/groups', '/students'] },
-  { to: '/sports', label: '종목', icon: 'book', match: ['/sports', '/leagues'], show: (f) => featureOn(f, 'sports') },
-  { to: '/eval', label: '평가', icon: 'paps', match: ['/eval', '/paps', '/more/assessments'], show: (f) => featureOn(f, 'paps') || featureOn(f, 'assess') },
-  { to: '/tools', label: '도구', icon: 'timer', match: ['/timer', '/tools'], show: (f) => featureOn(f, 'tools') },
-  { to: '/more', label: '더보기', icon: 'more', match: ['/more'] },
-]
-
-function isActive(t: Tab, path: string): boolean {
-  if (t.to === '/') return path === '/'
-  const hits = TABS.flatMap((x) => x.match.filter((m) => path === m || path.startsWith(`${m}/`)).map((m) => ({ x, m })))
-  // 더 길게 맞는 탭이 이긴다 (/more/assessments는 평가 탭)
-  const best = hits.sort((a, b) => b.m.length - a.m.length)[0]
-  return best?.x === t
-}
+import Icon from './Icon'
 
 /**
- * 하단 탭 (CLAUDE.md 5장): 홈 · 수업반 · 종목 · 평가 · 도구 · 더보기. 끈 기능의 탭은 숨긴다.
- * 폰·태블릿에서는 화면 맨 아래, 교무실 PC처럼 넓은 화면(1024px 이상)에서는 왼쪽 세로 메뉴로 바뀐다.
+ * 큰 메뉴 (CLAUDE.md 6-12, 메뉴 표 src/lib/nav.ts): 홈 · 수업 · PAPS · 평가 · 업무 · 설정.
+ * - 폰 · 태블릿: 화면 맨 아래 탭 6개 → 누르면 그 큰 메뉴 화면(하위 기능 칸)
+ * - PC(1024px 이상): 왼쪽 세로 메뉴. 지금 큰 메뉴가 펼쳐져 하위 메뉴가 늘 보인다(파이스처럼 두 단계)
+ * 끈 기능은 숨긴다(자료는 그대로).
  */
 export default function BottomNav() {
   const { settings } = useApp()
-  const { pathname } = useLocation()
-  const tabs = TABS.filter((t) => !t.show || t.show(settings.features))
+  const { pathname, search } = useLocation()
+  const sections = visibleSections(settings.features)
+  const current = sectionOf(pathname)
+
   return (
     <nav
       aria-label="주요 화면"
-      className="fixed inset-x-0 bottom-0 z-30 print:hidden border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:inset-y-0 lg:right-auto lg:w-60 lg:border-t-0 lg:border-r lg:bg-white lg:pb-0"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md print:hidden lg:inset-y-0 lg:right-auto lg:flex lg:w-60 lg:flex-col lg:border-t-0 lg:border-r lg:bg-white lg:pb-0"
     >
-      <div className="hidden items-center gap-2.5 px-5 pt-7 pb-6 lg:flex">
+      <div className="hidden items-center gap-2.5 px-5 pt-7 pb-5 lg:flex">
         <BrandLine />
       </div>
-      <ul className="mx-auto flex max-w-3xl lg:max-w-none lg:flex-col lg:gap-1 lg:px-3">
-        {tabs.map((t) => {
-          const active = isActive(t, pathname)
+
+      {/* 폰: 아래 탭 */}
+      <ul className="mx-auto flex max-w-3xl lg:hidden">
+        {sections.map((s) => {
+          const active = current === s.id
           return (
-            <li key={t.to} className="flex-1">
+            <li key={s.id} className="flex-1">
               <Link
-                to={t.to}
+                to={s.to}
                 aria-current={active ? 'page' : undefined}
-                className={`flex min-h-[62px] flex-col items-center justify-center gap-1 text-[0.72rem] font-bold transition-colors lg:min-h-[50px] lg:flex-row lg:justify-start lg:gap-3 lg:rounded-xl lg:px-4 lg:text-[0.98rem] ${
-                  active ? 'text-ink lg:bg-fill' : 'text-ink-3 hover:text-ink-2 lg:hover:bg-fill'
-                }`}
+                className={`flex min-h-[62px] flex-col items-center justify-center gap-1 text-[0.72rem] font-bold transition-colors ${active ? 'text-ink' : 'text-ink-3'}`}
               >
-                <span className={`grid place-items-center rounded-full transition-colors ${active ? 'text-brand' : ''}`}>
-                  <Icon name={t.icon} size={26} strokeWidth={active ? 2.5 : 2} />
-                </span>
-                {t.label}
+                <Icon name={s.icon} size={25} strokeWidth={active ? 2.5 : 2} className={active ? 'text-brand' : ''} />
+                {s.label}
               </Link>
+            </li>
+          )
+        })}
+      </ul>
+
+      {/* PC: 두 단계 메뉴 — 지금 큰 메뉴만 펼친다 */}
+      <ul className="hidden min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto px-3 pb-6 lg:flex">
+        {sections.map((s) => {
+          const active = current === s.id
+          const groups = visibleGroups(s, settings.features)
+          const item = active ? activeItem(pathname, search, groups.flatMap((g) => g.items)) : undefined
+          return (
+            <li key={s.id}>
+              <Link
+                to={s.to}
+                aria-current={active && !item ? 'page' : undefined}
+                className={`flex min-h-[46px] items-center gap-3 rounded-xl px-3 text-[0.98rem] font-bold transition-colors ${active ? 'bg-fill text-ink' : 'text-ink-3 hover:bg-fill hover:text-ink-2'}`}
+              >
+                <Icon name={s.icon} size={22} strokeWidth={active ? 2.5 : 2} className={active ? 'text-brand' : ''} />
+                <span className="flex-1">{s.label}</span>
+                {groups.length > 0 && <Icon name="chevronDown" size={16} className={`text-ink-3 transition-transform ${active ? '' : '-rotate-90'}`} />}
+              </Link>
+              {active && groups.length > 0 && (
+                <div className="mt-1 mb-2 ml-[1.35rem] border-l border-line pl-3">
+                  {groups.map((g) => (
+                    <div key={g.title} className="py-1">
+                      <p className="px-2 pt-1 pb-0.5 text-xs font-bold text-ink-3">{g.title}</p>
+                      {g.items.map((i) => {
+                        const on = item === i
+                        return (
+                          <Link
+                            key={i.to}
+                            to={i.to}
+                            aria-current={on ? 'page' : undefined}
+                            className={`block truncate rounded-lg px-2 py-1.5 text-[0.9rem] font-semibold ${on ? 'bg-brand-light text-brand' : 'text-ink-2 hover:bg-fill'}`}
+                          >
+                            {i.label}
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  ))}
+                </div>
+              )}
             </li>
           )
         })}

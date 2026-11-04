@@ -44,7 +44,7 @@ const LeaguePage = lazy(() => import('./pages/sports/LeaguePage'))
 const HelpPage = lazy(() => import('./pages/HelpPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 const TermsGate = lazy(() => import('./pages/TermsPage').then((m) => ({ default: m.TermsGate })))
-const ToolsPage = lazy(() => import('./pages/ToolsPage'))
+const SectionHubPage = lazy(() => import('./pages/SectionHubPage'))
 const PickPage = lazy(() => import('./pages/tools/PickPage'))
 const TeamsPage = lazy(() => import('./pages/tools/TeamsPage'))
 const StudentDetailPage = lazy(() => import('./pages/StudentDetailPage'))
@@ -72,7 +72,6 @@ const ClassSummaryPage = lazy(() => import('./pages/ClassSummaryPage'))
 const DataPage = lazy(() => import('./pages/DataPage'))
 const BudgetPage = lazy(() => import('./pages/BudgetPage'))
 const WorkGuidePage = lazy(() => import('./pages/WorkGuidePage'))
-const EvalPage = lazy(() => import('./pages/EvalPage'))
 const GroupsPage = lazy(() => import('./pages/groups/GroupsPage'))
 const GroupBoardPage = lazy(() => import('./pages/groups/GroupBoardPage'))
 const GroupEditPage = lazy(() => import('./pages/groups/GroupEditPage'))
@@ -173,9 +172,11 @@ export default function App() {
           <Route path="/plans/new" element={<PlanSetupPage />} />
           <Route path="/plans/:id" element={<PlanPage />} />
           <Route path="/plans/:id/setup" element={<PlanSetupPage />} />
-          <Route path="/eval" element={<EvalPage />} />
+          <Route path="/class" element={<SectionHubPage section="class" />} />
+          <Route path="/eval" element={<SectionHubPage section="eval" />} />
+          <Route path="/work" element={<SectionHubPage section="work" />} />
           <Route path="/timer" element={<TimerPage />} />
-          <Route path="/tools" element={<ToolsPage />} />
+          <Route path="/tools" element={<Navigate to="/class" replace />} />
           <Route path="/tools/pick" element={<PickPage />} />
           <Route path="/tools/teams" element={<TeamsPage />} />
           <Route path="/tools/apps" element={<TeamAppsPage />} />
