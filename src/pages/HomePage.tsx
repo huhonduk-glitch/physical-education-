@@ -59,7 +59,7 @@ export default function HomePage() {
   return (
     <>
       <header className="pt-[env(safe-area-inset-top)]">
-        <div className="page flex items-center gap-3 pt-5 pb-1">
+        <div className="page flex items-center gap-3 pt-5 pb-1 xl:max-w-[76rem]">
           <Logo size={40} />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-bold text-ink-3">{longDateLabel(today)}</p>
@@ -74,7 +74,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <div className="page space-y-5 pt-3 pb-8">
+      <div className="page space-y-5 pt-3 pb-8 xl:max-w-[76rem] xl:columns-2 xl:gap-6 xl:space-y-0 xl:[&>*]:mb-5 xl:[&>*]:break-inside-avoid">
         <AutoBackupNotice />
         <InstallGuide place="home" />
         {/* 시작 준비에 '첫 백업'이 이미 보이면 겹치지 않게 */}
