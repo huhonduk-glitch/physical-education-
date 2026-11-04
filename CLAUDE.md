@@ -884,3 +884,5 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 6. 🔶 계산만: `creditRisk(결석+결과, 수업 횟수)` → ok · caution(2번 더 빠지면 미만) · danger(`src/lib/attendance.ts`, 테스트 있음). 남은 것: 수업 횟수(그 수업반 출결 · 기록 · 일지 날짜 수)를 세어 누적 기록(`GroupStatsPage`) · 출결 화면에 노랑/빨강 표시
 7. 학교체육 업무 메뉴 근거: 학생선수 출석인정 결석 고교 연 50일 이내(국가대표 · 전국체전 심의 예외), 정규 외 스포츠클럽은 승인 기간 실적만 · 활동시간/특기사항 미기재
 8. ✅ 땅콩이 답 3개 더함(`seteuk-contest` · `seteuk-thesis` · `seteuk-student`)
+
+| H | 날씨 · 미세먼지 알림(체육 수업 실외 판단). 교사 요청: AccuWeather 또는 네이버 날씨. **제안**: 네이버는 공식 API가 없고 화면 긁어오기는 약관 위반 → 공식 공공 API 권장 — 기상청 단기예보(공공데이터포털) + 에어코리아 대기오염(미세 · 초미세먼지) API를 이미 있는 Cloudflare 중계(`relay/`)로, 인증키는 Cloudflare 비밀 값(NEIS_KEY처럼). AccuWeather는 무료 키 하루 호출 수 제한. 보내는 것 = 학교 위치(시군구 · 측정소)만, 학생 정보 없음 → 0-4 예외로 문서화 필요(교사 승인). 홈 대시보드에 오늘 날씨 · 미세먼지 등급 · 실외 수업 주의(나쁨 이상이면 빨강, 교육부 고농도 미세먼지 대응 기준은 원문 확인 후) | 방식 확인 필요 |
