@@ -86,7 +86,7 @@ export default function PlanSetupPage() {
       nav(-1)
     } else {
       const nid = await createPlan(db, { schoolYear: year, ...body })
-      nav(`/plans/${nid}`, { replace: true })
+      nav(`/plans/${nid}?import=1`, { replace: true })
     }
   }
   const remove = async () => {

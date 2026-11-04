@@ -34,7 +34,8 @@ export default function PlanPage() {
   const setGid = (g: string) => setSp((p) => (p.set('g', g), p), { replace: true })
   const [editing, setEditing] = useState<number | null>(null)
   const [quick, setQuick] = useState(false)
-  const [importing, setImporting] = useState(false)
+  // 새 진도표를 만들면 바로 '평가계획서로 초안 만들기' 창을 연다 (2026-11-04 교사 요청)
+  const [importing, setImporting] = useState(() => sp.get('import') === '1')
   const viewParam = sp.get('v')
   const setView = (v: 'list' | 'direct') => setSp((p) => (p.set('v', v), p), { replace: true })
   const today = todayStr()
@@ -113,7 +114,7 @@ export default function PlanPage() {
             )}
             {!readOnly && (
               <button type="button" className={`btn w-full ${items.length ? 'btn-soft' : 'btn-primary'}`} onClick={() => setImporting(true)}>
-                <Icon name="upload" /> 평가계획서 · 진도표 파일로 넣기
+                <Icon name="upload" /> 평가계획서로 초안 만들기 (PDF · 엑셀)
               </button>
             )}
             <div className="segment" role="tablist" aria-label="보기">
