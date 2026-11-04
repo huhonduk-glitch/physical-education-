@@ -85,9 +85,16 @@ export function newHomeroomGroup(schoolYear: number, grade: number, classNo: num
   }
 }
 
-/** 수업반 목록 정렬: 학기 → 순서 → 이름 */
+/** 수업반 목록 정렬 (2026-11-04 교사 요청 '오름차순 자동 정리'): 학적반(학년 → 반) 먼저, 그다음 수강반 이름 가나다 · 숫자 순 */
 export function sortGroups(groups: readonly ClassGroup[]): ClassGroup[] {
-  return [...groups].sort((a, b) => a.semester - b.semester || a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'ko'))
+  const kindRank = (g: ClassGroup) => (g.kind === 'homeroom' ? 0 : 1)
+  return [...groups].sort(
+    (a, b) =>
+      kindRank(a) - kindRank(b) ||
+      (a.kind === 'homeroom' ? (a.grade ?? 0) - (b.grade ?? 0) || (a.classNo ?? 0) - (b.classNo ?? 0) : 0) ||
+      a.name.localeCompare(b.name, 'ko', { numeric: true }) ||
+      a.semester - b.semester,
+  )
 }
 
 export interface MemberMatch {

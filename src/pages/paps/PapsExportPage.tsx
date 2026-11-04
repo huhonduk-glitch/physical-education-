@@ -19,6 +19,8 @@ interface Outcome {
   /** round: 그 학생에게 고른 회차 (문제를 누르면 그 회차 입력 칸으로 간다) */
   issues: (ExportIssue & { cls: string; round: { id: string | null; no: number } })[]
   excluded: string[]
+  /** 기록이 빠지거나 범위를 벗어나 이번 파일에서 뺀 학생 (2026-11-04 교사 요청: 한 명 때문에 반 전체를 못 내보냄) */
+  skipped?: string[]
   unknown: string[]
   fileName?: string
   rows?: number
@@ -60,14 +62,14 @@ export default function PapsExportPage() {
   const template = settings.neisTemplates[String(year)] ?? null
   const defaults = { course: settings.defaultCourse, track: settings.defaultTrack, dept: settings.defaultDept }
 
-  const run = async () => {
+  const run = async (skip = false) => {
     if (!cls) return
     setBusy(true)
     setOut(null)
     setShowN(30)
     try {
       const targets = scope === 'class' ? [cls] : classes.filter((c) => c.grade === cls.grade)
-      const all: Outcome = { issues: [], excluded: [], unknown: [] }
+      const all: Outcome = { issues: [], excluded: [], skipped: [], unknown: [] }
       let columns = null as ReturnType<typeof columnsFor> | null
       let headerKey = ''
       const rows: string[][] = []
@@ -145,15 +147,18 @@ export default function PapsExportPage() {
         headerKey = key
         const { values, excluded } = indexResults(data.results)
         const v = validateExport(cols, students, values, new Set(excluded.keys()), settings.neisRanges)
+        // 빼고 받기: 문제 있는 학생은 파일에서 빼고 이름만 알린다(나이스에서 따로 입력)
+        const bad = new Set(skip ? v.issues.map((i) => i.studentId) : [])
+        if (skip) all.skipped!.push(...v.included.filter((s) => bad.has(s.id)).map((s) => `${c.grade}-${c.classNo} ${s.number}번 ${s.name}`))
         all.issues.push(
-          ...v.issues.map((i) => {
+          ...v.issues.filter((i) => !bad.has(i.studentId)).map((i) => {
             const id = roundOfCell(i.studentId, i.cell)
             return { ...i, cls: `${c.grade}-${c.classNo}`, round: { id, no: roundNo.get(id) ?? 1 } }
           }),
         )
         all.excluded.push(...v.excluded.map((s) => `${c.grade}-${c.classNo} ${s.number}번 ${s.name}`))
         all.unknown = v.unknownColumns
-        const r = buildRows(cols, v.included, values, defaults, settings.neisRanges)
+        const r = buildRows(cols, v.included.filter((s) => !bad.has(s.id)), values, defaults, settings.neisRanges)
         if (rows.length === 0) rows.push(r[0])
         rows.push(...r.slice(1))
       }
@@ -230,7 +235,7 @@ export default function PapsExportPage() {
               : '나이스 양식을 등록하지 않아 표준 헤더로 만들어요. 나이스에서 받은 양식과 열 순서를 한 번 비교해 보세요.'}{' '}
             허용 범위는 <b>추정값</b>이에요 — [PAPS 설정]에서 고칠 수 있어요.
           </p>
-          <button type="button" className="btn btn-primary w-full text-lg" disabled={!cls || busy} onClick={run}>
+          <button type="button" className="btn btn-primary w-full text-lg" disabled={!cls || busy} onClick={() => run()}>
             <Icon name="download" /> {busy ? '검사 중…' : '검사하고 내려받기'}
           </button>
         </section>
@@ -258,6 +263,16 @@ export default function PapsExportPage() {
                 <p className="card-title text-danger">파일을 만들지 않았어요</p>
                 <p className="mt-1 font-semibold text-danger">아래 문제를 고친 뒤 다시 눌러 주세요. 항목을 누르면 그 학생 입력 칸으로 가요.</p>
               </section>
+            )}
+            {out.skipped && out.skipped.length > 0 && (
+              <p className="card bg-caution-light font-semibold text-ink-2 shadow-none">
+                기록이 빠지거나 범위를 벗어난 {out.skipped.length}명은 이 파일에서 뺐어요. 나이스에서 따로 입력하세요: {out.skipped.join(', ')}
+              </p>
+            )}
+            {out.issues.length > 0 && !out.fileName && (
+              <button type="button" className="btn btn-secondary w-full" disabled={busy} onClick={() => run(true)}>
+                문제 있는 {new Set(out.issues.map((i) => i.cls + i.studentId)).size}명은 빼고 파일 받기
+              </button>
             )}
             {out.excluded.length > 0 && (
               <p className="card font-semibold text-ink-2">
