@@ -169,6 +169,15 @@ function ItemSummary({ item }: { item: AssessItem }) {
       .map((b) => `${fmtNum(b.limit)}${item.unit ?? ''} ${dir} ${fmtNum(b.points)}`)
       .concat(base !== undefined ? [`그 밖 ${fmtNum(base)}`] : [])
       .join(' · ')
+  if (item.method === 'direct')
+    return (
+      <div className="space-y-1 rounded-xl bg-fill px-3 py-2 text-sm">
+        <p className="font-bold">
+          {item.label} · 점수 입력 · 만점 {fmtNum(itemMax(item))}점{item.nonPartPoints !== undefined && ` · 미참여 ${fmtNum(item.nonPartPoints)}점`}
+        </p>
+        {item.allowed?.length ? <p>기준 점수 {item.allowed.map(fmtNum).join(' · ')} (이 점수 밖이면 채점할 때 알려 줘요)</p> : <p>0~{fmtNum(item.max ?? 0)}점 사이로 직접 넣어요</p>}
+      </div>
+    )
   return (
     <div className="space-y-1 rounded-xl bg-fill px-3 py-2 text-sm">
       <p className="font-bold">

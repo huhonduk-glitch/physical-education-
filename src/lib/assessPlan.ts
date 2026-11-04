@@ -65,6 +65,8 @@ export interface ScoreRow {
 export interface BuiltItem {
   item: AssessItem
   problems: string[]
+  /** 글로 된 채점 기준: 점수별 기대 수행 (점수 입력 요소일 때) */
+  criteria?: { label: string; desc: string }[]
 }
 
 const fmt = (n: number) => String(Math.round(n * 100) / 100)
@@ -103,6 +105,15 @@ export function buildItem(label: string, rows: readonly ScoreRow[], opts: { id: 
   const parsed = rows.map((r) => ({ ...r, e: parseExpect(r.expect) }))
   const problems: string[] = []
   const unknown = parsed.filter((p) => p.e.kind === 'unknown')
+  // 기대 수행이 모두 글로 된 기준(예: '동작이 정확하고 자연스러움 40점')이면 기록표가 아니라 '점수 입력'.
+  // 배점 칸의 점수들을 기준 점수(allowed)로 — 채점할 때 이 점수 밖이면 경고 (6-11 A, 2026-11-04 교사 요청)
+  if (unknown.length && parsed.every((p) => p.e.kind === 'unknown' || p.e.kind === 'nonpart')) {
+    const np = parsed.find((p) => p.e.kind === 'nonpart')
+    const pts = [...new Set(parsed.map((p) => p.points))].sort((a, b) => b - a)
+    const item: AssessItem = { id: opts.id, label, method: 'direct', max: pts[0] ?? 0, allowed: pts }
+    if (np) item.nonPartPoints = np.points
+    return { item, problems: [], criteria: unknown.map((u) => ({ label: `${fmt(u.points)}점`, desc: u.expect.replace(/\s+/g, ' ').trim() })) }
+  }
   for (const u of unknown) problems.push(`'${u.expect}'(${fmt(u.points)}점)을 기록 구간으로 읽지 못했어요. 직접 고쳐 주세요`)
   const nonPart = parsed.find((p) => p.e.kind === 'nonpart')
   const counts = parsed.filter((p) => p.e.kind === 'count')
