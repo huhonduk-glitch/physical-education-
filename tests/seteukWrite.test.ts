@@ -152,3 +152,14 @@ describe('2026 길라잡이 반영 (2026-11-04)', () => {
     expect(checkSeteuk('유튜브 영상을 분석함.').find((h) => h.id === 'substitute')?.level).toBe('warn')
   })
 })
+
+describe('길라잡이 2 (2026-11-04)', () => {
+  it('소논문 · 연구보고서 · KOCW는 오류, 행사 · 축제는 괜찮음', async () => {
+    const { checkSeteuk } = await import('../src/lib/seteukCheck')
+    expect(checkSeteuk('소논문을 작성함.').find((h) => h.id === 'thesis')?.level).toBe('error')
+    expect(checkSeteuk('연구 보고서를 씀.').find((h) => h.id === 'thesis')).toBeTruthy()
+    expect(checkSeteuk('KOCW 강의를 들음.').find((h) => h.id === 'mooc')).toBeTruthy()
+    const ok = checkSeteuk('체육 축제와 학급 행사에서 진행을 맡음.')
+    expect(ok.filter((h) => h.level === 'error')).toEqual([])
+  })
+})
