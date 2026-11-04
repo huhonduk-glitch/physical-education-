@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import { BrandLine } from './Brand'
 import { Link, useLocation } from 'react-router-dom'
-import { NAV, activeItem, sectionOf, visibleGroups, visibleSections } from '../lib/nav'
+import { NAV, activeItem, sectionOf, visibleGroups, visibleSections, type NavGroup } from '../lib/nav'
+import { useGroups } from '../state/useGroups'
 import { useApp } from '../state/AppContext'
 import Icon from './Icon'
 
@@ -18,7 +19,7 @@ export default function BottomNav() {
   const sections = visibleSections(settings.features)
   const current = sectionOf(pathname)
   const sec = NAV.find((s) => s.id === current)!
-  const groups = visibleGroups(sec, settings.features)
+  const groups = useSideGroups(sec.id)
   const item = activeItem(pathname, search, groups.flatMap((g) => g.items))
 
   return (
@@ -68,29 +69,33 @@ export default function BottomNav() {
         <span className="ml-auto truncate text-sm font-bold text-ink-3">{settings.schoolName}</span>
       </nav>
 
-      {/* PC: 왼쪽 하위 메뉴 (지금 큰 메뉴만) */}
+      {/* PC: 왼쪽 하위 메뉴 (지금 큰 메뉴만). 묶음 이름 = 아이콘 + 굵은 검정, 하위 메뉴 = 들여 쓴 보통 글씨 + 세로 안내선 */}
       {groups.length > 0 && (
-        <aside aria-label={`${sec.label} 메뉴`} className="fixed top-14 bottom-0 left-0 z-20 hidden w-56 overflow-y-auto border-r border-line bg-white px-3 py-4 print:hidden lg:block">
-          <Link to={sec.to} className={`mb-2 flex min-h-[40px] items-center gap-2 rounded-lg px-2 font-extrabold ${!item && pathname === sec.to ? 'bg-brand-light text-brand' : 'text-ink'}`}>
-            <Icon name={sec.icon} size={20} className="text-brand" />
-            {sec.label}
+        <aside aria-label={`${sec.label} 메뉴`} className="fixed top-14 bottom-0 left-0 z-20 hidden w-60 overflow-y-auto border-r border-line bg-white px-3 py-5 print:hidden lg:block">
+          <Link to={sec.to} className="mb-3 block px-2 text-xs font-bold text-ink-3 hover:text-brand">
+            {sec.label} 메뉴
           </Link>
           {groups.map((g) => (
-            <div key={g.title} className="py-1.5">
-              <p className="px-2 pb-1 text-xs font-bold text-ink-3">{g.title}</p>
-              {g.items.map((i) => {
-                const on = item === i
-                return (
-                  <Link
-                    key={i.to}
-                    to={i.to}
-                    aria-current={on ? 'page' : undefined}
-                    className={`block truncate rounded-lg px-2 py-1.5 text-[0.92rem] font-semibold ${on ? 'bg-brand-light text-brand' : 'text-ink-2 hover:bg-fill'}`}
-                  >
-                    {i.label}
-                  </Link>
-                )
-              })}
+            <div key={g.title} className="mb-4">
+              <p className="flex items-center gap-2 px-2 pb-1.5 text-[0.95rem] font-extrabold text-ink">
+                <Icon name={g.icon} size={18} className="text-brand" />
+                {g.title}
+              </p>
+              <div className="ml-[1.05rem] border-l-2 border-line pl-2">
+                {g.items.map((i) => {
+                  const on = item === i
+                  return (
+                    <Link
+                      key={i.to}
+                      to={i.to}
+                      aria-current={on ? 'page' : undefined}
+                      className={`-ml-[0.6rem] block truncate border-l-2 py-1.5 pr-2 pl-3 text-[0.9rem] ${on ? 'border-brand bg-brand-light font-bold text-brand' : 'border-transparent font-medium text-ink-2 hover:bg-fill hover:text-ink'}`}
+                    >
+                      {i.label}
+                    </Link>
+                  )
+                })}
+              </div>
             </div>
           ))}
         </aside>
@@ -105,15 +110,27 @@ export function ContentFrame({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
   const sec = NAV.find((s) => s.id === sectionOf(pathname))!
   const side = visibleGroups(sec, settings.features).length > 0
-  return <div className={`min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] print:p-0 lg:pt-14 lg:pb-0 ${side ? 'lg:pl-56' : ''}`}>{children}</div>
+  return <div className={`min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] print:p-0 lg:pt-14 lg:pb-0 ${side ? 'lg:pl-60' : ''}`}>{children}</div>
 }
 
 /** PC 제목 위 위치 표시: '수업 › 종목 수업자료' (폰에서는 숨김) */
 export function useCrumb(): string[] {
-  const { settings } = useApp()
   const { pathname, search } = useLocation()
   const sec = NAV.find((s) => s.id === sectionOf(pathname))!
-  if (sec.id === 'home') return []
-  const item = activeItem(pathname, search, visibleGroups(sec, settings.features).flatMap((g) => g.items))
+  const groups = useSideGroups(sec.id)
+  if (pathname === '/') return []
+  const item = activeItem(pathname, search, groups.flatMap((g) => g.items))
   return item ? [sec.label, item.label] : [sec.label]
+}
+
+/** 왼쪽 하위 메뉴 묶음: '내 수업반'은 실제 반 이름으로 채운다 */
+export function useSideGroups(id: (typeof NAV)[number]['id']): NavGroup[] {
+  const { settings } = useApp()
+  const { groups: classes } = useGroups()
+  const sec = NAV.find((s) => s.id === id)!
+  return visibleGroups(sec, settings.features).map((g) =>
+    g.id === 'classes' && classes && classes.length > 0
+      ? { ...g, items: [...classes.map((c) => ({ to: `/groups/${c.id}`, label: c.name, icon: 'class' as const })), { to: '/groups', label: '수업반 관리', icon: 'settings' as const }] }
+      : g,
+  )
 }

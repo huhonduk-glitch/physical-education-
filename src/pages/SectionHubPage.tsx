@@ -25,7 +25,7 @@ export default function SectionHubPage({ section }: { section: SectionId }) {
   const groups = visibleGroups(s, settings.features)
   const showClasses = section === 'class' && featureOn(settings.features, 'records')
   // 수업 화면은 '수업반' 묶음 대신 반 카드를 바로 보여 준다
-  const rest = showClasses ? groups.filter((g) => g.title !== '수업반') : groups
+  const rest = showClasses ? groups.filter((g) => g.id !== 'classes') : groups
 
   return (
     <>

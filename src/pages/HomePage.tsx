@@ -15,6 +15,7 @@ import { currentInstallInfo } from '../lib/install'
 import { currentPeriod, todaysLessons } from '../lib/timetable'
 import { useApp } from '../state/AppContext'
 import { useGroups } from '../state/useGroups'
+import { NAV, visibleGroups } from '../lib/nav'
 
 /**
  * 홈 (2026-11-04 레이아웃 정리 · 교사: "번잡하면 아무도 안 쓴다")
@@ -297,7 +298,28 @@ export default function HomePage() {
             </section>
           )}
 
-          <div className="order-9 space-y-3 xl:order-none">
+          {/* ⑦ 기초 설정 · 평가계획서 넣기 (교사 가안: 초기설정은 홈에) — 메뉴 표 src/lib/nav.ts의 홈 묶음 */}
+          {visibleGroups(NAV[0], settings.features).map((g) => (
+            <section key={g.title} className="order-9 space-y-2 lg:hidden">
+              <SectionTitle title={g.title} />
+              <div className="card overflow-hidden p-0">
+                {g.items.map((i) => (
+                  <Link key={i.to} to={i.to} className="list-row min-h-[54px] hover:bg-fill">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-light text-brand">
+                      <Icon name={i.icon} size={18} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <b className="block truncate">{i.label}</b>
+                      {i.desc && <span className="block truncate text-sm text-ink-3">{i.desc}</span>}
+                    </span>
+                    <Icon name="chevronRight" size={18} className="text-ink-3" />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          ))}
+
+          <div className="order-10 space-y-3 xl:order-none">
             {!urgentInstall && <InstallGuide place="home" />}
             <p className="hint text-center">
               처음이라면{' '}

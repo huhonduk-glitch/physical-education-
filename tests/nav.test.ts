@@ -12,9 +12,13 @@ describe('메뉴 표 (6-12)', () => {
     expect(sectionOf('/timer')).toBe('class')
     expect(sectionOf('/paps/input/bmi')).toBe('paps')
     expect(sectionOf('/more/assessments/a1')).toBe('eval')
-    expect(sectionOf('/students/summary')).toBe('eval')
-    expect(sectionOf('/students/s1')).toBe('settings')
-    expect(sectionOf('/more/settings/neis')).toBe('settings')
+    expect(sectionOf('/students/summary')).toBe('class')
+    expect(sectionOf('/students/s1')).toBe('class')
+    expect(sectionOf('/students/import')).toBe('home')
+    expect(sectionOf('/more/settings/neis')).toBe('home')
+    expect(sectionOf('/more/settings')).toBe('settings')
+    expect(sectionOf('/plans/new')).toBe('home')
+    expect(sectionOf('/plans/p1')).toBe('class')
     expect(sectionOf('/more')).toBe('settings')
     expect(sectionOf('/work/team')).toBe('work')
   })
@@ -22,14 +26,14 @@ describe('메뉴 표 (6-12)', () => {
     const off = { paps: false }
     expect(visibleSections(off).map((s) => s.id)).not.toContain('paps')
     const cls = NAV.find((s) => s.id === 'class')!
-    expect(visibleGroups(cls, { captains: false, absences: false }).map((g) => g.title)).not.toContain('학생')
+    expect(visibleGroups(cls, { tools: false, sports: false, apps: false }).map((g) => g.title)).not.toContain('수업 도구')
   })
   it('켤 하위 항목', () => {
     const paps = NAV.find((s) => s.id === 'paps')!.groups.flatMap((g) => g.items)
     expect(activeItem('/paps/stats', '?c=1-1', paps)?.label).toBe('통계 · 그래프')
     expect(activeItem('/paps', '', paps)?.label).toBe('기록 입력')
     const cls = NAV.find((s) => s.id === 'class')!.groups.flatMap((g) => g.items)
-    expect(activeItem('/groups/g1/journal', '', cls)?.label).toBe('내 수업반')
+    expect(activeItem('/groups/g1/journal', '', cls)?.label).toBe('수업반 목록')
   })
   it('같은 주소가 한 큰 메뉴 안에서 두 번 나오지 않음', () => {
     for (const s of NAV) {
