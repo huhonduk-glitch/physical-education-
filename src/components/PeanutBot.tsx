@@ -18,8 +18,8 @@ export default function PeanutBot() {
   const [q, setQ] = useState('')
   const end = useRef<HTMLDivElement>(null)
   useEffect(() => end.current?.scrollIntoView({ block: 'end' }), [msgs, open])
-  // 슬라이드 · 보조심판 · 잠금 화면처럼 화면을 꽉 쓰는 곳에서는 숨김
-  if (/\/slides|\/referee|\/timer/.test(pathname)) return null
+  // 홈 · 더보기 · 사용법에만 (2026-11-04 교사 결정: 수업 중 화면에서 학생 카드 · 시간표를 가리지 않게)
+  if (!/^\/(more|help)?$/.test(pathname)) return null
 
   const ask = (text: string, a?: BotAnswer | null) => {
     const ans = a ?? findAnswer(text)

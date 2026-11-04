@@ -1,87 +1,65 @@
-import { Link } from 'react-router-dom'
-import Icon, { type IconName } from '../components/Icon'
+import { type IconName } from '../components/Icon'
+import { GroupTitle, HeroLink, MenuTile } from '../components/MenuTile'
 import PageHeader from '../components/PageHeader'
 import { useTimer } from '../state/TimerContext'
 
-const TOOLS: { to: string; icon: IconName; title: string; desc: string; tone: string }[] = [
-  { to: '/tools/pick', icon: 'dice', title: '뽑기', desc: '발표 · 시범 · 순서', tone: 'bg-brand-light text-brand' },
-  { to: '/tools/teams', icon: 'team', title: '팀 나누기', desc: '남녀 · 실력 고르게', tone: 'bg-brand-light text-brand' },
-  { to: '/tools/apps', icon: 'share', title: '팀 편성 · 전술 보드', desc: '반 명단 보내기', tone: 'bg-brand-light text-brand' },
-  { to: '/timer?tab=paps', icon: 'volume', title: 'PAPS 신호음', desc: '윗몸말아올리기 · 스텝검사', tone: 'bg-brand-light text-brand' },
+type Tool = { to: string; icon: IconName; title: string; desc: string }
+
+/** 하는 일로 묶는다 (2026-11-04 레이아웃 정리). 종목 수업자료는 하단 탭에 있어 여기서 뺐다 */
+const GROUPS: { title: string; items: Tool[] }[] = [
+  {
+    title: '수업 진행',
+    items: [
+      { to: '/tools/pick', icon: 'dice', title: '뽑기', desc: '발표 · 순서' },
+      { to: '/tools/teams', icon: 'team', title: '팀 나누기', desc: '남녀 · 실력 고르게' },
+      { to: '/referee', icon: 'flag', title: '보조심판', desc: '판정 · 점수 · 팀 파울' },
+      { to: '/tools/video', icon: 'eye', title: '동작 영상', desc: '지연 재생 · 슬로모션' },
+    ],
+  },
+  {
+    title: 'PAPS 측정',
+    items: [
+      { to: '/timer?tab=paps&aid=shuttle', icon: 'flag', title: '왕복오래달리기', desc: '신호마다 한 번 누르기' },
+      { to: '/timer?tab=paps', icon: 'volume', title: 'PAPS 신호음', desc: '윗몸말아올리기 · 스텝' },
+    ],
+  },
+  {
+    title: '다른 앱으로',
+    items: [{ to: '/tools/apps', icon: 'share', title: '팀 편성 · 전술 보드', desc: '반 명단 보내기' }],
+  },
 ]
 
-/** 도구 탭: 가장 많이 쓰는 타이머를 크게, 나머지는 두 칸씩 */
+function Group({ g, cols }: { g: (typeof GROUPS)[number]; cols: string }) {
+  return (
+    <section className="space-y-2">
+      <GroupTitle>{g.title}</GroupTitle>
+      <div className={`grid grid-cols-2 gap-3 ${cols}`}>
+        {g.items.map((x) => (
+          <MenuTile key={x.to} {...x} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/** 도구 탭: 가장 많이 쓰는 타이머 하나만 크게, 나머지는 같은 모양 칸 */
 export default function ToolsPage() {
   const t = useTimer()
   return (
     <>
       <PageHeader title="수업 도구" sub={t.running ? '타이머가 돌고 있어요' : undefined} />
       <div className="page space-y-3 pb-8">
-        <Link to="/timer" className="flex min-h-[112px] items-center gap-4 rounded-3xl bg-brand p-5 text-white shadow-[var(--shadow-float)] transition-transform active:scale-[0.99]">
-          <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white/20">
-            <Icon name="timer" size={30} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <b className="block text-xl">타이머 · 스톱워치</b>
-            <span className="block text-sm font-semibold text-white/85">카운트다운 · 인터벌 · 랩 기록 → PAPS·수행평가</span>
-          </span>
-          <Icon name="chevronRight" />
-        </Link>
-        <div className="grid grid-cols-2 gap-3">
-          {TOOLS.map((x) => (
-            <Link key={x.to} to={x.to} className="card flex min-h-[124px] flex-col gap-2 p-4 transition-transform active:scale-[0.98]">
-              <span className={`grid h-11 w-11 place-items-center rounded-2xl ${x.tone}`}>
-                <Icon name={x.icon} size={22} />
-              </span>
-              <b className="leading-snug">{x.title}</b>
-              <span className="text-xs font-semibold text-ink-3">{x.desc}</span>
-            </Link>
-          ))}
+        <HeroLink to="/timer" icon="timer" title="타이머 · 스톱워치" desc="카운트다운 · 인터벌 · 랩 기록" />
+        <Group g={GROUPS[0]} cols="md:grid-cols-4" />
+        {/* 칸이 적은 두 묶음은 넓은 화면에서 한 줄에 나란히 (빈 자리가 크지 않게) */}
+        <div className="space-y-3 md:grid md:grid-cols-4 md:gap-3 md:space-y-0">
+          <div className="md:col-span-2">
+            <Group g={GROUPS[1]} cols="md:grid-cols-2" />
+          </div>
+          <div className="md:col-span-2">
+            <Group g={GROUPS[2]} cols="md:grid-cols-2" />
+          </div>
         </div>
-        {/* 종목 수업자료 · 리그전 (6-5 ④) */}
-        <Link to="/sports" className="card flex min-h-[72px] items-center gap-3 p-4 transition-transform active:scale-[0.99]">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">
-            <Icon name="medal" size={22} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <b className="block">종목 수업자료</b>
-            <span className="text-xs font-semibold text-ink-3">규칙 · 경기 방법 · 리그전 · 토너먼트(SPORTS BRACKET) 안내</span>
-          </span>
-          <Icon name="chevronRight" className="text-ink-3" />
-        </Link>
-        {/* 보조심판 (2026-10-30): 판정 버튼 · 점수 · 팀 파울 · AI에게 묻기 */}
-        <Link to="/referee" className="card flex min-h-[72px] items-center gap-3 p-4 transition-transform active:scale-[0.99]">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">
-            <Icon name="flag" size={22} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <b className="block">보조심판</b>
-            <span className="text-xs font-semibold text-ink-3">반칙 버튼 → 판정 · 다시 시작 · 조항, 점수 · 팀 파울, AI에게 묻기</span>
-          </span>
-          <Icon name="chevronRight" className="text-ink-3" />
-        </Link>
-        {/* 동작 영상 피드백 (B-3): 영상은 기기 메모리에만 */}
-        <Link to="/tools/video" className="card flex min-h-[72px] items-center gap-3 p-4 transition-transform active:scale-[0.99]">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">
-            <Icon name="eye" size={22} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <b className="block">동작 영상 피드백</b>
-            <span className="text-xs font-semibold text-ink-3">카메라 지연 재생 · 슬로모션 · 선·각도 그리기 (기기에만)</span>
-          </span>
-          <Icon name="chevronRight" className="text-ink-3" />
-        </Link>
-        {/* PAPS 신호음 → 왕복 탭 2단을 거치지 않고 바로 */}
-        <Link to="/timer?tab=paps&aid=shuttle" className="card flex min-h-[72px] items-center gap-3 p-4 transition-transform active:scale-[0.99]">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-light text-brand">
-            <Icon name="flag" size={22} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <b className="block">왕복오래달리기</b>
-            <span className="text-xs font-semibold text-ink-3">내 mp3 재생 · 신호마다 한 번 누르기 · 늦은 학생만 → PAPS 저장</span>
-          </span>
-          <Icon name="chevronRight" className="text-ink-3" />
-        </Link>
       </div>
     </>
   )

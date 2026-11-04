@@ -2,11 +2,11 @@ import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 /** 화면 제목 줄. 스크롤해도 위에 붙어 있고, 뒤 배경이 살짝 비친다. */
-export default function PageHeader({ title, sub, back, right }: { title: ReactNode; sub?: ReactNode; back?: boolean; right?: ReactNode }) {
+export default function PageHeader({ title, sub, back, right, wide }: { title: ReactNode; sub?: ReactNode; back?: boolean; right?: ReactNode; wide?: boolean }) {
   const navigate = useNavigate()
   return (
     <header className="print:hidden sticky top-0 z-20 bg-bg/85 pt-[env(safe-area-inset-top)] backdrop-blur-md">
-      <div className="page flex min-h-[64px] items-center gap-1 px-2">
+      <div className={`page flex min-h-[64px] items-center gap-1 px-2 ${wide ? "lg:max-w-[64rem]" : ""}`}>
         {back && (
           <button type="button" className="btn btn-ghost -ml-1 px-2" aria-label="뒤로" onClick={() => navigate(-1)}>
             <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
