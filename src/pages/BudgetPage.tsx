@@ -7,7 +7,11 @@ import {
   DEFAULT_LAYOUT,
   dropdownList,
   groupItems,
+  isManual,
   isPicked,
+  manualItem,
+  mergeManual,
+  money,
   nameRange,
   parseBudgetCard,
   parseCell,
@@ -39,7 +43,8 @@ export default function BudgetPage() {
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
 
-  const items = saved?.card.items ?? []
+  const manual = settings.budgetManual ?? []
+  const items = useMemo(() => mergeManual(saved?.card.items ?? [], manual), [saved, manual])
   const picked = useMemo(() => items.filter((x) => isPicked(x, picks)), [items, picks])
   const others = items.filter((x) => !isPicked(x, picks))
   const groups = groupItems(picked)
@@ -68,6 +73,20 @@ export default function BudgetPage() {
     }
   }
 
+  const [editing, setEditing] = useState<BudgetItem | null>(null)
+  const saveManual = async (it: BudgetItem) => {
+    const i = manual.findIndex((x) => x.key === it.key)
+    await updateSettings({ budgetManual: i >= 0 ? manual.map((x, j) => (j === i ? it : x)) : [...manual, it] })
+    setEditing(null)
+    setMsg(i >= 0 ? `'${it.name}' 항목을 고쳤어요.` : `'${it.name}' 항목을 더했어요.`)
+  }
+  const removeManual = async (it: BudgetItem) => {
+    if (!confirm(`'${it.name}' 항목을 지울까요?`)) return
+    await updateSettings({ budgetManual: manual.filter((x) => x.key !== it.key) })
+    setEditing(null)
+  }
+  const details = [...new Set(items.map((x) => x.detail.replace(/^\(통합\)/, '')))]
+
   const toggle = (it: BudgetItem) => void updateSettings({ budgetPicks: { ...picks, [it.key]: !isPicked(it, picks) } })
   const setLayout = (p: Partial<SheetLayout>) => void updateSettings({ budgetLayout: { ...layout, ...p } })
 
@@ -90,7 +109,23 @@ export default function BudgetPage() {
           {msg && <p className="text-sm font-bold text-brand">{msg}</p>}
         </section>
 
-        {saved && (
+        <Collapse
+          key={editing?.key ?? 'new'}
+          defaultOpen={!saved || !!editing}
+          title={editing ? `'${editing.name}' 고치기` : '엑셀 없이 직접 입력'}
+          sub="세부사업 · 산출내역 · 예산현액 · 집행액을 손으로 적어요"
+        >
+          <ManualForm
+            initial={editing}
+            details={details}
+            disabled={readOnly}
+            onSave={saveManual}
+            onCancel={editing ? () => setEditing(null) : undefined}
+            onRemove={editing ? () => void removeManual(editing) : undefined}
+          />
+        </Collapse>
+
+        {items.length > 0 && (
           <>
             <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Tile label="체육 예산현액" value={won(sum.budget)} />
@@ -100,16 +135,28 @@ export default function BudgetPage() {
             </section>
 
             <section className="space-y-2">
-              <p className="px-1 text-sm font-bold text-ink-3">체육 항목 {picked.length}개 · 누르면 빼기</p>
+              <p className="px-1 text-sm font-bold text-ink-3">체육 항목 {picked.length}개 · 누르면 빼기 (직접 입력한 항목은 누르면 고치기)</p>
               {groups.length === 0 && <p className="card hint">고른 항목이 없어요. 아래 '다른 항목'에서 골라 주세요.</p>}
-              {groups.map((g) => (
-                <div key={g.unit + g.detail} className="card overflow-hidden p-0">
+              {groups.map((g, gi) => (
+                <div key={`${gi}-${g.unit}-${g.detail}`} className="card overflow-hidden p-0">
                   <div className="flex items-center justify-between gap-2 border-b border-line bg-fill px-4 py-2">
                     <b className="min-w-0 truncate">{g.detail.replace(/^\(통합\)/, '')}</b>
                     <span className={`shrink-0 text-sm font-bold ${g.left < 0 ? 'text-danger' : 'text-ink-2'}`}>잔액 {won(g.left)}</span>
                   </div>
                   {g.items.map((it) => (
-                    <ItemRow key={it.key} it={it} on onToggle={() => toggle(it)} disabled={readOnly} />
+                    <ItemRow
+                      key={it.key}
+                      it={it}
+                      on
+                      manual={isManual(it)}
+                      onToggle={() => {
+                        if (isManual(it)) {
+                          setEditing(it)
+                          window.scrollTo({ top: 0, behavior: 'smooth' })
+                        } else toggle(it)
+                      }}
+                      disabled={readOnly}
+                    />
                   ))}
                 </div>
               ))}
@@ -210,14 +257,20 @@ function Tile({ label, value, warn }: { label: string; value: string; warn?: boo
   )
 }
 
-function ItemRow({ it, on, onToggle, disabled }: { it: BudgetItem; on: boolean; onToggle: () => void; disabled?: boolean }) {
+function ItemRow({ it, on, manual, onToggle, disabled }: { it: BudgetItem; on: boolean; manual?: boolean; onToggle: () => void; disabled?: boolean }) {
   return (
     <button type="button" className="list-row min-h-[58px] w-full text-left hover:bg-fill" disabled={disabled} onClick={onToggle} aria-pressed={on}>
-      <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 ${on ? 'border-brand bg-brand text-white' : 'border-line'}`}>{on && <Icon name="check" size={14} />}</span>
+      {manual ? (
+        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-brand-light text-brand" title="직접 입력 · 누르면 고치기">
+          <Icon name="edit" size={14} />
+        </span>
+      ) : (
+        <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 ${on ? 'border-brand bg-brand text-white' : 'border-line'}`}>{on && <Icon name="check" size={14} />}</span>
+      )}
       <span className="min-w-0 flex-1">
         <b className="line-clamp-2 block break-keep">{it.name}</b>
         <span className="hint block truncate">
-          {on ? it.cost : `${it.detail.replace(/^\(통합\)/, '')} · ${it.cost}`} · 현액 {won(it.budget)}
+          {manual ? `직접 입력${it.cost ? ` · ${it.cost}` : ''}` : on ? it.cost : `${it.detail.replace(/^\(통합\)/, '')} · ${it.cost}`} · 현액 {won(it.budget)}
         </span>
       </span>
       <span className={`shrink-0 text-right text-sm font-bold tabular-nums ${it.left < 0 ? 'text-danger' : 'text-ink-2'}`}>
@@ -235,5 +288,98 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
       {children}
       {hint && <span className="hint block">{hint}</span>}
     </label>
+  )
+}
+
+/** 엑셀 없이 손으로 적는 칸. 잔액 = 현액 − 집행 (저절로) */
+function ManualForm({
+  initial,
+  details,
+  disabled,
+  onSave,
+  onCancel,
+  onRemove,
+}: {
+  initial: BudgetItem | null
+  details: string[]
+  disabled?: boolean
+  onSave: (it: BudgetItem) => void | Promise<void>
+  onCancel?: () => void
+  onRemove?: () => void
+}) {
+  const [f, setF] = useState({
+    unit: initial?.unit ?? '',
+    detail: initial && initial.detail !== '직접 입력' ? initial.detail : '',
+    cost: initial?.cost ?? '',
+    name: initial?.name ?? '',
+    budget: initial ? String(initial.budget) : '',
+    spent: initial ? String(initial.spent) : '',
+  })
+  const [err, setErr] = useState('')
+  const num = (v: string) => (v.trim() ? money(v) : 0)
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value })
+  const left = num(f.budget) - num(f.spent)
+
+  const submit = async () => {
+    if (!f.name.trim()) return setErr('산출내역(예산항목 이름)을 적어 주세요.')
+    if (!f.budget.trim()) return setErr('예산현액을 적어 주세요.')
+    if (!/^-?[\d,\s]+$/.test(f.budget.trim()) || (f.spent.trim() && !/^-?[\d,\s]+$/.test(f.spent.trim()))) return setErr('금액은 숫자로 적어 주세요.')
+    const id = initial ? initial.key.slice('manual|'.length) : `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
+    const it = manualItem(id, { ...f, budget: num(f.budget), spent: num(f.spent) })
+    if (!it) return setErr('금액은 숫자로 적어 주세요.')
+    setErr('')
+    await onSave(it)
+    if (!initial) setF({ ...f, cost: '', name: '', budget: '', spent: '' })
+  }
+
+  return (
+    <div className="card space-y-3">
+      <Field label="세부사업" hint="예: 학교스포츠클럽활동 · 체육대회 (같은 세부사업끼리 묶여요)">
+        <input className="field" list="budget-details" value={f.detail} onChange={set('detail')} placeholder="학교스포츠클럽활동" />
+        <datalist id="budget-details">
+          {details.map((d) => (
+            <option key={d} value={d} />
+          ))}
+        </datalist>
+      </Field>
+      <Field label="산출내역 (예산항목 이름)" hint="구글 시트 품목의 '예산항목'과 글자가 똑같아야 해요">
+        <input className="field" value={f.name} onChange={set('name')} placeholder="학교스포츠클럽 운영비" />
+      </Field>
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="예산현액(원)">
+          <input className="field" inputMode="numeric" value={f.budget} onChange={set('budget')} placeholder="1,000,000" />
+        </Field>
+        <Field label="집행액(원)" hint="없으면 비워 두기">
+          <input className="field" inputMode="numeric" value={f.spent} onChange={set('spent')} placeholder="0" />
+        </Field>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="단위사업 (선택)">
+          <input className="field" value={f.unit} onChange={set('unit')} placeholder="동아리활동" />
+        </Field>
+        <Field label="비목 (선택)">
+          <input className="field" value={f.cost} onChange={set('cost')} placeholder="교육운영비" />
+        </Field>
+      </div>
+      <p className={`text-sm font-bold ${left < 0 ? 'text-danger' : 'text-ink-2'}`}>잔액 {won(left)}원 (현액 − 집행)</p>
+      {err && <p className="text-sm font-bold text-danger">{err}</p>}
+      <button type="button" className="btn btn-primary w-full" disabled={disabled} onClick={() => void submit()}>
+        <Icon name={initial ? 'check' : 'plus'} size={18} /> {initial ? '고친 내용 저장' : '항목 더하기'}
+      </button>
+      {(onCancel || onRemove) && (
+        <div className="grid grid-cols-2 gap-2">
+          {onCancel && (
+            <button type="button" className="btn btn-outline" onClick={onCancel}>
+              그만 고치기
+            </button>
+          )}
+          {onRemove && (
+            <button type="button" className="btn btn-danger" disabled={disabled} onClick={onRemove}>
+              <Icon name="trash" size={18} /> 지우기
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   )
 }

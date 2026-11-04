@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BudgetFileError, DEFAULT_LAYOUT, groupItems, isPicked, looksPe, money, nameRange, parseBudgetCard, pasteRange, sheetLabel, sheetRows, toTsv } from '../src/lib/budget'
+import { BudgetFileError, DEFAULT_LAYOUT, groupItems, isManual, isPicked, looksPe, manualItem, mergeManual, money, nameRange, parseBudgetCard, pasteRange, sheetLabel, sheetRows, toTsv } from '../src/lib/budget'
 
 // 에듀파인 사업관리카드(예산) 모양을 본뜬 가상 표 (금액 · 항목은 지어낸 값)
 const G = [
@@ -59,6 +59,21 @@ describe('사업관리카드 읽기', () => {
   })
 })
 
+describe('손으로 적은 항목', () => {
+  it('잔액 계산 · 늘 고름 · 시트 표기', () => {
+    const it1 = manualItem('a1', { unit: '동아리활동', detail: '학교스포츠클럽', cost: '교육운영비', name: '대회 참가비', budget: 500000, spent: 120000 })!
+    expect(it1).toMatchObject({ key: 'manual|a1', left: 380000 })
+    expect(isManual(it1)).toBe(true)
+    expect(isPicked(it1, { [it1.key]: false })).toBe(true)
+    expect(sheetLabel(it1)).toBe('동아리활동-학교스포츠클럽-교육운영비')
+    expect(manualItem('a2', { detail: '', name: '공 구입', budget: 100, spent: 0 })!.detail).toBe('직접 입력')
+  })
+  it('산출내역이 없거나 금액이 숫자가 아니면 안 만듦', () => {
+    expect(manualItem('x', { detail: 'd', name: ' ', budget: 1, spent: 0 })).toBeNull()
+    expect(manualItem('x', { detail: 'd', name: 'n', budget: NaN, spent: 0 })).toBeNull()
+  })
+})
+
 describe('시트에 붙일 표', () => {
   const card = parseBudgetCard(G)
   const picked = card.items.filter((x) => isPicked(x, { [card.items[4].key]: true }))
@@ -93,5 +108,17 @@ describe('시트에 붙일 표', () => {
   })
   it('탭 글: 칸 안 줄바꿈은 빈칸', () => {
     expect(toTsv([['가\n나', 1], ['다', '=A1']])).toBe('가 나\t1\n다\t=A1')
+  })
+})
+
+describe('손으로 적은 항목 끼워 넣기', () => {
+  it('같은 세부사업 바로 뒤 · 없으면 맨 뒤', () => {
+    const card = parseBudgetCard(G)
+    const a = manualItem('a', { detail: '학교스포츠클럽활성화', name: '공 구입', budget: 100, spent: 0 })!
+    const b = manualItem('b', { detail: '육상부', name: '스파이크', budget: 50, spent: 0 })!
+    const out = mergeManual(card.items, [a, b])
+    expect(out.map((x) => x.name)).toEqual(['체육대회운영비', '학교문화 운영비', '클럽 강사비', '학교스포츠클럽 운영비', '공 구입', '서포터즈 동아리활동 운영비', '스파이크'])
+    expect(out[4]).toMatchObject({ unit: '동아리활동', detail: '(통합)학교스포츠클럽활성화' })
+    expect(groupItems(out.filter((x) => isPicked(x, {})))[1].items).toHaveLength(3)
   })
 })

@@ -79,6 +79,8 @@ export interface AppSettings {
   /** 체육 예산 현황 (6-11 D): 에듀파인 사업관리카드에서 읽은 항목 · 교사가 고친 고르기 · 시트 붙일 자리. 학생 정보 없음 */
   budgetCard: { fetchedAt: number; fileName: string; card: import('../lib/budget').BudgetCard } | null
   budgetPicks: Record<string, boolean>
+  /** 엑셀 없이 손으로 적은 예산 항목 (늘 체육 항목) */
+  budgetManual: import('../lib/budget').BudgetItem[]
   budgetLayout: import('../lib/budget').SheetLayout
 }
 
@@ -161,6 +163,7 @@ export function defaultSettings(): AppSettings {
     refHouseRules: {},
     budgetCard: null,
     budgetPicks: {},
+    budgetManual: [],
     budgetLayout: { startCell: 'N5', itemSheet: '물품구입 시트', itemCol: 'H', amountCol: 'F', firstRow: 4, withEdufine: true },
   }
 }

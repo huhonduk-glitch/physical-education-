@@ -118,7 +118,53 @@ export function looksPe(it: Pick<BudgetItem, 'detail' | 'name'>): boolean {
 }
 
 export function isPicked(it: BudgetItem, picks: Record<string, boolean>): boolean {
+  if (isManual(it)) return true
   return picks[it.key] ?? looksPe(it)
+}
+
+/** 엑셀 없이 교사가 손으로 적은 항목 (열쇠가 manual|로 시작) */
+export function isManual(it: Pick<BudgetItem, 'key'>): boolean {
+  return it.key.startsWith('manual|')
+}
+
+export interface ManualInput {
+  unit?: string
+  detail: string
+  cost?: string
+  name: string
+  budget: number
+  spent: number
+}
+
+/** 손으로 적은 항목을 같은 세부사업(파일 항목) 바로 뒤에 끼워 넣는다 — 시트에서 한 묶음으로 합계가 나오게 */
+export function mergeManual(fileItems: BudgetItem[], manual: BudgetItem[]): BudgetItem[] {
+  const out = [...fileItems]
+  const same = (a: string, b: string) => norm(a).replace(/^\(통합\)/, '') === norm(b).replace(/^\(통합\)/, '')
+  for (const m of manual) {
+    let at = -1
+    out.forEach((x, i) => {
+      if (same(x.detail, m.detail)) at = i
+    })
+    if (at < 0) out.push(m)
+    else out.splice(at + 1, 0, { ...m, unit: m.unit || out[at].unit, detail: out[at].detail })
+  }
+  return out
+}
+
+/** 손으로 적은 항목 → 예산 항목 (잔액 = 현액 − 집행). 산출내역이 없거나 금액이 숫자가 아니면 null */
+export function manualItem(id: string, m: ManualInput): BudgetItem | null {
+  const name = m.name.trim()
+  if (!name || !Number.isFinite(m.budget) || !Number.isFinite(m.spent)) return null
+  return {
+    key: `manual|${id}`,
+    unit: (m.unit ?? '').trim(),
+    detail: m.detail.trim() || '직접 입력',
+    cost: (m.cost ?? '').trim(),
+    name,
+    budget: m.budget,
+    spent: m.spent,
+    left: m.budget - m.spent,
+  }
 }
 
 /** 시트 '세부사업' 칸 글자: 자율·자치활동 → 자율자치활동, (통합) 빼기 (교사 시트 표기) */
