@@ -1,8 +1,13 @@
-import { useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
-import { NEIS_SCREEN_NOTE, WORK_DOCS, WORK_TOPICS, srcLabel, workTopic, type WorkLine, type WorkSrc } from '../data/peWork'
+import PdfPageViewer, { countPdfPages, forgetPdf } from '../components/PdfPageViewer'
+import { listDocs, removeDoc, saveDoc, type StoredDocMeta } from '../db/docStore'
+import { NEIS_SCREEN_NOTE, WORK_DOCS, WORK_TOPICS, srcLabel, workTopic, type WorkDoc, type WorkLine, type WorkSrc } from '../data/peWork'
+
+/** 넣어 둔 자료 파일이 있으면 쪽 표시를 눌러 그 쪽을 연다 */
+const OpenCtx = createContext<{ has: (d: WorkDoc) => boolean; open: (src: WorkSrc, title: string) => void }>({ has: () => false, open: () => undefined })
 
 type Tab = 'neis' | 'calendar' | 'rules' | 'forms'
 const TABS: { id: Tab; label: string }[] = [
@@ -21,10 +26,18 @@ export default function WorkGuidePage() {
   const topic = workTopic(id)
   const [tab, setTab] = useState<Tab>('neis')
   const [open, setOpen] = useState<string | null>(null)
+  const [docs, setDocs] = useState<StoredDocMeta[]>([])
+  const [viewer, setViewer] = useState<{ doc: WorkDoc; page: number; title: string } | null>(null)
+  const refresh = () => listDocs().then(setDocs).catch(() => setDocs([]))
+  useEffect(() => {
+    void refresh()
+  }, [])
+  const has = (d: WorkDoc) => docs.some((x) => x.key === d)
+  const openSrc = (src: WorkSrc, title: string) => setViewer({ doc: src.doc, page: Array.isArray(src.page) ? src.page[0] : src.page, title })
   if (!topic) return <Navigate to="/more" replace />
 
   return (
-    <>
+    <OpenCtx.Provider value={{ has, open: openSrc }}>
       <PageHeader title={topic.title} sub="학교체육 업무" back />
       <div className="page space-y-4 pb-10">
         <p className="hint px-1">{topic.summary}</p>
@@ -36,6 +49,8 @@ export default function WorkGuidePage() {
             </Link>
           ))}
         </div>
+
+        <DocFiles docs={docs} onChange={() => void refresh()} />
 
         <div className="segment" role="tablist">
           {TABS.map((t) => (
@@ -125,10 +140,19 @@ export default function WorkGuidePage() {
                 <div key={i} className="flex items-start gap-3 border-b border-line px-4 py-3 last:border-b-0">
                   <Icon name="file" size={18} className="mt-0.5 shrink-0 text-brand" />
                   <Line line={f} />
+                  {has(f.src.doc) && (
+                    <button type="button" className="btn btn-soft h-10 min-h-0 shrink-0 px-3 text-sm" onClick={() => openSrc(f.src, f.text)}>
+                      열기
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
-            <p className="hint px-1">양식 원본은 교육청 공문에 붙은 '{WORK_DOCS.plan.name}' 파일의 그 쪽에 있어요. 공문 원본을 내려받아 쓰세요.</p>
+            <p className="hint px-1">
+              {has('plan')
+                ? '[열기]로 넣어 둔 파일의 그 쪽을 봐요. 한글 · 엑셀 서식은 공문 첨부 파일에서 받아 쓰세요.'
+                : `양식은 교육청 공문에 붙은 '${WORK_DOCS.plan.name}' 파일의 그 쪽에 있어요. 위 [자료 파일]에 넣어 두면 여기서 바로 열려요.`}
+            </p>
           </section>
         )}
 
@@ -142,7 +166,95 @@ export default function WorkGuidePage() {
           <p className="hint">· '제주' 표시는 제주교육청 2026 기준이에요. 다른 시도는 자기 교육청 학교체육 운영 계획을 확인하세요.</p>
         </section>
       </div>
-    </>
+      {viewer && <PdfPageViewer key={`${viewer.doc}-${viewer.page}-${viewer.title}`} docKey={viewer.doc} page={viewer.page} title={`${WORK_DOCS[viewer.doc].short} · ${viewer.title}`} onClose={() => setViewer(null)} />}
+    </OpenCtx.Provider>
+  )
+}
+
+/** 자료 파일 넣기: 이 기기에만 둔다 (공개 저장소에 원본을 넣지 않음) */
+function DocFiles({ docs, onChange }: { docs: StoredDocMeta[]; onChange: () => void }) {
+  const input = useRef<HTMLInputElement>(null)
+  const [target, setTarget] = useState<WorkDoc>('plan')
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [show, setShow] = useState(false)
+  const keys = Object.keys(WORK_DOCS) as WorkDoc[]
+  const missing = keys.filter((k) => !docs.some((d) => d.key === k))
+  const expanded = show || missing.length > 0
+
+  const onFile = async (f: File) => {
+    setBusy(true)
+    setMsg('')
+    setShow(true)
+    try {
+      if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') throw new Error('PDF 파일을 넣어 주세요.')
+      const pages = await countPdfPages(await f.arrayBuffer())
+      forgetPdf(target)
+      await saveDoc(target, f, pages, f.name)
+      const want = WORK_DOCS[target].pages
+      setMsg(pages === want ? `넣었어요 (${pages}쪽).` : `넣었어요. 다만 이 파일은 ${pages}쪽이라 안내의 ${want}쪽 판과 달라요. 쪽이 안 맞을 수 있어요.`)
+      onChange()
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : '파일을 넣지 못했어요.')
+    } finally {
+      setBusy(false)
+      if (input.current) input.current.value = ''
+    }
+  }
+
+  const remove = async (k: WorkDoc) => {
+    if (!confirm('이 기기에서 파일을 지울까요?')) return
+    forgetPdf(k)
+    await removeDoc(k)
+    onChange()
+  }
+
+  return (
+    <section className="card space-y-2">
+      <button type="button" className="flex min-h-[48px] w-full items-center gap-3 text-left" aria-expanded={expanded} onClick={() => setShow((v) => !v)}>
+        <Icon name="file" size={20} className="shrink-0 text-brand" />
+        <span className="min-w-0 flex-1">
+          <b className="block">자료 파일 (이 기기에만)</b>
+          <span className="hint block">{missing.length ? `PDF ${missing.length}개를 넣으면 쪽 표시를 눌러 바로 열려요` : '넣어 둔 파일의 쪽을 바로 열 수 있어요'}</span>
+        </span>
+        <Icon name="chevronDown" size={18} className={`shrink-0 text-ink-3 ${expanded ? 'rotate-180' : ''}`} />
+      </button>
+      {expanded && (
+        <div className="space-y-2">
+          <input ref={input} type="file" accept="application/pdf,.pdf" className="hidden" onChange={(e) => e.target.files?.[0] && void onFile(e.target.files[0])} />
+          {keys.map((k) => {
+            const d = docs.find((x) => x.key === k)
+            return (
+              <div key={k} className="rounded-2xl bg-fill px-3 py-2">
+                <p className="text-sm font-bold">{WORK_DOCS[k].name}</p>
+                <p className="hint">{d ? `넣음 · ${d.name} · ${d.pages}쪽 · ${(d.size / 1048576).toFixed(1)}MB` : '아직 안 넣음 (교육청 공문 첨부 PDF)'}</p>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-outline h-11 min-h-0 flex-1 text-sm"
+                    disabled={busy}
+                    onClick={() => {
+                      setTarget(k)
+                      input.current?.click()
+                    }}
+                  >
+                    {d ? '바꾸기' : 'PDF 넣기'}
+                  </button>
+                  {d && (
+                    <button type="button" className="btn btn-ghost h-11 min-h-0 px-3 text-sm text-danger" disabled={busy} onClick={() => void remove(k)}>
+                      지우기
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+          {busy && <p className="hint">읽는 중…</p>}
+          {msg && <p className="text-sm font-bold text-brand">{msg}</p>}
+          <p className="hint">파일은 이 기기 브라우저에만 저장되고 인터넷으로 보내지 않아요. 백업 파일에는 들어가지 않으니 기기를 바꾸면 다시 넣어 주세요.</p>
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -152,11 +264,17 @@ function Line({ line, prefix = '' }: { line: WorkLine; prefix?: string }) {
       {prefix}
       {line.text}
       {line.local && <span className="ml-1 rounded-md bg-caution-light px-1.5 py-0.5 text-xs font-bold text-ink-2">제주</span>}
-      <Src src={line.src} />
+      <Src src={line.src} title={line.text.length > 30 ? `${line.text.slice(0, 30)}…` : line.text} />
     </span>
   )
 }
 
-function Src({ src }: { src: WorkSrc }) {
-  return <span className="ml-1 text-xs font-semibold whitespace-nowrap text-ink-3">({srcLabel(src)})</span>
+function Src({ src, title }: { src: WorkSrc; title: string }) {
+  const { has, open } = useContext(OpenCtx)
+  if (!has(src.doc)) return <span className="ml-1 text-xs font-semibold whitespace-nowrap text-ink-3">({srcLabel(src)})</span>
+  return (
+    <button type="button" className="ml-1 rounded-md bg-brand-light px-1.5 py-0.5 text-xs font-bold whitespace-nowrap text-brand active:opacity-70" onClick={() => open(src, title)}>
+      {srcLabel(src)} 열기
+    </button>
+  )
 }
