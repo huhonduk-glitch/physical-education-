@@ -14,3 +14,11 @@ describe('땅콩이 도우미 답 찾기', () => {
     for (const a of BOT_FAQ) expect(a.keys.length * a.text.length).toBeGreaterThan(0)
   })
 })
+
+describe('땅콩이 — 길라잡이 질문 (2026-11-04)', () => {
+  it('대회 · 소논문 · 학생 글 질문', () => {
+    expect(findAnswer('세특에 대회 써도 돼요?')?.id).toBe('seteuk-contest')
+    expect(findAnswer('소논문 쓴 거 넣어도 되나요')?.id).toBe('seteuk-thesis')
+    expect(findAnswer('학생 자기평가서 참고해도 돼요?')?.id).toBe('seteuk-student')
+  })
+})

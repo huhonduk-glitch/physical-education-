@@ -883,4 +883,4 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 5. AI 확정 체크에 "직접 관찰한 내용인가" 더하기
 6. 출결: 고교학점제 과목 출석률 2/3(16회당) 기준에 가까운 학생 노란 알림
 7. 학교체육 업무 메뉴 근거: 학생선수 출석인정 결석 고교 연 50일 이내(국가대표 · 전국체전 심의 예외), 정규 외 스포츠클럽은 승인 기간 실적만 · 활동시간/특기사항 미기재
-8. 땅콩이 답에 길라잡이 근거 질문(대회 · 소논문 · 학생 자기평가서) 더하기
+8. ✅ 땅콩이 답 3개 더함(`seteuk-contest` · `seteuk-thesis` · `seteuk-student`)
