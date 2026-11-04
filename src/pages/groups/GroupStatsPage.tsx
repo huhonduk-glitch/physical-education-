@@ -42,7 +42,10 @@ export default function GroupStatsPage() {
     for (const x of data?.attendance ?? []) if (inRange(x.date, range) && (x.status === 'absent' || x.status === 'result') && x.reason !== '인정') m.set(x.studentId, (m.get(x.studentId) ?? 0) + 1)
     return m
   }, [data, range])
-  const held = useMemo(() => new Set([...(data?.records ?? []), ...(data?.attendance ?? [])].filter((x) => inRange(x.date, range)).map((x) => x.date)).size, [data, range])
+  // 수업 횟수: 이 수업반의 교과 진도표 목표 차시(2학점 32 · 1학점 16, 교사 제안 2026-11-04)가 있으면 그것, 없으면 기록 · 출결이 있는 날 수(어림값)
+  const planTarget = useLiveQuery(async () => (await db.progressPlans.where('groupIds').equals(id).toArray()).reduce((m, p) => Math.max(m, p.target || 0), 0), [id])
+  const dayCount = useMemo(() => new Set([...(data?.records ?? []), ...(data?.attendance ?? [])].filter((x) => inRange(x.date, range)).map((x) => x.date)).size, [data, range])
+  const held = planTarget || dayCount
   const days = useMemo(() => new Set((data?.records ?? []).filter((r) => inRange(r.date, range)).map((r) => r.date)).size, [data, range])
 
   // 표 열: 설정의 체크 항목 + 기간 안에 기록이 있는 예전 항목(이름을 바꾼 항목 등)
