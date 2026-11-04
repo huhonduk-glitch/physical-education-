@@ -36,6 +36,12 @@ export default function GroupStatsPage() {
   )
   const attend = useMemo(() => attendTally((data?.attendance ?? []).filter((a) => inRange(a.date, range))), [data, range])
   // 고교학점제 출석률 2/3 (길라잡이): 수업 횟수 ≈ 이 기간에 기록 · 출결이 있는 날 수 (기록 안 한 날은 빠지므로 어림값)
+  // 인정 결석 · 결과는 출석률에서 빼고 센다(교사 확인 2026-11-04). 사유는 담임이 서류로 정하므로 알림은 '담임 확인' 참고용
+  const missing = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const x of data?.attendance ?? []) if (inRange(x.date, range) && (x.status === 'absent' || x.status === 'result') && x.reason !== '인정') m.set(x.studentId, (m.get(x.studentId) ?? 0) + 1)
+    return m
+  }, [data, range])
   const held = useMemo(() => new Set([...(data?.records ?? []), ...(data?.attendance ?? [])].filter((x) => inRange(x.date, range)).map((x) => x.date)).size, [data, range])
   const days = useMemo(() => new Set((data?.records ?? []).filter((r) => inRange(r.date, range)).map((r) => r.date)).size, [data, range])
 
@@ -139,9 +145,9 @@ export default function GroupStatsPage() {
                   <td className="border-t border-line px-2 font-bold text-ink-3 tabular-nums">{t?.absent || ''}</td>
                   {ATTEND_ORDER.map((st) => {
                     const at = attend.get(s.id)
-                    const risk = st === 'absent' ? creditRisk((at?.absent ?? 0) + (at?.result ?? 0), held) : 'ok'
+                    const risk = st === 'absent' && at ? creditRisk(missing.get(s.id) ?? 0, held) : 'ok'
                     return (
-                    <td key={st} title={risk === 'ok' ? undefined : risk === 'danger' ? '출석률 2/3 미만 (고교학점제 미이수 위험)' : '2번 더 빠지면 출석률 2/3 미만'} className={`border-t border-line px-1.5 font-bold text-danger tabular-nums ${risk === 'danger' ? 'bg-danger-light' : risk === 'caution' ? 'bg-caution-light' : ''}`}>
+                    <td key={st} title={risk === 'ok' ? undefined : risk === 'danger' ? '출석률 2/3 미만 위험 (인정 결석 제외) — 사유는 담임 선생님께 확인' : '2번 더 빠지면 출석률 2/3 미만 (인정 결석 제외) — 담임 확인'} className={`border-t border-line px-1.5 font-bold text-danger tabular-nums ${risk === 'danger' ? 'bg-danger-light' : risk === 'caution' ? 'bg-caution-light' : ''}`}>
                       {attend.get(s.id)?.[st] || ''}
                     </td>
                     )
