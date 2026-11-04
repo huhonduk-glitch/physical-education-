@@ -61,6 +61,8 @@ export default function ComciTimetable() {
       await updateSettings({ comciTeacherName: name.trim(), comciWeek: { fetchedAt: Date.now(), week, label, myNo, peNos, data }, ...(timesChanged ? { periodStarts: starts } : {}) })
       setTimesMsg('')
       if (timesChanged) setTimesMsg(`교시 시각도 컴시간대로 맞췄어요: ${starts.map((t, i) => `${i + 1}교시 ${t}`).join(' · ')}`)
+      // 내 이름이 한 명으로 찾아지면 내 수업을 바로 내 시간표 · 수업반으로 (2026-11-04 교사 요청: 하나씩 누르지 않게)
+      if (myNo) await putMine(data, myNo)
       if (!name.trim()) setErr('내 이름을 넣으면 내 수업을 찾아 시간표에 넣을 수 있어요.')
       else if (found.length === 0) setErr(`컴시간 시간표에서 '${name.trim()}' 선생님을 찾지 못했어요. 아래 [나는 누구]에서 골라 주세요.`)
       else if (found.length > 1) setErr(`같은 이름이 ${found.length}명이에요. 아래 [나는 누구]에서 골라 주세요.`)
@@ -92,8 +94,10 @@ export default function ComciTimetable() {
   const mineOverlaps = saved?.myNo ? cells.filter((c) => c.items.length >= 2 && c.items.some((x) => x.teacherNo === saved.myNo)).length : 0
 
   const apply = async () => {
-    if (!saved?.myNo) return
-    const picks = myPicks(saved.data, saved.myNo)
+    if (saved?.myNo) await putMine(saved.data, saved.myNo)
+  }
+  async function putMine(data: NonNullable<typeof saved>['data'], myNo: number) {
+    const picks = myPicks(data, myNo)
     const r = await applyNeisTimetable(db, { schoolYear: settings.schoolYear, picks, current: settings.timetable, replaceAll })
     await updateSettings({ timetable: r.timetable })
     setMsg(
