@@ -76,3 +76,14 @@ describe('출결 저장', () => {
     expect(back.reason).toBe('질병')
   })
 })
+
+describe('고교학점제 출석률 2/3 (2026-11-04)', () => {
+  it('16회 수업: 5번 빠짐까지 괜찮음, 6번부터 미만', async () => {
+    const { creditRisk } = await import('../src/lib/attendance')
+    expect(creditRisk(3, 16)).toBe('ok')
+    expect(creditRisk(4, 16)).toBe('caution')
+    expect(creditRisk(5, 16)).toBe('caution')
+    expect(creditRisk(6, 16)).toBe('danger')
+    expect(creditRisk(0, 0)).toBe('ok')
+  })
+})
