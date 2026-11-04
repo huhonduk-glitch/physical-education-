@@ -146,15 +146,34 @@ function badEndings(text: string): string[] {
   return out.slice(0, 5)
 }
 
-export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?: number } = {}): CheckHit[] {
+/** 연구보고서(소논문)를 세특에 쓸 수 있는 과목 (2026 기재요령 본문, 교사 확인 2026-11-04): 정규교육과정 성취기준에 따라 수업한 경우, 실적(제목 · 연구 주제 · 참여 인원 · 소요 시간)은 빼고 */
+export const THESIS_SUBJECTS = ['수학과제 탐구', '사회문제 탐구', '융합과학 탐구', '과학과제 연구', '사회과제 연구', '윤리문제 탐구']
+export const thesisAllowed = (subject?: string) => !!subject && THESIS_SUBJECTS.some((x) => subject.replace(/\s+/g, '').includes(x.replace(/\s+/g, '')))
+
+export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?: number; subject?: string } = {}): CheckHit[] {
   const hits: CheckHit[] = []
   const maxBytes = (opts.maxChars ?? SETEUK_MAX_CHARS) * 3
   const { bytes } = countText(text)
   if (bytes > maxBytes) hits.push({ id: 'length', level: 'error', title: `나이스 글자 수를 넘었어요 (${bytes}/${maxBytes}바이트)`, basis: '기재요령: 과목별 세특 500자 = 나이스 1,500바이트 (한글 3 · 띄어쓰기 · 숫자 1)', words: [] })
   for (const r of RULES) {
     const words = [...new Set([...text.matchAll(r.re)].map((m) => m[0].trim()))]
-    if (words.length) hits.push({ id: r.id, level: r.level, title: r.title, basis: r.basis, words })
+    if (!words.length) continue
+    if (r.id === 'thesis') {
+      // 허용 과목이면 실적(참여 인원 · 소요 시간 · 제목)만 경고, 아니면 기재 불가
+      if (thesisAllowed(opts.subject)) {
+        const rec = [...text.matchAll(/\d+\s*명(이|과|과\s*함께)?\s*(참여|공동)|\d+\s*(시간|일|주|개월)\s*(동안|간|에\s*걸쳐)|제목/g)].map((m) => m[0])
+        if (rec.length) hits.push({ id: 'thesis', level: 'warn', title: '연구보고서 실적(제목 · 참여 인원 · 소요 시간)은 빼고 써요', basis: `기재요령: ${THESIS_SUBJECTS.join(' · ')} 과목은 성취기준에 따른 수업이면 실적을 빼고 입력 가능`, words: [...new Set(rec)] })
+      } else hits.push({ id: 'thesis', level: 'error', title: '소논문 · 연구보고서 (이 과목은 기재 불가)', basis: `기재요령: ${THESIS_SUBJECTS.join(' · ')} 과목만 실적을 빼고 입력 가능(정규교육과정 성취기준에 따라 수업한 경우)`, words })
+      continue
+    }
+    hits.push({ id: r.id, level: r.level, title: r.title, basis: r.basis, words })
   }
+  // PAPS 등급: 1등급(종목별)만 체육 관련 교과 세특에 쓸 수 있고, 2~5등급 같은 정량 서술은 불가 (교사 확인 2026-11-04)
+  const papsLow = [...text.matchAll(/(PAPS|팝스|체력)[^.]{0,30}?[2-5]\s*등급|[2-5]\s*등급[^.]{0,20}?(PAPS|팝스|체력)/gi)].map((m) => m[0])
+  if (papsLow.length) hits.push({ id: 'paps', level: 'error', title: 'PAPS 2~5등급은 쓸 수 없어요 (1등급만 종목별로)', basis: '기재요령: PAPS는 1등급에 한해 체육 관련 교과 세특에 종목별로 입력 가능', words: [...new Set(papsLow)] })
+  const peSubject = !opts.subject || /체육|운동|스포츠/.test(opts.subject)
+  const papsTop = [...text.matchAll(/(PAPS|팝스|체력)[^.]{0,30}?1\s*등급/gi)].map((m) => m[0])
+  if (papsTop.length && !peSubject) hits.push({ id: 'paps', level: 'error', title: 'PAPS 1등급은 체육 관련 교과에만', basis: '기재요령: PAPS 1등급은 체육 관련 교과 세특에만 종목별로 입력 가능', words: [...new Set(papsTop)] })
   const own = schoolWords(opts.schoolName ?? '').filter((w) => text.replace(/\s+/g, '').includes(w))
   // 다른 학교 이름도 (고교블라인드 · 연수자료 '학교명'): ○○고등학교 · ○○여고 · ○○고교 · ○○중학교 · ○○초 …
   const any = [...text.matchAll(SCHOOL_NAME)].map((m) => m[0].trim()).filter((w) => !NOT_SCHOOL.test(w))
