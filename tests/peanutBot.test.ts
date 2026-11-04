@@ -1,0 +1,16 @@
+import { describe, expect, it } from 'vitest'
+import { BOT_FAQ, findAnswer } from '../src/data/botFaq'
+
+describe('땅콩이 도우미 답 찾기', () => {
+  it('선생님 말로 물어도 맞는 답', () => {
+    expect(findAnswer('처음에 뭐부터 설정해요?')?.id).toBe('start')
+    expect(findAnswer('팝스 나이스 내보내기가 안돼요')?.id).toBe('paps')
+    expect(findAnswer('노트북에서도 같이 쓰고 싶어요')?.id).toBe('backup')
+    expect(findAnswer('세특 바이트 검사')?.id).toBe('seteuk')
+    expect(findAnswer('오늘 날씨 어때')).toBeNull()
+  })
+  it('답마다 낱말 · 글이 있고 id가 겹치지 않음', () => {
+    expect(new Set(BOT_FAQ.map((a) => a.id)).size).toBe(BOT_FAQ.length)
+    for (const a of BOT_FAQ) expect(a.keys.length * a.text.length).toBeGreaterThan(0)
+  })
+})

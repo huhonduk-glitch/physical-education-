@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
+import PeanutBot from './components/PeanutBot'
 import BottomNav from './components/BottomNav'
 import DemoBanner from './components/DemoBanner'
 import { AfterUpdate } from './components/WhatsNew'
@@ -225,6 +226,7 @@ export default function App() {
         </Routes>
         </Suspense>
       </div>
+      <PeanutBot />
       <BottomNav />
       </TimerProvider>
     </AppContext.Provider>
