@@ -279,7 +279,7 @@ export default function HelpPage() {
           </ol>
         </section>
 
-        <nav className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none]" aria-label="주제">
+        <nav className="-mx-4 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible px-4 py-1 [scrollbar-width:none]" aria-label="주제">
           {TOPICS.map((t) => (
             <a key={t.id} href={`#help-${t.id}`} className="chip shrink-0" onClick={(e) => {
                 e.preventDefault()

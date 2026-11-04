@@ -176,6 +176,8 @@ export interface AssessItem {
   method: AssessMethod
   /** direct일 때 만점 */
   max?: number
+  /** direct일 때 평가계획서에 정한 점수들 (예: 30 · 27 · 24 …). 이 밖의 값은 경고 (2026-11-04 교사 요청) */
+  allowed?: number[]
   levels?: AssessLevel[]
   unit?: string
   better?: 'higher' | 'lower'

@@ -50,7 +50,7 @@ export default function KeywordPicker({ value, onChange, defaultOpen = false }: 
           )}
           <input className="field" type="search" placeholder="키워드 찾기 (예: 협동, 전략)" value={q} onChange={(e) => setQ(e.target.value)} aria-label="키워드 찾기" />
           {!query && (
-            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="tablist" aria-label="키워드 카테고리">
+            <div className="-mx-1 flex gap-1.5 overflow-x-auto md:flex-wrap md:overflow-visible px-1 pb-1" role="tablist" aria-label="키워드 카테고리">
               {cats.map((c) => (
                 <button
                   key={c}

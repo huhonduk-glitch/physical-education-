@@ -190,7 +190,7 @@ export default function HomePage() {
         {recordsOn && lessons.length > 0 && (
           <section className="space-y-2">
             <SectionTitle title="오늘 수업" action={{ to: '/more/settings/timetable', label: '시간표' }} />
-            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+            <div className="-mx-4 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible px-4 pb-1">
               {lessons.map((l) => {
                 const g = groupById.get(l.groupId)
                 if (!g) return null
@@ -260,7 +260,7 @@ export default function HomePage() {
         {recordsOn && groups && groups.length > 0 && (
           <section className="space-y-2">
             <SectionTitle title={`내 수업반 ${groups.length}`} action={{ to: '/groups', label: '전체' }} />
-            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+            <div className="-mx-4 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible px-4 pb-1">
               {groups.map((g) => {
                 const c = GROUP_COLORS[g.color] ?? GROUP_COLORS.blue
                 return (

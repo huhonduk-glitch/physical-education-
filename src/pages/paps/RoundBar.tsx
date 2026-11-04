@@ -34,7 +34,7 @@ export default function RoundBar({ rounds, readOnly }: { rounds: PapsRoundState;
           </button>
         )}
       </div>
-      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="tablist">
+      <div className="-mx-1 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible px-1 pb-1" role="tablist">
         {rounds.rounds.map((r) => (
           <button
             key={r.id ?? 'first'}

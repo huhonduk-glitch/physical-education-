@@ -69,7 +69,7 @@ export default function StudentsPage() {
         </div>
       ) : (
         <div className="page py-4">
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-2" role="tablist" aria-label="반 고르기">
+          <div className="-mx-4 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible px-4 pb-2" role="tablist" aria-label="반 고르기">
             {classes.map((c) => {
               const k = `${c.grade}-${c.classNo}`
               return (

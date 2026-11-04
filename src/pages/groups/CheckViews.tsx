@@ -44,7 +44,7 @@ export function ItemCheckView({ group, list, items, counts, absentIds, readOnly,
 
   return (
     <div className="space-y-3">
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none]" role="tablist" aria-label="체크 항목">
+      <div className="-mx-4 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible px-4 py-1 [scrollbar-width:none]" role="tablist" aria-label="체크 항목">
         {items.map((i) => {
           const n = list.filter((s) => (counts.get(s.id)?.get(i.key) ?? 0) > 0).length
           const on = i.key === item.key

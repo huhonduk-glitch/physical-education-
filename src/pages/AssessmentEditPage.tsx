@@ -401,6 +401,21 @@ function ItemEditor({
           <span className="text-ink-3">점</span>
         </label>
       )}
+      {item.method === 'direct' && (
+        <label className="block space-y-1">
+          <span className="text-sm font-bold text-ink-2">기준 점수 (선택 · 쉼표로) — 이 밖의 점수를 넣으면 노란 경고</span>
+          <input
+            className="field w-full"
+            placeholder="예: 30, 27, 24, 21, 18"
+            defaultValue={item.allowed?.join(', ') ?? ''}
+            disabled={readOnly}
+            onBlur={(e) => {
+              const nums = e.target.value.split(/[,\s·]+/).map(Number).filter((n) => e.target.value.trim() && Number.isFinite(n))
+              onChange({ allowed: nums.length ? [...new Set(nums)].sort((a, b) => b - a) : undefined })
+            }}
+          />
+        </label>
+      )}
 
       {!readOnly && (
         <div className="flex gap-2 border-t border-line pt-3">

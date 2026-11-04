@@ -31,7 +31,7 @@ export default function ClassPicker({
   const hidden = classes.length - shown.length
   const others = useMine ? classes.filter((c) => !mine!.has(classKeyStr(c))).length : 0
   return (
-    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none]" role="tablist" aria-label="반 고르기">
+    <div className="-mx-4 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible px-4 py-1 [scrollbar-width:none]" role="tablist" aria-label="반 고르기">
       {allLabel && (
         <button type="button" role="tab" aria-selected={value === null} className="chip shrink-0" onClick={() => onChange(null)}>
           {allLabel}
