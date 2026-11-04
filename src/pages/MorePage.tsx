@@ -36,6 +36,8 @@ const GROUPS: { title: string; items: MenuItem[] }[] = [
   {
     title: '학교체육 업무',
     items: [
+      { to: '/work/team', label: '학교운동부 · 학생선수', desc: '나이스 할 일 · 출석인정 허용일수 · 최저학력제 · 양식', icon: 'medal', tone: 'bg-brand-light text-brand' },
+      { to: '/work/club', label: '학교스포츠클럽', desc: '나이스 등록 · 활동내역 · 특기사항 · 학생부 기록', icon: 'team', tone: 'bg-brand-light text-brand' },
       { to: '/work/budget', label: '체육 예산 현황', desc: '에듀파인 사업관리카드 → 구글 시트 예산 표', icon: 'list', tone: 'bg-brand-light text-brand' },
     ],
   },
