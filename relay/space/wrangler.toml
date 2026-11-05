@@ -7,4 +7,4 @@ compatibility_date = "2026-10-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "pelog-space"
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "fb0fdb52-1db2-412f-8dae-13dff9312509"
