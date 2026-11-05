@@ -1,0 +1,10 @@
+name = "pelog-space"
+main = "space-worker.js"
+compatibility_date = "2026-10-01"
+
+# 올리기 전: npx wrangler d1 create pelog-space → 나온 database_id를 아래에 넣고
+#           npx wrangler d1 execute pelog-space --remote --file schema.sql
+[[d1_databases]]
+binding = "DB"
+database_name = "pelog-space"
+database_id = "fb0fdb52-1db2-412f-8dae-13dff9312509"

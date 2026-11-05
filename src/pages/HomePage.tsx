@@ -16,6 +16,7 @@ import { currentPeriod, todaysLessons } from '../lib/timetable'
 import { useApp } from '../state/AppContext'
 import { useGroups } from '../state/useGroups'
 import { NAV, visibleGroups } from '../lib/nav'
+import { WORK_KIND, dday as workDday, upcoming as upcomingWork } from '../lib/workCal'
 
 /**
  * 홈 (2026-11-04 레이아웃 정리 · 교사: "번잡하면 아무도 안 쓴다")
@@ -38,6 +39,7 @@ export default function HomePage() {
   const today = todayStr()
   const upcoming = upcomingEvents(settings.neisSchedule?.events ?? [], today)
   const dday = (d: string) => ddayOf(d, today)
+  const work = upcomingWork(settings.workEvents ?? [], today, 14)
   const install = currentInstallInfo()
   // 아이폰 · 카톡 안 브라우저의 빨간 안내는 자료가 지워질 수 있어 맨 위, 설치 권유(파랑)는 맨 아래
   const urgentInstall = !install.standalone && (!!install.inApp || install.platform === 'ios')
@@ -280,6 +282,24 @@ export default function HomePage() {
               </button>
             </div>
           </section>
+
+          {/* ⑥ 업무 일정 알림 (같이 쓰기 6-13): 14일 안 D-day */}
+          {work.length > 0 && (
+            <section className="order-7 space-y-2 xl:order-none">
+              <SectionTitle title="다가오는 업무 일정" action={{ to: '/work/calendar', label: '업무 달력' }} />
+              <div className="card overflow-hidden p-0">
+                {work.slice(0, 5).map((e) => (
+                  <Link key={e.id} to="/work/calendar" className="list-row min-h-[52px] hover:bg-fill">
+                    <span className="w-16 shrink-0 font-black tabular-nums">{e.date <= today ? '진행 중' : workDday(e.date, today)}</span>
+                    <span className="rounded-md px-1.5 py-0.5 text-xs font-bold" style={{ background: WORK_KIND[e.kind].bg, color: WORK_KIND[e.kind].fg }}>
+                      {WORK_KIND[e.kind].label}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate font-semibold">{e.title}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* ⑥ 학사일정 */}
           {upcoming.length > 0 && (

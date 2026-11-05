@@ -1,3 +1,5 @@
+import ShareSheet from '../../components/ShareSheet'
+import { packPlan } from '../../lib/share'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
@@ -34,6 +36,7 @@ export default function PlanPage() {
   const setGid = (g: string) => setSp((p) => (p.set('g', g), p), { replace: true })
   const [editing, setEditing] = useState<number | null>(null)
   const [quick, setQuick] = useState(false)
+  const [sharing, setSharing] = useState(false)
   // 새 진도표를 만들면 바로 '평가계획서로 초안 만들기' 창을 연다 (2026-11-04 교사 요청)
   const [importing, setImporting] = useState(() => sp.get('import') === '1')
   const viewParam = sp.get('v')
@@ -74,6 +77,9 @@ export default function PlanPage() {
         back
         right={
           <>
+            <button type="button" className="btn btn-soft" onClick={() => setSharing(true)} aria-label="다른 선생님께 보내기" title="다른 선생님께 보내기">
+              <Icon name="share" />
+            </button>
             <button type="button" className="btn btn-soft" onClick={exportXlsx} aria-label="엑셀로 받기">
               <Icon name="download" />
             </button>
@@ -310,6 +316,7 @@ export default function PlanPage() {
         />
       )}
       {quick && <QuickSheet hasItems={items.length > 0} target={plan.target} onClose={() => setQuick(false)} onApply={(next, mode) => saveItems(mode === 'replace' ? next : [...items, ...next])} />}
+      {sharing && <ShareSheet pack={packPlan(plan)} onClose={() => setSharing(false)} />}
     </>
   )
 }

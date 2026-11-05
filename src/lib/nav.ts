@@ -171,7 +171,7 @@ export const NAV: NavSection[] = [
     label: '업무',
     icon: 'medal',
     to: '/work',
-    match: ['/work'],
+    match: ['/work', '/share'],
     groups: [
       {
         title: '학교체육 업무',
@@ -180,6 +180,17 @@ export const NAV: NavSection[] = [
           { to: '/work/team', label: '학교운동부 · 학생선수', icon: 'medal', desc: '나이스 할 일 · 규정 · 양식' },
           { to: '/work/club', label: '학교스포츠클럽', icon: 'team', desc: '등록 · 활동내역 · 학생부' },
           { to: '/work/budget', label: '체육 예산 현황', icon: 'list', desc: '에듀파인 → 구글 시트' },
+        ],
+      },
+      {
+        title: '같이 쓰기',
+        icon: 'share',
+        items: [
+          { to: '/work/calendar', label: '업무 달력', icon: 'calendar', desc: 'PAPS · 나이스 마감 · 대회 일정' },
+          { to: '/work/lend', label: '교구 대여 장부', icon: 'list', desc: '빌린 것 · 남은 수량 · 반납' },
+          { to: '/work/book', label: '체육관 · 운동장 예약', icon: 'grid', desc: '요일 × 교시 예약표' },
+          { to: '/work/space', label: '학교 공유 공간', icon: 'share', desc: '공유 코드로 같은 학교 선생님과 연결' },
+          { to: '/share', label: '받은 자료 넣기', icon: 'download', desc: '다른 선생님이 보낸 진도표 · 수행평가 · 일정' },
         ],
       },
     ],
