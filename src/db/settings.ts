@@ -86,6 +86,9 @@ export interface AppSettings {
   workEvents: import('../lib/workCal').WorkEvent[]
   /** 학교 공유 공간 연결 (0-4 예외 6-13). 비밀번호가 있어 백업 파일에서 뺀다(SECRET_KEYS) */
   space: import('../lib/space').SpaceConn | null
+  /** 날씨 · 미세먼지 (6-11 H, 0-4 예외): 학교 위치(기상청 격자 · 측정소)와 마지막으로 받은 값 */
+  weatherLoc: import('../lib/weather').WeatherLoc | null
+  weatherCache: { fetchedAt: number; ncst?: import('../lib/weather').Ncst; fcst?: import('../lib/weather').Fcst; air?: import('../lib/weather').Air } | null
 }
 
 export interface NeisTemplate {
@@ -170,6 +173,8 @@ export function defaultSettings(): AppSettings {
     budgetManual: [],
     workEvents: [],
     space: null,
+    weatherLoc: null,
+    weatherCache: null,
     budgetLayout: { startCell: 'N5', itemSheet: '물품구입 시트', itemCol: 'H', amountCol: 'F', firstRow: 4, withEdufine: true },
   }
 }

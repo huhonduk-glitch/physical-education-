@@ -10,11 +10,22 @@
  * - 인증키를 따로 받지 않은 선생님도 학교 찾기 · 학급 · 시간표 · 학사일정을 다 받도록, 교사의 인증키를 Cloudflare 비밀 값(NEIS_KEY)으로 붙인다.
  *   키는 GitHub · 앱 어디에도 없다. 넣는 법: cd relay && npx wrangler secret put NEIS_KEY
  * - 정해진 서비스 6개만, 학교 공개 자료만. 보내는 것은 학교 코드 · 날짜(학생 정보 없음). 앱이 보낸 KEY는 버린다
+ *
+ * 날씨 · 미세먼지 (2026-11-06 교사 결정, CLAUDE.md 0-4 예외): GET ?wx=ncst|fcst|air&…
+ * - 기상청 단기예보(초단기실황 · 단기예보) · 에어코리아 시도별 대기오염. 공공데이터포털 인증키는 Cloudflare 비밀 값(DATA_GO_KR_KEY)
+ *   넣는 법: cd relay && npx wrangler secret put DATA_GO_KR_KEY  (앱 · GitHub에는 없다)
+ * - 보내는 것: 기상청 격자 번호(nx · ny) · 날짜 · 시각, 또는 시도 이름. 학생 정보 없음. 같은 요청은 10분 캐시
  */
 const ORIGIN = 'http://comci.net:4082'
 const ALLOWED = /^\/(st|\d{3,8}(\?[A-Za-z0-9%=+/_l-]{0,400})?)$/
 const NEIS = 'https://open.neis.go.kr/hub/'
 const NEIS_SERVICES = new Set(['schoolInfo', 'classInfo', 'hisTimetable', 'misTimetable', 'elsTimetable', 'SchoolSchedule'])
+const WX = {
+  ncst: 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtNcst',
+  fcst: 'https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst',
+  air: 'https://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getCtprvnRltmMesureDnsty',
+}
+const SIDO = new Set(['서울', '부산', '대구', '인천', '광주', '대전', '울산', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주', '세종'])
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -27,6 +38,7 @@ export default {
     if (request.method !== 'GET') return new Response('GET only', { status: 405, headers: CORS })
     const url = new URL(request.url)
     if (url.searchParams.has('neis')) return neis(url, env, ctx)
+    if (url.searchParams.has('wx')) return wx(url, env, ctx)
     const p = url.searchParams.get('p') ?? ''
     if (!ALLOWED.test(p)) return new Response('허용하지 않는 경로', { status: 400, headers: CORS })
 
@@ -58,6 +70,55 @@ async function neis(url, env, ctx) {
   if (hit) return hit
   if (env.NEIS_KEY) q.set('KEY', env.NEIS_KEY)
   const res = await fetch(`${NEIS}${service}?${q}`)
+  const out = new Response(await res.arrayBuffer(), {
+    status: res.status,
+    headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=600' },
+  })
+  if (res.ok) ctx.waitUntil(cache.put(key, out.clone()))
+  return out
+}
+
+/** 날씨 질의 검사: 정해진 서비스 · 정해진 칸만 (위치 · 날짜 · 시도) */
+export function wxQuery(url) {
+  const kind = url.searchParams.get('wx') ?? ''
+  if (!WX[kind]) return null
+  const q = new URLSearchParams()
+  if (kind === 'air') {
+    const sido = url.searchParams.get('sidoName') ?? ''
+    if (!SIDO.has(sido)) return null
+    q.set('sidoName', sido)
+    q.set('returnType', 'json')
+    q.set('numOfRows', '200')
+    q.set('pageNo', '1')
+    q.set('ver', '1.3')
+  } else {
+    const d = url.searchParams.get('base_date') ?? ''
+    const t = url.searchParams.get('base_time') ?? ''
+    const nx = url.searchParams.get('nx') ?? ''
+    const ny = url.searchParams.get('ny') ?? ''
+    if (!/^\d{8}$/.test(d) || !/^\d{4}$/.test(t) || !/^\d{1,3}$/.test(nx) || !/^\d{1,3}$/.test(ny)) return null
+    q.set('base_date', d)
+    q.set('base_time', t)
+    q.set('nx', nx)
+    q.set('ny', ny)
+    q.set('dataType', 'JSON')
+    q.set('pageNo', '1')
+    q.set('numOfRows', kind === 'fcst' ? '1000' : '60')
+  }
+  return { kind, q }
+}
+
+async function wx(url, env, ctx) {
+  const w = wxQuery(url)
+  if (!w) return new Response('허용하지 않는 질의', { status: 400, headers: CORS })
+  const cache = caches.default
+  const key = new Request(`https://wx-cache.local/${w.kind}?${w.q}`)
+  const hit = await cache.match(key)
+  if (hit) return hit
+  if (!env.DATA_GO_KR_KEY) return new Response(JSON.stringify({ error: '날씨 인증키가 아직 없어요' }), { status: 503, headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8' } })
+  const q = new URLSearchParams(w.q)
+  q.set('serviceKey', env.DATA_GO_KR_KEY)
+  const res = await fetch(`${WX[w.kind]}?${q}`)
   const out = new Response(await res.arrayBuffer(), {
     status: res.status,
     headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'public, max-age=600' },

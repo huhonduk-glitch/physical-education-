@@ -6,6 +6,7 @@ import { Logo } from '../components/Brand'
 import FeatureSheet from '../components/FeatureSheet'
 import Icon from '../components/Icon'
 import InstallGuide from '../components/InstallGuide'
+import WeatherCard from '../components/WeatherCard'
 import { longDateLabel, shortDateLabel, todayStr } from '../lib/dates'
 import { dday as ddayOf, upcomingEvents } from '../lib/neisOpenApi'
 import { FEATURES, featureOn } from '../lib/features'
@@ -233,6 +234,10 @@ export default function HomePage() {
 
         {/* 오른쪽: 내 것 */}
         <div className="contents xl:flex xl:flex-col xl:gap-5">
+          {/* 날씨 · 미세먼지 — 실외 수업 참고 (6-11 H) */}
+          <div className="order-3 xl:order-none">
+            <WeatherCard />
+          </div>
           {/* ④ 내 수업반 — 두 칸 격자 (가로로 밀면 뒤 반이 안 보였다) */}
           {recordsOn && groups && groups.length > 0 && (
             <section className="order-5 space-y-2 xl:order-none">
