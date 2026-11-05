@@ -49,7 +49,8 @@ describe('업데이트 소식 팝업', () => {
     expect(localStorage.getItem(SEEN_KEY)).toBe(latest.id)
   })
   it('새로 시작한 선생님: 띄우지 않고 본 것으로 둠', async () => {
-    withApp(Date.now())
+    // 가장 최근 소식 날짜 뒤에 시작한 선생님 (지금 시각을 쓰면 배포 서버(UTC)에서 날짜가 하루 늦어 틀릴 수 있음)
+    withApp(Date.parse(`${latest.date}T12:00:00`))
     await waitFor(() => expect(localStorage.getItem(SEEN_KEY)).toBe(latest.id))
     expect(screen.queryByText('업데이트됐어요')).toBeNull()
   })
