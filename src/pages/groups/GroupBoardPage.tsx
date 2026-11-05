@@ -30,9 +30,9 @@ const MODE_KEY = 'pe.boardMode'
 const readMode = (): BoardMode => {
   try {
     const m = localStorage.getItem(MODE_KEY)
-    return m === 'items' || m === 'table' || m === 'attend' || m === 'ledger' ? m : 'cards'
+    return m === 'items' || m === 'table' || m === 'attend' || m === 'cards' ? m : 'ledger'
   } catch {
-    return 'cards'
+    return 'ledger'
   }
 }
 
@@ -200,11 +200,11 @@ export default function GroupBoardPage() {
         <div className="segment" role="tablist" aria-label="기록 방법">
           {(
             [
+              ['ledger', '기록표'],
               ['cards', '카드'],
               ['items', '항목'],
               ['table', '체크표'],
               ['attend', '출결'],
-              ['ledger', '기록표'],
             ] as const
           ).map(([m, label]) => (
             <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}>
@@ -246,6 +246,7 @@ export default function GroupBoardPage() {
             groupId={id}
             students={list}
             numberOf={(s) => memberNo(group, s)}
+            readOnly={readOnly}
             onCell={(s, d) => {
               if (readOnly) return
               setSheetDate(d)

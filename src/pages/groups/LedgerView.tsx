@@ -1,12 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
 import { db } from '../../db/db'
+import { setAttendance } from '../../db/attendanceRepo'
+import { toggleCheck } from '../../db/recordsRepo'
+import { checkItems, type CheckItem } from '../../lib/checkBoard'
 import type { Student } from '../../db/types'
 import { todayStr } from '../../lib/dates'
 import { ledgerCells, ledgerColumns, ledgerTotals, shiftMonth, weekSpans, type AttendMark } from '../../lib/ledger'
 import { useApp } from '../../state/AppContext'
 
 const WD = ['일', '월', '화', '수', '목', '금', '토']
+const ATT_NAME: Record<AttendMark, string> = { absent: '결석', late: '지각', early: '조퇴', result: '결과' }
 const ATT: Record<AttendMark, { t: string; c: string }> = {
   absent: { t: '결', c: 'bg-danger text-white' },
   result: { t: '과', c: 'bg-danger-light text-danger' },
@@ -14,22 +18,32 @@ const ATT: Record<AttendMark, { t: string; c: string }> = {
   late: { t: '지', c: 'bg-caution-light text-ink' },
 }
 
+/** 입력 도구: 아무것도 안 고르면 칸을 눌러 기록 창, 고르면 칸을 누를 때마다 바로 넣기 · 빼기 */
+type Tool = { kind: 'attend'; status: AttendMark } | { kind: 'check'; item: CheckItem } | null
+
 /**
  * 누가 기록표 (2026-11-05 교사 요청 — 나이스 출결 화면처럼): 세로 = 학생 명렬, 가로 = 이 달 수업일(주차로 묶음).
- * 칸을 누르면 그 학생 · 그 날짜로 기록 창이 열린다. 칸에는 ★칭찬 수 · ▲지도 수 · 견학 · 출결 글자.
+ * 위 입력 도구에서 결석 · 지각 · 칭찬 항목 등을 고르고 칸을 누르면 바로 기록된다(다시 누르면 지움) — 나이스 출결 입력과 같은 방식.
+ * 도구를 안 고르면 칸을 눌러 그 학생 · 그 날짜의 기록 창을 연다. 칸에는 ★칭찬 수 · ▲지도 수 · 견학 · 출결 글자.
  */
 export default function LedgerView({
   groupId,
   students,
   numberOf,
   onCell,
+  readOnly,
 }: {
   groupId: string
   students: readonly Student[]
   numberOf: (s: Student) => string
   onCell: (s: Student, date: string) => void
+  readOnly?: boolean
 }) {
   const { settings } = useApp()
+  const [tool, setTool] = useState<Tool>(null)
+  const tools = useMemo(() => checkItems(settings.recordButtons), [settings.recordButtons])
+  const praiseTools = tools.filter((t) => t.type === 'exemplary')
+  const guideTools = tools.filter((t) => t.type === 'unprepared')
   const today = todayStr()
   const [month, setMonth] = useState(today.slice(0, 7))
   const data = useLiveQuery(async () => {
@@ -49,6 +63,19 @@ export default function LedgerView({
   }, [month, weekdays, data])
   const cells = useMemo(() => ledgerCells(data?.r ?? [], data?.a ?? [], (data?.t ?? []) as { studentId: string; date: string; status: AttendMark }[]), [data])
   const spans = weekSpans(cols)
+
+  const tap = (s: Student, date: string) => {
+    if (!tool || readOnly) return onCell(s, date)
+    if (tool.kind === 'check') {
+      void toggleCheck(db, { schoolYear: settings.schoolYear, groupId, studentId: s.id, date, type: tool.item.type, category: tool.item.label })
+      return
+    }
+    // 그 학생 · 그날 출결 줄이 이미 있으면 그 교시 줄을 고친다 (같은 상태면 지우기 = 출석)
+    const cur = (data?.t ?? []).find((x) => x.studentId === s.id && x.date === date)
+    const next = cur?.status === tool.status ? null : tool.status
+    void setAttendance(db, { schoolYear: settings.schoolYear, groupId, studentId: s.id, date, period: cur?.period }, next)
+  }
+  const chip = (on: boolean, cls: string) => `chip min-h-[40px] px-3 text-sm ${on ? cls : ''}`
   const [y, m] = month.split('-')
 
   return (
@@ -64,6 +91,59 @@ export default function LedgerView({
           ▶
         </button>
       </div>
+
+      {!readOnly && (
+        <div className="card space-y-2 p-3">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="w-12 shrink-0 text-xs font-extrabold text-ink-3">입력</span>
+            <button type="button" className={chip(!tool, 'bg-ink text-white')} aria-pressed={!tool} onClick={() => setTool(null)}>
+              칸 눌러 기록 창
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="w-12 shrink-0 text-xs font-extrabold text-ink-3">출결</span>
+            {(['absent', 'late', 'early', 'result'] as AttendMark[]).map((st) => {
+              const on = tool?.kind === 'attend' && tool.status === st
+              return (
+                <button key={st} type="button" className={chip(on, 'bg-danger text-white')} aria-pressed={on} onClick={() => setTool(on ? null : { kind: 'attend', status: st })}>
+                  {ATT_NAME[st]}
+                </button>
+              )
+            })}
+          </div>
+          {praiseTools.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="w-12 shrink-0 text-xs font-extrabold text-brand">★ 칭찬</span>
+              {praiseTools.map((it) => {
+                const on = tool?.kind === 'check' && tool.item.key === it.key
+                return (
+                  <button key={it.key} type="button" className={chip(on, 'bg-brand text-white')} aria-pressed={on} onClick={() => setTool(on ? null : { kind: 'check', item: it })}>
+                    {it.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          {guideTools.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="w-12 shrink-0 text-xs font-extrabold text-danger">▲ 지도</span>
+              {guideTools.map((it) => {
+                const on = tool?.kind === 'check' && tool.item.key === it.key
+                return (
+                  <button key={it.key} type="button" className={chip(on, 'bg-danger text-white')} aria-pressed={on} onClick={() => setTool(on ? null : { kind: 'check', item: it })}>
+                    {it.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+          <p className={`rounded-xl px-3 py-2 text-sm font-bold ${tool ? 'bg-brand-light text-brand' : 'bg-fill text-ink-2'}`}>
+            {!tool
+              ? '칸을 누르면 그 학생 · 그 날짜의 기록 창이 열려요. 위에서 항목을 고르면 칸을 누를 때마다 바로 기록돼요.'
+              : `‘${tool.kind === 'attend' ? ATT_NAME[tool.status] : tool.item.label}’ 입력 중 — 칸을 누르면 넣고, 다시 누르면 빼요`}
+          </p>
+        </div>
+      )}
 
       <div className="card overflow-x-auto p-0">
         <table className="w-max min-w-full border-collapse text-sm">
@@ -110,9 +190,9 @@ export default function LedgerView({
                       <td key={c.date} className={`border-r border-b border-line p-0 ${c.date === today ? 'bg-brand-light/60' : ''}`}>
                         <button
                           type="button"
-                          className="flex h-11 w-full min-w-[2.6rem] flex-col items-center justify-center gap-0.5 hover:bg-brand-light active:bg-brand-light"
+                          className={`flex h-11 w-full min-w-[2.6rem] flex-col items-center justify-center gap-0.5 active:bg-brand-light ${tool ? 'cursor-crosshair hover:bg-brand-light' : 'hover:bg-fill'}`}
                           aria-label={`${s.name} ${c.day}일 기록`}
-                          onClick={() => onCell(s, c.date)}
+                          onClick={() => tap(s, c.date)}
                         >
                           {x?.attend && <span className={`rounded px-1 text-[0.7rem] leading-4 font-black ${ATT[x.attend].c}`}>{ATT[x.attend].t}</span>}
                           {x?.absence && <span className="rounded bg-fill-2 px-1 text-[0.7rem] leading-4 font-bold text-ink-2">견</span>}
@@ -136,7 +216,7 @@ export default function LedgerView({
         </table>
       </div>
       <p className="hint px-1">
-        <span className="font-bold text-brand">★</span> 칭찬 · <span className="font-bold text-danger">▲</span> 지도 · 견 견학 · 결 결석 · 지 지각 · 조 조퇴 · 과 결과 — 칸을 누르면 그 날짜로 기록해요
+        <span className="font-bold text-brand">★</span> 칭찬 · <span className="font-bold text-danger">▲</span> 지도 · 견 견학 · 결 결석 · 지 지각 · 조 조퇴 · 과 결과 · 빈칸 = 출석
       </p>
     </section>
   )
