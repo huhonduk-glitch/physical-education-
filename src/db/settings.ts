@@ -84,6 +84,8 @@ export interface AppSettings {
   budgetLayout: import('../lib/budget').SheetLayout
   /** 업무 달력 일정 (같이 쓰기 6-13, 이 기기에만 · 학생 정보 없음) */
   workEvents: import('../lib/workCal').WorkEvent[]
+  /** 학교 공유 공간 연결 (0-4 예외 6-13). 비밀번호가 있어 백업 파일에서 뺀다(SECRET_KEYS) */
+  space: import('../lib/space').SpaceConn | null
 }
 
 export interface NeisTemplate {
@@ -167,6 +169,7 @@ export function defaultSettings(): AppSettings {
     budgetPicks: {},
     budgetManual: [],
     workEvents: [],
+    space: null,
     budgetLayout: { startCell: 'N5', itemSheet: '물품구입 시트', itemCol: 'H', amountCol: 'F', firstRow: 4, withEdufine: true },
   }
 }
