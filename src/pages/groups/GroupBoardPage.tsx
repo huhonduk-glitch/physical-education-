@@ -23,13 +23,14 @@ import { useGroups } from '../../state/useGroups'
 import { AttendView } from './AttendView'
 import ClassToolsSheet from './ClassToolsSheet'
 import { ItemCheckView, TableCheckView } from './CheckViews'
+import LedgerView from './LedgerView'
 
-type BoardMode = 'cards' | 'items' | 'table' | 'attend'
+type BoardMode = 'cards' | 'items' | 'table' | 'attend' | 'ledger'
 const MODE_KEY = 'pe.boardMode'
 const readMode = (): BoardMode => {
   try {
     const m = localStorage.getItem(MODE_KEY)
-    return m === 'items' || m === 'table' || m === 'attend' ? m : 'cards'
+    return m === 'items' || m === 'table' || m === 'attend' || m === 'ledger' ? m : 'cards'
   } catch {
     return 'cards'
   }
@@ -93,6 +94,8 @@ export default function GroupBoardPage() {
   const [multi, setMulti] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
   const [sheet, setSheet] = useState<Student[] | null>(null)
+  // 기록표에서 칸을 누르면 그 날짜로 기록 (없으면 보드 날짜)
+  const [sheetDate, setSheetDate] = useState<string | null>(null)
   const [teamSend, setTeamSend] = useState(false)
   const [toolsOpen, setToolsOpen] = useState(false)
   useEffect(() => {
@@ -151,6 +154,7 @@ export default function GroupBoardPage() {
   return (
     <>
       <PageHeader
+        wide={mode === 'ledger' ? 'xl' : undefined}
         title={group?.name ?? ''}
         sub={[group?.subject, group ? SEMESTER_LABEL[group.semester] : '', nowHere ? `지금 ${nowHere.period}교시` : ''].filter(Boolean).join(' · ')}
         back
@@ -176,7 +180,7 @@ export default function GroupBoardPage() {
           </>
         }
       />
-      <div className="page space-y-3 pb-4">
+      <div className={`page space-y-3 pb-4 ${mode === 'ledger' ? 'lg:max-w-[72rem]' : ''}`}>
         {groups && groups.length > 1 && <GroupPicker groups={groups} value={id} onChange={choose} />}
         <DateBar value={date} onChange={setDate} marked={marked} />
         <Link to={`/groups/${id}/journal?d=${date}`} className="flex min-h-[52px] items-center gap-3 rounded-2xl bg-white px-4 shadow-[var(--shadow-card)]">
@@ -196,10 +200,11 @@ export default function GroupBoardPage() {
         <div className="segment" role="tablist" aria-label="기록 방법">
           {(
             [
-              ['cards', '학생 카드'],
-              ['items', '항목 체크'],
+              ['cards', '카드'],
+              ['items', '항목'],
               ['table', '체크표'],
               ['attend', '출결'],
+              ['ledger', '기록표'],
             ] as const
           ).map(([m, label]) => (
             <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}>
@@ -236,6 +241,18 @@ export default function GroupBoardPage() {
           </div>
         )}
 
+        {group && list.length > 0 && mode === 'ledger' && (
+          <LedgerView
+            groupId={id}
+            students={list}
+            numberOf={(s) => memberNo(group, s)}
+            onCell={(s, d) => {
+              if (readOnly) return
+              setSheetDate(d)
+              setSheet([s])
+            }}
+          />
+        )}
         {group && list.length > 0 && mode === 'attend' && (
           <AttendView
             group={group}
@@ -345,13 +362,19 @@ export default function GroupBoardPage() {
       {sheet && (
         <RecordSheet
           students={sheet}
-          date={date}
+          date={sheetDate ?? date}
           period={nowHere?.period}
           groupId={id}
           numberOf={(s) => (group ? memberNo(group, s) : String(s.number))}
           points={sheet.length === 1 ? history?.points.get(sheet[0].id) ?? { praise: 0, guide: 0 } : undefined}
-          onClose={() => setSheet(null)}
-          onRecorded={onRecorded}
+          onClose={() => {
+            setSheet(null)
+            setSheetDate(null)
+          }}
+          onRecorded={(t, msg) => {
+            setSheetDate(null)
+            onRecorded(t, msg)
+          }}
         />
       )}
       {toolsOpen && group && (

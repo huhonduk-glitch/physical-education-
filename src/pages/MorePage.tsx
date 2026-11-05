@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { Logo, MakerCredit } from '../components/Brand'
 import FeatureSheet from '../components/FeatureSheet'
 import Icon, { type IconName } from '../components/Icon'
+import { GroupPanel, PanelItem, toneOf } from '../components/MenuTile'
 import PageHeader from '../components/PageHeader'
 import { backupOverdue } from '../db/backup'
 import { NAV, visibleGroups } from '../lib/nav'
@@ -52,28 +53,16 @@ export default function MorePage() {
           <QuickTile onClick={lock} icon="lock" label="잠그기" tone={T} />
         </div>
 
-        <div className="space-y-5 md:columns-2 md:gap-5 md:space-y-0 md:[&>section]:mb-5 md:[&>section]:break-inside-avoid">
+        <div className="space-y-4">
           {visibleGroups(NAV.find((x) => x.id === 'settings')!, settings.features)
             .map((g) => ({ ...g, items: g.items.filter((m) => !IN_TILES.has(m.to)) }))
             .filter((g) => g.items.length > 0)
-            .map((g) => (
-              <section key={g.title}>
-                <h2 className="mb-1.5 px-1 text-sm font-bold text-ink-3">{g.title}</h2>
-                <div className="card overflow-hidden p-0">
-                  {g.items.map((m) => (
-                    <Link key={m.to} to={m.to} className="list-row min-h-[58px] hover:bg-fill">
-                      <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-xl ${T}`}>
-                        <Icon name={m.icon} size={18} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <b className="block truncate">{m.label}</b>
-                        {m.desc && <span className="hidden truncate text-sm text-ink-3 md:block">{m.desc}</span>}
-                      </span>
-                      <Icon name="chevronRight" size={18} className="text-ink-3" />
-                    </Link>
-                  ))}
-                </div>
-              </section>
+            .map((g, gi) => (
+              <GroupPanel key={g.title} title={g.title} icon={g.icon} tone={toneOf(gi)} count={g.items.length}>
+                {g.items.map((m) => (
+                  <PanelItem key={m.to} to={m.to} icon={m.icon} title={m.label} desc={m.desc} tone={toneOf(gi)} />
+                ))}
+              </GroupPanel>
             ))}
         </div>
 

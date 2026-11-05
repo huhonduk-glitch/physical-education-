@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import HubStats from '../components/HubStats'
 import Icon from '../components/Icon'
-import { GroupTitle, MenuTile } from '../components/MenuTile'
+import { GroupPanel, PanelItem, toneOf } from '../components/MenuTile'
 import PageHeader from '../components/PageHeader'
 import { GROUP_COLORS, SEMESTER_LABEL } from '../lib/groups'
 import { featureOn } from '../lib/features'
@@ -29,20 +29,20 @@ export default function SectionHubPage({ section }: { section: SectionId }) {
 
   return (
     <>
-      <PageHeader title={s.label} sub={SUB[section]} wide />
-      <div className="page space-y-3 pb-8 lg:max-w-[64rem]">
+      <PageHeader title={s.label} sub={SUB[section]} wide="xl" />
+      <div className="page space-y-4 pb-8 lg:max-w-[72rem]">
         <HubStats section={section} />
         {showClasses && <MyClasses />}
-        {rest.map((g) => (
-          <section key={g.title} className="space-y-2">
-            <GroupTitle>{g.title}</GroupTitle>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
+        {rest.map((g) => {
+          const tone = toneOf(groups.indexOf(g))
+          return (
+            <GroupPanel key={g.title} title={g.title} icon={g.icon} tone={tone} count={g.items.length}>
               {g.items.map((i) => (
-                <MenuTile key={i.to} to={i.to} icon={i.icon} title={i.label} desc={i.desc} />
+                <PanelItem key={i.to} to={i.to} icon={i.icon} title={i.label} desc={i.desc} tone={tone} />
               ))}
-            </div>
-          </section>
-        ))}
+            </GroupPanel>
+          )
+        })}
         {rest.length === 0 && !showClasses && <p className="card hint">이 메뉴의 기능을 모두 꺼 두었어요. [설정 → 기능 고르기]에서 켤 수 있어요.</p>}
       </div>
     </>

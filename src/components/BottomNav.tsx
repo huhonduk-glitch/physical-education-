@@ -3,8 +3,10 @@ import { BrandLine } from './Brand'
 import { Link, useLocation } from 'react-router-dom'
 import { NAV, activeItem, sectionOf, visibleGroups, visibleSections, type NavGroup } from '../lib/nav'
 import { useGroups } from '../state/useGroups'
+import { useFolded, useSideOpen } from '../state/sidebar'
 import { useApp } from '../state/AppContext'
 import Icon from './Icon'
+import { toneOf } from './MenuTile'
 
 /**
  * 큰 메뉴 (CLAUDE.md 6-12, 메뉴 표 src/lib/nav.ts): 홈 · 수업 · PAPS · 평가 · 업무 · 설정.
@@ -21,6 +23,8 @@ export default function BottomNav() {
   const sec = NAV.find((s) => s.id === current)!
   const groups = useSideGroups(sec.id)
   const item = activeItem(pathname, search, groups.flatMap((g) => g.items))
+  const [open, setOpen] = useSideOpen()
+  const [folded, toggleFold] = useFolded()
 
   return (
     <>
@@ -47,6 +51,18 @@ export default function BottomNav() {
 
       {/* PC: 맨 위 가로 메뉴 */}
       <nav aria-label="주요 화면" className="fixed inset-x-0 top-0 z-30 hidden h-14 items-center gap-6 border-b border-line bg-white px-5 print:hidden lg:flex">
+        {groups.length > 0 && (
+          <button
+            type="button"
+            className="-mr-3 grid h-10 w-10 place-items-center rounded-xl text-ink-2 hover:bg-fill"
+            aria-label={open ? '왼쪽 메뉴 접기' : '왼쪽 메뉴 펼치기'}
+            aria-expanded={open}
+            title={open ? '왼쪽 메뉴 접기 (본문 넓게)' : '왼쪽 메뉴 펼치기'}
+            onClick={() => setOpen(!open)}
+          >
+            <Icon name="list" size={22} />
+          </button>
+        )}
         <Link to="/" className="flex shrink-0 items-center gap-2.5">
           <BrandLine />
         </Link>
@@ -70,18 +86,28 @@ export default function BottomNav() {
       </nav>
 
       {/* PC: 왼쪽 하위 메뉴 (지금 큰 메뉴만). 묶음 이름 = 아이콘 + 굵은 검정, 하위 메뉴 = 들여 쓴 보통 글씨 + 세로 안내선 */}
-      {groups.length > 0 && (
+      {groups.length > 0 && open && (
         <aside aria-label={`${sec.label} 메뉴`} className="fixed top-14 bottom-0 left-0 z-20 hidden w-60 overflow-y-auto border-r border-line bg-white px-3 py-5 print:hidden lg:block">
           <Link to={sec.to} className="mb-3 block px-2 text-xs font-bold text-ink-3 hover:text-brand">
             {sec.label} 메뉴
           </Link>
-          {groups.map((g) => (
-            <div key={g.title} className="mb-4">
-              <p className="flex items-center gap-2 px-2 pb-1.5 text-[0.95rem] font-extrabold text-ink">
-                <Icon name={g.icon} size={18} className="text-brand" />
-                {g.title}
-              </p>
-              <div className="ml-[1.05rem] border-l-2 border-line pl-2">
+          {groups.map((g, gi) => {
+            const key = `${sec.id}/${g.title}`
+            const shut = folded.has(key) && !g.items.includes(item!)
+            return (
+            <div key={g.title} className="mb-3">
+              <button
+                type="button"
+                aria-expanded={!shut}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[0.95rem] font-extrabold text-ink hover:bg-fill"
+                onClick={() => toggleFold(key)}
+              >
+                <Icon name={g.icon} size={18} style={{ color: toneOf(gi).fg }} />
+                <span className="flex-1">{g.title}</span>
+                <Icon name="chevronDown" size={16} className={`text-ink-3 transition-transform ${shut ? '-rotate-90' : ''}`} />
+              </button>
+              {!shut && (
+              <div className="mt-0.5 ml-[1.05rem] border-l-2 border-line pl-2">
                 {g.items.map((i) => {
                   const on = item === i
                   return (
@@ -96,8 +122,10 @@ export default function BottomNav() {
                   )
                 })}
               </div>
+              )}
             </div>
-          ))}
+            )
+          })}
         </aside>
       )}
     </>
@@ -109,7 +137,8 @@ export function ContentFrame({ children }: { children: ReactNode }) {
   const { settings } = useApp()
   const { pathname } = useLocation()
   const sec = NAV.find((s) => s.id === sectionOf(pathname))!
-  const side = visibleGroups(sec, settings.features).length > 0
+  const [open] = useSideOpen()
+  const side = open && visibleGroups(sec, settings.features).length > 0
   return <div className={`min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] print:p-0 lg:pt-14 lg:pb-0 ${side ? 'lg:pl-60' : ''}`}>{children}</div>
 }
 

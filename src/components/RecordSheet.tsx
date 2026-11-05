@@ -1,3 +1,4 @@
+import { longDateLabel, todayStr } from '../lib/dates'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -86,7 +87,7 @@ export default function RecordSheet({ students, date, period, groupId, numberOf 
   return (
     <BottomSheet
       title={single ? <>{numberOf(single)}번 {single.name}</> : <>{students.length}명 한꺼번에 기록</>}
-      sub={single && points ? `이 반 누적: 칭찬 ${points.praise} · 지도 ${points.guide}` : undefined}
+      sub={[date !== todayStr() ? `${longDateLabel(date)} 기록` : '', single && points ? `이 반 누적: 칭찬 ${points.praise} · 지도 ${points.guide}` : ''].filter(Boolean).join(' · ') || undefined}
       onClose={onClose}
     >
       <div className="space-y-5">
@@ -198,7 +199,7 @@ function TodayList({ student, date }: { student: Student; date: string }) {
   return (
     <section className="rounded-2xl bg-fill p-4">
       <div className="mb-1 flex items-center justify-between">
-        <h3 className="font-extrabold">오늘 기록</h3>
+        <h3 className="font-extrabold">{date === todayStr() ? '오늘 기록' : `${longDateLabel(date)} 기록`}</h3>
         <Link to={`/students/${student.id}`} className="btn min-h-[40px] bg-white px-3 text-sm text-brand">
           누적 기록 보기
         </Link>

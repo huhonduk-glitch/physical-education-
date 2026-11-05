@@ -77,6 +77,14 @@ textarea {
     padding-left: 1rem;
     padding-right: 1rem;
   }
+  /* PC: 본문을 더 넓게 (2026-11-05 교사: "메인화면 더 크게"). 왼쪽 메뉴를 접으면 그만큼 넓어진다 */
+  @media (min-width: 1280px) {
+    .page {
+      max-width: 60rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
 
   /* ── 버튼 (모두 48px 이상) ── */
   .btn {
