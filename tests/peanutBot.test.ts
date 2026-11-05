@@ -7,7 +7,8 @@ describe('땅콩이 도우미 답 찾기', () => {
     expect(findAnswer('팝스 나이스 내보내기가 안돼요')?.id).toBe('paps')
     expect(findAnswer('노트북에서도 같이 쓰고 싶어요')?.id).toBe('backup')
     expect(findAnswer('세특 바이트 검사')?.id).toBe('seteuk')
-    expect(findAnswer('오늘 날씨 어때')).toBeNull()
+    expect(findAnswer('오늘 날씨 어때')?.id).toBe('weather')
+    expect(findAnswer('피자 맛집 알려줘')).toBeNull()
   })
   it('답마다 낱말 · 글이 있고 id가 겹치지 않음', () => {
     expect(new Set(BOT_FAQ.map((a) => a.id)).size).toBe(BOT_FAQ.length)
