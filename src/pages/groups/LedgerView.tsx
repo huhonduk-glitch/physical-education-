@@ -6,6 +6,7 @@ import { toggleCheck } from '../../db/recordsRepo'
 import { checkItems, type CheckItem } from '../../lib/checkBoard'
 import type { Student } from '../../db/types'
 import { todayStr } from '../../lib/dates'
+import { creditRisk } from '../../lib/attendance'
 import { ledgerCells, ledgerColumns, ledgerTotals, shiftMonth, weekSpans, type AttendMark } from '../../lib/ledger'
 import { useApp } from '../../state/AppContext'
 
@@ -45,6 +46,19 @@ export default function LedgerView({
   const praiseTools = tools.filter((t) => t.type === 'exemplary')
   const guideTools = tools.filter((t) => t.type === 'unprepared')
   const today = todayStr()
+  // 고교학점제 출석률 2/3 (누적 기록 화면과 같은 셈): 학년도 전체 결석 · 결과(인정 제외) / 수업 횟수(진도표 목표 차시, 없으면 기록한 날 수)
+  const year = useLiveQuery(async () => {
+    const [att, recs, plans] = await Promise.all([
+      db.attendance.where('groupId').equals(groupId).filter((x) => x.schoolYear === settings.schoolYear).toArray(),
+      db.records.where('groupId').equals(groupId).filter((x) => x.schoolYear === settings.schoolYear).toArray(),
+      db.progressPlans.where('groupIds').equals(groupId).toArray(),
+    ])
+    const missing = new Map<string, number>()
+    for (const x of att) if ((x.status === 'absent' || x.status === 'result') && x.reason !== '인정') missing.set(x.studentId, (missing.get(x.studentId) ?? 0) + 1)
+    const target = plans.reduce((m, p) => Math.max(m, p.target || 0), 0)
+    const held = target || new Set([...att, ...recs].map((x) => x.date)).size
+    return { missing, held }
+  }, [groupId, settings.schoolYear])
   const [month, setMonth] = useState(today.slice(0, 7))
   const data = useLiveQuery(async () => {
     const [r, a, t] = await Promise.all([
@@ -75,7 +89,7 @@ export default function LedgerView({
     const next = cur?.status === tool.status ? null : tool.status
     void setAttendance(db, { schoolYear: settings.schoolYear, groupId, studentId: s.id, date, period: cur?.period }, next)
   }
-  const chip = (on: boolean, cls: string) => `chip min-h-[40px] px-3 text-sm ${on ? cls : ''}`
+  const chip = (on: boolean, cls: string) => `chip min-h-[40px] shrink-0 px-3 text-sm ${on ? cls : ''}`
   const [y, m] = month.split('-')
 
   return (
@@ -94,14 +108,14 @@ export default function LedgerView({
 
       {!readOnly && (
         <div className="card space-y-2 p-3">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="w-12 shrink-0 text-xs font-extrabold text-ink-3">입력</span>
+          <div className="-mx-3 flex items-center gap-1.5 overflow-x-auto px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
+            <span className="sticky left-0 w-12 shrink-0 bg-white text-xs font-extrabold text-ink-3">입력</span>
             <button type="button" className={chip(!tool, 'bg-ink text-white')} aria-pressed={!tool} onClick={() => setTool(null)}>
               칸 눌러 기록 창
             </button>
           </div>
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="w-12 shrink-0 text-xs font-extrabold text-ink-3">출결</span>
+          <div className="-mx-3 flex items-center gap-1.5 overflow-x-auto px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
+            <span className="sticky left-0 w-12 shrink-0 bg-white text-xs font-extrabold text-ink-3">출결</span>
             {(['absent', 'late', 'early', 'result'] as AttendMark[]).map((st) => {
               const on = tool?.kind === 'attend' && tool.status === st
               return (
@@ -112,8 +126,8 @@ export default function LedgerView({
             })}
           </div>
           {praiseTools.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="w-12 shrink-0 text-xs font-extrabold text-brand">★ 칭찬</span>
+            <div className="-mx-3 flex items-center gap-1.5 overflow-x-auto px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
+              <span className="sticky left-0 w-12 shrink-0 bg-white text-xs font-extrabold text-brand">★ 칭찬</span>
               {praiseTools.map((it) => {
                 const on = tool?.kind === 'check' && tool.item.key === it.key
                 return (
@@ -125,8 +139,8 @@ export default function LedgerView({
             </div>
           )}
           {guideTools.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              <span className="w-12 shrink-0 text-xs font-extrabold text-danger">▲ 지도</span>
+            <div className="-mx-3 flex items-center gap-1.5 overflow-x-auto px-3 md:mx-0 md:flex-wrap md:overflow-visible md:px-0">
+              <span className="sticky left-0 w-12 shrink-0 bg-white text-xs font-extrabold text-danger">▲ 지도</span>
               {guideTools.map((it) => {
                 const on = tool?.kind === 'check' && tool.item.key === it.key
                 return (
@@ -139,20 +153,20 @@ export default function LedgerView({
           )}
           <p className={`rounded-xl px-3 py-2 text-sm font-bold ${tool ? 'bg-brand-light text-brand' : 'bg-fill text-ink-2'}`}>
             {!tool
-              ? '칸을 누르면 그 학생 · 그 날짜의 기록 창이 열려요. 위에서 항목을 고르면 칸을 누를 때마다 바로 기록돼요.'
+              ? '항목을 고르면 칸을 누를 때마다 바로 기록돼요. 안 고르면 칸을 눌러 기록 창.'
               : `‘${tool.kind === 'attend' ? ATT_NAME[tool.status] : tool.item.label}’ 입력 중 — 칸을 누르면 넣고, 다시 누르면 빼요`}
           </p>
         </div>
       )}
 
-      <div className="card overflow-x-auto p-0">
+      <div className="card max-h-[calc(100dvh-13rem)] overflow-auto p-0 lg:max-h-[calc(100dvh-16rem)]">
         <table className="w-max min-w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-fill text-ink-2">
-              <th rowSpan={2} className="sticky left-0 z-10 w-10 border-r border-b border-line bg-fill px-2 py-1.5 font-bold">
+            <tr className="sticky top-0 z-20 bg-fill text-ink-2">
+              <th rowSpan={2} className="sticky left-0 z-30 w-10 border-r border-b border-line bg-fill px-2 py-1.5 font-bold">
                 번호
               </th>
-              <th rowSpan={2} className="sticky left-10 z-10 min-w-[4.5rem] border-r border-b border-line bg-fill px-2 py-1.5 text-left font-bold">
+              <th rowSpan={2} className="sticky left-10 z-30 min-w-[4.5rem] border-r border-b border-line bg-fill px-2 py-1.5 text-left font-bold">
                 이름
               </th>
               {spans.map((w, i) => (
@@ -164,7 +178,7 @@ export default function LedgerView({
                 이 달 합계
               </th>
             </tr>
-            <tr className="bg-fill text-ink-2">
+            <tr className="sticky top-[2.05rem] z-20 bg-fill text-ink-2">
               {cols.map((c) => (
                 <th key={c.date} className={`min-w-[2.6rem] border-r border-b border-line px-1 py-1 text-xs font-bold ${c.date === today ? 'bg-brand text-white' : ''}`}>
                   {c.day}
@@ -183,7 +197,21 @@ export default function LedgerView({
               return (
                 <tr key={s.id} className={zebra}>
                   <td className={`sticky left-0 z-[1] border-r border-b border-line px-2 py-1 text-center font-bold tabular-nums ${zebra === 'bg-white' ? 'bg-white' : 'bg-[#f7f8fa]'}`}>{numberOf(s)}</td>
-                  <td className={`sticky left-10 z-[1] border-r border-b border-line px-2 py-1 font-bold whitespace-nowrap ${zebra === 'bg-white' ? 'bg-white' : 'bg-[#f7f8fa]'}`}>{s.name}</td>
+                  <td className={`sticky left-10 z-[1] border-r border-b border-line px-2 py-1 font-bold whitespace-nowrap ${zebra === 'bg-white' ? 'bg-white' : 'bg-[#f7f8fa]'}`}>
+                    {s.name}
+                    {(() => {
+                      const risk = year ? creditRisk(year.missing.get(s.id) ?? 0, year.held) : 'ok'
+                      if (risk === 'ok') return null
+                      return (
+                        <span
+                          className={`ml-1 rounded px-1 text-[0.65rem] font-black ${risk === 'danger' ? 'bg-danger text-white' : 'bg-caution-light text-ink'}`}
+                          title={`고교학점제 출석률: 학년도 결석 · 결과 ${year?.missing.get(s.id) ?? 0}번 / 수업 약 ${year?.held}번 (인정 결석 제외) — 담임 확인용 참고`}
+                        >
+                          {risk === 'danger' ? '미달' : '주의'}
+                        </span>
+                      )
+                    })()}
+                  </td>
                   {cols.map((c) => {
                     const x = cells.get(`${s.id}|${c.date}`)
                     return (
@@ -216,7 +244,7 @@ export default function LedgerView({
         </table>
       </div>
       <p className="hint px-1">
-        <span className="font-bold text-brand">★</span> 칭찬 · <span className="font-bold text-danger">▲</span> 지도 · 견 견학 · 결 결석 · 지 지각 · 조 조퇴 · 과 결과 · 빈칸 = 출석
+        <span className="font-bold text-brand">★</span> 칭찬 · <span className="font-bold text-danger">▲</span> 지도 · 견 견학 · 결 결석 · 지 지각 · 조 조퇴 · 과 결과 · 빈칸 = 출석 · 이름 옆 <b>주의</b>/<b className="text-danger">미달</b> = 고교학점제 출석률 2/3(담임 확인용 참고)
       </p>
     </section>
   )
