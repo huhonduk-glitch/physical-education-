@@ -100,3 +100,26 @@ describe('계획서 칸 글', () => {
     expect(checklistFrom('• 스포츠 응용과학 연구하기 1) 기한내에 보고서를 제출하였는가? 2) 보고서의 분량이 적당한가?')).toEqual(['기한내에 보고서를 제출하였는가?', '보고서의 분량이 적당한가?'])
   })
 })
+
+describe('글로 된 채점 기준 → 점수 입력 + 기준 점수 (6-11 A)', () => {
+  // 지어낸 예 (기능 평가에서 흔한 서술형 기준 모양)
+  const skill = [
+    { expect: '동작이 정확하고 자연스러우며 끝까지 이어 수행함', points: 30 },
+    { expect: '동작이 대체로 정확하나 연결이 조금 끊김', points: 27 },
+    { expect: '기본 동작을 수행하나 정확성이 부족함', points: 24 },
+    { expect: '자발적 미참여, 장기 미인정 결석', points: 20 },
+  ]
+  it('기록 구간이 아니면 점수 입력, 배점 칸의 점수들이 기준 점수', () => {
+    const b = buildItem('물구나무서기', skill, { id: 'x' })
+    expect(b.item).toMatchObject({ method: 'direct', max: 30, allowed: [30, 27, 24, 20], nonPartPoints: 20 })
+    expect(b.problems).toEqual([])
+    expect(b.criteria?.map((c) => c.label)).toEqual(['30점', '27점', '24점'])
+    expect(itemMax(b.item)).toBe(30)
+    expect(itemPoints(b.item, '미참여')).toBe(20)
+  })
+  it('기록 구간과 섞여 있으면 예전처럼 기록표 + 알림', () => {
+    const b = buildItem('섞임', [{ expect: '20회 이상', points: 10 }, { expect: '열심히 함', points: 8 }], { id: 'y' })
+    expect(b.item.method).toBe('record')
+    expect(b.problems.some((p) => p.includes('열심히 함'))).toBe(true)
+  })
+})

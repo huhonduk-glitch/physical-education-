@@ -29,7 +29,7 @@ export default function AutoBackupNotice() {
   }
   const download = async () => {
     const [latest] = await listSnapshots()
-    if (!latest) return setErr('자동 백업을 찾지 못했어요. [더보기 → 백업 · 학년도]에서 확인해 주세요.')
+    if (!latest) return setErr('자동 백업을 찾지 못했어요. [설정 → 백업 · 학년도]에서 확인해 주세요.')
     saveText(backupFileName(new Date(latest.createdAt)).replace('backup_', 'backup_업데이트전_'), JSON.stringify(latest.file), 'application/json')
   }
   return (

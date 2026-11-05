@@ -9,7 +9,7 @@ import PageHeader from '../components/PageHeader'
 import { db, newId } from '../db/db'
 import { addRecords } from '../db/recordsRepo'
 import type { AssessItem, Assessment, AssessmentScore, Student } from '../db/types'
-import { areaTotal, directProblem, fmtNum, itemMax, itemPoints, itemsOf, levelOf, NON_PART, toggleCheck } from '../lib/assessScore'
+import { areaTotal, directProblem, directWarn, fmtNum, itemMax, itemPoints, itemsOf, levelOf, NON_PART, toggleCheck } from '../lib/assessScore'
 import { readPaste, type PasteRow } from '../lib/assessPaste'
 import { circled, criteriaLines, recordSheet, sheetStudents } from '../lib/assessSheet'
 import { todayStr } from '../lib/dates'
@@ -128,7 +128,7 @@ export default function AssessmentGradePage() {
           </button>
         )}
 
-        <div className="-mx-4 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none]" role="tablist" aria-label="채점 요소">
+        <div className="-mx-4 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible px-4 py-1 [scrollbar-width:none]" role="tablist" aria-label="채점 요소">
           {items.map((it) => {
             const n = list.filter((s) => itemPoints(it, byStudent.get(s.id)?.scores[it.id], s.gender) !== null).length
             return (
@@ -383,6 +383,7 @@ function ScoreInput({
   const [text, setText] = useState(raw === undefined ? '' : String(raw))
   useEffect(() => setText(raw === undefined ? '' : String(raw)), [raw])
   const problem = text.trim() === NON_PART ? null : item.method === 'direct' ? directProblem(item, text.trim()) : text.trim() && !Number.isFinite(Number(text)) ? '숫자가 아니에요' : null
+  const warn = problem || text.trim() === NON_PART ? null : directWarn(item, text.trim())
   const commit = () => {
     const t = text.trim()
     if (t === '') return onCommit('')
@@ -394,7 +395,8 @@ function ScoreInput({
     <span className="flex items-center gap-1">
       <input
         ref={inputRef}
-        className={`field min-h-[44px] w-20 text-center font-bold ${problem ? 'border-danger bg-danger-light' : ''}`}
+        className={`field min-h-[44px] w-20 text-center font-bold ${problem ? 'border-danger bg-danger-light' : warn ? 'border-caution bg-caution-light' : ''}`}
+        title={problem ?? warn ?? undefined}
         inputMode="decimal"
         enterKeyHint="next"
         value={text}
@@ -413,6 +415,7 @@ function ScoreInput({
       />
       <span className="w-10 text-sm text-ink-3">{item.method === 'record' ? item.unit : `/${item.max ?? 0}`}</span>
       {problem && <span className="w-full text-xs font-bold text-danger">{problem}</span>}
+      {!problem && warn && <span className="w-full text-xs font-bold text-caution">{warn}</span>}
     </span>
   )
 }

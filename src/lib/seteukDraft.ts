@@ -44,6 +44,10 @@ export interface DraftPart {
   id: string
 }
 
+/** 학생이 써 낸 글 종류 (2026 기재요령 길라잡이: 세특에 참고만 할 수 있는 5가지). 세특 초안에 옮기지 않는다 */
+export const STUDENT_TEXT_KINDS: readonly string[] = ['동료평가서', '자기평가서', '수업 산출물', '수업 소감문', '독후감(ISBN)']
+export const TEXT_KINDS: readonly string[] = ['교사 기록', ...STUDENT_TEXT_KINDS]
+
 export function draftParts(inp: DraftInput, opts: { maxNotes?: number } = {}): DraftPart[] {
   const parts: DraftPart[] = []
   const kw = new Map(inp.keywords.map((k) => [k.id, k.label]))
@@ -76,12 +80,14 @@ export function draftParts(inp: DraftInput, opts: { maxNotes?: number } = {}): D
       if (lv?.desc) parts.push({ kind: 'assess', id: `assess:${a.id}:${it.id}`, text: sentence(`${a.title}에서 ${lv.desc.replace(/[.]\s*$/, '')}`) })
     }
   }
-  // 6) 평가 기록표 (2026-11-02): 글 칸(탐구주제 등) · 만족한 체크리스트 평가 요소. 백지 제출 · 미응시 같은 제출 구분이면 넣지 않는다. 점수 · 수준은 넣지 않는다
+  // 6) 평가 기록표 (2026-11-02)
+  //    학생이 써 낸 글(동료평가서 · 자기평가서 · 수업 산출물 · 수업 소감문 · ISBN 독후감)은 2026 기재요령 길라잡이대로 '참고'만 —
+  //    초안에 그대로 옮기지 않는다(교사가 관찰 · 평가한 내용으로 다시 쓴다): 글 칸(탐구주제 등) · 만족한 체크리스트 평가 요소. 백지 제출 · 미응시 같은 제출 구분이면 넣지 않는다. 점수 · 수준은 넣지 않는다
   for (const { a, items, score } of inp.assessments) {
     if (!score || score.status) continue
     for (const name of a.texts ?? []) {
       const v = score.texts?.[name]?.trim()
-      if (!v) continue
+      if (!v || STUDENT_TEXT_KINDS.includes(a.textKinds?.[name] ?? '')) continue
       const josa = eulReul(v).slice(v.length)
       const text = /주제/.test(name) ? `${a.title}에서 ‘${v}’${josa} 주제로 탐구함` : `${a.title} ${name}: ${v}`
       parts.push({ kind: 'assess', id: `assess:${a.id}:text:${name}`, text: sentence(text) })

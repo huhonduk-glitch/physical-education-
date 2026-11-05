@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
 import { db } from '../../db/db'
-import { ATTEND_LABEL, ATTEND_ORDER, attendTally } from '../../lib/attendance'
+import { ATTEND_LABEL, ATTEND_ORDER, attendTally, creditRisk } from '../../lib/attendance'
 import { checkItems, checkKey, inRange, PERIOD_LABEL, periodRange, tallyByStudent, type Period } from '../../lib/checkBoard'
 import { todayStr } from '../../lib/dates'
 import { saveXlsx } from '../../lib/download'
@@ -35,6 +35,17 @@ export default function GroupStatsPage() {
     [data, range],
   )
   const attend = useMemo(() => attendTally((data?.attendance ?? []).filter((a) => inRange(a.date, range))), [data, range])
+  // 고교학점제 출석률 2/3 (길라잡이): 수업 횟수 ≈ 이 기간에 기록 · 출결이 있는 날 수 (기록 안 한 날은 빠지므로 어림값)
+  // 인정 결석 · 결과는 출석률에서 빼고 센다(교사 확인 2026-11-04). 사유는 담임이 서류로 정하므로 알림은 '담임 확인' 참고용
+  const missing = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const x of data?.attendance ?? []) if (inRange(x.date, range) && (x.status === 'absent' || x.status === 'result') && x.reason !== '인정') m.set(x.studentId, (m.get(x.studentId) ?? 0) + 1)
+    return m
+  }, [data, range])
+  // 수업 횟수: 이 수업반의 교과 진도표 목표 차시(2학점 32 · 1학점 16, 교사 제안 2026-11-04)가 있으면 그것, 없으면 기록 · 출결이 있는 날 수(어림값)
+  const planTarget = useLiveQuery(async () => (await db.progressPlans.where('groupIds').equals(id).toArray()).reduce((m, p) => Math.max(m, p.target || 0), 0), [id])
+  const dayCount = useMemo(() => new Set([...(data?.records ?? []), ...(data?.attendance ?? [])].filter((x) => inRange(x.date, range)).map((x) => x.date)).size, [data, range])
+  const held = planTarget || dayCount
   const days = useMemo(() => new Set((data?.records ?? []).filter((r) => inRange(r.date, range)).map((r) => r.date)).size, [data, range])
 
   // 표 열: 설정의 체크 항목 + 기간 안에 기록이 있는 예전 항목(이름을 바꾼 항목 등)
@@ -135,11 +146,15 @@ export default function GroupStatsPage() {
                   <td className="border-t border-line px-2 font-extrabold text-brand tabular-nums">{t?.plus || ''}</td>
                   <td className="border-t border-line px-2 font-extrabold text-danger tabular-nums">{t?.minus || ''}</td>
                   <td className="border-t border-line px-2 font-bold text-ink-3 tabular-nums">{t?.absent || ''}</td>
-                  {ATTEND_ORDER.map((st) => (
-                    <td key={st} className="border-t border-line px-1.5 font-bold text-danger tabular-nums">
+                  {ATTEND_ORDER.map((st) => {
+                    const at = attend.get(s.id)
+                    const risk = st === 'absent' && at ? creditRisk(missing.get(s.id) ?? 0, held) : 'ok'
+                    return (
+                    <td key={st} title={risk === 'ok' ? undefined : risk === 'danger' ? '출석률 2/3 미만 위험 (인정 결석 제외) — 사유는 담임 선생님께 확인' : '2번 더 빠지면 출석률 2/3 미만 (인정 결석 제외) — 담임 확인'} className={`border-t border-line px-1.5 font-bold text-danger tabular-nums ${risk === 'danger' ? 'bg-danger-light' : risk === 'caution' ? 'bg-caution-light' : ''}`}>
                       {attend.get(s.id)?.[st] || ''}
                     </td>
-                  ))}
+                    )
+                  })}
                   {columns.map((c) => (
                     <td key={c.key} className="border-t border-line px-1 tabular-nums">
                       {t?.byKey.get(c.key) || ''}

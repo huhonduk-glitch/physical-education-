@@ -87,3 +87,14 @@ describe('기록표 학생 줄 (엑셀 · 인쇄)', () => {
     expect(sheet.at(-3)!.at(-1)).toBe('대체과제(제출) / 보고서 우수')
   })
 })
+
+describe('점수 직접 입력: 기준 점수 밖은 경고 (2026-11-04)', () => {
+  it('allowed가 있으면 그 밖의 값에 경고, 범위 밖은 오류 그대로', async () => {
+    const { directWarn, directProblem } = await import('../src/lib/assessScore')
+    const it0 = { id: 'x', label: '보고서', method: 'direct' as const, max: 30, allowed: [30, 27, 24] }
+    expect(directWarn(it0, '27')).toBeNull()
+    expect(directWarn(it0, '25')).toMatch(/기준 점수/)
+    expect(directProblem(it0, '31')).toMatch(/0~30/)
+    expect(directWarn({ ...it0, allowed: undefined }, '25')).toBeNull()
+  })
+})

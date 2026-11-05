@@ -89,3 +89,14 @@ describe('세특 초안 문장은 기재요령 검사기에 기호로 걸리지 
     expect(hits.find((h) => h.id === 'symbol')).toBeUndefined()
   })
 })
+
+describe('학생 제출 글은 세특 초안에 옮기지 않음 (길라잡이)', () => {
+  it('글 칸 종류가 자기평가서면 빼고, 교사 기록(탐구주제)은 그대로', () => {
+    const a = make('checklist')
+    const withKind = { ...a, texts: ['탐구주제', '소감'], textKinds: { 소감: '수업 소감문' } }
+    const parts = draftParts({ records: [], keywords: [], captainRoles: [], assessments: [{ a: withKind, items: a.items!, scores: {}, score: { texts: { 탐구주제: '체육관 바닥', 소감: '재미있었다' } } }] })
+    const txt = parts.map((p) => p.text).join(' ')
+    expect(txt).toContain('체육관 바닥')
+    expect(txt).not.toContain('재미있었다')
+  })
+})

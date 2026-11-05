@@ -38,6 +38,14 @@ export default function NeisSyncPage() {
     <>
       <PageHeader title="나이스에서 불러오기" sub="학급 · 시간표 · 학사일정" back />
       <div className="page space-y-4 pb-10">
+        <Link to="/timetable/pe" className="card flex items-center gap-3 border-2 border-brand/30 active:scale-[0.99]">
+          <Icon name="calendar" className="text-brand" />
+          <span className="min-w-0 flex-1">
+            <b className="block">내 이름으로 내 수업 · 교시 시각 한 번에</b>
+            <span className="text-sm text-ink-3">나이스 공개 자료에는 선생님 이름과 교시 시각이 없어요. 컴시간에서 학교와 내 이름을 넣으면 내 수업을 시간표 · 수업반에 바로 넣고 교시 시작 시각도 맞춰요.</span>
+          </span>
+          <Icon name="chevronRight" className="text-ink-3" />
+        </Link>
         <section className="rounded-2xl bg-brand-light p-4 text-sm font-semibold text-brand">
           나이스 교육정보 개방 포털의 <b>학교 공개 자료</b>만 받아 와요. 보내는 것은 학교 이름·학교 코드뿐이고, 학생 정보는 보내지 않아요. 담당 교사 이름은 공개 자료에 없어서, 내 수업 칸은 한 번 골라 주셔야 해요.
         </section>

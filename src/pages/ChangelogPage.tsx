@@ -3,7 +3,7 @@ import PageHeader from '../components/PageHeader'
 import { ChangeList } from '../components/WhatsNew'
 import { loadChangelog, type ChangeEntry } from '../lib/changelog'
 
-/** 더보기 → 업데이트 소식: 지금까지 바뀐 것 전부 */
+/** 설정 → 업데이트 소식: 지금까지 바뀐 것 전부 */
 export default function ChangelogPage() {
   const [list, setList] = useState<ChangeEntry[] | null>(null)
   useEffect(() => {

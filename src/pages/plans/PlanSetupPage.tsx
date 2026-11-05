@@ -86,7 +86,7 @@ export default function PlanSetupPage() {
       nav(-1)
     } else {
       const nid = await createPlan(db, { schoolYear: year, ...body })
-      nav(`/plans/${nid}`, { replace: true })
+      nav(`/plans/${nid}?import=1`, { replace: true })
     }
   }
   const remove = async () => {
@@ -215,7 +215,7 @@ export default function PlanSetupPage() {
               )}
             </div>
           ) : (
-            <p className="hint">[더보기 → 나이스에서 불러오기]로 학사일정을 받으면 휴일을 한 번에 넣을 수 있어요.</p>
+            <p className="hint">[설정 → 나이스에서 불러오기]로 학사일정을 받으면 휴일을 한 번에 넣을 수 있어요.</p>
           )}
           <div className="flex gap-2">
             <input className="field flex-1" type="date" value={newOff} min={f.startDate} max={f.endDate} onChange={(e) => setNewOff(e.target.value)} disabled={readOnly} />

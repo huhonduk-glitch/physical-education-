@@ -50,7 +50,7 @@ export default function KeywordPicker({ value, onChange, defaultOpen = false }: 
           )}
           <input className="field" type="search" placeholder="키워드 찾기 (예: 협동, 전략)" value={q} onChange={(e) => setQ(e.target.value)} aria-label="키워드 찾기" />
           {!query && (
-            <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="tablist" aria-label="키워드 카테고리">
+            <div className="-mx-1 flex gap-1.5 overflow-x-auto md:flex-wrap md:overflow-visible px-1 pb-1" role="tablist" aria-label="키워드 카테고리">
               {cats.map((c) => (
                 <button
                   key={c}
@@ -67,7 +67,7 @@ export default function KeywordPicker({ value, onChange, defaultOpen = false }: 
             </div>
           )}
           <div className="flex flex-wrap gap-1.5">{shown.map(chip)}</div>
-          {query && shown.length === 0 && <p className="hint">'{q.trim()}' 키워드가 없어요. 더보기 → 세특 키워드 → 키워드 사전에서 더할 수 있어요.</p>}
+          {query && shown.length === 0 && <p className="hint">'{q.trim()}' 키워드가 없어요. 평가 → 세특 키워드 → 키워드 사전에서 더할 수 있어요.</p>}
         </div>
       )}
     </div>

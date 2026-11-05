@@ -176,6 +176,8 @@ export interface AssessItem {
   method: AssessMethod
   /** direct일 때 만점 */
   max?: number
+  /** direct일 때 평가계획서에 정한 점수들 (예: 30 · 27 · 24 …). 이 밖의 값은 경고 (2026-11-04 교사 요청) */
+  allowed?: number[]
   levels?: AssessLevel[]
   unit?: string
   better?: 'higher' | 'lower'
@@ -214,6 +216,8 @@ export interface Assessment {
   specials?: { label: string; points: number }[]
   /** 학생마다 적는 글 칸 (예: 탐구주제) */
   texts?: string[]
+  /** 글 칸 종류 (글 칸 이름 → 종류). 없으면 '교사 기록'. 학생이 써 낸 글(STUDENT_TEXT_KINDS)은 세특 초안에 옮기지 않는다 */
+  textKinds?: Record<string, string>
   /** 성취 수준: 합계가 만점의 min% 이상이면 이 수준 (예: 상 90 · 중 60 · 하 0) */
   levelCuts?: { label: string; min: number }[]
 }

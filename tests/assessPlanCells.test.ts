@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Cell } from '../src/lib/pdfTable'
-import { assessmentsFromCells, planTotals } from '../src/lib/assessPlanCells'
+import { assessmentsFromCells, planTotals, readAssessPlan } from '../src/lib/assessPlanCells'
 import { itemPoints } from '../src/lib/assessScore'
 
 // 교사가 준 평가계획서(2026 2학기 스포츠생활2)의 '수행평가 세부계획' 표 모양을 본뜬 칸 (좌표는 비슷하게 만든 것)
@@ -119,5 +119,32 @@ describe('평가계획서 → 평가 목록', () => {
     expect(it1.checks).toHaveLength(7)
     expect(itemPoints(it1, 6)).toBe(18)
     expect(list[1].problems).toEqual([])
+  })
+})
+
+describe('글로 된 채점 기준 표 (6-11 A)', () => {
+  const qual = task(780, {
+    std: '[12스생2-01-03] 가상 성취기준',
+    elements: '• 동작 수행',
+    title: '매트 운동 연결 동작',
+    max: 30,
+    ratio: '30%',
+    when: '11월 중',
+    name: '연결 동작',
+    methods: ['■ 실기·시연', '□ 기타', '■ 교사 관찰 및 기록'],
+    rows: [
+      ['동작이 정확하고 자연스럽게 이어짐', 30],
+      ['동작이 대체로 정확함', 26],
+      ['기본 동작만 수행함', 22],
+      ['자발적 미참여, 장기 미인정 결석', 18],
+    ],
+  })
+  it('점수 입력 · 기준 점수 · 만점 맞음 · 세부표로 읽음', () => {
+    const [a] = assessmentsFromCells([qual])
+    expect(a.item).toMatchObject({ method: 'direct', max: 30, allowed: [30, 26, 22, 18], nonPartPoints: 18 })
+    expect(a.problems).toEqual([])
+    // 계획서에 A/B/C 수행 특성이 있으면 그것을 그대로 둔다
+    expect(a.levelDescs.map((l) => l.label)).toEqual(['A', 'B', 'C'])
+    expect(readAssessPlan([qual])[0].item?.allowed).toEqual([30, 26, 22, 18])
   })
 })

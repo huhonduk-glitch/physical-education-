@@ -30,7 +30,7 @@ export default function UpgradeBlocked({ error, file, onContinue }: { error: str
       <button type="button" className="btn btn-soft w-full" disabled={!!file && !saved} onClick={onContinue}>
         {file && !saved ? '먼저 파일을 받아 주세요' : '파일을 받았어요 · 계속하기'}
       </button>
-      <p className="hint">받은 파일은 [더보기 → 백업 · 학년도 → 복원]으로 언제든 되돌릴 수 있어요.</p>
+      <p className="hint">받은 파일은 [설정 → 백업 · 학년도 → 복원]으로 언제든 되돌릴 수 있어요.</p>
     </main>
   )
 }

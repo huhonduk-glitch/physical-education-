@@ -80,7 +80,7 @@ export function TermsGate() {
         </div>
         <InstallGuide place="terms" />
         <TermsFolded />
-        <p className="hint text-center">이 안내는 [더보기 → 이용 안내]에서 다시 볼 수 있어요.</p>
+        <p className="hint text-center">이 안내는 [설정 → 이용 안내]에서 다시 볼 수 있어요.</p>
       </main>
       {/* 동의 체크·버튼은 화면 아래에 고정 (예전에는 안내 6개 아래, 화면 밖에 있었음) */}
       <ActionBar edge>
@@ -96,7 +96,7 @@ export function TermsGate() {
   )
 }
 
-/** 더보기 → 이용 안내 (다시 읽기) */
+/** 설정 → 이용 안내 (다시 읽기) */
 export default function TermsPage() {
   const { settings } = useApp()
   const at = settings.termsAgreed?.at

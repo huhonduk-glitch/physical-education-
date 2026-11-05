@@ -53,6 +53,14 @@ export function directProblem(it: AssessItem, raw: string | number | undefined):
   return null
 }
 
+/** 점수 직접 입력: 평가계획서에 정한 점수(allowed) 밖이면 경고 문구 — 저장은 막지 않는다 */
+export function directWarn(it: AssessItem, raw: string | number | undefined): string | null {
+  if (it.method !== 'direct' || !it.allowed?.length || raw === undefined || raw === '') return null
+  const v = Number(raw)
+  if (!Number.isFinite(v) || it.allowed.some((a) => Math.abs(a - v) < 1e-9)) return null
+  return `기준 점수가 아니에요 (${it.allowed.join(' · ')})`
+}
+
 export interface AssessTotal {
   total: number
   max: number

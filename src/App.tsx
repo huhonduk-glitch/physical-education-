@@ -1,7 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import BottomNav from './components/BottomNav'
+import PeanutBot from './components/PeanutBot'
+import BottomNav, { ContentFrame } from './components/BottomNav'
 import DemoBanner from './components/DemoBanner'
 import { AfterUpdate } from './components/WhatsNew'
 import MiniTimer from './components/MiniTimer'
@@ -43,7 +44,7 @@ const LeaguePage = lazy(() => import('./pages/sports/LeaguePage'))
 const HelpPage = lazy(() => import('./pages/HelpPage'))
 const TermsPage = lazy(() => import('./pages/TermsPage'))
 const TermsGate = lazy(() => import('./pages/TermsPage').then((m) => ({ default: m.TermsGate })))
-const ToolsPage = lazy(() => import('./pages/ToolsPage'))
+const SectionHubPage = lazy(() => import('./pages/SectionHubPage'))
 const PickPage = lazy(() => import('./pages/tools/PickPage'))
 const TeamsPage = lazy(() => import('./pages/tools/TeamsPage'))
 const StudentDetailPage = lazy(() => import('./pages/StudentDetailPage'))
@@ -69,7 +70,8 @@ const AssessmentEditPage = lazy(() => import('./pages/AssessmentEditPage'))
 const AssessExportPage = lazy(() => import('./pages/AssessExportPage'))
 const ClassSummaryPage = lazy(() => import('./pages/ClassSummaryPage'))
 const DataPage = lazy(() => import('./pages/DataPage'))
-const EvalPage = lazy(() => import('./pages/EvalPage'))
+const BudgetPage = lazy(() => import('./pages/BudgetPage'))
+const WorkGuidePage = lazy(() => import('./pages/WorkGuidePage'))
 const GroupsPage = lazy(() => import('./pages/groups/GroupsPage'))
 const GroupBoardPage = lazy(() => import('./pages/groups/GroupBoardPage'))
 const GroupEditPage = lazy(() => import('./pages/groups/GroupEditPage'))
@@ -153,7 +155,7 @@ export default function App() {
     <AppContext.Provider value={ctx}>
       <TimerProvider>
       <MiniTimer />
-      <div className="min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-60 print:p-0">
+      <ContentFrame>
         <DemoBanner />
         <AfterUpdate />
         <Suspense fallback={<div className="p-6 text-ink-3">불러오는 중…</div>}>
@@ -170,9 +172,11 @@ export default function App() {
           <Route path="/plans/new" element={<PlanSetupPage />} />
           <Route path="/plans/:id" element={<PlanPage />} />
           <Route path="/plans/:id/setup" element={<PlanSetupPage />} />
-          <Route path="/eval" element={<EvalPage />} />
+          <Route path="/class" element={<SectionHubPage section="class" />} />
+          <Route path="/eval" element={<SectionHubPage section="eval" />} />
+          <Route path="/work" element={<SectionHubPage section="work" />} />
           <Route path="/timer" element={<TimerPage />} />
-          <Route path="/tools" element={<ToolsPage />} />
+          <Route path="/tools" element={<Navigate to="/class" replace />} />
           <Route path="/tools/pick" element={<PickPage />} />
           <Route path="/tools/teams" element={<TeamsPage />} />
           <Route path="/tools/apps" element={<TeamAppsPage />} />
@@ -207,6 +211,8 @@ export default function App() {
           <Route path="/seteuk/ai-guide" element={<AiGuidePage />} />
           <Route path="/timetable/pe" element={<PeTimetablePage />} />
           <Route path="/more/data" element={<DataPage />} />
+          <Route path="/work/budget" element={<BudgetPage />} />
+          <Route path="/work/:topic" element={<WorkGuidePage />} />
           <Route path="/more/assessments" element={<AssessmentsPage />} />
           <Route path="/more/assessments/new" element={<AssessmentEditPage />} />
           <Route path="/more/assessments/rubric" element={<RubricPage />} />
@@ -224,7 +230,8 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         </Suspense>
-      </div>
+      </ContentFrame>
+      <PeanutBot />
       <BottomNav />
       </TimerProvider>
     </AppContext.Provider>

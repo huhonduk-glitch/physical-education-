@@ -31,7 +31,9 @@ export function usePapsClassKey(): { classes: ClassKey[]; mine: Set<string>; cls
   } catch {
     /* 무시 */
   }
-  const want = fromUrl ?? saved
+  // 지난번에 고른 반이 이제 내 수업반이 아니면(수업반을 지움) 내 수업반으로 돌아간다 (2026-11-04 교사 요청)
+  // 다른 반은 [다른 반]에서 직접 고를 때만(주소 ?c=)
+  const want = fromUrl ?? (saved && (mine.size === 0 || mine.has(saved)) ? saved : null)
   const cls = classes.find((c) => classKeyStr(c) === want) ?? classes.find((c) => mine.has(classKeyStr(c))) ?? classes[0] ?? null
   useEffect(() => {
     if (cls && fromUrl !== classKeyStr(cls)) setSp((p) => (p.set('c', classKeyStr(cls)), p), { replace: true })

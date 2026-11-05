@@ -55,7 +55,7 @@ export default function SeteukEditor({ group, basis, draft, level, autoLevel, le
   const stale = !!draft?.basisKey && draft.basisKey !== curKey && draft.status !== 'confirmed'
   const picked = partsForLevel(basis.parts, { maxParts: frame.maxParts, important, excluded })
 
-  const hits = checkSeteuk(text, { schoolName: settings.schoolName })
+  const hits = checkSeteuk(text, { schoolName: settings.schoolName, subject: group.subject || undefined })
   const cnt = countText(text)
   const inRange = cnt.bytes >= frame.minBytes && cnt.bytes <= frame.maxBytes
   const confirmedNow = draft?.status === 'confirmed' && draft.confirmedText === text.trim()

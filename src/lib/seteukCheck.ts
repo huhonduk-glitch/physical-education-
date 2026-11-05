@@ -47,8 +47,12 @@ const RULES: Rule[] = [
   { id: 'cert', level: 'error', title: '인증시험 · 자격증', basis: `${P} 3-라 · 파 (자격증은 '자격증 취득' 항목에만)`, re: /인증시험|인증\s*(취득|획득)|자격증|자격\s*(취득|획득)|급수\s*취득|[0-9]+급\s*(취득|합격)|기능사|산업기사|생활스포츠지도사|스포츠지도사|컴퓨터활용능력|워드프로세서|ITQ|GTQ|MOS|DIAT|한국사능력검정|유단자|[0-9]\s*단\s*(취득|승단)|단증|품증/g },
   // 마. 모의고사 · 학력평가
   { id: 'mock', level: 'error', title: '모의고사 · 학력평가 성적', basis: `${P} 3-마`, re: /모의고사|모의평가|학력평가|전국연합|수능\s*(성적|점수|등급)|백분위|표준점수/g },
-  // 바. 논문 · 학회 (수업 중 소논문 · 탐구 보고서는 괜찮음)
+  // 바. 논문 · 학회
+  // 소논문 · 연구보고서: 모든 서술형 항목 기재 불가 (2026 기재요령 길라잡이, 2026-11-04 교사 확인)
+  { id: 'thesis', level: 'warn', title: '소논문 · 연구보고서 (기재요령이 허용한 과목 수업 활동만 가능 — 확인하세요)', basis: '2026 기재요령 길라잡이 — 원칙은 기재 불가. 교사 확인(2026-11-04): 특정 과목 예외가 기재요령에 있음 → 원문 확인 전까지 경고', re: /소논문|연구\s*보고서/g },
   { id: 'paper', level: 'error', title: '논문 투고 · 학회 발표', basis: `${P} 3-바`, re: /(?<!소)논문\s*(투고|게재|등재|발표)|학회|학술지|학술대회|저널에/g },
+  // 교과 세특 기재 금지: K-MOOC · MOOC (2026 기재요령 길라잡이 고등학교용)
+  { id: 'mooc', level: 'error', title: 'K-MOOC · MOOC · KOCW 강좌', basis: '2026 기재요령 길라잡이 — 교과 세특 기재 금지', re: /KOCW|K-?MOOC|MOOC|무크\s*강좌/gi },
   // 사. 도서 출간
   { id: 'book', level: 'error', title: '도서 출간', basis: `${P} 3-사`, re: /출간|출판|저서|책을\s*(냄|펴냄|발간)|전자책을?\s*(냄|펴냄|발간)/g },
   // 아. 지식재산권
@@ -142,15 +146,34 @@ function badEndings(text: string): string[] {
   return out.slice(0, 5)
 }
 
-export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?: number } = {}): CheckHit[] {
+/** 연구보고서(소논문)를 세특에 쓸 수 있는 과목 (2026 기재요령 본문, 교사 확인 2026-11-04): 정규교육과정 성취기준에 따라 수업한 경우, 실적(제목 · 연구 주제 · 참여 인원 · 소요 시간)은 빼고 */
+export const THESIS_SUBJECTS = ['수학과제 탐구', '사회문제 탐구', '융합과학 탐구', '과학과제 연구', '사회과제 연구', '윤리문제 탐구']
+export const thesisAllowed = (subject?: string) => !!subject && THESIS_SUBJECTS.some((x) => subject.replace(/\s+/g, '').includes(x.replace(/\s+/g, '')))
+
+export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?: number; subject?: string } = {}): CheckHit[] {
   const hits: CheckHit[] = []
   const maxBytes = (opts.maxChars ?? SETEUK_MAX_CHARS) * 3
   const { bytes } = countText(text)
   if (bytes > maxBytes) hits.push({ id: 'length', level: 'error', title: `나이스 글자 수를 넘었어요 (${bytes}/${maxBytes}바이트)`, basis: '기재요령: 과목별 세특 500자 = 나이스 1,500바이트 (한글 3 · 띄어쓰기 · 숫자 1)', words: [] })
   for (const r of RULES) {
     const words = [...new Set([...text.matchAll(r.re)].map((m) => m[0].trim()))]
-    if (words.length) hits.push({ id: r.id, level: r.level, title: r.title, basis: r.basis, words })
+    if (!words.length) continue
+    if (r.id === 'thesis') {
+      // 허용 과목이면 실적(참여 인원 · 소요 시간 · 제목)만 경고, 아니면 기재 불가
+      if (thesisAllowed(opts.subject)) {
+        const rec = [...text.matchAll(/\d+\s*명(이|과|과\s*함께)?\s*(참여|공동)|\d+\s*(시간|일|주|개월)\s*(동안|간|에\s*걸쳐)|제목/g)].map((m) => m[0])
+        if (rec.length) hits.push({ id: 'thesis', level: 'warn', title: '연구보고서 실적(제목 · 참여 인원 · 소요 시간)은 빼고 써요', basis: `기재요령: ${THESIS_SUBJECTS.join(' · ')} 과목은 성취기준에 따른 수업이면 실적을 빼고 입력 가능`, words: [...new Set(rec)] })
+      } else hits.push({ id: 'thesis', level: 'error', title: '소논문 · 연구보고서 (이 과목은 기재 불가)', basis: `기재요령: ${THESIS_SUBJECTS.join(' · ')} 과목만 실적을 빼고 입력 가능(정규교육과정 성취기준에 따라 수업한 경우)`, words })
+      continue
+    }
+    hits.push({ id: r.id, level: r.level, title: r.title, basis: r.basis, words })
   }
+  // PAPS 등급: 1등급(종목별)만 체육 관련 교과 세특에 쓸 수 있고, 2~5등급 같은 정량 서술은 불가 (교사 확인 2026-11-04)
+  const papsLow = [...text.matchAll(/(PAPS|팝스|체력)[^.]{0,30}?[2-5]\s*등급|[2-5]\s*등급[^.]{0,20}?(PAPS|팝스|체력)/gi)].map((m) => m[0])
+  if (papsLow.length) hits.push({ id: 'paps', level: 'error', title: 'PAPS 2~5등급은 쓸 수 없어요 (1등급만 종목별로)', basis: '기재요령: PAPS는 1등급에 한해 체육 관련 교과 세특에 종목별로 입력 가능', words: [...new Set(papsLow)] })
+  const peSubject = !opts.subject || /체육|운동|스포츠/.test(opts.subject)
+  const papsTop = [...text.matchAll(/(PAPS|팝스|체력)[^.]{0,30}?1\s*등급/gi)].map((m) => m[0])
+  if (papsTop.length && !peSubject) hits.push({ id: 'paps', level: 'error', title: 'PAPS 1등급은 체육 관련 교과에만', basis: '기재요령: PAPS 1등급은 체육 관련 교과 세특에만 종목별로 입력 가능', words: [...new Set(papsTop)] })
   const own = schoolWords(opts.schoolName ?? '').filter((w) => text.replace(/\s+/g, '').includes(w))
   // 다른 학교 이름도 (고교블라인드 · 연수자료 '학교명'): ○○고등학교 · ○○여고 · ○○고교 · ○○중학교 · ○○초 …
   const any = [...text.matchAll(SCHOOL_NAME)].map((m) => m[0].trim()).filter((w) => !NOT_SCHOOL.test(w))
@@ -158,7 +181,7 @@ export function checkSeteuk(text: string, opts: { schoolName?: string; maxChars?
   if (school.length) hits.push({ id: 'school', level: 'error', title: '학교를 알 수 있는 내용', basis: '기재요령 23쪽 4 고교블라인드 (학교명 · 재단명 · 축제명 · 별칭 등) · 연수자료', words: school })
   // 학교 연수자료(2026 학교생활기록부 기재요령 담임 연수, 기재요령 28~30쪽): 한글 입력 · 명사형 종결과 마침표 · 기호 최소화
   const sub = SUBSTITUTES.flatMap((x) => [...text.matchAll(x.re)].map((m) => `${m[0].trim()} → ${x.to}`))
-  if (sub.length) hits.push({ id: 'substitute', level: 'error', title: '기재 유의어 (대체어로 바꿔 주세요)', basis: '기재요령 · 학교 연수자료 ‘기재 유의어 → 대체어’', words: [...new Set(sub)] })
+  if (sub.length) hits.push({ id: 'substitute', level: 'warn', title: '기재 유의어 (대체어 예시를 참고해 바꿔 보세요)', basis: '2026 기재 유의어 대체 표현 예시 — 참고용 예시이며 절대 기준이 아님(길라잡이). 학생 활동을 정확히 드러내는 표현을 고르세요', words: [...new Set(sub)] })
   // 유의어로 이미 잡은 자리(예: 챗GPT)의 영문은 다시 걸지 않는다
   const spans = SUBSTITUTES.flatMap((x) => [...text.matchAll(x.re)].map((m) => [m.index!, m.index! + m[0].length] as const))
   const inSpan = (i: number) => spans.some(([a, b]) => i >= a && i < b)

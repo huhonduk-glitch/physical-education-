@@ -1,3 +1,4 @@
+import { TEXT_KINDS } from '../lib/seteukDraft'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
@@ -44,6 +45,7 @@ export default function AssessmentEditPage() {
   const [items, setItems] = useState<AssessItem[]>(tplData?.items ?? [newItem()])
   const [specials, setSpecials] = useState<{ label: string; points: number }[]>(tplData?.specials ?? [])
   const [texts, setTexts] = useState<string[]>(tplData?.texts ?? [])
+  const [textKinds, setTextKinds] = useState<Record<string, string>>({})
   const [levelCuts, setLevelCuts] = useState<{ label: string; min: number }[]>(tplData?.levelCuts ?? [])
   const [altTask, setAltTask] = useState(true)
   const [loaded, setLoaded] = useState(!id)
@@ -57,6 +59,7 @@ export default function AssessmentEditPage() {
     setAltTask(existing.altTaskEnabled)
     setSpecials(existing.specials ?? [])
     setTexts(existing.texts ?? [])
+    setTextKinds(existing.textKinds ?? {})
     setLevelCuts(existing.levelCuts ?? [])
     setGroupIds(existing.groupIds ?? (groups ?? []).filter((g) => g.kind === 'homeroom' && g.grade === existing.grade).map((g) => g.id))
     setLoaded(true)
@@ -89,6 +92,10 @@ export default function AssessmentEditPage() {
       ...(existing?.plan ? { plan: existing.plan } : {}),
       ...(specials.length ? { specials: specials.map((x) => ({ ...x, label: x.label.trim() })) } : {}),
       ...(texts.length ? { texts: texts.map((x) => x.trim()) } : {}),
+      ...(() => {
+        const kinds = Object.fromEntries(texts.map((t) => [t.trim(), textKinds[t] ?? textKinds[t.trim()]]).filter(([, k]) => k && k !== '교사 기록'))
+        return Object.keys(kinds).length ? { textKinds: kinds } : {}
+      })(),
       ...(levelCuts.length ? { levelCuts: levelCuts.map((x) => ({ ...x, label: x.label.trim() })) } : {}),
     }
     await db.assessments.put(a)
@@ -212,7 +219,7 @@ export default function AssessmentEditPage() {
         )}
 
         <h2 className="px-1 text-lg font-extrabold">기록표 칸</h2>
-        <SheetOptions readOnly={readOnly} texts={texts} setTexts={setTexts} specials={specials} setSpecials={setSpecials} levelCuts={levelCuts} setLevelCuts={setLevelCuts} />
+        <SheetOptions readOnly={readOnly} texts={texts} setTexts={setTexts} textKinds={textKinds} setTextKinds={setTextKinds} specials={specials} setSpecials={setSpecials} levelCuts={levelCuts} setLevelCuts={setLevelCuts} />
 
         {existing && !readOnly && (
           <button type="button" className="btn btn-danger-soft w-full" onClick={remove}>
@@ -401,6 +408,21 @@ function ItemEditor({
           <span className="text-ink-3">점</span>
         </label>
       )}
+      {item.method === 'direct' && (
+        <label className="block space-y-1">
+          <span className="text-sm font-bold text-ink-2">기준 점수 (선택 · 쉼표로) — 이 밖의 점수를 넣으면 노란 경고</span>
+          <input
+            className="field w-full"
+            placeholder="예: 30, 27, 24, 21, 18"
+            defaultValue={item.allowed?.join(', ') ?? ''}
+            disabled={readOnly}
+            onBlur={(e) => {
+              const nums = e.target.value.split(/[,\s·]+/).map(Number).filter((n) => e.target.value.trim() && Number.isFinite(n))
+              onChange({ allowed: nums.length ? [...new Set(nums)].sort((a, b) => b - a) : undefined })
+            }}
+          />
+        </label>
+      )}
 
       {!readOnly && (
         <div className="flex gap-2 border-t border-line pt-3">
@@ -522,6 +544,8 @@ function SheetOptions({
   readOnly,
   texts,
   setTexts,
+  textKinds,
+  setTextKinds,
   specials,
   setSpecials,
   levelCuts,
@@ -530,6 +554,8 @@ function SheetOptions({
   readOnly: boolean
   texts: string[]
   setTexts: (v: string[]) => void
+  textKinds: Record<string, string>
+  setTextKinds: (v: Record<string, string>) => void
   specials: { label: string; points: number }[]
   setSpecials: (v: { label: string; points: number }[]) => void
   levelCuts: { label: string; min: number }[]
@@ -541,10 +567,17 @@ function SheetOptions({
     <section className="card space-y-5">
       <div className="space-y-2">
         <p className="font-extrabold">글 칸</p>
-        <p className="hint">학생마다 적어 둘 칸이에요 (예: 탐구주제, 발표 주제). 점수에는 들어가지 않아요.</p>
+        <p className="hint">학생마다 적어 둘 칸이에요 (예: 탐구주제, 발표 주제). 점수에는 들어가지 않아요. 학생이 써 낸 글(동료 · 자기평가서, 산출물, 소감문, 독후감)이면 종류를 골라 두세요 — 기재요령 길라잡이대로 세특 초안에 그대로 옮기지 않아요.</p>
         {texts.map((t, k) => (
           <div key={k} className="flex items-center gap-2">
             <input className="field flex-1" value={t} placeholder="예: 탐구주제" aria-label={`글 칸 ${k + 1} 이름`} disabled={readOnly} onChange={(e) => setTexts(texts.map((x, j) => (j === k ? e.target.value : x)))} />
+            <select className="field w-36 shrink-0" aria-label={`글 칸 ${k + 1} 종류`} disabled={readOnly} value={textKinds[t] ?? '교사 기록'} onChange={(e) => setTextKinds({ ...textKinds, [t]: e.target.value })}>
+              {TEXT_KINDS.map((x) => (
+                <option key={x} value={x}>
+                  {x}
+                </option>
+              ))}
+            </select>
             {!readOnly && (
               <button type="button" className="btn btn-ghost px-2 text-ink-3" aria-label="글 칸 빼기" onClick={() => setTexts(texts.filter((_, j) => j !== k))}>
                 <Icon name="close" size={18} />

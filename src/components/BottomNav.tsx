@@ -1,72 +1,165 @@
+import type { ReactNode } from 'react'
 import { BrandLine } from './Brand'
 import { Link, useLocation } from 'react-router-dom'
-import { featureOn } from '../lib/features'
+import { NAV, activeItem, sectionOf, visibleGroups, visibleSections, type NavGroup } from '../lib/nav'
+import { useGroups } from '../state/useGroups'
+import { useFolded, useSideOpen } from '../state/sidebar'
 import { useApp } from '../state/AppContext'
-import Icon, { type IconName } from './Icon'
-
-interface Tab {
-  to: string
-  label: string
-  icon: IconName
-  /** 이 주소들로 시작하면 이 탭이 켜진 것으로 본다 */
-  match: string[]
-  show?: (f: Parameters<typeof featureOn>[0]) => boolean
-}
-
-const TABS: Tab[] = [
-  { to: '/', label: '홈', icon: 'home', match: [] },
-  { to: '/groups', label: '수업반', icon: 'class', match: ['/groups', '/students'] },
-  { to: '/sports', label: '종목', icon: 'book', match: ['/sports', '/leagues'], show: (f) => featureOn(f, 'sports') },
-  { to: '/eval', label: '평가', icon: 'paps', match: ['/eval', '/paps', '/more/assessments'], show: (f) => featureOn(f, 'paps') || featureOn(f, 'assess') },
-  { to: '/tools', label: '도구', icon: 'timer', match: ['/timer', '/tools'], show: (f) => featureOn(f, 'tools') },
-  { to: '/more', label: '더보기', icon: 'more', match: ['/more'] },
-]
-
-function isActive(t: Tab, path: string): boolean {
-  if (t.to === '/') return path === '/'
-  const hits = TABS.flatMap((x) => x.match.filter((m) => path === m || path.startsWith(`${m}/`)).map((m) => ({ x, m })))
-  // 더 길게 맞는 탭이 이긴다 (/more/assessments는 평가 탭)
-  const best = hits.sort((a, b) => b.m.length - a.m.length)[0]
-  return best?.x === t
-}
+import Icon from './Icon'
+import { toneOf } from './MenuTile'
 
 /**
- * 하단 탭 (CLAUDE.md 5장): 홈 · 수업반 · 종목 · 평가 · 도구 · 더보기. 끈 기능의 탭은 숨긴다.
- * 폰·태블릿에서는 화면 맨 아래, 교무실 PC처럼 넓은 화면(1024px 이상)에서는 왼쪽 세로 메뉴로 바뀐다.
+ * 큰 메뉴 (CLAUDE.md 6-12, 메뉴 표 src/lib/nav.ts): 홈 · 수업 · PAPS · 평가 · 업무 · 설정.
+ * - 폰 · 태블릿: 화면 맨 아래 탭 6개 → 누르면 그 큰 메뉴 화면(하위 기능 칸)
+ * - PC(1024px 이상, 2026-11-05 교사 선택): 맨 위 가로 메뉴에 큰 메뉴, 왼쪽에는 지금 큰 메뉴의 하위 메뉴만(홈은 없음),
+ *   제목 위에 '수업 › 종목 수업자료' 위치 표시(PageHeader). 교사가 만드는 다른 앱 · 파이스와 같은 방식
+ * 끈 기능은 숨긴다(자료는 그대로).
  */
 export default function BottomNav() {
   const { settings } = useApp()
-  const { pathname } = useLocation()
-  const tabs = TABS.filter((t) => !t.show || t.show(settings.features))
+  const { pathname, search } = useLocation()
+  const sections = visibleSections(settings.features)
+  const current = sectionOf(pathname)
+  const sec = NAV.find((s) => s.id === current)!
+  const groups = useSideGroups(sec.id)
+  const item = activeItem(pathname, search, groups.flatMap((g) => g.items))
+  const [open, setOpen] = useSideOpen()
+  const [folded, toggleFold] = useFolded()
+
   return (
-    <nav
-      aria-label="주요 화면"
-      className="fixed inset-x-0 bottom-0 z-30 print:hidden border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:inset-y-0 lg:right-auto lg:w-60 lg:border-t-0 lg:border-r lg:bg-white lg:pb-0"
-    >
-      <div className="hidden items-center gap-2.5 px-5 pt-7 pb-6 lg:flex">
-        <BrandLine />
-      </div>
-      <ul className="mx-auto flex max-w-3xl lg:max-w-none lg:flex-col lg:gap-1 lg:px-3">
-        {tabs.map((t) => {
-          const active = isActive(t, pathname)
-          return (
-            <li key={t.to} className="flex-1">
-              <Link
-                to={t.to}
-                aria-current={active ? 'page' : undefined}
-                className={`flex min-h-[62px] flex-col items-center justify-center gap-1 text-[0.72rem] font-bold transition-colors lg:min-h-[50px] lg:flex-row lg:justify-start lg:gap-3 lg:rounded-xl lg:px-4 lg:text-[0.98rem] ${
-                  active ? 'text-ink lg:bg-fill' : 'text-ink-3 hover:text-ink-2 lg:hover:bg-fill'
-                }`}
+    <>
+      {/* 폰: 아래 탭 */}
+      <nav aria-label="주요 화면" className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md print:hidden lg:hidden">
+        <ul className="mx-auto flex max-w-3xl">
+          {sections.map((s) => {
+            const active = current === s.id
+            return (
+              <li key={s.id} className="flex-1">
+                <Link
+                  to={s.to}
+                  aria-current={active ? 'page' : undefined}
+                  className={`flex min-h-[62px] flex-col items-center justify-center gap-1 text-[0.72rem] font-bold transition-colors ${active ? 'text-ink' : 'text-ink-3'}`}
+                >
+                  <Icon name={s.icon} size={25} strokeWidth={active ? 2.5 : 2} className={active ? 'text-brand' : ''} />
+                  {s.label}
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      </nav>
+
+      {/* PC: 맨 위 가로 메뉴 */}
+      <nav aria-label="주요 화면" className="fixed inset-x-0 top-0 z-30 hidden h-14 items-center gap-6 border-b border-line bg-white px-5 print:hidden lg:flex">
+        {groups.length > 0 && (
+          <button
+            type="button"
+            className="-mr-3 grid h-10 w-10 place-items-center rounded-xl text-ink-2 hover:bg-fill"
+            aria-label={open ? '왼쪽 메뉴 접기' : '왼쪽 메뉴 펼치기'}
+            aria-expanded={open}
+            title={open ? '왼쪽 메뉴 접기 (본문 넓게)' : '왼쪽 메뉴 펼치기'}
+            onClick={() => setOpen(!open)}
+          >
+            <Icon name="list" size={22} />
+          </button>
+        )}
+        <Link to="/" className="flex shrink-0 items-center gap-2.5">
+          <BrandLine />
+        </Link>
+        <ul className="flex h-full items-stretch gap-1">
+          {sections.map((s) => {
+            const active = current === s.id
+            return (
+              <li key={s.id} className="flex">
+                <Link
+                  to={s.to}
+                  aria-current={active ? 'page' : undefined}
+                  className={`flex items-center border-b-[3px] px-3 text-[0.98rem] font-bold transition-colors ${active ? 'border-brand text-ink' : 'border-transparent text-ink-3 hover:text-ink-2'}`}
+                >
+                  {s.label}
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+        <span className="ml-auto truncate text-sm font-bold text-ink-3">{settings.schoolName}</span>
+      </nav>
+
+      {/* PC: 왼쪽 하위 메뉴 (지금 큰 메뉴만). 묶음 이름 = 아이콘 + 굵은 검정, 하위 메뉴 = 들여 쓴 보통 글씨 + 세로 안내선 */}
+      {groups.length > 0 && open && (
+        <aside aria-label={`${sec.label} 메뉴`} className="fixed top-14 bottom-0 left-0 z-20 hidden w-60 overflow-y-auto border-r border-line bg-white px-3 py-5 print:hidden lg:block">
+          <Link to={sec.to} className="mb-3 block px-2 text-xs font-bold text-ink-3 hover:text-brand">
+            {sec.label} 메뉴
+          </Link>
+          {groups.map((g, gi) => {
+            const key = `${sec.id}/${g.title}`
+            const shut = folded.has(key) && !g.items.includes(item!)
+            return (
+            <div key={g.title} className="mb-3">
+              <button
+                type="button"
+                aria-expanded={!shut}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[0.95rem] font-extrabold text-ink hover:bg-fill"
+                onClick={() => toggleFold(key)}
               >
-                <span className={`grid place-items-center rounded-full transition-colors ${active ? 'text-brand' : ''}`}>
-                  <Icon name={t.icon} size={26} strokeWidth={active ? 2.5 : 2} />
-                </span>
-                {t.label}
-              </Link>
-            </li>
-          )
-        })}
-      </ul>
-    </nav>
+                <Icon name={g.icon} size={18} style={{ color: toneOf(gi).fg }} />
+                <span className="flex-1">{g.title}</span>
+                <Icon name="chevronDown" size={16} className={`text-ink-3 transition-transform ${shut ? '-rotate-90' : ''}`} />
+              </button>
+              {!shut && (
+              <div className="mt-0.5 ml-[1.05rem] border-l-2 border-line pl-2">
+                {g.items.map((i) => {
+                  const on = item === i
+                  return (
+                    <Link
+                      key={i.to}
+                      to={i.to}
+                      aria-current={on ? 'page' : undefined}
+                      className={`-ml-[0.6rem] block truncate border-l-2 py-1.5 pr-2 pl-3 text-[0.9rem] ${on ? 'border-brand bg-brand-light font-bold text-brand' : 'border-transparent font-medium text-ink-2 hover:bg-fill hover:text-ink'}`}
+                    >
+                      {i.label}
+                    </Link>
+                  )
+                })}
+              </div>
+              )}
+            </div>
+            )
+          })}
+        </aside>
+      )}
+    </>
+  )
+}
+
+/** 내용 칸: 폰은 아래 탭만큼 띄우고, PC는 위 메뉴 · 왼쪽 하위 메뉴만큼 띄운다 */
+export function ContentFrame({ children }: { children: ReactNode }) {
+  const { settings } = useApp()
+  const { pathname } = useLocation()
+  const sec = NAV.find((s) => s.id === sectionOf(pathname))!
+  const [open] = useSideOpen()
+  const side = open && visibleGroups(sec, settings.features).length > 0
+  return <div className={`min-h-dvh pb-[calc(72px+env(safe-area-inset-bottom))] print:p-0 lg:pt-14 lg:pb-0 ${side ? 'lg:pl-60' : ''}`}>{children}</div>
+}
+
+/** PC 제목 위 위치 표시: '수업 › 종목 수업자료' (폰에서는 숨김) */
+export function useCrumb(): string[] {
+  const { pathname, search } = useLocation()
+  const sec = NAV.find((s) => s.id === sectionOf(pathname))!
+  const groups = useSideGroups(sec.id)
+  if (pathname === '/') return []
+  const item = activeItem(pathname, search, groups.flatMap((g) => g.items))
+  return item ? [sec.label, item.label] : [sec.label]
+}
+
+/** 왼쪽 하위 메뉴 묶음: '내 수업반'은 실제 반 이름으로 채운다 */
+export function useSideGroups(id: (typeof NAV)[number]['id']): NavGroup[] {
+  const { settings } = useApp()
+  const { groups: classes } = useGroups()
+  const sec = NAV.find((s) => s.id === id)!
+  return visibleGroups(sec, settings.features).map((g) =>
+    g.id === 'classes' && classes && classes.length > 0
+      ? { ...g, items: [...classes.map((c) => ({ to: `/groups/${c.id}`, label: c.name, icon: 'class' as const })), { to: '/groups', label: '수업반 관리', icon: 'settings' as const }] }
+      : g,
   )
 }

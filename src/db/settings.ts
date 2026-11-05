@@ -41,7 +41,7 @@ export interface AppSettings {
   neisTemplates: Record<string, NeisTemplate>
   /** 마지막 백업 시각 (ms) */
   lastBackupAt: number
-  /** 켜 둔 기능 (끈 기능은 홈·탭·더보기에서 숨긴다. 자료는 지우지 않는다) */
+  /** 켜 둔 기능 (끈 기능은 홈·메뉴에서 숨긴다. 자료는 지우지 않는다) */
   features: Record<FeatureId, boolean>
   /** 나이스 공개 자료로 불러올 우리 학교 (학교 공개 정보만. 2026-10-10 교사 승인) */
   neisSchool: NeisSchool | null
@@ -76,6 +76,12 @@ export interface AppSettings {
   seteukFrames: Partial<Record<1 | 2 | 3 | 4 | 5, import('../lib/seteukLevel').LevelFrame>>
   /** 보조심판 '우리 반 규칙' (종목 id → 글). 공식 규칙을 줄여 쓰는 수업 규칙 */
   refHouseRules: Record<string, string>
+  /** 체육 예산 현황 (6-11 D): 에듀파인 사업관리카드에서 읽은 항목 · 교사가 고친 고르기 · 시트 붙일 자리. 학생 정보 없음 */
+  budgetCard: { fetchedAt: number; fileName: string; card: import('../lib/budget').BudgetCard } | null
+  budgetPicks: Record<string, boolean>
+  /** 엑셀 없이 손으로 적은 예산 항목 (늘 체육 항목) */
+  budgetManual: import('../lib/budget').BudgetItem[]
+  budgetLayout: import('../lib/budget').SheetLayout
 }
 
 export interface NeisTemplate {
@@ -155,6 +161,10 @@ export function defaultSettings(): AppSettings {
     seteukWeights: { assess: 50, activity: 35, paps: 15, guide: 10 },
     seteukFrames: {},
     refHouseRules: {},
+    budgetCard: null,
+    budgetPicks: {},
+    budgetManual: [],
+    budgetLayout: { startCell: 'N5', itemSheet: '물품구입 시트', itemCol: 'H', amountCol: 'F', firstRow: 4, withEdufine: true },
   }
 }
 

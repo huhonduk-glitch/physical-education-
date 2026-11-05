@@ -129,13 +129,14 @@ export function assessmentsFromCells(pages: readonly Cell[][]): PlannedAssessmen
       const built = buildItem(label, scoreRows, { id: `plan-${++n}`, checks: isCount ? checklistFrom(cur.elements ?? '') : undefined })
       cur.item = built.item
       cur.problems.push(...built.problems)
+      if (built.criteria?.length && !cur.levelDescs.length) cur.levelDescs = built.criteria
     }
   }
 
   for (const a of out) {
     if (!a.title) a.title = a.item?.label ?? '이름 없는 평가'
     if (!a.item) a.problems.push('채점 기준 표(기대 수행 · 배점)를 찾지 못했어요. 평가를 만든 뒤 채점 요소를 직접 넣어 주세요')
-    const max = a.item ? Math.max(a.item.basePoints ?? 0, a.item.basePointsF ?? 0, ...(a.item.bands ?? []).map((b) => b.points), ...(a.item.bandsF ?? []).map((b) => b.points)) : undefined
+    const max = a.item?.method === 'direct' ? a.item.max : a.item ? Math.max(a.item.basePoints ?? 0, a.item.basePointsF ?? 0, ...(a.item.bands ?? []).map((b) => b.points), ...(a.item.bandsF ?? []).map((b) => b.points)) : undefined
     if (a.max !== undefined && max !== undefined && Math.abs(max - a.max) > 1e-9) a.problems.push(`만점이 ${a.max}점인데 채점 기준의 가장 높은 점수는 ${max}점이에요`)
   }
   return out.filter((a) => a.item || a.elements)
@@ -205,7 +206,8 @@ function levelCriteria(cells: readonly PCell[]): Map<string, { label: string; de
 /** 세부계획 표가 있으면 그것으로, 없으면 개요 표로 */
 export function readAssessPlan(pages: readonly Cell[][]): PlannedAssessment[] {
   const detailed = assessmentsFromCells(pages)
-  return detailed.some((a) => a.item && a.item.method !== 'direct') ? detailed : assessmentsFromOverview(pages)
+  // 세부 채점 기준을 읽은 평가가 하나라도 있으면 세부표 (글로 된 기준 → 점수 입력 + 기준 점수도 세부표로 셈)
+  return detailed.some((a) => a.item && (a.item.method !== 'direct' || a.item.allowed?.length)) ? detailed : assessmentsFromOverview(pages)
 }
 
 /** 평가 영역별 만점 합 · 반영비율 합 확인 */

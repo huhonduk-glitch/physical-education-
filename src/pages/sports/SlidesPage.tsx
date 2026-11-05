@@ -6,7 +6,7 @@ import { buildSlides, stepsOf, type Slide } from '../../lib/sportSlides'
 import SlideView from './SlideView'
 
 const label = (s: Slide) =>
-  s.kind === 'cover' ? '표지' : s.kind === 'keys' ? '핵심 규칙' : s.kind === 'key' ? `핵심 ${s.no} · ${s.key.title}` : s.kind === 'section' ? `${s.chapter} ${s.title}${s.part ? ` ${s.part}` : ''}` : s.kind === 'quiz' ? `퀴즈 ${s.no}` : '출처'
+  s.kind === 'cover' ? '표지' : s.kind === 'poster' ? s.title : s.kind === 'key' ? `핵심 ${s.no} · ${s.key.title}` : s.kind === 'section' ? `${s.chapter} ${s.title}${s.part ? ` ${s.part}` : ''}` : s.kind === 'quiz' ? `퀴즈 ${s.no}` : '출처'
 
 /**
  * 종목 자료 슬라이드 (2026-10-30 다시 짬): 검은 화면 · 누를 때마다 한 줄씩 → 다 보이면 다음 장.

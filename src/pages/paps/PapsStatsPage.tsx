@@ -227,7 +227,7 @@ export default function PapsStatsPage() {
             <p className="card-title">회차별 추이</p>
             <p className="hint">{rounds.length < 2 ? '회차가 하나뿐이에요. [+ 새 회차]로 다시 측정하면 변화가 그려져요.' : '반 평균이 회차마다 어떻게 바뀌었는지 봐요.'}</p>
           </div>
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          <div className="-mx-1 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible px-1 pb-1">
             {(['total', ...FACTORS] as const).map((k) => (
               <button key={k} type="button" aria-pressed={trendKey === k} className="chip shrink-0" onClick={() => setTrendKey(k)}>
                 {k === 'total' ? '종합점수' : SHORT[k]}
@@ -245,7 +245,7 @@ export default function PapsStatsPage() {
               {mixed ? ' · 남녀 기준이 달라 줄을 나눠요' : ''}). 점을 누르면 이름·기록이 보여요.
             </p>
           </div>
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          <div className="-mx-1 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible px-1 pb-1">
             {FACTORS.map((f) => (
               <button key={f} type="button" aria-pressed={stripFactor === f} className="chip shrink-0" onClick={() => setStripFactor(f)}>
                 {SHORT[f]}

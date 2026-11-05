@@ -6,6 +6,7 @@ import { MORE } from './sportsMore'
 import { SKILL } from './sportsSkill'
 import { SCHOOL } from './sportsSchool'
 import { COACHING, PLAYBOOK } from './sportsCoaching'
+import { SECTION_ILLUST } from './sportIllustrations'
 
 /**
  * 종목 수업자료 (6-5 ④, 2026-10-27).
@@ -237,7 +238,10 @@ export const UPCOMING: { id: string; name: string; emoji: string; group: SportGr
 /** 규칙서 요약 뒤에 수업 지도 내용(포지션 · 기술 · 전술 · 안전 · 생각해 봅시다)을 이어 붙인다 (2026-10-31) */
 function withCoaching(g: SportGuide): SportGuide {
   const c = COACHING[g.id]
-  return c ? { ...g, sections: [...g.sections, ...c], sources: [...g.sources, PLAYBOOK] } : g
+  const ill = SECTION_ILLUST[g.id] ?? {}
+  // 그림이 없는 절에만 자유 이용 삽화를 붙인다 (sportIllustrations.ts)
+  const sections = [...g.sections, ...(c ?? [])].map((s) => (!s.figure && ill[s.title] ? { ...s, figure: ill[s.title] } : s))
+  return { ...g, sections, sources: c ? [...g.sources, PLAYBOOK] : g.sources }
 }
 export const SPORTS: SportGuide[] = RULES.map(withCoaching)
 

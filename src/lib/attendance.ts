@@ -51,3 +51,16 @@ export function tallyText(t: AttendTally | undefined): string {
     .map((s) => `${ATTEND_LABEL[s]} ${t[s]}`)
     .join(' · ')
 }
+
+/**
+ * 고교학점제 과목 출석률 (2026 기재요령 길라잡이: 수업 횟수의 2/3 이상 출석해야 이수).
+ * missing = 결석 + 결과 횟수, held = 이 과목 수업이 열린 횟수.
+ * 'danger' = 이미 2/3 미만, 'caution' = 2번만 더 빠지면 미만, 'ok' = 괜찮음.
+ */
+export function creditRisk(missing: number, held: number): 'ok' | 'caution' | 'danger' {
+  if (held <= 0) return 'ok'
+  const attended = held - missing
+  if (attended * 3 < held * 2) return 'danger'
+  if ((attended - 2) * 3 < held * 2) return 'caution'
+  return 'ok'
+}

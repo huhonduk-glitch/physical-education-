@@ -144,3 +144,33 @@ describe('연수자료 분야별 확장 · 모든 학교명', () => {
     expect(ids('랠리를 끝까지 이어가며 집중함. 랠리를 끝까지 이어가며 집중함.')).toContain('repeat')
   })
 })
+
+describe('2026 길라잡이 반영 (2026-11-04)', () => {
+  it('K-MOOC는 오류, 유의어는 참고용 경고', async () => {
+    const { checkSeteuk } = await import('../src/lib/seteukCheck')
+    expect(checkSeteuk('K-MOOC 강좌를 수강함.').find((h) => h.id === 'mooc')?.level).toBe('error')
+    expect(checkSeteuk('유튜브 영상을 분석함.').find((h) => h.id === 'substitute')?.level).toBe('warn')
+  })
+})
+
+describe('길라잡이 2 (2026-11-04)', () => {
+  it('소논문 · 연구보고서 · KOCW는 오류, 행사 · 축제는 괜찮음', async () => {
+    const { checkSeteuk } = await import('../src/lib/seteukCheck')
+    expect(checkSeteuk('소논문을 작성함.').find((h) => h.id === 'thesis')?.level).toBe('error')
+    expect(checkSeteuk('연구보고서를 작성하며 가설을 세움.', { subject: '과학과제 연구' }).find((h) => h.id === 'thesis')).toBeUndefined()
+    expect(checkSeteuk('5명이 참여한 연구보고서를 20시간 동안 씀.', { subject: '사회문제 탐구' }).find((h) => h.id === 'thesis')?.level).toBe('warn')
+    expect(checkSeteuk('연구 보고서를 씀.').find((h) => h.id === 'thesis')).toBeTruthy()
+    expect(checkSeteuk('KOCW 강의를 들음.').find((h) => h.id === 'mooc')).toBeTruthy()
+    const ok = checkSeteuk('체육 축제와 학급 행사에서 진행을 맡음.')
+    expect(ok.filter((h) => h.level === 'error')).toEqual([])
+  })
+})
+
+describe('PAPS 등급 서술 (2026-11-04 교사 확인)', () => {
+  it('2~5등급은 오류, 1등급은 체육 교과에서만', async () => {
+    const { checkSeteuk } = await import('../src/lib/seteukCheck')
+    expect(checkSeteuk('PAPS 왕복오래달리기에서 2등급을 받음.').find((h) => h.id === 'paps')?.level).toBe('error')
+    expect(checkSeteuk('PAPS 왕복오래달리기에서 1등급을 받음.', { subject: '체육1' }).find((h) => h.id === 'paps')).toBeUndefined()
+    expect(checkSeteuk('PAPS 악력에서 1등급을 받음.', { subject: '수학' }).find((h) => h.id === 'paps')?.level).toBe('error')
+  })
+})
