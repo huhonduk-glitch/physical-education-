@@ -1,3 +1,5 @@
+import ShareSheet from '../components/ShareSheet'
+import { packAssessment } from '../lib/share'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams, useParams } from 'react-router-dom'
@@ -46,6 +48,7 @@ export default function AssessmentGradePage() {
   const absences = useLiveQuery(() => (list.length ? db.absences.where('studentId').anyOf(list.map((s) => s.id)).toArray() : []), [list.map((s) => s.id).join(',')])
   const [note, setNote] = useState<Student | null>(null)
   const [pasting, setPasting] = useState(false)
+  const [sharing, setSharing] = useState(false)
 
   if (!a) return <PageHeader title="불러오는 중…" back />
   const maxTotal = items.reduce((n, it) => n + itemMax(it), 0)
@@ -107,6 +110,9 @@ export default function AssessmentGradePage() {
             <Link to={`/more/assessments/${a.id}/sheet${gid ? `?g=${gid}` : ''}`} className="btn btn-soft px-3" aria-label="기록지 인쇄">
               <Icon name="file" size={20} />
             </Link>
+            <button type="button" className="btn btn-soft px-3" onClick={() => setSharing(true)} aria-label="다른 선생님께 보내기" title="다른 선생님께 보내기">
+              <Icon name="share" size={20} />
+            </button>
             <button type="button" className="btn btn-soft px-3" onClick={exportXlsx} disabled={list.length === 0} aria-label="기록표 엑셀">
               <Icon name="download" size={20} />
             </button>
@@ -208,6 +214,7 @@ export default function AssessmentGradePage() {
           onClose={() => setPasting(false)}
         />
       )}
+      {sharing && <ShareSheet pack={packAssessment(a)} onClose={() => setSharing(false)} />}
     </>
   )
 }

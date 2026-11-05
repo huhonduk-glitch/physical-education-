@@ -72,6 +72,8 @@ const ClassSummaryPage = lazy(() => import('./pages/ClassSummaryPage'))
 const DataPage = lazy(() => import('./pages/DataPage'))
 const BudgetPage = lazy(() => import('./pages/BudgetPage'))
 const WorkGuidePage = lazy(() => import('./pages/WorkGuidePage'))
+const SharePage = lazy(() => import('./pages/SharePage'))
+const WorkCalendarPage = lazy(() => import('./pages/WorkCalendarPage'))
 const GroupsPage = lazy(() => import('./pages/groups/GroupsPage'))
 const GroupBoardPage = lazy(() => import('./pages/groups/GroupBoardPage'))
 const GroupEditPage = lazy(() => import('./pages/groups/GroupEditPage'))
@@ -212,7 +214,9 @@ export default function App() {
           <Route path="/timetable/pe" element={<PeTimetablePage />} />
           <Route path="/more/data" element={<DataPage />} />
           <Route path="/work/budget" element={<BudgetPage />} />
+          <Route path="/work/calendar" element={<WorkCalendarPage />} />
           <Route path="/work/:topic" element={<WorkGuidePage />} />
+          <Route path="/share" element={<SharePage />} />
           <Route path="/more/assessments" element={<AssessmentsPage />} />
           <Route path="/more/assessments/new" element={<AssessmentEditPage />} />
           <Route path="/more/assessments/rubric" element={<RubricPage />} />
