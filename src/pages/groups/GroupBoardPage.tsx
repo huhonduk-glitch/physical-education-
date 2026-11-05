@@ -244,6 +244,7 @@ export default function GroupBoardPage() {
         {group && list.length > 0 && mode === 'ledger' && (
           <LedgerView
             groupId={id}
+            group={group}
             students={list}
             numberOf={(s) => memberNo(group, s)}
             readOnly={readOnly}

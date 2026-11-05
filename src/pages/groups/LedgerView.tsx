@@ -1,3 +1,4 @@
+import { CREDIT_SOURCE_LABEL, defaultTerm, heldClasses, termSessions } from '../../lib/creditBase'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
 import { db } from '../../db/db'
@@ -29,12 +30,14 @@ type Tool = { kind: 'attend'; status: AttendMark } | { kind: 'check'; item: Chec
  */
 export default function LedgerView({
   groupId,
+  group,
   students,
   numberOf,
   onCell,
   readOnly,
 }: {
   groupId: string
+  group?: { semester: 0 | 1 | 2; grade?: number }
   students: readonly Student[]
   numberOf: (s: Student) => string
   onCell: (s: Student, date: string) => void
@@ -56,9 +59,10 @@ export default function LedgerView({
     const missing = new Map<string, number>()
     for (const x of att) if ((x.status === 'absent' || x.status === 'result') && x.reason !== '인정') missing.set(x.studentId, (missing.get(x.studentId) ?? 0) + 1)
     const target = plans.reduce((m, p) => Math.max(m, p.target || 0), 0)
-    const held = target || new Set([...att, ...recs].map((x) => x.date)).size
-    return { missing, held }
-  }, [groupId, settings.schoolYear])
+    const sessions = group ? termSessions(groupId, settings.timetable, defaultTerm(settings.schoolYear, group.semester), settings.neisSchedule?.events ?? [], group.grade) : 0
+    const { held, source } = heldClasses({ planTarget: target, sessions, recordedDays: new Set([...att, ...recs].map((x) => x.date)).size })
+    return { missing, held, source }
+  }, [groupId, settings.schoolYear, settings.timetable, settings.neisSchedule, group])
   const [month, setMonth] = useState(today.slice(0, 7))
   const data = useLiveQuery(async () => {
     const [r, a, t] = await Promise.all([
@@ -205,7 +209,7 @@ export default function LedgerView({
                       return (
                         <span
                           className={`ml-1 rounded px-1 text-[0.65rem] font-black ${risk === 'danger' ? 'bg-danger text-white' : 'bg-caution-light text-ink'}`}
-                          title={`고교학점제 출석률: 학년도 결석 · 결과 ${year?.missing.get(s.id) ?? 0}번 / 수업 약 ${year?.held}번 (인정 결석 제외) — 담임 확인용 참고`}
+                          title={`고교학점제 출석률: 학년도 결석 · 결과 ${year?.missing.get(s.id) ?? 0}번 / 수업 ${year?.held}번 (${year ? CREDIT_SOURCE_LABEL[year.source] : ''}, 인정 결석 제외) — 담임 확인용 참고`}
                         >
                           {risk === 'danger' ? '미달' : '주의'}
                         </span>
