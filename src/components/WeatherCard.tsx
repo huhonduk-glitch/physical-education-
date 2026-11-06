@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { COMCI_RELAY_DEFAULT } from '../lib/comcigan'
 import {
   GRADE_LABEL,
   PTY_LABEL,
-  SIDO_LIST,
   SKY_LABEL,
   dailyBase,
   fcstBase,
@@ -19,6 +18,7 @@ import {
   type Fcst,
   type Ncst,
 } from '../lib/weather'
+import { GRID_SIDO, airSido, placeFromAddress, placeFromGrid, rowOf, sigunguOf, suggestStation, type GridRow } from '../lib/weatherPlace'
 import { useApp } from '../state/AppContext'
 import Icon from './Icon'
 
@@ -27,7 +27,7 @@ const STALE = 30 * 60 * 1000
 
 /**
  * 홈 날씨 · 미세먼지 (6-11 H, 0-4 예외): 지금 기온 · 강수 · 오늘 최고/최저 · 강수확률, 미세먼지 · 초미세먼지 등급, 실외 수업 참고.
- * 학교 위치는 처음 한 번 [현재 위치로](격자 번호로만 저장) + 미세먼지 측정소 고르기. 30분마다 새로.
+ * 학교 위치: 나이스 학교 주소로 자동, 또는 시도 → 시군구를 고르거나 [현재 위치로](격자 번호만 저장). 측정소는 추천 + 고르기. 30분마다 새로.
  */
 export default function WeatherCard() {
   const { settings, updateSettings } = useApp()
@@ -147,62 +147,130 @@ export default function WeatherCard() {
 function WeatherSetup({ relay, onDone, onCancel }: { relay: string; onDone: () => void; onCancel?: () => void }) {
   const { settings, updateSettings } = useApp()
   const cur = settings.weatherLoc
+  const school = settings.neisSchool
+  const [sido, setSido] = useState(cur?.place?.split('|')[0] ?? '')
+  const [sigungu, setSigungu] = useState(cur?.place?.split('|')[1] ?? '')
   const [grid, setGrid] = useState<{ nx: number; ny: number } | null>(cur ? { nx: cur.nx, ny: cur.ny } : null)
-  const [sido, setSido] = useState(cur?.sido ?? '')
+  const [airName, setAirName] = useState(cur?.sido ?? '')
   const [stations, setStations] = useState<string[]>([])
   const [station, setStation] = useState(cur?.station ?? '')
-  const [label, setLabel] = useState(cur?.label ?? settings.schoolName ?? '')
+  const [label, setLabel] = useState(cur?.label ?? school?.name ?? settings.schoolName ?? '')
   const [msg, setMsg] = useState('')
+  const tried = useRef(false)
+
+  /** 시군구 하나를 고르면: 격자 · 에어코리아 시도 · 측정소 목록과 추천 */
+  const pick = useCallback(
+    async (row: GridRow, keepStation?: string) => {
+      setSido(row.s)
+      setSigungu(row.g)
+      setGrid({ nx: row.x, ny: row.y })
+      const air = airSido(row)
+      setAirName(air)
+      const r = await fetchWx(relay, { wx: 'air', sidoName: air })
+      if (r.error) setMsg(r.error)
+      const list = stationNames(r.items as never)
+      setStations(list)
+      setStation(keepStation && list.includes(keepStation) ? keepStation : suggestStation(list, row))
+    },
+    [relay],
+  )
+
+  // 처음: 저장한 곳이 있으면 그 목록, 없으면 나이스 학교 주소로 자동
+  useEffect(() => {
+    if (tried.current) return
+    tried.current = true
+    const saved = cur?.place ? rowOf(cur.place.split('|')[0], cur.place.split('|')[1]) : undefined
+    if (saved) return void pick(saved, cur?.station)
+    if (cur) return void pick(placeFromGrid(cur.nx, cur.ny), cur.station)
+    if (school?.address) {
+      const p = placeFromAddress(school.address)
+      if (p.row) {
+        setMsg(`나이스 학교 주소(${school.address})로 정했어요. 다르면 아래에서 고쳐 주세요.`)
+        void pick(p.row)
+      } else if (p.sido) setSido(p.sido)
+    }
+  }, [cur, school, pick])
 
   const locate = () => {
-    if (!navigator.geolocation) return setMsg('이 브라우저는 위치를 못 써요.')
+    if (!navigator.geolocation) return setMsg('이 브라우저는 위치를 못 써요. 시도 · 시군구를 골라 주세요.')
     setMsg('위치를 찾는 중…')
     navigator.geolocation.getCurrentPosition(
       (p) => {
-        setGrid(toGrid(p.coords.latitude, p.coords.longitude))
-        setMsg('위치를 찾았어요. 위도 · 경도는 저장하지 않고 기상청 격자 번호만 저장해요.')
+        const g = toGrid(p.coords.latitude, p.coords.longitude)
+        const row = placeFromGrid(g.nx, g.ny)
+        void pick(row).then(() => setGrid(g))
+        setMsg(`${row.s} ${row.g} 근처예요. 위도 · 경도는 저장하지 않고 기상청 격자 번호만 저장해요.`)
       },
-      () => setMsg('위치를 못 받았어요. 브라우저에서 위치 허용을 눌러 주세요.'),
+      () => setMsg('위치를 못 받았어요. 브라우저에서 위치 허용을 누르거나, 시도 · 시군구를 골라 주세요.'),
       { enableHighAccuracy: false, timeout: 15000 },
     )
   }
-  const loadStations = async (s: string) => {
-    setSido(s)
-    setStation('')
-    const r = await fetchWx(relay, { wx: 'air', sidoName: s })
-    if (r.error) setMsg(r.error)
-    setStations(stationNames(r.items as never))
-  }
+
+  const rows = sido ? sigunguOf(sido) : []
 
   return (
     <section className="card space-y-3" aria-label="날씨 위치 정하기">
       <div>
-        <p className="font-extrabold">오늘 날씨 · 미세먼지</p>
-        <p className="hint">학교에서 한 번 정해 두면 홈에 실외 수업 참고가 떠요. 보내는 것은 학교 위치(격자 번호 · 측정소)뿐이에요.</p>
+        <p className="font-extrabold">오늘 날씨 · 미세먼지 · 학교 위치</p>
+        <p className="hint">선생님 학교가 있는 시군구를 정해 두면 홈에 실외 수업 참고가 떠요. 보내는 것은 기상청 격자 번호 · 시도 이름뿐이에요.</p>
       </div>
-      <button type="button" className="btn btn-outline w-full" onClick={locate}>
-        <Icon name="flag" size={18} /> {grid ? `현재 위치로 다시 정하기 (격자 ${grid.nx}, ${grid.ny})` : '학교에서 현재 위치로 정하기'}
-      </button>
       <div className="grid grid-cols-2 gap-2">
-        <select className="field" value={sido} onChange={(e) => void loadStations(e.target.value)} aria-label="시도">
+        <select
+          className="field"
+          value={sido}
+          aria-label="시도"
+          onChange={(e) => {
+            setSido(e.target.value)
+            setSigungu('')
+            setGrid(null)
+            setStations([])
+            setStation('')
+            setMsg('')
+          }}
+        >
           <option value="">시도 고르기</option>
-          {SIDO_LIST.map((s) => (
+          {GRID_SIDO.map((s) => (
             <option key={s} value={s}>
               {s}
             </option>
           ))}
         </select>
-        <select className="field" value={station} disabled={!stations.length} onChange={(e) => setStation(e.target.value)} aria-label="미세먼지 측정소">
-          <option value="">측정소 (학교 가까운 곳)</option>
+        <select
+          className="field"
+          value={sigungu}
+          disabled={!rows.length}
+          aria-label="시군구"
+          onChange={(e) => {
+            const row = rowOf(sido, e.target.value)
+            setMsg('')
+            if (row) void pick(row)
+          }}
+        >
+          <option value="">시군구 고르기</option>
+          {rows.map((r) => (
+            <option key={r.g} value={r.g}>
+              {r.g}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button type="button" className="btn btn-outline w-full" onClick={locate}>
+        <Icon name="flag" size={18} /> 학교에 있다면: 현재 위치로 찾기
+      </button>
+      <label className="block">
+        <span className="text-sm font-bold text-ink-2">미세먼지 측정소 {airName && `(${airName})`}</span>
+        <select className="field mt-1 w-full" value={station} disabled={!stations.length} onChange={(e) => setStation(e.target.value)} aria-label="미세먼지 측정소">
+          <option value="">{stations.length ? '측정소 고르기 (학교 가까운 곳)' : '시군구를 먼저 골라 주세요'}</option>
           {stations.map((s) => (
             <option key={s} value={s}>
               {s}
             </option>
           ))}
         </select>
-      </div>
-      <input className="field w-full" placeholder="이름 (예: 학교)" value={label} onChange={(e) => setLabel(e.target.value)} />
+      </label>
+      <input className="field w-full" placeholder="카드에 보일 이름 (예: 학교)" value={label} onChange={(e) => setLabel(e.target.value)} aria-label="카드에 보일 이름" />
       {msg && <p className="text-sm font-bold text-brand">{msg}</p>}
+      {grid && <p className="text-xs text-ink-3">기상청 격자 {grid.nx}, {grid.ny}</p>}
       <div className="grid grid-cols-2 gap-2">
         {onCancel ? (
           <button type="button" className="btn btn-outline" onClick={onCancel}>
@@ -214,9 +282,12 @@ function WeatherSetup({ relay, onDone, onCancel }: { relay: string; onDone: () =
         <button
           type="button"
           className="btn btn-primary"
-          disabled={!grid || !sido || !station}
+          disabled={!grid || !airName || !station}
           onClick={async () => {
-            await updateSettings({ weatherLoc: { nx: grid!.nx, ny: grid!.ny, sido, station, label: label.trim() || undefined }, weatherCache: null })
+            await updateSettings({
+              weatherLoc: { nx: grid!.nx, ny: grid!.ny, sido: airName, station, label: label.trim() || undefined, place: sido && sigungu ? `${sido}|${sigungu}` : undefined },
+              weatherCache: null,
+            })
             onDone()
           }}
         >

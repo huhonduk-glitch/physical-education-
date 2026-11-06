@@ -15,6 +15,8 @@ export interface WeatherLoc {
   /** 측정소 이름 */
   station: string
   label?: string
+  /** 격자표 시도|시군구 (고르기 칸을 다시 채울 때) */
+  place?: string
 }
 
 export interface Ncst {
