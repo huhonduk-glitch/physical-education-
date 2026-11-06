@@ -15,6 +15,8 @@ export interface WeatherLoc {
   /** 측정소 이름 */
   station: string
   label?: string
+  /** 격자표 시도|시군구 (고르기 칸을 다시 채울 때) */
+  place?: string
 }
 
 export interface Ncst {
@@ -91,6 +93,16 @@ export function fcstBase(now: Date): { date: string; time: string } {
     return { date: ymd(d), time: '2300' }
   }
   return { date: ymd(d), time: `${pad(ok[ok.length - 1])}00` }
+}
+
+/** 오늘 최저 · 최고를 담은 예보: 그날 02시 발표(02:10 전이면 전날 23시) */
+export function dailyBase(now: Date): { date: string; time: string } {
+  const d = new Date(now)
+  if (d.getHours() * 60 + d.getMinutes() < 2 * 60 + 10) {
+    d.setDate(d.getDate() - 1)
+    return { date: ymd(d), time: '2300' }
+  }
+  return { date: ymd(d), time: '0200' }
 }
 
 type Item = { category: string; obsrValue?: string; fcstValue?: string; fcstDate?: string; fcstTime?: string }
