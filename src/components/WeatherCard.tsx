@@ -5,6 +5,7 @@ import {
   PTY_LABEL,
   SIDO_LIST,
   SKY_LABEL,
+  dailyBase,
   fcstBase,
   fetchWx,
   ncstBase,
@@ -44,17 +45,26 @@ export default function WeatherCard() {
     const now = new Date()
     const nb = ncstBase(now)
     const fb = fcstBase(now)
-    const [n, f, a] = await Promise.all([
+    const db = dailyBase(now)
+    const [n, f, a, dy] = await Promise.all([
       fetchWx(relay, { wx: 'ncst', base_date: nb.date, base_time: nb.time, nx: String(loc.nx), ny: String(loc.ny) }),
       fetchWx(relay, { wx: 'fcst', base_date: fb.date, base_time: fb.time, nx: String(loc.nx), ny: String(loc.ny) }),
       fetchWx(relay, { wx: 'air', sidoName: loc.sido }),
+      db.time === fb.time && db.date === fb.date ? Promise.resolve(null) : fetchWx(relay, { wx: 'fcst', base_date: db.date, base_time: db.time, nx: String(loc.nx), ny: String(loc.ny) }),
     ])
     const today = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
     const hhmm = `${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
     const next = {
       fetchedAt: Date.now(),
       ncst: n.error ? cache?.ncst : parseNcst(n.items as never),
-      fcst: f.error ? cache?.fcst : parseFcst(f.items as never, today, hhmm),
+      fcst: f.error
+        ? cache?.fcst
+        : (() => {
+            const cur = parseFcst(f.items as never, today, hhmm)
+            // 최저 · 최고는 02시 예보 쪽이 하루 전체를 담고 있다
+            const day = dy && !dy.error ? parseFcst(dy.items as never, today, hhmm) : null
+            return { ...cur, tmn: cur.tmn ?? day?.tmn, tmx: cur.tmx ?? day?.tmx }
+          })(),
       air: a.error ? cache?.air : parseAir(a.items as never, loc.station) ?? undefined,
     }
     setErr(n.error || a.error || f.error || '')

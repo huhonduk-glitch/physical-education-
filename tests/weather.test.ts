@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 // @ts-expect-error 순수 JS (Cloudflare Worker)
 import { wxQuery } from '../relay/comcigan-worker.js'
-import { fcstBase, itemsOf, ncstBase, outdoorAdvice, parseAir, parseFcst, parseNcst, stationNames, toGrid } from '../src/lib/weather'
+import { dailyBase, fcstBase, itemsOf, ncstBase, outdoorAdvice, parseAir, parseFcst, parseNcst, stationNames, toGrid } from '../src/lib/weather'
 
 describe('날씨 · 미세먼지', () => {
   it('위경도 → 기상청 격자 (서울시청 60,127 · 제주시청 53,38)', () => {
@@ -13,6 +13,8 @@ describe('날씨 · 미세먼지', () => {
     expect(ncstBase(new Date(2026, 10, 6, 9, 45))).toEqual({ date: '20261106', time: '0900' })
     expect(fcstBase(new Date(2026, 10, 6, 8, 5))).toEqual({ date: '20261106', time: '0500' })
     expect(fcstBase(new Date(2026, 10, 6, 1, 0))).toEqual({ date: '20261105', time: '2300' })
+    expect(dailyBase(new Date(2026, 10, 6, 13, 0))).toEqual({ date: '20261106', time: '0200' })
+    expect(dailyBase(new Date(2026, 10, 6, 1, 0))).toEqual({ date: '20261105', time: '2300' })
   })
   it('응답 읽기 · 오류', () => {
     const ok = { response: { header: { resultCode: '00' }, body: { items: { item: [{ category: 'T1H', obsrValue: '12.3' }, { category: 'PTY', obsrValue: '1' }, { category: 'RN1', obsrValue: '강수없음' }] } } } }

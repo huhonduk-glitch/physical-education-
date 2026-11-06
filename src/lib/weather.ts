@@ -93,6 +93,16 @@ export function fcstBase(now: Date): { date: string; time: string } {
   return { date: ymd(d), time: `${pad(ok[ok.length - 1])}00` }
 }
 
+/** 오늘 최저 · 최고를 담은 예보: 그날 02시 발표(02:10 전이면 전날 23시) */
+export function dailyBase(now: Date): { date: string; time: string } {
+  const d = new Date(now)
+  if (d.getHours() * 60 + d.getMinutes() < 2 * 60 + 10) {
+    d.setDate(d.getDate() - 1)
+    return { date: ymd(d), time: '2300' }
+  }
+  return { date: ymd(d), time: '0200' }
+}
+
 type Item = { category: string; obsrValue?: string; fcstValue?: string; fcstDate?: string; fcstTime?: string }
 
 /** 공공데이터포털 응답에서 항목 목록 꺼내기 (오류면 메시지) */
