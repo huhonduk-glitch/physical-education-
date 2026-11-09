@@ -77,7 +77,15 @@ export const NAV: NavSection[] = [
     to: '/class',
     match: ['/class', '/groups', '/plans', '/sports', '/leagues', '/referee', '/timer', '/tools', '/more/absences', '/more/captains', '/students'],
     groups: [
-      { id: 'classes', title: '내 수업반', icon: 'class', items: [{ to: '/groups', label: '수업반 목록', icon: 'class', desc: '누가기록 · 출결 · 일지', feature: 'records' }] },
+      {
+        id: 'classes',
+        title: '내 수업반',
+        icon: 'class',
+        items: [
+          { to: '/groups', label: '수업반 목록', icon: 'class', desc: '누가기록 · 출결 · 일지', feature: 'records' },
+          { to: '/weekly', label: '이번 주 요약', icon: 'list', desc: '지난주 비교 · 챙길 학생', feature: 'records' },
+        ],
+      },
       {
         title: '수업 자료',
         icon: 'book',

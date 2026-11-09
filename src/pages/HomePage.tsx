@@ -7,6 +7,7 @@ import FeatureSheet from '../components/FeatureSheet'
 import Icon from '../components/Icon'
 import InstallGuide from '../components/InstallGuide'
 import WeatherCard from '../components/WeatherCard'
+import WeeklyCard from '../components/WeeklyCard'
 import { longDateLabel, shortDateLabel, todayStr } from '../lib/dates'
 import { dday as ddayOf, upcomingEvents } from '../lib/neisOpenApi'
 import { FEATURES, featureOn } from '../lib/features'
@@ -238,6 +239,12 @@ export default function HomePage() {
           <div className="order-3 xl:order-none">
             <WeatherCard />
           </div>
+          {/* 이번 주 수업 요약 (2026-11-09) — 숫자만, 이름은 요약 화면에서 */}
+          {recordsOn && (
+            <div className="order-5 empty:hidden xl:order-none">
+              <WeeklyCard />
+            </div>
+          )}
           {/* ④ 내 수업반 — 두 칸 격자 (가로로 밀면 뒤 반이 안 보였다) */}
           {recordsOn && groups && groups.length > 0 && (
             <section className="order-5 space-y-2 xl:order-none">
