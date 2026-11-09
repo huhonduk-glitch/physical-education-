@@ -10,8 +10,9 @@ const allSrcs = (): WorkSrc[] =>
   ])
 
 describe('학교체육 업무 안내 자료', () => {
-  it('운동부 · 스포츠클럽 두 가지', () => {
-    expect(WORK_TOPICS.map((t) => t.id)).toEqual(['team', 'club'])
+  it('운동부 · 스포츠클럽 · 체육소위원회', () => {
+    expect(WORK_TOPICS.map((t) => t.id)).toEqual(['team', 'club', 'committee'])
+    expect(workTopic('committee')?.menus).toEqual([]) // 나이스 메뉴는 확인하지 못해 비움
     expect(workTopic('club')?.title).toBe('학교스포츠클럽')
     expect(workTopic('x')).toBeUndefined()
   })

@@ -244,7 +244,7 @@ export default function PapsSchoolPage() {
               ))}
             </div>
             <p className="hint">
-              기본값은 제주특별자치도교육청 「2026학년도 학교체육 운영방향」 24쪽 “대상: 학생건강체력평가 결과 4~5등급, 비만 판정 학생 및 참여 희망자 등”이에요. 희망 학생은 엑셀 명단에 더해 주세요.
+              기본값은 제주특별자치도교육청 「2026학년도 학교체육 운영방향」(누리집 PDF) 24쪽 “대상: 학생건강체력평가 결과 4~5등급, 비만 판정 학생 및 참여 희망자 등”이에요. 희망 학생은 [건강체력교실 운영]에서 더해요.
             </p>
           </div>
           {targets.length === 0 ? (
@@ -266,6 +266,9 @@ export default function PapsSchoolPage() {
               </ul>
             </Collapse>
           )}
+          <Link to="/paps/clinic" className="btn btn-soft w-full">
+            건강체력교실 운영 (참여 학생 · 활동 기록 · 변화 분석) ›
+          </Link>
           <button type="button" className="btn btn-primary w-full" onClick={exportXlsx}>
             엑셀 받기 (서식 14 · 서식 12 · 학급별 · 대상 명단)
           </button>

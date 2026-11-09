@@ -4,7 +4,7 @@ import type { Student } from './types'
 import type { EventId, Factor, FlexMode, PapsStandards } from '../lib/paps'
 import { buildReport, type StudentReport } from '../lib/report'
 import type { StudentPaps } from '../lib/paps'
-import { linkAcrossYears } from '../lib/yearLink'
+import { applyOverrides, linkAcrossYears, type YearLink, type YearLinkOverrides } from '../lib/yearLink'
 import type { SchoolPapsRow } from '../lib/schoolPaps'
 import type { ClinicChange } from '../lib/clinic'
 
@@ -48,10 +48,13 @@ export async function loadYearPaps(
   db: PeDatabase,
   me: Student,
   ctx: { standards: PapsStandards; schoolLevel: string; flexMode: FlexMode },
-): Promise<{ years: { schoolYear: number; grade: number; classNo: number; studentId: string; paps: StudentPaps | null }[]; ambiguous: number[] }> {
+  ov?: YearLinkOverrides,
+): Promise<{ years: { schoolYear: number; grade: number; classNo: number; studentId: string; paps: StudentPaps | null }[]; ambiguous: number[]; links: YearLink<Student>[] }> {
   const name = me.name.replace(/\s+/g, '')
-  const others = (await db.students.toArray()).filter((s) => s.name.replace(/\s+/g, '') === name)
-  const links = linkAcrossYears(me, others)
+  const all = await db.students.toArray()
+  const others = all.filter((s) => s.name.replace(/\s+/g, '') === name)
+  // 교사가 고친 연결(이름이 달라도) — settings.yearLinks
+  const links = applyOverrides(me, linkAcrossYears(me, others), all, ov)
   const people = [me, ...links.map((l) => l.student).filter((s): s is Student => !!s)].sort((a, b) => a.schoolYear - b.schoolYear)
   const years = []
   for (const s of people) {
@@ -61,7 +64,7 @@ export async function loadYearPaps(
     const paps = excluded.has(s.id) ? null : studentSummary(ctx.standards, s, ctx.schoolLevel, selected, values.get(s.id), ctx.flexMode)
     years.push({ schoolYear: s.schoolYear, grade: s.grade, classNo: s.classNo, studentId: s.id, paps })
   }
-  return { years, ambiguous: links.filter((l) => !l.student).map((l) => l.schoolYear) }
+  return { years, ambiguous: links.filter((l) => !l.student && !l.manual).map((l) => l.schoolYear), links }
 }
 
 /**

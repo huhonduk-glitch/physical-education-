@@ -143,6 +143,7 @@ export const NAV: NavSection[] = [
           { to: '/paps/results', label: '결과 · 등급', icon: 'paps', desc: '종합점수 · 등급', feature: 'paps' },
           { to: '/paps/stats', label: '통계 · 그래프', icon: 'grid', desc: '분포 · 회차별 변화', feature: 'paps' },
           { to: '/paps/school', label: '학교 전체 결과', icon: 'list', desc: '학급별 · 건강체력교실 대상', feature: 'paps' },
+          { to: '/paps/clinic', label: '건강체력교실', icon: 'medal', desc: '운영계획 · 참여 · 변화 분석', feature: 'paps' },
           { to: '/paps/export', label: '나이스 파일', icon: 'download', desc: '업로드 파일 만들기', feature: 'paps' },
           { to: '/paps/codes', label: '튼튼몬 코드', icon: 'share', desc: '학생별 코드 · QR', feature: 'paps' },
         ],
@@ -188,6 +189,7 @@ export const NAV: NavSection[] = [
         items: [
           { to: '/work/team', label: '학교운동부 · 학생선수', icon: 'medal', desc: '나이스 할 일 · 규정 · 양식', feature: 'work' },
           { to: '/work/club', label: '학교스포츠클럽', icon: 'team', desc: '등록 · 활동내역 · 학생부', feature: 'work' },
+          { to: '/work/committee', label: '학교체육소위원회', icon: 'list', desc: '구성 · 연 2회 회의 · 심의할 일', feature: 'work' },
           { to: '/work/budget', label: '체육 예산 현황', icon: 'list', desc: '에듀파인 → 구글 시트', feature: 'work' },
         ],
       },

@@ -7,13 +7,16 @@
  *          ※ 1쪽: "교육자료 내 화면들은 교육 당일 기준으로, 화면 레이아웃(버튼위치, 버튼명 등)은 4세대 나이스 개통 전 일부 변경될 수 있습니다."
  *  - plan: 「2026학년도 학교체육 운영방향」 제주특별자치도교육청(161쪽) — 규정 · 일정 · 양식
  *          금액 · 날짜 · 대회처럼 제주에만 해당하는 것은 local: true (다른 시도는 자기 교육청 계획을 따름)
+ *  - final: 같은 문서의 제주교육청 누리집 게시 PDF 「2026 체육교육운영방향(최종)」(176쪽, 체육교육 게시판 2026-02-11) — 쪽수가 161쪽판과 달라
+ *          따로 둔다. 학교체육소위원회(2026-11-09 교사 질문)는 이 판에서 읽었다(Claude가 직접 받아 읽음).
  */
 
-export type WorkDoc = 'neis' | 'plan'
+export type WorkDoc = 'neis' | 'plan' | 'final'
 
 export const WORK_DOCS: Record<WorkDoc, { name: string; short: string; pages: number }> = {
   neis: { name: '4세대 지능형 나이스 PAPS 및 체육 사용자 교육자료', short: '나이스 교육자료', pages: 147 },
   plan: { name: '2026학년도 학교체육 운영방향 (제주특별자치도교육청)', short: '운영방향', pages: 161 },
+  final: { name: '2026 체육교육운영방향(최종) — 제주특별자치도교육청 누리집 게시 PDF', short: '운영방향(누리집 PDF)', pages: 176 },
 }
 
 export interface WorkSrc {
@@ -41,7 +44,7 @@ export interface WorkMenu {
 }
 
 export interface WorkTopic {
-  id: 'team' | 'club'
+  id: 'team' | 'club' | 'committee'
   title: string
   summary: string
   calendar: { when: string; what: string; src: WorkSrc; local?: boolean }[]
@@ -52,6 +55,7 @@ export interface WorkTopic {
 
 const N = (page: WorkSrc['page']): WorkSrc => ({ doc: 'neis', page })
 const P = (page: WorkSrc['page']): WorkSrc => ({ doc: 'plan', page })
+const F = (page: WorkSrc['page']): WorkSrc => ({ doc: 'final', page })
 
 export const NEIS_SCREEN_NOTE = '나이스 교육자료의 화면은 교육 당일 기준이라 4세대 나이스 개통 전 버튼 위치 · 이름이 조금 바뀔 수 있어요.'
 
@@ -309,6 +313,76 @@ export const WORK_TOPICS: WorkTopic[] = [
     ],
   },
 ]
+
+/**
+ * 학교체육소위원회 (2026-11-09 교사 질문 '학교행정업무 중 학교체육소위원회도 들어가 있니?').
+ * 근거는 운영방향 누리집 PDF(176쪽판)만. 나이스 메뉴는 교육자료에서 확인하지 못해 넣지 않았다(menus 비움).
+ */
+WORK_TOPICS.push({
+  id: 'committee',
+  title: '학교체육소위원회',
+  summary: '학교운영위원회 안에 따로 두는 체육 소위원회예요. 학기마다 한 번(연 2회) 꼭 열고, 스포츠클럽 조직 · 운동부 창단과 해체 · 최저학력 과목 대체 같은 일을 심의해요.',
+  calendar: [
+    { when: '학년 초', what: '소위원회 규정 정비 · 위원 구성(5~7명, 외부위원 1명 이상)', src: F([6, 19]), local: true },
+    { when: '3~4월', what: '소위원회를 거쳐 학교스포츠클럽 조직', src: F(37), local: true },
+    { when: '1학기 1회', what: '정기회의 (학기별 1회, 연 2회 의무 개최)', src: F(19), local: true },
+    { when: '2학기 1회', what: '정기회의', src: F([19, 157]), local: true },
+    { when: '필요할 때', what: '임시회의: 위원 3분의 1 이상 요구, 교육감(교육장) 요청, 위원장이 필요하다고 볼 때', src: F(157) },
+  ],
+  menus: [],
+  rules: [
+    {
+      title: '설치 근거와 원칙',
+      lines: [
+        { text: '근거: 초 · 중등교육법 시행령 제60조의2(소위원회), 제주특별자치도 학교운영위원회에 관한 조례 제21조(소위원회)', src: F(19), local: true },
+        { text: '학교운영위원회와 분리해 운영해요 (운영위원회를 급히 모으기 어려운 현안을 처리하려고)', src: F(6), local: true },
+        { text: '대상: 모든 학교', src: F(19), local: true },
+      ],
+    },
+    {
+      title: '구성',
+      lines: [
+        { text: '5~7명 안팎, 외부위원 1명 이상', src: F(19), local: true },
+        { text: '(규정 예시) 위원장 1명 · 부위원장 1명 포함. 당연직: 교감 · 체육 업무 담당 부장(교사)', src: F(156) },
+        { text: '(규정 예시) 위촉 위원: 학교운영위원회 학부모 위원을 넣고, 상담 · 보건 · 학교폭력 담당교사 등에서 학교장이 위촉', src: F(156) },
+        { text: '(규정 예시) 위원장은 위촉 위원 중에서 호선, 부위원장은 교감. 위촉 위원 임기 2년(연임 가능), 간사 1명(교직원 중 위원장이 지명)', src: F(156) },
+      ],
+    },
+    {
+      title: '하는 일 (심의)',
+      lines: [
+        { text: '교육과정 운영, 학교스포츠클럽 육성 · 활성화, 지역사회 체육시설 활용, 학교운동부 운영, 체육시설 관리에 관한 협의', src: F(19), local: true },
+        { text: '(규정 예시) 학생건강체력평가에서 비만 판정을 받은 학생에 대한 대책', src: F(156) },
+        { text: '(규정 예시) 스포츠클럽 조직 · 운영, 학생선수 등록 · 탈퇴, 학생선수 최저학력제 운영, 학교운동부 창단 · 해체', src: F(156) },
+        { text: '(규정 예시) 학생선수 학습권 보장 · 인권 보호, 여학생 체육활동 활성화, 체육 인력 임용 · 지원(학교운영위원회에서 심의하면 생략 가능)', src: F(156) },
+      ],
+    },
+    {
+      title: '회의',
+      lines: [
+        { text: '(규정 예시) 정기회의 매년 2회(반기별) + 임시회의', src: F(157) },
+        { text: '(규정 예시) 참석 대상 위원 과반수 출석으로 열고, 출석 위원 3분의 2 이상 찬성으로 의결', src: F(157) },
+        { text: '(규정 예시) 간사는 안건을 회의 5일 전까지 위원에게 알림(긴급하면 예외). 긴급 사안은 서면결의 후 다음 회의에 보고', src: F(157) },
+        { text: '(규정 예시) 본인이 직접 관련된 사안은 심의에 참여할 수 없음', src: F(157) },
+      ],
+    },
+    {
+      title: '소위원회를 거쳐야 하는 일',
+      lines: [
+        { text: '스포츠클럽 등록 인원이 10명 아래로 불가피할 때 등록 여부 결정', src: F(38), local: true },
+        { text: '(고등학교) 학생선수 최저학력 과목: 영어 · 사회 → 수학 · 과학으로 바꿀 때 소위원회 심의 후 학교장이 결정', src: F(70), local: true },
+        { text: '학교운동부 창단: 교육(지원)청 협의 → 소위원회 개최(학교장 결재) → 학교운영위원회 심의(자문) → 창단계획서 제출', src: F(84), local: true },
+        { text: '학교운동부 해체: 교육(지원)청 사전 협의 → 관계자 협의 → 소위원회 회의(학생선수 진학 · 전출 해결) → 학교운영위원회 심의 → 교육(지원)청 보고(소위원회 회의록 첨부)', src: F(84), local: true },
+        { text: '학교운동부지도자 자격: 학교체육소위원회 승인을 받은 자도 포함', src: F(29), local: true },
+        { text: '운동부 폭력 · 성폭력 신고를 통보받으면 학교장은 소위원회가 조사하게 하고, 소위원회는 조사 결과를 7일 안에 학교장에게 알림 (학생선수보호위원회 운영 규정 제13조)', src: F(151), local: true },
+      ],
+    },
+  ],
+  forms: [
+    { text: '학교체육소위원회 운영 규정(예시)', src: F([156, 157]) },
+    { text: '체육소위원회 회의록 (운동부 해체 보고 때 첨부) — 학교 자체 양식', src: F(84) },
+  ],
+})
 
 export function workTopic(id: string): WorkTopic | undefined {
   return WORK_TOPICS.find((t) => t.id === id)
