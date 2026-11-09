@@ -142,6 +142,7 @@ export const NAV: NavSection[] = [
         items: [
           { to: '/paps/results', label: '결과 · 등급', icon: 'paps', desc: '종합점수 · 등급', feature: 'paps' },
           { to: '/paps/stats', label: '통계 · 그래프', icon: 'grid', desc: '분포 · 회차별 변화', feature: 'paps' },
+          { to: '/paps/school', label: '학교 전체 결과', icon: 'list', desc: '학급별 · 건강체력교실 대상', feature: 'paps' },
           { to: '/paps/export', label: '나이스 파일', icon: 'download', desc: '업로드 파일 만들기', feature: 'paps' },
           { to: '/paps/codes', label: '튼튼몬 코드', icon: 'share', desc: '학생별 코드 · QR', feature: 'paps' },
         ],

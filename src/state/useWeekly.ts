@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo } from 'react'
 import { db } from '../db/db'
 import { addDays, todayStr } from '../lib/dates'
-import { NO_PRAISE_DAYS, weeklySummary } from '../lib/weekly'
+import { praiseSince, weeklySummary } from '../lib/weekly'
 import { useApp } from './AppContext'
 import { useGroups } from './useGroups'
 
@@ -11,7 +11,9 @@ export function useWeekly() {
   const { settings } = useApp()
   const { groups, students, membersOf } = useGroups()
   const today = todayStr()
-  const from = addDays(today, -(NO_PRAISE_DAYS + 7))
+  const praiseFrom = praiseSince(today)
+  const lastMonday = addDays(today, -13)
+  const from = praiseFrom < lastMonday ? praiseFrom : lastMonday
   const data = useLiveQuery(async () => {
     const [records, absences, attendance] = await Promise.all([
       db.records.where('date').between(from, today, true, true).toArray(),
@@ -24,10 +26,11 @@ export function useWeekly() {
     if (!data || !groups) return null
     return weeklySummary({
       today,
+      praiseFrom,
       groups: groups.map((g) => ({ id: g.id, name: g.name, memberIds: membersOf(g).map((s) => s.id) })),
       ...data,
     })
-  }, [data, groups, membersOf, today])
+  }, [data, groups, membersOf, today, praiseFrom])
   return { summary, groups, students, membersOf, today }
 }
 

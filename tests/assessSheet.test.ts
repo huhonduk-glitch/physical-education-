@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { ASSESS_TEMPLATES } from '../src/data/assessTemplates'
 import type { Assessment, AssessmentScore } from '../src/db/types'
-import { areaTotal, checklistBands, itemPoints, levelOf, toggleCheck } from '../src/lib/assessScore'
+import { areaTotal, checklistBands, gradingProgress, itemPoints, levelOf, toggleCheck } from '../src/lib/assessScore'
 import { criteriaLines, recordSheet, sheetStudents } from '../src/lib/assessSheet'
 
 let n = 0
@@ -96,5 +96,21 @@ describe('점수 직접 입력: 기준 점수 밖은 경고 (2026-11-04)', () =>
     expect(directWarn(it0, '25')).toMatch(/기준 점수/)
     expect(directProblem(it0, '31')).toMatch(/0~30/)
     expect(directWarn({ ...it0, allowed: undefined }, '25')).toBeNull()
+  })
+})
+
+describe('채점 · 제출 현황 (2026-11-09)', () => {
+  it('채점 끝 · 남은 학생 · 제출 구분별 수', () => {
+    const a = make('checklist')
+    const it0 = a.items![0]
+    const st = ['p', 'q', 'r', 's'].map((id) => ({ id, gender: 'M' as const }))
+    const sc: Record<string, Partial<AssessmentScore>> = { p: { scores: { [it0.id]: 5 } }, q: { status: '백지 제출' }, r: { status: '미응시(미인정)' } }
+    const g = gradingProgress(a, st, (id) => (sc[id] ? score(sc[id]) : undefined))
+    expect(g.done).toBe(3)
+    expect(g.remaining.map((s) => s.id)).toEqual(['s'])
+    expect(g.bySpecial).toEqual([
+      { label: '백지 제출', count: 1 },
+      { label: '미응시(미인정)', count: 1 },
+    ])
   })
 })

@@ -4,7 +4,8 @@
  * 이번 주(월요일 ~ 오늘)와 지난주 같은 때(지난 월요일 ~ 지난주 오늘 요일)를 수업반마다 견주고 — 월요일에 '지난주 전체'와 견주면 늘 줄어 보여서, 교사가 이번 주에 챙길 것을 모은다.
  *  - 칭찬 · 지도 · 견학 · 결석 수와 지난주 대비 증감
  *  - 지도가 쌓이는 학생: 최근 14일 지도 3번 이상
- *  - 칭찬을 아직 못 받은 학생: 최근 28일 칭찬 0번 (그 수업반에서 기록을 한 날이 있을 때만)
+ *  - 칭찬을 아직 못 받은 학생: 이번 학기(학기 시작이 28일보다 가까우면 최근 28일) 칭찬 0번 — 칭찬을 쓰는 반만
+ *    (2026-11-09 다듬음: 최근 28일만 보면 시연에서 반의 절반이 넘게 나와 너무 많았다)
  * 점수 · 등급으로 바꾸지 않고 횟수만 센다(6-1 A '포인트 = 횟수만'). 학생 이름이 나오므로 홈에는 숫자만, 이름은 요약 화면에서.
  */
 import { addDays } from './dates'
@@ -34,6 +35,8 @@ const zero = (): Counts => ({ praise: 0, guide: 0, absence: 0, absent: 0 })
 
 export interface WeeklyInput {
   today: string
+  /** 칭찬을 세기 시작하는 날 (없으면 최근 28일). praiseSince(today)로 이번 학기 시작 */
+  praiseFrom?: string
   groups: readonly { id: string; name: string; memberIds: readonly string[] }[]
   records: readonly { studentId: string; date: string; type: string; groupId?: string }[]
   absences: readonly { studentId: string; date: string; groupId?: string }[]
@@ -60,7 +63,7 @@ export const NO_PRAISE_DAYS = 28
 export function weeklySummary(input: WeeklyInput): { range: { thisWeek: WeekRange; lastWeek: WeekRange }; groups: GroupWeek[] } {
   const range = weekRanges(input.today)
   const recent14: WeekRange = { from: addDays(input.today, -(GUIDE_REPEAT_DAYS - 1)), to: input.today }
-  const recent28: WeekRange = { from: addDays(input.today, -(NO_PRAISE_DAYS - 1)), to: input.today }
+  const recent28: WeekRange = { from: input.praiseFrom ?? addDays(input.today, -(NO_PRAISE_DAYS - 1)), to: input.today }
   const groups = input.groups.map((g) => {
     const tw = zero()
     const lw = zero()
@@ -94,6 +97,17 @@ export function weeklySummary(input: WeeklyInput): { range: { thisWeek: WeekRang
     return { groupId: g.id, name: g.name, thisWeek: tw, lastWeek: lw, daysThisWeek: days.size, guideRepeat, noPraise }
   })
   return { range, groups }
+}
+
+/**
+ * 칭찬을 세기 시작하는 날: 이번 학기 시작(1학기 3/2 · 2학기 8/17, 진도표 기본 학기와 같음).
+ * 학기가 시작한 지 28일이 안 됐으면 최근 28일.
+ */
+export function praiseSince(today: string): string {
+  const y = Number(today.slice(0, 4))
+  const term = today >= `${y}-08-17` ? `${y}-08-17` : today >= `${y}-03-02` ? `${y}-03-02` : `${y - 1}-08-17`
+  const d28 = addDays(today, -(NO_PRAISE_DAYS - 1))
+  return term < d28 ? term : d28
 }
 
 /** 지난주 대비 증감 글: +3 · −2 · 같음 */
