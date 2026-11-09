@@ -2,17 +2,32 @@
  * PAPS 통계 그래프 (B-4). 라이브러리 없이 SVG로 그려서 오프라인에서도 된다.
  *
  * 색 (dataviz 검증기 통과, 흰 바탕):
- * - 등급 1→5: 파랑 한 가지 색의 진하기 순서 (ordinal ramp, 1등급이 가장 진함)
+ * - 등급 1→5 (2026-11-09 교사: "톤앤톤이라 구분이 안 된다"): 파랑 한 색 진하기 → **좋음 파랑 · 3등급 회색 · 나쁨 빨강**
+ *   양쪽으로 갈리는 색(diverging). 붙은 두 칸 색각 이상 ΔE 14.9 이상 · 보통 눈 18.3 이상. 칸 안에는 등급 숫자도 같이 적는다.
  * - 남·여 비교: 파랑 #2a78d6 · 주황 #eb6834 (색각 이상 ΔE 24.7)
+ * - 회차: 진하기가 아니라 서로 다른 색(파랑 · 주황 · 청록 · 노랑 · 분홍) — 2~3회차 나란히 막대가 한눈에 갈리게
  * 글자는 늘 글자색(ink)이고, 막대·점에만 색을 쓴다. 범례는 2개 이상일 때만.
  */
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 
-export const GRADE_COLORS = ['#104281', '#1c5cab', '#2a78d6', '#5598e7', '#86b6ef'] as const
-/** 등급 칸 안 글자: 진한 칸은 흰 글자, 연한 칸은 진한 글자 */
-const GRADE_TEXT = ['#ffffff', '#ffffff', '#ffffff', '#191f28', '#191f28']
+export const GRADE_COLORS = ['#1c5cab', '#6da7ec', '#cfcdc5', '#ec7a6a', '#b8282b'] as const
+/** 등급 칸 안 글자: 진한 칸(1·5등급)은 흰 글자, 연한 칸은 진한 글자 */
+const GRADE_TEXT = ['#ffffff', '#191f28', '#191f28', '#191f28', '#ffffff']
+/** 분포 그림 바탕 띠 (등급 색을 아주 옅게) */
+const GRADE_TINT = ['#e3edf9', '#eef5fd', '#f4f3f0', '#fdeeec', '#f8e1e1']
 export const GENDER_COLORS = { M: '#2a78d6', F: '#eb6834' } as const
 export const SERIES_1 = '#2a78d6'
+/** 회차 색: 범주색 순서 그대로 (dataviz 기본 팔레트 1~5번) */
+const ROUND_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948']
+const TRACK = '#f2f4f6'
+/** 종합등급 구간 (종합점수 80·60·40·20점, paps-standards.json totalScore) — 추이 그래프 바탕 띠 */
+export const TOTAL_ZONES = [
+  { from: 80, to: 100, grade: 1 },
+  { from: 60, to: 80, grade: 2 },
+  { from: 40, to: 60, grade: 3 },
+  { from: 20, to: 40, grade: 4 },
+  { from: 0, to: 20, grade: 5 },
+]
 const GRID = '#e5e8eb'
 const AXIS = '#6b7684'
 const INK = '#191f28'
@@ -70,12 +85,11 @@ export function Legend({ items }: { items: { label: string; color: string }[] })
 }
 
 /** 종합등급 분포: 회차마다 한 줄, 1~5등급을 100% 누적 막대로 */
-export function GradeStack({ rows }: { rows: { label: string; dist: readonly number[] }[] }) {
+export function GradeStack({ rows, labelW = 92, emptyText = '다 측정한 학생이 없어요' }: { rows: { label: string; dist: readonly number[] }[]; labelW?: number; emptyText?: string }) {
   const [ref, width] = useWidth()
   const [tip, setTip] = useState<Tip | null>(null)
-  const labelW = 92
-  const barH = 26
-  const rowH = 40
+  const barH = 28
+  const rowH = 42
   const plotW = width - labelW - 4
   const h = rows.length * rowH + 4
   return (
@@ -92,7 +106,7 @@ export function GradeStack({ rows }: { rows: { label: string; dist: readonly num
               </text>
               {total === 0 ? (
                 <text x={labelW} y={y + barH / 2} dominantBaseline="middle" fontSize={12} fill={AXIS}>
-                  다 측정한 학생이 없어요
+                  {emptyText}
                 </text>
               ) : (
                 <>
@@ -115,9 +129,10 @@ export function GradeStack({ rows }: { rows: { label: string; dist: readonly num
                         <g key={gi} onPointerEnter={() => show(body)} onClick={() => show(body)}>
                           {/* 칸 사이 2px 바탕색 틈 */}
                           <rect x={x0} y={y} width={Math.max(0, w - 2)} height={barH} fill={GRADE_COLORS[gi]} />
-                          {w > 24 && (
+                          {w > 22 && (
                             <text x={x0 + (w - 2) / 2} y={y + barH / 2} textAnchor="middle" dominantBaseline="middle" fontSize={12} fontWeight={700} fill={GRADE_TEXT[gi]}>
-                              {n}
+                              {/* 넓으면 '2등급 5', 좁으면 숫자만 — 색만으로 등급을 알게 하지 않는다 */}
+                              {w > 62 ? `${gi + 1}등급 ${n}` : n}
                             </text>
                           )}
                         </g>
@@ -141,10 +156,10 @@ export function FactorBars({ items, max = 20 }: { items: { label: string; values
   const [tip, setTip] = useState<Tip | null>(null)
   const labelW = 96
   const per = items[0]?.values.length ?? 1
-  const barH = per > 1 ? 14 : 20
+  const barH = per > 2 ? 14 : per > 1 ? 18 : 24
   const groupH = per * (barH + 4) + 14
   const top = 18
-  const plotW = width - labelW - 44
+  const plotW = width - labelW - (per > 1 ? 80 : 44)
   const xs = (v: number) => labelW + (v / max) * plotW
   const h = top + items.length * groupH
   const ticks = [0, max / 4, max / 2, (max * 3) / 4, max]
@@ -178,9 +193,11 @@ export function FactorBars({ items, max = 20 }: { items: { label: string; values
                 return (
                   <g key={v.key} onPointerEnter={show} onClick={show}>
                     <rect x={labelW} y={y - 2} width={plotW} height={barH + 4} fill="transparent" />
+                    {/* 만점까지 옅은 바탕 막대 — 얼마나 찼는지 한눈에 */}
+                    <rect x={labelW} y={y} width={plotW} height={barH} rx={4} fill={TRACK} />
                     {v.value !== null && v.value > 0 && <rect x={labelW} y={y} width={xs(v.value) - labelW} height={barH} rx={4} fill={v.color} />}
-                    <text x={v.value === null ? labelW + 4 : xs(v.value) + 6} y={y + barH / 2} dominantBaseline="middle" fontSize={12} fontWeight={700} fill={v.value === null ? AXIS : INK2}>
-                      {v.value === null ? '측정 없음' : v.value}
+                    <text x={v.value === null ? labelW + 6 : xs(v.value) + 6} y={y + barH / 2} dominantBaseline="middle" fontSize={per > 1 ? 12 : 13} fontWeight={800} fill={v.value === null ? AXIS : INK}>
+                      {v.value === null ? '측정 없음' : per > 1 ? `${v.label} ${v.value}` : v.value}
                     </text>
                   </g>
                 )
@@ -194,26 +211,39 @@ export function FactorBars({ items, max = 20 }: { items: { label: string; values
   )
 }
 
-/** 회차별 추이: 꺾은선 한 줄 (회차가 x축). 값이 없는 회차는 건너뛴다 */
-export function TrendLine({ points, max, unit }: { points: { label: string; value: number | null; n: number }[]; max: number; unit: string }) {
+/**
+ * 회차별 추이: 꺾은선 한 줄 (회차가 x축). 값이 없는 회차는 건너뛴다.
+ * zones를 주면 바탕에 등급 띠(종합점수 80·60·40·20점 경계)를 옅게 깔아 평균이 몇 등급 자리인지 보인다.
+ */
+export function TrendLine({ points, max, unit, zones }: { points: { label: string; value: number | null; n: number }[]; max: number; unit: string; zones?: { from: number; to: number; grade: number }[] }) {
   const [ref, width] = useWidth()
   const [tip, setTip] = useState<Tip | null>(null)
   const left = 34
-  const right = 20
-  const top = 16
-  const h = 190
+  const right = zones ? 52 : 20
+  const top = 22
+  const h = 210
   const bottom = 36
   const plotH = h - top - bottom
-  const step = points.length > 1 ? (width - left - right) / (points.length - 1) : 0
-  const xs = (i: number) => (points.length > 1 ? left + i * step : (left + width - right) / 2)
+  const inset = 28 // 첫·끝 점이 축에 붙지 않게
+  const step = points.length > 1 ? (width - left - right - inset * 2) / (points.length - 1) : 0
+  const xs = (i: number) => (points.length > 1 ? left + inset + i * step : (left + width - right) / 2)
   const ys = (v: number) => top + plotH - (v / max) * plotH
   const ticks = [0, max / 2, max]
   const has = points.map((p, i) => ({ ...p, i })).filter((p) => p.value !== null)
   const path = has.map((p, k) => `${k ? 'L' : 'M'}${xs(p.i)},${ys(p.value!)}`).join(' ')
-  const last = has[has.length - 1]
+  const area = has.length > 1 ? `${path} L${xs(has[has.length - 1].i)},${ys(0)} L${xs(has[0].i)},${ys(0)} Z` : ''
+  const labelAll = has.length <= 6
   return (
     <div ref={ref} className="relative" onPointerLeave={() => setTip(null)}>
       <svg width={width} height={h} role="img" aria-label="회차별 추이">
+        {zones?.map((z) => (
+          <g key={z.grade}>
+            <rect x={left} y={ys(z.to)} width={width - left - right} height={ys(z.from) - ys(z.to)} fill={GRADE_TINT[z.grade - 1]} />
+            <text x={width - right + 6} y={(ys(z.from) + ys(z.to)) / 2} dominantBaseline="middle" fontSize={11} fontWeight={700} fill={INK2}>
+              {z.grade}등급
+            </text>
+          </g>
+        ))}
         {ticks.map((t) => (
           <g key={t}>
             <line x1={left} x2={width - right} y1={ys(t)} y2={ys(t)} stroke={GRID} strokeWidth={1} />
@@ -227,16 +257,17 @@ export function TrendLine({ points, max, unit }: { points: { label: string; valu
             {p.label}
           </text>
         ))}
-        {has.length > 1 && <path d={path} fill="none" stroke={SERIES_1} strokeWidth={2} strokeLinejoin="round" />}
+        {area && !zones && <path d={area} fill={SERIES_1} opacity={0.1} />}
+        {has.length > 1 && <path d={path} fill="none" stroke={SERIES_1} strokeWidth={2.5} strokeLinejoin="round" />}
         {has.map((p) => (
-          <circle key={p.i} cx={xs(p.i)} cy={ys(p.value!)} r={5} fill={SERIES_1} stroke="#fff" strokeWidth={2} />
+          <circle key={p.i} cx={xs(p.i)} cy={ys(p.value!)} r={6} fill={SERIES_1} stroke="#fff" strokeWidth={2} />
         ))}
-        {last && (
-          <text x={xs(last.i)} y={ys(last.value!) - 12} textAnchor="middle" fontSize={13} fontWeight={800} fill={INK}>
-            {last.value}
+        {(labelAll ? has : has.slice(-1)).map((p) => (
+          <text key={`v${p.i}`} x={xs(p.i)} y={ys(p.value!) - 13} textAnchor="middle" fontSize={13} fontWeight={800} fill={INK} stroke="#fff" strokeWidth={3} paintOrder="stroke">
+            {p.value}
             {unit}
           </text>
-        )}
+        ))}
         {/* 회차마다 넓게 누르는 칸 (점보다 크게) */}
         {points.map((p, i) => {
           const body = (
@@ -273,15 +304,15 @@ export interface StripDot {
 }
 
 /**
- * 종목 기록 분포: 학생 한 명 = 점 하나. 세로선은 공식 기준표의 등급 경계(그 학년·성별).
+ * 종목 기록 분포: 학생 한 명 = 점 하나. 바탕 띠는 공식 기준표의 등급 구역(그 학년·성별) — 띠 위에 'N등급 · M명'.
  * 성별마다 기준이 달라 줄을 나눈다.
  */
-export function DotStrip({ rows, unit }: { rows: { label: string; dots: StripDot[]; bands: { min: number; label: string }[] }[]; unit: string }) {
+export function DotStrip({ rows, unit }: { rows: { label: string; dots: StripDot[]; zones: { min: number | null; grade: number | string }[] }[]; unit: string }) {
   const [ref, width] = useWidth()
   const [tip, setTip] = useState<Tip | null>(null)
   const left = 12
   const right = 12
-  const rowH = 96
+  const rowH = 108
   const all = rows.flatMap((r) => r.dots.map((d) => d.value))
   if (all.length === 0) return <p className="hint">이 요인에 기록이 있는 학생이 없어요.</p>
   let lo = Math.min(...all)
@@ -301,24 +332,35 @@ export function DotStrip({ rows, unit }: { rows: { label: string; dots: StripDot
       <svg width={width} height={h} role="img" aria-label="기록 분포">
         {rows.map((r, ri) => {
           const y0 = ri * rowH
-          const mid = y0 + 56
+          const mid = y0 + 66
           // 같은 자리에 겹치는 점은 위아래로 번갈아 비켜 놓는다
           const used = new Map<number, number>()
-          const inRange = r.bands.filter((b) => b.min > lo && b.min < hi)
+          // 등급 구역 → 화면 안에 보이는 부분만 [a, b)
+          const zs = r.zones
+            .map((z, zi) => ({ ...z, a: Math.max(lo, z.min ?? -Infinity), b: Math.min(hi, r.zones[zi + 1]?.min ?? Infinity) }))
+            .filter((z) => z.b > z.a)
           return (
             <g key={r.label}>
               <text x={0} y={y0 + 14} fontSize={13} fontWeight={700} fill={INK}>
                 {r.label} <tspan fill={AXIS} fontWeight={600}>({r.dots.length}명)</tspan>
               </text>
-              <line x1={left} x2={width - right} y1={mid} y2={mid} stroke={GRID} strokeWidth={1} />
-              {inRange.map((b) => (
-                <g key={b.min}>
-                  <line x1={xs(b.min)} x2={xs(b.min)} y1={y0 + 24} y2={y0 + 88} stroke={GRID} strokeWidth={1} />
-                  <text x={xs(b.min) + 3} y={y0 + 32} fontSize={10} fill={AXIS}>
-                    {b.label}
-                  </text>
-                </g>
-              ))}
+              {zs.map((z) => {
+                const x1 = xs(z.a)
+                const zw = xs(z.b) - x1
+                const g = typeof z.grade === 'number' ? z.grade : null
+                const n = g ? r.dots.filter((d) => d.grade === g).length : 0
+                return (
+                  <g key={String(z.min)}>
+                    <rect x={x1} y={y0 + 22} width={Math.max(0, zw - 1)} height={rowH - 30} fill={g ? GRADE_TINT[g - 1] : TRACK} />
+                    {g && <rect x={x1} y={y0 + 22} width={Math.max(0, zw - 1)} height={4} fill={GRADE_COLORS[g - 1]} />}
+                    {zw > 34 && (
+                      <text x={x1 + zw / 2} y={y0 + 40} textAnchor="middle" fontSize={11} fontWeight={700} fill={INK2}>
+                        {g ? (zw > 64 ? `${g}등급 · ${n}명` : `${g}등급`) : String(z.grade)}
+                      </text>
+                    )}
+                  </g>
+                )
+              })}
               {[...r.dots]
                 .sort((a, b) => a.value - b.value)
                 .map((d) => {
@@ -326,8 +368,8 @@ export function DotStrip({ rows, unit }: { rows: { label: string; dots: StripDot
                   const bucket = Math.round(x / 9)
                   const k = used.get(bucket) ?? 0
                   used.set(bucket, k + 1)
-                  const dy = k === 0 ? 0 : (k % 2 ? -1 : 1) * Math.ceil(k / 2) * 11
-                  const y = mid + Math.max(-26, Math.min(26, dy))
+                  const dy = k === 0 ? 0 : (k % 2 ? -1 : 1) * Math.ceil(k / 2) * 13
+                  const y = mid + Math.max(-22, Math.min(30, dy))
                   const body = (
                     <>
                       {d.name} · {fmt(d.value)}
@@ -339,7 +381,8 @@ export function DotStrip({ rows, unit }: { rows: { label: string; dots: StripDot
                   return (
                     <g key={d.id} onPointerEnter={show} onClick={show}>
                       <circle cx={x} cy={y} r={11} fill="transparent" />
-                      <circle cx={x} cy={y} r={5.5} fill={d.grade ? GRADE_COLORS[d.grade - 1] : AXIS} stroke="#fff" strokeWidth={2} />
+                      <circle cx={x} cy={y} r={6.5} fill={d.grade ? GRADE_COLORS[d.grade - 1] : AXIS} stroke="#fff" strokeWidth={1.5} />
+                      <circle cx={x} cy={y} r={7.5} fill="none" stroke="rgba(25,31,40,0.35)" strokeWidth={1} />
                     </g>
                   )
                 })}
@@ -372,9 +415,7 @@ export function ProfileBars({ factors, series }: { factors: string[]; series: { 
   )
 }
 
-/** 회차 수에 맞춘 진하기 (늦은 회차가 진함) — 같은 등급 파랑 계열 */
+/** 회차 색: 서로 다른 색 (1회차 파랑 · 2회차 주황 · 3회차 청록 …). 8회차가 넘으면 다시 처음 색 */
 export function roundColors(n: number): string[] {
-  const ramp = [...GRADE_COLORS].reverse() // 연한 → 진한
-  if (n <= 1) return [SERIES_1]
-  return Array.from({ length: n }, (_, i) => ramp[Math.round((i / (n - 1)) * (ramp.length - 1))])
+  return Array.from({ length: Math.max(1, n) }, (_, i) => ROUND_COLORS[i % ROUND_COLORS.length])
 }

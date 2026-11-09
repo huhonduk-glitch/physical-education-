@@ -17,6 +17,9 @@ import type { Student } from '../db/types'
 import { useApp } from '../state/AppContext'
 import { usePapsClass } from '../state/usePapsClass'
 import { GradeBadge } from './paps/common'
+import { TOTAL_ZONES, TrendLine } from './paps/charts'
+import { loadYearPaps } from '../db/reportRepo'
+import { FACTORS } from '../lib/paps'
 
 function Card({ title, children, right }: { title: string; children: ReactNode; right?: ReactNode }) {
   return (
@@ -247,6 +250,7 @@ export default function StudentDetailPage() {
         </Card>
 
         <PapsCard student={s} />
+        <YearPapsCard student={s} />
         <AssessCard student={s} />
 
         <Card title="최근 기록 (지우기 가능)">
@@ -310,6 +314,77 @@ function PapsCard({ student }: { student: Student }) {
       <Link to={`/paps/stats?c=${student.grade}-${student.classNo}&s=${student.id}`} className="text-sm font-bold text-brand">
         PAPS 회차별 변화 그래프 ›
       </Link>
+    </Card>
+  )
+}
+
+/**
+ * 학년별 PAPS 변화 (2026-11-09): 다른 학년도에 같은 학생(이름 · 성별 · 학년)이 있을 때만 보인다.
+ * 학년도마다 가장 최근 회차. 학년도 이월로 지난 명렬이 이 기기에 남아 있어야 이어진다.
+ */
+function YearPapsCard({ student }: { student: Student }) {
+  const { standards, settings } = useApp()
+  const data = useLiveQuery(
+    () => loadYearPaps(db, student, { standards, schoolLevel: settings.schoolLevel, flexMode: settings.papsFlexMode }),
+    [student, standards, settings.schoolLevel, settings.papsFlexMode],
+  )
+  if (!data || (data.years.length < 2 && data.ambiguous.length === 0)) return null
+  const label = (y: { schoolYear: number; grade: number }) => `${y.schoolYear} ${settings.schoolLevel}${y.grade}`
+  return (
+    <Card title="학년별 PAPS 변화">
+      {data.years.length >= 2 && (
+        <>
+          <p className="hint">학년도마다 가장 최근 회차의 종합점수예요. 바탕 띠는 종합등급(80 · 60 · 40 · 20점).</p>
+          <TrendLine
+            points={data.years.map((y) => ({ label: label(y), value: y.paps?.complete ? y.paps.total : null, n: 1 }))}
+            max={100}
+            unit="점"
+            zones={TOTAL_ZONES}
+          />
+          <div className="-mx-1 overflow-x-auto px-1">
+            <table className="w-full text-sm tabular-nums">
+              <thead className="text-ink-3">
+                <tr>
+                  <th className="py-1 pr-1 text-left">요인 (20점)</th>
+                  {data.years.map((y) => (
+                    <th key={y.schoolYear} className="px-1 py-1 text-right">
+                      {label(y)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {FACTORS.map((f) => (
+                  <tr key={f} className="border-t border-line">
+                    <td className="py-1 pr-1">{f}</td>
+                    {data.years.map((y) => {
+                      const x = y.paps?.factors.find((v) => v.factor === f)
+                      return (
+                        <td key={y.schoolYear} className="px-1 py-1 text-right">
+                          {x?.points ?? '—'}
+                          {x?.band && <span className="text-ink-3"> · {typeof x.band.grade === 'number' ? `${x.band.grade}등급` : x.band.grade}</span>}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+                <tr className="border-t border-line font-bold">
+                  <td className="py-1 pr-1">종합</td>
+                  {data.years.map((y) => (
+                    <td key={y.schoolYear} className="px-1 py-1 text-right">
+                      {!y.paps ? '—' : y.paps.complete ? `${y.paps.total} · ${y.paps.grade}등급` : `미완료 ${y.paps.sum}`}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+      {data.ambiguous.length > 0 && (
+        <p className="hint">{data.ambiguous.join(' · ')}학년도에 이름 · 성별 · 학년이 같은 학생이 여럿이라 이어 붙이지 않았어요.</p>
+      )}
+      <p className="hint">이름 · 성별 · 학년으로 찾은 것이에요. 다른 학생이 섞였다면 그 학년도 명렬을 확인해 주세요. 나이스 값이 우선입니다.</p>
     </Card>
   )
 }

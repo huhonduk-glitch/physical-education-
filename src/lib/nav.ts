@@ -77,7 +77,15 @@ export const NAV: NavSection[] = [
     to: '/class',
     match: ['/class', '/groups', '/plans', '/sports', '/leagues', '/referee', '/timer', '/tools', '/more/absences', '/more/captains', '/students'],
     groups: [
-      { id: 'classes', title: '내 수업반', icon: 'class', items: [{ to: '/groups', label: '수업반 목록', icon: 'class', desc: '누가기록 · 출결 · 일지', feature: 'records' }] },
+      {
+        id: 'classes',
+        title: '내 수업반',
+        icon: 'class',
+        items: [
+          { to: '/groups', label: '수업반 목록', icon: 'class', desc: '누가기록 · 출결 · 일지', feature: 'records' },
+          { to: '/weekly', label: '이번 주 요약', icon: 'list', desc: '지난주 비교 · 챙길 학생', feature: 'records' },
+        ],
+      },
       {
         title: '수업 자료',
         icon: 'book',
@@ -177,9 +185,9 @@ export const NAV: NavSection[] = [
         title: '학교체육 업무',
         icon: 'medal',
         items: [
-          { to: '/work/team', label: '학교운동부 · 학생선수', icon: 'medal', desc: '나이스 할 일 · 규정 · 양식' },
-          { to: '/work/club', label: '학교스포츠클럽', icon: 'team', desc: '등록 · 활동내역 · 학생부' },
-          { to: '/work/budget', label: '체육 예산 현황', icon: 'list', desc: '에듀파인 → 구글 시트' },
+          { to: '/work/team', label: '학교운동부 · 학생선수', icon: 'medal', desc: '나이스 할 일 · 규정 · 양식', feature: 'work' },
+          { to: '/work/club', label: '학교스포츠클럽', icon: 'team', desc: '등록 · 활동내역 · 학생부', feature: 'work' },
+          { to: '/work/budget', label: '체육 예산 현황', icon: 'list', desc: '에듀파인 → 구글 시트', feature: 'work' },
         ],
       },
       {

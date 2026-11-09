@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Factor, StudentPaps } from '../src/lib/paps'
-import { classStat, factorValues, improvement, needsSupport, type StatInput } from '../src/lib/papsStats'
+import { classStat, factorGradeDist, factorValues, gradeZones, improvement, needsSupport, type StatInput } from '../src/lib/papsStats'
 
 const F: Factor[] = ['심폐지구력', '근력·근지구력', '유연성', '순발력', '비만']
 /** 요인 점수 5개(null = 미측정)로 학생 결과 만들기. 등급은 점수로 대충 (테스트용) */
@@ -98,5 +98,22 @@ describe('분포 그림의 등급 경계', () => {
     // 경계값은 공식표의 그 등급 첫 구간 min 그대로
     for (const e of edges) expect(bands.find((b) => `${b.grade}등급` === e.label)!.min).toBe(e.min)
     expect(gradeEdges([])).toEqual([])
+  })
+})
+
+describe('그래프 개선 (2026-11-09)', () => {
+  it('요인별 등급 분포: 숫자 등급 4요인만, 제외 학생 빼기', () => {
+    const d = factorGradeDist([s('a', paps([20, 18, 16, 2, 20])), s('b', paps([10, null, 8, 10, 20])), s('c', paps([20, 20, 20, 20, 20]), true), s('d', null)])
+    expect(d.map((x) => x.factor)).toEqual(['심폐지구력', '근력·근지구력', '유연성', '순발력'])
+    expect(d[0].dist).toEqual([1, 0, 1, 0, 0]) // 20 → 1등급, 10 → 3등급
+    expect(d[1].dist).toEqual([1, 0, 0, 0, 0])
+    expect(d[3].dist).toEqual([0, 0, 1, 0, 1]) // 2 → 5등급, 10 → 3등급
+  })
+  it('등급 구역: 첫 구역은 끝없이, 그다음은 등급이 바뀌는 곳 (고1남 왕복오래달리기 5→1등급)', async () => {
+    const { DEFAULT_STANDARDS } = await import('../src/lib/paps')
+    const z = gradeZones(DEFAULT_STANDARDS.table.shuttleRun['고1'].M)
+    expect(z.map((x) => x.grade)).toEqual([5, 4, 3, 2, 1])
+    expect(z[0].min).toBeNull()
+    expect(gradeZones([])).toEqual([])
   })
 })

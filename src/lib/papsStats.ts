@@ -148,3 +148,27 @@ export function needsSupport(list: readonly StatInput[]): { id: string; reasons:
   }
   return out
 }
+
+/**
+ * 공식표 구간 → 등급 구역 (분포 그림의 바탕 색 띠). 첫 구역은 공식표 맨 아래 구간부터(min = null = 끝없음).
+ * 낮을수록 좋은 종목(50m 등)은 값이 작은 쪽이 1등급이라 첫 구역이 1등급이다.
+ */
+export function gradeZones(bands: readonly Band[]): { min: number | null; grade: number | string }[] {
+  if (bands.length === 0) return []
+  const out: { min: number | null; grade: number | string }[] = [{ min: null, grade: bands[0].grade }]
+  for (let i = 1; i < bands.length; i++) if (bands[i].grade !== bands[i - 1].grade) out.push({ min: bands[i].min, grade: bands[i].grade })
+  return out
+}
+
+/** 요인마다 등급 1~5 학생 수 (숫자 등급 요인만 — 비만 BMI는 판정명이라 뺀다). 이 요인을 측정한 학생만 */
+export function factorGradeDist(list: readonly StatInput[]): { factor: Factor; dist: [number, number, number, number, number] }[] {
+  return FACTORS.filter((f) => f !== '비만').map((factor) => {
+    const dist: [number, number, number, number, number] = [0, 0, 0, 0, 0]
+    for (const s of list) {
+      if (s.excluded) continue
+      const g = s.paps?.factors.find((x) => x.factor === factor)?.band?.grade
+      if (typeof g === 'number' && g >= 1 && g <= 5) dist[g - 1]++
+    }
+    return { factor, dist }
+  })
+}

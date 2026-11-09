@@ -3,6 +3,8 @@ import { indexResults, loadClassPapsPicked, studentSummary } from './papsRepo'
 import type { Student } from './types'
 import type { EventId, Factor, FlexMode, PapsStandards } from '../lib/paps'
 import { buildReport, type StudentReport } from '../lib/report'
+import type { StudentPaps } from '../lib/paps'
+import { linkAcrossYears } from '../lib/yearLink'
 
 /** 학생 여러 명의 리포트를 한 번에 (반마다 PAPS 설정을 따로 읽는다) */
 export async function loadReports(
@@ -34,4 +36,28 @@ export async function loadReports(
   return students.map((s) =>
     buildReport(s, { records, absences, captains, keywords, assessments, scores, groups, paps: papsOf.get(s.id)?.paps ?? null, papsExcluded: papsOf.get(s.id)?.excluded ?? false }),
   )
+}
+
+/**
+ * 학년도를 넘는 PAPS (2026-11-09): 이 학생과 다른 학년도의 같은 학생(이름 · 성별 · 학년, src/lib/yearLink.ts)마다
+ * 그 학년도 가장 최근 회차 결과. 학년도 순, 이 학년도 포함.
+ */
+export async function loadYearPaps(
+  db: PeDatabase,
+  me: Student,
+  ctx: { standards: PapsStandards; schoolLevel: string; flexMode: FlexMode },
+): Promise<{ years: { schoolYear: number; grade: number; classNo: number; studentId: string; paps: StudentPaps | null }[]; ambiguous: number[] }> {
+  const name = me.name.replace(/\s+/g, '')
+  const others = (await db.students.toArray()).filter((s) => s.name.replace(/\s+/g, '') === name)
+  const links = linkAcrossYears(me, others)
+  const people = [me, ...links.map((l) => l.student).filter((s): s is Student => !!s)].sort((a, b) => a.schoolYear - b.schoolYear)
+  const years = []
+  for (const s of people) {
+    const d = await loadClassPapsPicked(db, s.schoolYear, s.grade, s.classNo, [s.id], 'latest')
+    const { values, excluded } = indexResults(d.results)
+    const selected = (d.config?.selectedEvents ?? {}) as Partial<Record<Factor, EventId>>
+    const paps = excluded.has(s.id) ? null : studentSummary(ctx.standards, s, ctx.schoolLevel, selected, values.get(s.id), ctx.flexMode)
+    years.push({ schoolYear: s.schoolYear, grade: s.grade, classNo: s.classNo, studentId: s.id, paps })
+  }
+  return { years, ambiguous: links.filter((l) => !l.student).map((l) => l.schoolYear) }
 }

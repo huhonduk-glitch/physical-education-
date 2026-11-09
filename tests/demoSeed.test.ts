@@ -23,7 +23,7 @@ describe('시연용 가상 자료', () => {
   it('가상 학생 60명 · 수업반 4개 · 시간표 · 누가기록 · 일지 · PAPS · 수행평가를 넣는다', async () => {
     const db = fresh()
     expect(await seedDemo(db, { now: NOW, pin: PIN })).toBe(true)
-    expect(await db.students.count()).toBe(60)
+    expect(await db.students.count()).toBe(80) // 이 학년도 60 + 지난 학년도 1-3반 20
     const groups = await db.groups.toArray()
     expect(groups.map((g) => g.kind).sort()).toEqual(['elective', 'homeroom', 'homeroom', 'homeroom'])
     expect(await db.records.count()).toBeGreaterThan(40)
@@ -53,7 +53,7 @@ describe('시연용 가상 자료', () => {
   it('이름은 모두 가명 목록의 조합이고 겹치지 않는다', async () => {
     const db = fresh()
     await seedDemo(db, { now: NOW, pin: PIN })
-    const names = (await db.students.toArray()).map((x) => x.name)
+    const names = (await db.students.where('schoolYear').equals(2026).toArray()).map((x) => x.name)
     for (const name of names) {
       expect(DEMO_NAME_PARTS.SURNAMES).toContain(name[0])
       expect(DEMO_NAME_PARTS.GIVEN).toContain(name.slice(1))
@@ -75,11 +75,25 @@ describe('시연용 가상 자료', () => {
     expect((await loadRounds(db, 2026, 1, 2)).length).toBe(1)
   })
 
+  it('지난 학년도: 2-1 학생이 작년 1-3반으로 있고 PAPS가 있어 학년별 변화가 이어진다', async () => {
+    const db = fresh()
+    await seedDemo(db, { now: NOW, pin: PIN })
+    const { loadYearPaps } = await import('../src/db/reportRepo')
+    const { DEFAULT_STANDARDS } = await import('../src/lib/paps')
+    const me = (await db.students.where('schoolYear').equals(2026).toArray()).find((x) => x.grade === 2 && x.number === 1)!
+    const r = await loadYearPaps(db, me, { standards: DEFAULT_STANDARDS, schoolLevel: '고', flexMode: 'regulation' })
+    expect(r.years.map((y) => [y.schoolYear, y.grade])).toEqual([
+      [2025, 1],
+      [2026, 2],
+    ])
+    expect(r.years.every((y) => y.paps?.complete)).toBe(true)
+  })
+
   it('한 번만 넣는다 (두 번째 열 때는 그대로)', async () => {
     const db = fresh()
     await seedDemo(db, { now: NOW, pin: PIN })
     expect(await seedDemo(db, { now: NOW, pin: PIN })).toBe(false)
-    expect(await db.students.count()).toBe(60)
+    expect(await db.students.count()).toBe(80) // 이 학년도 60 + 지난 학년도 1-3반 20
   })
 
   it('같은 씨앗이면 같은 반이 만들어진다', async () => {
