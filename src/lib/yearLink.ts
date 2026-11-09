@@ -21,7 +21,15 @@ export interface YearLink<S extends YearStudent = YearStudent> {
   student: S | null
   /** 같은 이름 · 성별 · 학년 후보 수 (2 이상이면 이어 붙이지 않음) */
   candidates: number
+  /** 후보 학생들 (교사가 고를 때) */
+  options: S[]
+  /** 교사가 직접 고르거나 끊었는지 */
+  manual?: boolean
 }
+
+/** 교사가 고친 연결: '학생id|학년도' → 다른 학년도 학생 id 또는 'none'(잇지 않기) */
+export type YearLinkOverrides = Record<string, string>
+export const overrideKey = (studentId: string, schoolYear: number) => `${studentId}|${schoolYear}`
 
 const norm = (s: string) => s.replace(/\s+/g, '')
 
@@ -37,5 +45,26 @@ export function linkAcrossYears<S extends YearStudent>(me: YearStudent, all: rea
   }
   return [...byYear]
     .sort((a, b) => a[0] - b[0])
-    .map(([schoolYear, list]) => ({ schoolYear, student: list.length === 1 ? list[0] : null, candidates: list.length }))
+    .map(([schoolYear, list]) => ({ schoolYear, student: list.length === 1 ? list[0] : null, candidates: list.length, options: list }))
+}
+
+/**
+ * 교사가 고친 연결을 덮어씀 (2026-11-09): 'none'이면 그 학년도는 끊고, 학생 id면 그 학생으로(후보에 없어도 — 개명 · 전학 등).
+ * 자동으로 못 찾은 학년도라도 교사가 이은 학생이 있으면 더한다.
+ */
+export function applyOverrides<S extends YearStudent>(me: YearStudent, links: readonly YearLink<S>[], all: readonly S[], ov: YearLinkOverrides | undefined): YearLink<S>[] {
+  if (!ov) return [...links]
+  const out = links.map((l) => {
+    const v = ov[overrideKey(me.id, l.schoolYear)]
+    if (v === undefined) return l
+    if (v === 'none') return { ...l, student: null, manual: true }
+    return { ...l, student: all.find((s) => s.id === v) ?? null, manual: true }
+  })
+  for (const [k, v] of Object.entries(ov)) {
+    const [sid, y] = k.split('|')
+    if (sid !== me.id || v === 'none' || out.some((l) => l.schoolYear === Number(y))) continue
+    const s = all.find((x) => x.id === v)
+    if (s) out.push({ schoolYear: Number(y), student: s, candidates: 0, options: [], manual: true })
+  }
+  return out.sort((a, b) => a.schoolYear - b.schoolYear)
 }

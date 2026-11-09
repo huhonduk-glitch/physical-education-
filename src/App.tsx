@@ -57,6 +57,7 @@ const PapsPastePage = lazy(() => import('./pages/paps/PapsPastePage'))
 const PapsResultsPage = lazy(() => import('./pages/paps/PapsResultsPage'))
 const PapsStatsPage = lazy(() => import('./pages/paps/PapsStatsPage'))
 const PapsSchoolPage = lazy(() => import('./pages/paps/PapsSchoolPage'))
+const ClinicPage = lazy(() => import('./pages/paps/ClinicPage'))
 const WeeklyPage = lazy(() => import('./pages/WeeklyPage'))
 const PapsExportPage = lazy(() => import('./pages/paps/PapsExportPage'))
 const PapsSetupPage = lazy(() => import('./pages/paps/PapsSetupPage'))
@@ -74,6 +75,8 @@ const ClassSummaryPage = lazy(() => import('./pages/ClassSummaryPage'))
 const DataPage = lazy(() => import('./pages/DataPage'))
 const BudgetPage = lazy(() => import('./pages/BudgetPage'))
 const WorkGuidePage = lazy(() => import('./pages/WorkGuidePage'))
+const WorkDocsPage = lazy(() => import('./pages/WorkDocsPage'))
+const CommitteePage = lazy(() => import('./pages/CommitteePage'))
 const SharePage = lazy(() => import('./pages/SharePage'))
 const WorkCalendarPage = lazy(() => import('./pages/WorkCalendarPage'))
 const SpacePage = lazy(() => import('./pages/space/SpacePage'))
@@ -204,6 +207,7 @@ export default function App() {
           <Route path="/paps/results" element={<PapsResultsPage />} />
           <Route path="/paps/stats" element={<PapsStatsPage />} />
           <Route path="/paps/school" element={<PapsSchoolPage />} />
+          <Route path="/paps/clinic" element={<ClinicPage />} />
           <Route path="/paps/export" element={<PapsExportPage />} />
           <Route path="/paps/setup" element={<PapsSetupPage />} />
           <Route path="/paps/codes" element={<PapsLinkCodesPage />} />
@@ -225,6 +229,8 @@ export default function App() {
           <Route path="/work/space" element={<SpacePage />} />
           <Route path="/work/lend" element={<LendPage />} />
           <Route path="/work/book" element={<BookPage />} />
+          <Route path="/work/docs" element={<WorkDocsPage />} />
+          <Route path="/work/committee/meetings" element={<CommitteePage />} />
           <Route path="/work/:topic" element={<WorkGuidePage />} />
           <Route path="/share" element={<SharePage />} />
           <Route path="/more/assessments" element={<AssessmentsPage />} />

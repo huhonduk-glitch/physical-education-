@@ -84,6 +84,12 @@ export interface AppSettings {
   budgetLayout: import('../lib/budget').SheetLayout
   /** 건강체력교실 대상 기준 (학교 지침에 맞게, 기본 종합 4·5등급 · 경도 · 고도비만) */
   clinicRule: import('../lib/schoolPaps').ClinicRule
+  /** 건강체력교실 운영 (학년도 → 운영계획 · 참여 학생 · 활동 기록). 학생 id가 들어가 백업에 함께 간다 */
+  clinic: Record<string, import('../lib/clinic').ClinicYear>
+  /** 학년별 PAPS 이어 붙이기를 교사가 고친 것 ('학생id|학년도' → 다른 학년도 학생 id 또는 'none') */
+  yearLinks: import('../lib/yearLink').YearLinkOverrides
+  /** 학교체육소위원회 (학년도 → 위원 · 회의 기록). 교직원 · 학부모 이름만, 학생 정보 없음 */
+  committee: Record<string, import('../lib/committee').CommitteeYear>
   /** 업무 달력 일정 (같이 쓰기 6-13, 이 기기에만 · 학생 정보 없음) */
   workEvents: import('../lib/workCal').WorkEvent[]
   /** 학교 공유 공간 연결 (0-4 예외 6-13). 비밀번호가 있어 백업 파일에서 뺀다(SECRET_KEYS) */
@@ -175,6 +181,9 @@ export function defaultSettings(): AppSettings {
     budgetManual: [],
     workEvents: [],
     clinicRule: { lowGrades: [4, 5], obeseLabels: ['경도비만', '고도비만'] },
+    clinic: {},
+    yearLinks: {},
+    committee: {},
     space: null,
     weatherLoc: null,
     weatherCache: null,

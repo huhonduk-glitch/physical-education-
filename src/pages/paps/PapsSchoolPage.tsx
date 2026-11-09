@@ -6,7 +6,7 @@ import PageHeader from '../../components/PageHeader'
 import { db } from '../../db/db'
 import { loadSchoolPaps } from '../../db/reportRepo'
 import { saveXlsx } from '../../lib/download'
-import { BMI_LABELS, clinicTargets, rate, schoolPapsStats, type ClassPapsStat } from '../../lib/schoolPaps'
+import { BMI_LABELS, clinicTargets, compareYears, rate, resultFormRows, schoolPapsStats, unmeasuredRows, yearImprovers, type ClassPapsStat } from '../../lib/schoolPaps'
 import { useApp } from '../../state/AppContext'
 import { GRADE_COLORS, GradeStack, Legend } from './charts'
 
@@ -21,7 +21,13 @@ export default function PapsSchoolPage() {
     () => loadSchoolPaps(db, settings.schoolYear, { standards, schoolLevel: settings.schoolLevel, flexMode: settings.papsFlexMode }),
     [settings.schoolYear, standards, settings.schoolLevel, settings.papsFlexMode],
   )
+  const lastRows = useLiveQuery(
+    () => loadSchoolPaps(db, settings.schoolYear - 1, { standards, schoolLevel: settings.schoolLevel, flexMode: settings.papsFlexMode }),
+    [settings.schoolYear, standards, settings.schoolLevel, settings.papsFlexMode],
+  )
   const stats = useMemo(() => (rows ? schoolPapsStats(rows, rule) : null), [rows, rule])
+  const years = useMemo(() => (rows && lastRows?.some((r) => r.paps?.complete) ? compareYears(rows, lastRows, rule) : []), [rows, lastRows, rule])
+  const improvers = useMemo(() => (rows && lastRows ? yearImprovers(rows, lastRows, 10) : []), [rows, lastRows])
   const targets = useMemo(() => (rows ? clinicTargets(rows, rule) : []), [rows, rule])
   const lv = settings.schoolLevel
   const lowLabel = `종합 ${rule.lowGrades.join('·')}등급`
@@ -58,7 +64,42 @@ export default function PapsSchoolPage() {
   ]
   const exportXlsx = () => {
     const head = ['학급', '대상 학생', '다 측정', '측정 제외', '1등급', '2등급', '3등급', '4등급', '5등급', '평균 종합점수', `저체력(${lowLabel})`, '저체력 비율', `비만(${obeseLabel})`]
+    // 운영방향 서식 14 (학년마다 1~5등급 · 4~5등급 남 · 여 · 계 · 비율, 전체인원) — 머리글 두 줄 병합 그대로
+    const form = resultFormRows(rows ?? [])
+    const bands = ['1등급', '2등급', '3등급', '4등급', '5등급', '4~5등급']
+    const formHead1 = ['연번', '학교급', '학교명', '학년', ...bands.flatMap((b) => [b, '', '', '']), '전체인원']
+    const formHead2 = ['', '', '', '', ...bands.flatMap(() => ['남', '여', '계', '비율']), '']
+    const formMerges = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 28 } },
+      ...[0, 1, 2, 3, 28].map((c) => ({ s: { r: 2, c }, e: { r: 3, c } })),
+      ...bands.map((_, i) => ({ s: { r: 2, c: 4 + i * 4 }, e: { r: 2, c: 7 + i * 4 } })),
+    ]
+    const unmeasured = unmeasuredRows(rows ?? [])
     void saveXlsx(`학교PAPS_${settings.schoolYear}.xlsx`, [
+      {
+        name: '14. PAPS 측정결과',
+        rows: [
+          [`${settings.schoolYear}학년도 PAPS 측정결과`],
+          [],
+          formHead1,
+          formHead2,
+          ...form.map((f, i) => [i + 1, lv, settings.schoolName, `${f.grade}학년`, ...f.cells.flatMap((c) => [c.M, c.F, c.total, c.rate]), f.total]),
+        ],
+        widths: [5, 6, 14, 6, ...bands.flatMap(() => [5, 5, 5, 7]), 8],
+        merges: formMerges,
+      },
+      {
+        name: '12. 미측정 학생 관리부',
+        rows: [
+          [`${settings.schoolYear}학년도 학생건강체력평가제(PAPS) 특수교육 대상자 및 미측정 학생 관리부`],
+          [],
+          ['학교명', settings.schoolName],
+          [],
+          ['학반', '번호', '성명', '성별', '구분', '비고 (특수교육 대상자는 장애 구분, 미측정 학생은 사유)'],
+          ...unmeasured.map((u) => [`${u.row.grade}-${u.row.classNo}`, u.row.number, u.row.name, u.row.gender === 'M' ? '남' : u.row.gender === 'F' ? '여' : '', '미측정 학생', u.note]),
+        ],
+        widths: [8, 6, 10, 6, 12, 50],
+      },
       {
         name: '학급별 결과',
         rows: [
@@ -202,7 +243,9 @@ export default function PapsSchoolPage() {
                 </button>
               ))}
             </div>
-            <p className="hint">기본값 종합 4·5등급 = 저체력은 교육부 발표에서 쓰는 분류예요. 희망 학생도 참여할 수 있으면 엑셀에서 더해 주세요.</p>
+            <p className="hint">
+              기본값은 제주특별자치도교육청 「2026학년도 학교체육 운영방향」(누리집 PDF) 24쪽 “대상: 학생건강체력평가 결과 4~5등급, 비만 판정 학생 및 참여 희망자 등”이에요. 희망 학생은 [건강체력교실 운영]에서 더해요.
+            </p>
           </div>
           {targets.length === 0 ? (
             <p className="hint">대상 후보가 없어요.</p>
@@ -223,10 +266,69 @@ export default function PapsSchoolPage() {
               </ul>
             </Collapse>
           )}
+          <Link to="/paps/clinic" className="btn btn-soft w-full">
+            건강체력교실 운영 (참여 학생 · 활동 기록 · 변화 분석) ›
+          </Link>
           <button type="button" className="btn btn-primary w-full" onClick={exportXlsx}>
-            학급별 결과 · 대상 명단 엑셀 받기
+            엑셀 받기 (서식 14 · 서식 12 · 학급별 · 대상 명단)
           </button>
         </section>
+
+        {years.length > 0 && (
+          <section className="card space-y-2">
+            <div>
+              <p className="card-title">작년과 비교</p>
+              <p className="hint">같은 학년끼리 견줘요 ({settings.schoolYear - 1} ↔ {settings.schoolYear}). 지난 학년도 명렬 · PAPS가 이 기기에 있을 때만 나와요.</p>
+            </div>
+            <div className="-mx-1 overflow-x-auto px-1">
+              <table className="w-full text-sm whitespace-nowrap tabular-nums">
+                <thead className="text-ink-3">
+                  <tr>
+                    <th className="py-1.5 pr-2 text-left">학년</th>
+                    <th className="px-1 text-right">평균 (작년 → 올해)</th>
+                    <th className="px-1 text-right">저체력 비율 (작년 → 올해)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {years.map((y) => (
+                    <tr key={y.grade} className="border-t border-line">
+                      <td className="py-1.5 pr-2 font-bold">
+                        {lv}
+                        {y.grade}
+                      </td>
+                      <td className="px-1 text-right">
+                        {y.last?.avgTotal ?? '—'} → <b>{y.now?.avgTotal ?? '—'}</b>
+                      </td>
+                      <td className="px-1 text-right">
+                        {y.last ? rate(y.last.low, y.last.complete) : '—'} → <b>{y.now ? rate(y.now.low, y.now.complete) : '—'}</b>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        )}
+
+        {improvers.length > 0 && (
+          <Collapse title={`전년 대비 많이 향상된 학생 ${improvers.length}명`} sub="운영방향 22쪽 PAPS 우수학생 표창 예시 · 학생 이름이 나와요" className="card">
+            <ul className="divide-y divide-line">
+              {improvers.map((x) => (
+                <li key={x.row.studentId}>
+                  <Link to={`/students/${x.row.studentId}`} className="flex min-h-[44px] items-center gap-2">
+                    <span className="w-16 shrink-0 text-sm text-ink-3 tabular-nums">
+                      {x.row.grade}-{x.row.classNo}-{x.row.number}
+                    </span>
+                    <b className="min-w-0 flex-1 truncate">{x.row.name}</b>
+                    <span className="shrink-0 text-sm tabular-nums">
+                      {x.before} → {x.after} <b className="text-ok">+{x.delta}</b>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Collapse>
+        )}
       </div>
     </>
   )

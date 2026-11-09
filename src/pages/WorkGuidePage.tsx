@@ -24,7 +24,9 @@ const TABS: { id: Tab; label: string }[] = [
 export default function WorkGuidePage() {
   const { topic: id = '' } = useParams()
   const topic = workTopic(id)
-  const [tab, setTab] = useState<Tab>('neis')
+  const [tabPick, setTab] = useState<Tab>('neis')
+  // 나이스 메뉴가 없는 주제(체육소위원회)는 규정부터
+  const tab: Tab = tabPick === 'neis' && topic && topic.menus.length === 0 ? 'rules' : tabPick
   const [open, setOpen] = useState<string | null>(null)
   const [docs, setDocs] = useState<StoredDocMeta[]>([])
   const [viewer, setViewer] = useState<{ doc: WorkDoc; page: number; title: string } | null>(null)
@@ -44,16 +46,30 @@ export default function WorkGuidePage() {
 
         <div className="flex gap-2">
           {WORK_TOPICS.map((t) => (
-            <Link key={t.id} to={`/work/${t.id}`} replace className={`btn flex-1 ${t.id === topic.id ? 'btn-primary' : 'btn-outline'}`}>
-              {t.id === 'team' ? '학교운동부' : '스포츠클럽'}
+            <Link key={t.id} to={`/work/${t.id}`} replace className={`btn flex-1 px-2 whitespace-nowrap ${t.id === topic.id ? 'btn-primary' : 'btn-outline'}`}>
+              {t.id === 'team' ? '운동부' : t.id === 'club' ? '스포츠클럽' : '소위원회'}
             </Link>
           ))}
         </div>
 
+        {topic.id === 'committee' && (
+          <Link to="/work/committee/meetings" className="card flex min-h-[64px] items-center gap-3 active:bg-fill">
+            <Icon name="edit" className="shrink-0 text-brand" />
+            <span className="min-w-0 flex-1">
+              <b className="block">회의 기록 · 회의록</b>
+              <span className="hint">위원 명단 · 학기별 정기회의 현황 · 회의록 인쇄</span>
+            </span>
+            <Icon name="chevronRight" className="text-ink-3" />
+          </Link>
+        )}
+        <Link to="/work/docs" className="block px-1 text-sm font-bold text-brand">
+          나이스와 따로, 매년 기안해야 하는 계획 · 제출 일정 · 양식 ›
+        </Link>
+
         <DocFiles docs={docs} onChange={() => void refresh()} />
 
         <div className="segment" role="tablist">
-          {TABS.map((t) => (
+          {TABS.filter((t) => t.id !== 'neis' || (topic?.menus.length ?? 0) > 0).map((t) => (
             <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}>
               {t.label}
             </button>

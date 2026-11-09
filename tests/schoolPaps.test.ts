@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Factor, StudentPaps } from '../src/lib/paps'
-import { clinicTargets, DEFAULT_CLINIC_RULE, rate, schoolPapsStats, type SchoolPapsRow } from '../src/lib/schoolPaps'
+import { clinicTargets, compareYears, DEFAULT_CLINIC_RULE, rate, resultFormRows, schoolPapsStats, unmeasuredRows, yearImprovers, type SchoolPapsRow } from '../src/lib/schoolPaps'
 
 const F: Factor[] = ['심폐지구력', '근력·근지구력', '유연성', '순발력', '비만']
 /** 종합등급 · BMI 판정으로 학생 결과 (테스트용) */
@@ -57,5 +57,47 @@ describe('학교 전체 PAPS · 건강체력교실', () => {
   it('비율 글', () => {
     expect(rate(169, 1000)).toBe('16.9%')
     expect(rate(1, 0)).toBe('—')
+  })
+})
+
+describe('운영방향 서식 · 작년 비교 (2026-11-09)', () => {
+  const mk = (grade: number, g: number | null, gender: 'M' | 'F', name = `x${++n}`, total = 50, excluded = false, excludeReason?: string): SchoolPapsRow => ({
+    studentId: `t${++n}`,
+    grade,
+    classNo: 1,
+    number: n,
+    name,
+    gender,
+    paps: g === null ? null : paps(g, '정상', total),
+    excluded,
+    ...(excludeReason ? { excludeReason } : {}),
+  })
+  it('서식 14: 학년마다 1~5등급 남 · 여 · 계 · 비율과 4~5등급, 전체인원 = 등급이 나온 학생', () => {
+    const rows = [mk(1, 1, 'M'), mk(1, 1, 'F'), mk(1, 4, 'M'), mk(1, 5, 'F'), mk(1, null, 'M'), mk(2, 3, 'F')]
+    const f = resultFormRows(rows)
+    expect(f.map((x) => [x.grade, x.total])).toEqual([
+      [1, 4],
+      [2, 1],
+    ])
+    expect(f[0].cells[0]).toEqual({ M: 1, F: 1, total: 2, rate: 50 })
+    expect(f[0].cells[5]).toEqual({ M: 1, F: 1, total: 2, rate: 50 }) // 4~5등급
+    expect(f[0].cells[2].total).toBe(0)
+  })
+  it('서식 12: 측정 제외(사유)와 다 측정 못 한 학생', () => {
+    const rows = [mk(1, 2, 'M'), mk(1, null, 'F', '가', 0, true, '발목 부상'), mk(1, null, 'M', '나')]
+    expect(unmeasuredRows(rows).map((x) => [x.row.name, x.note])).toEqual([
+      ['가', '측정 제외 · 발목 부상'],
+      ['나', '기록 없음'],
+    ])
+  })
+  it('작년 같은 학년과 비교 · 전년 대비 향상 학생 (이름 · 성별 같고 한 학년 위, 오른 학생만)', () => {
+    const last = [mk(1, 4, 'M', '김하늘', 30), mk(1, 3, 'F', '이바다', 50), mk(1, 3, 'F', '박구름', 55)]
+    const now = [mk(2, 2, 'M', '김하늘', 70), mk(2, 3, 'F', '이바다', 45), mk(1, 2, 'F', '박구름', 60), mk(1, 5, 'M', '최별', 10)]
+    const c = compareYears(now, last)
+    expect(c.map((x) => [x.grade, x.last?.complete ?? 0, x.now?.complete ?? 0])).toEqual([
+      [1, 3, 2],
+      [2, 0, 2],
+    ])
+    expect(yearImprovers(now, last).map((x) => [x.row.name, x.before, x.after, x.delta])).toEqual([['김하늘', 30, 70, 40]])
   })
 })

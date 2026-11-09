@@ -19,6 +19,7 @@ import { usePapsClass } from '../state/usePapsClass'
 import { GradeBadge } from './paps/common'
 import { TOTAL_ZONES, TrendLine } from './paps/charts'
 import { loadYearPaps } from '../db/reportRepo'
+import { overrideKey } from '../lib/yearLink'
 import { FACTORS } from '../lib/paps'
 
 function Card({ title, children, right }: { title: string; children: ReactNode; right?: ReactNode }) {
@@ -323,12 +324,18 @@ function PapsCard({ student }: { student: Student }) {
  * 학년도마다 가장 최근 회차. 학년도 이월로 지난 명렬이 이 기기에 남아 있어야 이어진다.
  */
 function YearPapsCard({ student }: { student: Student }) {
-  const { standards, settings } = useApp()
+  const { standards, settings, updateSettings, readOnly } = useApp()
   const data = useLiveQuery(
-    () => loadYearPaps(db, student, { standards, schoolLevel: settings.schoolLevel, flexMode: settings.papsFlexMode }),
-    [student, standards, settings.schoolLevel, settings.papsFlexMode],
+    () => loadYearPaps(db, student, { standards, schoolLevel: settings.schoolLevel, flexMode: settings.papsFlexMode }, settings.yearLinks),
+    [student, standards, settings.schoolLevel, settings.papsFlexMode, settings.yearLinks],
   )
-  if (!data || (data.years.length < 2 && data.ambiguous.length === 0)) return null
+  if (!data || data.links.length === 0) return null
+  const setLink = (year: number, v: string | undefined) => {
+    const next = { ...(settings.yearLinks ?? {}) }
+    if (v === undefined) delete next[overrideKey(student.id, year)]
+    else next[overrideKey(student.id, year)] = v
+    void updateSettings({ yearLinks: next })
+  }
   const label = (y: { schoolYear: number; grade: number }) => `${y.schoolYear} ${settings.schoolLevel}${y.grade}`
   return (
     <Card title="학년별 PAPS 변화">
@@ -381,10 +388,43 @@ function YearPapsCard({ student }: { student: Student }) {
           </div>
         </>
       )}
-      {data.ambiguous.length > 0 && (
-        <p className="hint">{data.ambiguous.join(' · ')}학년도에 이름 · 성별 · 학년이 같은 학생이 여럿이라 이어 붙이지 않았어요.</p>
-      )}
-      <p className="hint">이름 · 성별 · 학년으로 찾은 것이에요. 다른 학생이 섞였다면 그 학년도 명렬을 확인해 주세요. 나이스 값이 우선입니다.</p>
+      <ul className="space-y-1.5">
+        {data.links.map((l) => (
+          <li key={l.schoolYear} className="flex flex-wrap items-center gap-2 rounded-xl bg-fill px-3 py-2 text-sm">
+            <b className="shrink-0">{l.schoolYear}학년도</b>
+            {l.student ? (
+              <span className="min-w-0 flex-1 truncate">
+                {l.student.grade}-{l.student.classNo}-{l.student.number} {l.student.name}
+                {l.manual ? ' (직접 이음)' : ''}
+              </span>
+            ) : l.options.length > 1 && !l.manual ? (
+              <select className="field h-10 min-h-0 min-w-0 flex-1 py-0 text-sm" aria-label={`${l.schoolYear}학년도 같은 학생 고르기`} value="" disabled={readOnly} onChange={(e) => e.target.value && setLink(l.schoolYear, e.target.value)}>
+                <option value="">같은 이름 {l.options.length}명 — 이 학생이 누구인지 고르기</option>
+                {l.options.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.grade}학년 {o.classNo}반 {o.number}번 {o.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="min-w-0 flex-1 text-ink-3">잇지 않음</span>
+            )}
+            {!readOnly &&
+              (l.manual ? (
+                <button type="button" className="btn btn-ghost h-9 min-h-0 shrink-0 px-2 text-sm text-brand" onClick={() => setLink(l.schoolYear, undefined)}>
+                  자동으로 되돌리기
+                </button>
+              ) : (
+                l.student && (
+                  <button type="button" className="btn btn-ghost h-9 min-h-0 shrink-0 px-2 text-sm text-ink-3" onClick={() => setLink(l.schoolYear, 'none')}>
+                    다른 학생이에요 · 잇지 않기
+                  </button>
+                )
+              ))}
+          </li>
+        ))}
+      </ul>
+      <p className="hint">이름 · 성별 · 학년으로 찾고, 틀리면 위에서 끊거나 골라요(이 기기에 기억). 나이스 값이 우선입니다.</p>
     </Card>
   )
 }

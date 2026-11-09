@@ -1,11 +1,12 @@
 import type { PeDatabase } from './db'
-import { indexResults, loadClassPapsPicked, studentSummary } from './papsRepo'
+import { indexResults, loadClassPaps, loadClassPapsPicked, studentSummary } from './papsRepo'
 import type { Student } from './types'
 import type { EventId, Factor, FlexMode, PapsStandards } from '../lib/paps'
 import { buildReport, type StudentReport } from '../lib/report'
 import type { StudentPaps } from '../lib/paps'
-import { linkAcrossYears } from '../lib/yearLink'
+import { applyOverrides, linkAcrossYears, type YearLink, type YearLinkOverrides } from '../lib/yearLink'
 import type { SchoolPapsRow } from '../lib/schoolPaps'
+import type { ClinicChange } from '../lib/clinic'
 
 /** 학생 여러 명의 리포트를 한 번에 (반마다 PAPS 설정을 따로 읽는다) */
 export async function loadReports(
@@ -47,10 +48,13 @@ export async function loadYearPaps(
   db: PeDatabase,
   me: Student,
   ctx: { standards: PapsStandards; schoolLevel: string; flexMode: FlexMode },
-): Promise<{ years: { schoolYear: number; grade: number; classNo: number; studentId: string; paps: StudentPaps | null }[]; ambiguous: number[] }> {
+  ov?: YearLinkOverrides,
+): Promise<{ years: { schoolYear: number; grade: number; classNo: number; studentId: string; paps: StudentPaps | null }[]; ambiguous: number[]; links: YearLink<Student>[] }> {
   const name = me.name.replace(/\s+/g, '')
-  const others = (await db.students.toArray()).filter((s) => s.name.replace(/\s+/g, '') === name)
-  const links = linkAcrossYears(me, others)
+  const all = await db.students.toArray()
+  const others = all.filter((s) => s.name.replace(/\s+/g, '') === name)
+  // 교사가 고친 연결(이름이 달라도) — settings.yearLinks
+  const links = applyOverrides(me, linkAcrossYears(me, others), all, ov)
   const people = [me, ...links.map((l) => l.student).filter((s): s is Student => !!s)].sort((a, b) => a.schoolYear - b.schoolYear)
   const years = []
   for (const s of people) {
@@ -60,7 +64,7 @@ export async function loadYearPaps(
     const paps = excluded.has(s.id) ? null : studentSummary(ctx.standards, s, ctx.schoolLevel, selected, values.get(s.id), ctx.flexMode)
     years.push({ schoolYear: s.schoolYear, grade: s.grade, classNo: s.classNo, studentId: s.id, paps })
   }
-  return { years, ambiguous: links.filter((l) => !l.student).map((l) => l.schoolYear) }
+  return { years, ambiguous: links.filter((l) => !l.student && !l.manual).map((l) => l.schoolYear), links }
 }
 
 /**
@@ -89,7 +93,41 @@ export async function loadSchoolPaps(
         gender: s.gender ?? null,
         paps: studentSummary(ctx.standards, s, ctx.schoolLevel, selected, values.get(s.id), ctx.flexMode),
         excluded: excluded.has(s.id),
+        ...(excluded.get(s.id) ? { excludeReason: excluded.get(s.id) } : {}),
       })
+  }
+  return out
+}
+
+/**
+ * 건강체력교실 참여 학생의 변화 (2026-11-09): 1회차(정시) → 학생마다 가장 최근 회차.
+ */
+export async function loadClinicChanges(
+  db: PeDatabase,
+  schoolYear: number,
+  students: readonly Student[],
+  ctx: { standards: PapsStandards; schoolLevel: string; flexMode: FlexMode },
+): Promise<ClinicChange[]> {
+  const byClass = new Map<string, Student[]>()
+  for (const s of students) byClass.set(`${s.grade}-${s.classNo}`, [...(byClass.get(`${s.grade}-${s.classNo}`) ?? []), s])
+  const out: ClinicChange[] = []
+  for (const list of byClass.values()) {
+    const { grade, classNo } = list[0]
+    const ids = list.map((s) => s.id)
+    const [first, latest] = await Promise.all([loadClassPaps(db, schoolYear, grade, classNo, ids, null), loadClassPapsPicked(db, schoolYear, grade, classNo, ids, 'latest')])
+    const f = indexResults(first.results).values
+    const l = indexResults(latest.results).values
+    const roundNo = new Map(latest.rounds.map((r) => [r.id, r.round]))
+    const sel = (cfg: typeof first.config) => (cfg?.selectedEvents ?? {}) as Partial<Record<Factor, EventId>>
+    for (const s of list) {
+      const rid = latest.pick.get(s.id) ?? null
+      out.push({
+        studentId: s.id,
+        first: studentSummary(ctx.standards, s, ctx.schoolLevel, sel(first.config), f.get(s.id), ctx.flexMode),
+        latest: studentSummary(ctx.standards, s, ctx.schoolLevel, sel(latest.config), l.get(s.id), ctx.flexMode),
+        latestRound: rid ? (roundNo.get(rid) ?? 1) : 1,
+      })
+    }
   }
   return out
 }
