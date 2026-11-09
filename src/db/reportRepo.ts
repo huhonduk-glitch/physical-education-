@@ -1,11 +1,12 @@
 import type { PeDatabase } from './db'
-import { indexResults, loadClassPapsPicked, studentSummary } from './papsRepo'
+import { indexResults, loadClassPaps, loadClassPapsPicked, studentSummary } from './papsRepo'
 import type { Student } from './types'
 import type { EventId, Factor, FlexMode, PapsStandards } from '../lib/paps'
 import { buildReport, type StudentReport } from '../lib/report'
 import type { StudentPaps } from '../lib/paps'
 import { linkAcrossYears } from '../lib/yearLink'
 import type { SchoolPapsRow } from '../lib/schoolPaps'
+import type { ClinicChange } from '../lib/clinic'
 
 /** 학생 여러 명의 리포트를 한 번에 (반마다 PAPS 설정을 따로 읽는다) */
 export async function loadReports(
@@ -89,7 +90,41 @@ export async function loadSchoolPaps(
         gender: s.gender ?? null,
         paps: studentSummary(ctx.standards, s, ctx.schoolLevel, selected, values.get(s.id), ctx.flexMode),
         excluded: excluded.has(s.id),
+        ...(excluded.get(s.id) ? { excludeReason: excluded.get(s.id) } : {}),
       })
+  }
+  return out
+}
+
+/**
+ * 건강체력교실 참여 학생의 변화 (2026-11-09): 1회차(정시) → 학생마다 가장 최근 회차.
+ */
+export async function loadClinicChanges(
+  db: PeDatabase,
+  schoolYear: number,
+  students: readonly Student[],
+  ctx: { standards: PapsStandards; schoolLevel: string; flexMode: FlexMode },
+): Promise<ClinicChange[]> {
+  const byClass = new Map<string, Student[]>()
+  for (const s of students) byClass.set(`${s.grade}-${s.classNo}`, [...(byClass.get(`${s.grade}-${s.classNo}`) ?? []), s])
+  const out: ClinicChange[] = []
+  for (const list of byClass.values()) {
+    const { grade, classNo } = list[0]
+    const ids = list.map((s) => s.id)
+    const [first, latest] = await Promise.all([loadClassPaps(db, schoolYear, grade, classNo, ids, null), loadClassPapsPicked(db, schoolYear, grade, classNo, ids, 'latest')])
+    const f = indexResults(first.results).values
+    const l = indexResults(latest.results).values
+    const roundNo = new Map(latest.rounds.map((r) => [r.id, r.round]))
+    const sel = (cfg: typeof first.config) => (cfg?.selectedEvents ?? {}) as Partial<Record<Factor, EventId>>
+    for (const s of list) {
+      const rid = latest.pick.get(s.id) ?? null
+      out.push({
+        studentId: s.id,
+        first: studentSummary(ctx.standards, s, ctx.schoolLevel, sel(first.config), f.get(s.id), ctx.flexMode),
+        latest: studentSummary(ctx.standards, s, ctx.schoolLevel, sel(latest.config), l.get(s.id), ctx.flexMode),
+        latestRound: rid ? (roundNo.get(rid) ?? 1) : 1,
+      })
+    }
   }
   return out
 }
