@@ -213,11 +213,14 @@ export async function seedDemo(db: PeDatabase, opts: DemoSeedOptions = {}): Prom
   ]
   const r1 = (x: number) => Math.round(x * 10) / 10
   const papsResults: PapsResult[] = []
-  const cell = (studentId: string, eventId: string, attempt: number | null, value: number, roundId?: string, measuredAt = ts) =>
-    papsResults.push({ id: id('p'), schoolYear: year, studentId, eventId, attempt, side: null, value, excluded: false, measuredAt, ...(roundId ? { roundId } : {}) })
-  const measure = (s: Student, roundId: string | undefined, gain: number) => {
+  const cellAt = (studentId: string, eventId: string, attempt: number | null, value: number, roundId?: string, measuredAt = ts, sy = year) =>
+    papsResults.push({ id: id('p'), schoolYear: sy, studentId, eventId, attempt, side: null, value, excluded: false, measuredAt, ...(roundId ? { roundId } : {}) })
+  const fits = new Map<string, number>()
+  const fitOf = (k: string) => fits.get(k) ?? (fits.set(k, between(0.5, 1.5)), fits.get(k)!)
+  const measure = (s: Student, roundId: string | undefined, gain: number, sy = year) => {
+    const cell = (studentId: string, eventId: string, attempt: number | null, value: number, rid?: string) => cellAt(studentId, eventId, attempt, value, rid, ts, sy)
     const m = s.gender === 'M'
-    const fit = between(0.5, 1.5) // 학생마다 체력 차이
+    const fit = fitOf(s.name) // 학생마다 체력 차이 (학년도 · 회차가 달라도 같은 학생은 같게)
     cell(s.id, 'shuttleRun', null, Math.round((m ? 38 : 24) * fit + gain * 6), roundId)
     cell(s.id, 'curlUp', null, Math.round((m ? 38 : 26) * fit + gain * 4), roundId)
     const sit = r1((m ? 6 : 13) * fit - 2 + gain)
@@ -236,6 +239,13 @@ export async function seedDemo(db: PeDatabase, opts: DemoSeedOptions = {}): Prom
     measure(s, round2.id, between(0.3, 1.6))
   }
   for (const s of classOf(1, 2)) measure(s, undefined, 0)
+  // 지난 학년도(학년별 PAPS 변화 시연, 2026-11-09): 2-1 학생이 작년에 1학년 3반이었던 명렬과 PAPS 한 번
+  const lastYear = classOf(2, 1).map((s): Student => ({ ...s, id: id('s'), schoolYear: year - 1, grade: 1, classNo: 3, classCode: '03', studentCode: `103${String(s.number).padStart(2, '0')}` }))
+  papsConfigs.push({ id: id('pc'), schoolYear: year - 1, grade: 1, classNo: 3, selectedEvents: selected })
+  papsConfigs.push({ id: id('pc'), schoolYear: year, grade: 2, classNo: 1, selectedEvents: selected })
+  for (const s of lastYear) measure(s, undefined, 0, year - 1)
+  for (const s of classOf(2, 1)) measure(s, undefined, between(0.4, 1.8))
+  students.push(...lastYear)
   // 측정 제외 1명 (사유 예시)
   papsResults.push({ id: id('p'), schoolYear: year, studentId: classOf(1, 2)[19].id, eventId: '__excluded__', attempt: null, side: null, excluded: true, excludeReason: '발목 부상 (예시)', measuredAt: ts })
 

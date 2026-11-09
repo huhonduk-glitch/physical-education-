@@ -26,7 +26,36 @@ export const FEATURES: FeatureInfo[] = [
   { id: 'apps', label: '팀 편성 · 전술 보드', short: '팀 편성', desc: '반 명단을 팀 편성 앱 · 전술 보드로 한 번에', icon: 'share', tone: 'bg-brand-light text-brand', to: '/tools/apps', needsRoster: false },
   { id: 'absences', label: '견학', short: '견학', desc: '견학 목록 · 대체 과제', icon: 'bandage', tone: 'bg-brand-light text-brand', to: '/more/absences', needsRoster: true },
   { id: 'captains', label: '체육부장', short: '체육부장', desc: '지정 · 교체 이력 · 활동 체크', icon: 'medal', tone: 'bg-brand-light text-brand', to: '/more/captains', needsRoster: true },
+  { id: 'work', label: '학교체육 업무', short: '체육 업무', desc: '학교운동부 · 스포츠클럽 · 체육 예산', icon: 'medal', tone: 'bg-brand-light text-brand', to: '/work', needsRoster: false },
   { id: 'seteuk', label: '세특 키워드', short: '세특', desc: '키워드 사전 · 근거 모아보기', icon: 'tag', tone: 'bg-brand-light text-brand', to: '/more/keywords', needsRoster: true },
 ]
+
+/**
+ * 업무 역할로 한 번에 고르기 (2026-11-09 교사 승인 — 인더스쿨 '역할별 메뉴'에서 착안).
+ * 고른 역할들의 기능을 합쳐 켜고 나머지는 끈다(숨기기만, 자료는 그대로). 아래 기능별 스위치로 더 고칠 수 있다.
+ */
+export interface Role {
+  id: string
+  label: string
+  desc: string
+  features: FeatureId[]
+}
+export const ROLES: Role[] = [
+  { id: 'teach', label: '체육 수업', desc: '누가기록 · 진도표 · 수행평가 · 세특 · 종목 · 수업 도구 · 견학', features: ['records', 'plans', 'assess', 'seteuk', 'sports', 'tools', 'apps', 'absences'] },
+  { id: 'paps', label: 'PAPS 측정', desc: '기록 입력 · 등급 · 나이스 파일 · 통계', features: ['paps'] },
+  { id: 'captain', label: '체육부장 운영', desc: '반마다 체육부장 · 활동 체크', features: ['captains'] },
+  { id: 'work', label: '학교체육 업무 담당', desc: '학교운동부 · 스포츠클럽 · 체육 예산', features: ['work'] },
+]
+
+/** 고른 역할 → 기능 켜고 끄기 표 */
+export function featuresForRoles(roleIds: readonly string[]): Record<FeatureId, boolean> {
+  const on = new Set(ROLES.filter((r) => roleIds.includes(r.id)).flatMap((r) => r.features))
+  return Object.fromEntries(FEATURES.map((f) => [f.id, on.has(f.id)])) as Record<FeatureId, boolean>
+}
+
+/** 지금 켜진 기능으로 보아 '다 켜진' 역할들 (칩 표시용) */
+export function rolesOf(features: Partial<Record<FeatureId, boolean>> | undefined): string[] {
+  return ROLES.filter((r) => r.features.every((id) => featureOn(features, id))).map((r) => r.id)
+}
 
 export const featureOn = (features: Partial<Record<FeatureId, boolean>> | undefined, id: FeatureId) => features?.[id] !== false

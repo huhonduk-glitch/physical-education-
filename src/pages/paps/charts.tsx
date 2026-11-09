@@ -20,6 +20,14 @@ export const SERIES_1 = '#2a78d6'
 /** 회차 색: 범주색 순서 그대로 (dataviz 기본 팔레트 1~5번) */
 const ROUND_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948']
 const TRACK = '#f2f4f6'
+/** 종합등급 구간 (종합점수 80·60·40·20점, paps-standards.json totalScore) — 추이 그래프 바탕 띠 */
+export const TOTAL_ZONES = [
+  { from: 80, to: 100, grade: 1 },
+  { from: 60, to: 80, grade: 2 },
+  { from: 40, to: 60, grade: 3 },
+  { from: 20, to: 40, grade: 4 },
+  { from: 0, to: 20, grade: 5 },
+]
 const GRID = '#e5e8eb'
 const AXIS = '#6b7684'
 const INK = '#191f28'

@@ -425,7 +425,7 @@ function shortName(name: string): string {
 }
 
 /** 아래 탭에 이미 있는 기능 (홈 바로가기에서 뺀다) */
-const TAB_FEATURES: readonly string[] = ['records', 'sports', 'paps', 'assess', 'tools']
+const TAB_FEATURES: readonly string[] = ['records', 'sports', 'paps', 'assess', 'tools', 'work']
 
 const SETUP_HIDE_KEY = 'pelog.setupHidden'
 function readSetupHidden(): boolean {

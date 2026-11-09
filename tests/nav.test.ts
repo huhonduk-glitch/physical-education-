@@ -42,3 +42,19 @@ describe('메뉴 표 (6-12)', () => {
     }
   })
 })
+
+describe('업무 역할로 기능 고르기 (2026-11-09)', () => {
+  it('고른 역할의 기능만 켜고, 업무 역할을 끄면 업무 메뉴의 운동부 · 클럽 · 예산이 숨는다', async () => {
+    const { featuresForRoles, rolesOf } = await import('../src/lib/features')
+    const { NAV, visibleGroups } = await import('../src/lib/nav')
+    const f = featuresForRoles(['teach', 'paps'])
+    expect(f.records && f.paps && f.assess).toBe(true)
+    expect(f.work || f.captains).toBe(false)
+    expect(rolesOf(f)).toEqual(['teach', 'paps'])
+    const work = NAV.find((s) => s.id === 'work')!
+    expect(visibleGroups(work, f).flatMap((g) => g.items.map((i) => i.to))).not.toContain('/work/budget')
+    expect(visibleGroups(work, featuresForRoles(['work'])).flatMap((g) => g.items.map((i) => i.to))).toContain('/work/budget')
+    // 아무것도 안 고른 처음 상태는 모든 역할이 켜져 있다
+    expect(rolesOf(undefined)).toEqual(['teach', 'paps', 'captain', 'work'])
+  })
+})

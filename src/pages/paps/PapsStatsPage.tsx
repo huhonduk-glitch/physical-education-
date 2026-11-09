@@ -7,19 +7,11 @@ import { eventName, FACTORS, levelKey, type EventId, type Factor, type StudentPa
 import { classStat, factorGradeDist, factorValues, gradeZones, improvement, needsSupport, type StatInput } from '../../lib/papsStats'
 import { useApp } from '../../state/AppContext'
 import { usePapsClass } from '../../state/usePapsClass'
-import { DotStrip, FactorBars, GENDER_COLORS, GRADE_COLORS, GradeStack, Legend, ProfileBars, roundColors, SERIES_1, TrendLine } from './charts'
+import { DotStrip, FactorBars, GENDER_COLORS, GRADE_COLORS, GradeStack, Legend, ProfileBars, roundColors, SERIES_1, TOTAL_ZONES, TrendLine } from './charts'
 import { usePapsClassKey } from './common'
 import RoundBar, { roundLabel } from './RoundBar'
 import { useRoundSummaries } from './RoundCompare'
 
-/** 종합등급 구간 (종합점수 80·60·40·20점, paps-standards.json totalScore) — 추이 그래프 바탕 띠 */
-const TOTAL_ZONES = [
-  { from: 80, to: 100, grade: 1 },
-  { from: 60, to: 80, grade: 2 },
-  { from: 40, to: 60, grade: 3 },
-  { from: 20, to: 40, grade: 4 },
-  { from: 0, to: 20, grade: 5 },
-]
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`)
 const SHORT: Record<Factor, string> = { 심폐지구력: '심폐지구력', '근력·근지구력': '근력', 유연성: '유연성', 순발력: '순발력', 비만: '비만(BMI)' }
 
