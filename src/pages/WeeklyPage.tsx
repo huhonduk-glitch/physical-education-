@@ -6,10 +6,11 @@ import PageHeader from '../components/PageHeader'
 import { db } from '../db/db'
 import type { Student } from '../db/types'
 import { shortDateLabel } from '../lib/dates'
+import { saveXlsx } from '../lib/download'
 import { areaTotal } from '../lib/assessScore'
 import { memberNo } from '../lib/groups'
 import { groupProgress, meetings, schedule } from '../lib/progressPlan'
-import { deltaLabel, GUIDE_REPEAT_DAYS, GUIDE_REPEAT_MIN, NO_PRAISE_DAYS, sumCounts, type Counts } from '../lib/weekly'
+import { deltaLabel, GUIDE_REPEAT_DAYS, GUIDE_REPEAT_MIN, praiseSince, sumCounts, type Counts } from '../lib/weekly'
 import { useApp } from '../state/AppContext'
 import { useWeekly } from '../state/useWeekly'
 
@@ -75,6 +76,24 @@ export default function WeeklyPage() {
     return s ? `${g ? memberNo(g, s) : s.number}번 ${s.name}` : '(명렬에 없음)'
   }
 
+  const exportXlsx = () => {
+    const head = ['수업반', ...ROWS.flatMap((r) => [`${r.label} 이번 주`, `${r.label} 지난주`]), '이번 주 기록한 날', '지도 쌓이는 학생', '칭찬 아직 못 받은 학생']
+    const body = summary.groups.map((g) => [
+      g.name,
+      ...ROWS.flatMap((r) => [g.thisWeek[r.key], g.lastWeek[r.key]]),
+      g.daysThisWeek,
+      g.guideRepeat.map((x) => `${label(x.studentId, g.groupId)}(${x.count})`).join(', '),
+      g.noPraise.map((id) => label(id, g.groupId)).join(', '),
+    ])
+    void saveXlsx(`주간수업요약_${range.thisWeek.from}.xlsx`, [
+      {
+        name: '주간 요약',
+        rows: [[`이번 주 ${range.thisWeek.from} ~ ${range.thisWeek.to} · 지난주 같은 때 ${range.lastWeek.from} ~ ${range.lastWeek.to} (횟수만)`], head, ...body],
+        widths: [18, ...ROWS.flatMap(() => [9, 9]), 10, 30, 40],
+      },
+    ])
+  }
+
   return (
     <>
       <PageHeader title="이번 주 수업 요약" sub={`${shortDateLabel(range.thisWeek.from)} ~ ${shortDateLabel(range.thisWeek.to)} · 지난주 같은 때(${shortDateLabel(range.lastWeek.from)} ~ ${shortDateLabel(range.lastWeek.to)})와 비교`} back />
@@ -96,7 +115,12 @@ export default function WeeklyPage() {
         </section>
 
         <section className="card space-y-2">
-          <p className="card-title">수업반별</p>
+          <div className="flex items-center gap-2">
+            <p className="card-title flex-1">수업반별</p>
+            <button type="button" className="btn btn-ghost shrink-0 px-3 text-brand" onClick={exportXlsx}>
+              엑셀 받기
+            </button>
+          </div>
           {active.length === 0 ? (
             <p className="hint">이번 주와 지난주에 남긴 기록이 없어요. 수업반에서 칭찬 · 지도 · 출결을 기록하면 여기 모여요.</p>
           ) : (
@@ -156,7 +180,7 @@ export default function WeeklyPage() {
           )}
 
           {noPraise.length > 0 && (
-            <Collapse title={`칭찬을 아직 못 받은 학생 ${noPraise.reduce((n, g) => n + g.noPraise.length, 0)}명`} sub={`최근 ${NO_PRAISE_DAYS}일 — 조용한 학생도 한 번씩 봐 주세요`}>
+            <Collapse title={`칭찬을 아직 못 받은 학생 ${noPraise.reduce((n, g) => n + g.noPraise.length, 0)}명`} sub={`이번 학기(${shortDateLabel(praiseSince(range.thisWeek.to))}부터) 칭찬 0번 — 조용한 학생도 한 번씩 봐 주세요`}>
               <div className="space-y-2">
                 {noPraise.map((g) => (
                   <div key={g.groupId}>

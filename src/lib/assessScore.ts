@@ -186,3 +186,30 @@ export function appliesTo(a: Assessment, s: { id: string; grade: number; classNo
     (g) => a.groupIds!.includes(g.id) && (g.kind === 'homeroom' ? g.grade === s.grade && g.classNo === s.classNo : g.memberIds.includes(s.id)),
   )
 }
+
+/**
+ * 채점 · 제출 현황 (2026-11-09 — 인더스쿨 '제출률 확인'에서 착안): 채점 끝 · 남은 학생 · 제출 구분별 수.
+ * 남은 학생 = 요소 점수가 다 안 찼고 제출 구분도 안 고른 학생 (명단 복사로 미제출 · 미응시 확인).
+ */
+export function gradingProgress<S extends { id: string; gender?: Gender | null }>(
+  a: Assessment,
+  students: readonly S[],
+  scoreOf: (id: string) => Pick<AssessmentScore, 'scores' | 'status'> | undefined,
+  items: readonly AssessItem[] = itemsOf(a),
+): { done: number; total: number; remaining: S[]; started: S[]; bySpecial: { label: string; count: number }[] } {
+  const remaining: S[] = []
+  const started: S[] = []
+  const special = new Map<string, number>()
+  let done = 0
+  for (const s of students) {
+    const sc = scoreOf(s.id)
+    const t = areaTotal(a, sc, s.gender ?? undefined, items)
+    if (t.status) special.set(t.status, (special.get(t.status) ?? 0) + 1)
+    if (t.complete) done++
+    else {
+      remaining.push(s)
+      if (t.done > 0) started.push(s)
+    }
+  }
+  return { done, total: students.length, remaining, started, bySpecial: (a.specials ?? []).map((x) => ({ label: x.label, count: special.get(x.label) ?? 0 })).filter((x) => x.count > 0) }
+}

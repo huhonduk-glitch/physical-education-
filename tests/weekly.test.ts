@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deltaLabel, sumCounts, weekRanges, weeklySummary } from '../src/lib/weekly'
+import { deltaLabel, praiseSince, sumCounts, weekRanges, weeklySummary } from '../src/lib/weekly'
 
 describe('주간 수업 요약', () => {
   it('이번 주 = 월요일 ~ 오늘, 지난주 = 같은 때(지난 월 ~ 7일 전)', () => {
@@ -63,6 +63,21 @@ describe('주간 수업 요약', () => {
       attendance: [],
     }).groups[0]
     expect(s.noPraise).toEqual(['b', 'c'])
+  })
+
+  it('칭찬 세기 시작: 이번 학기 시작, 학기 초 28일 안이면 최근 28일', () => {
+    expect(praiseSince('2026-11-11')).toBe('2026-08-17')
+    expect(praiseSince('2026-05-20')).toBe('2026-03-02')
+    expect(praiseSince('2026-03-10')).toBe('2026-02-11') // 학기 시작 8일째 → 최근 28일
+    expect(praiseSince('2027-01-20')).toBe('2026-08-17') // 겨울방학
+    const s = weeklySummary({
+      ...base,
+      praiseFrom: '2026-09-01',
+      records: [{ studentId: 'b', date: '2026-09-10', type: 'exemplary', groupId: 'g1' }],
+      absences: [],
+      attendance: [],
+    }).groups[0]
+    expect(s.noPraise).toEqual(['a', 'c'])
   })
 
   it('증감 글과 합계', () => {

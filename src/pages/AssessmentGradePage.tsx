@@ -11,11 +11,11 @@ import PageHeader from '../components/PageHeader'
 import { db, newId } from '../db/db'
 import { addRecords } from '../db/recordsRepo'
 import type { AssessItem, Assessment, AssessmentScore, Student } from '../db/types'
-import { areaTotal, directProblem, directWarn, fmtNum, itemMax, itemPoints, itemsOf, levelOf, NON_PART, toggleCheck } from '../lib/assessScore'
+import { areaTotal, directProblem, gradingProgress, directWarn, fmtNum, itemMax, itemPoints, itemsOf, levelOf, NON_PART, toggleCheck } from '../lib/assessScore'
 import { readPaste, type PasteRow } from '../lib/assessPaste'
 import { circled, criteriaLines, recordSheet, sheetStudents } from '../lib/assessSheet'
 import { todayStr } from '../lib/dates'
-import { saveXlsx } from '../lib/download'
+import { copyText, saveXlsx } from '../lib/download'
 import { memberNo } from '../lib/groups'
 import { useApp } from '../state/AppContext'
 import { useGroups } from '../state/useGroups'
@@ -127,6 +127,7 @@ export default function AssessmentGradePage() {
         )}
         {linked.length > 1 && <GroupPicker groups={linked} value={gid ?? null} onChange={(g) => setSp({ g }, { replace: true })} />}
         {linked.length === 0 && <p className="card">이 평가에 연결된 수업반이 없어요. [고치기]에서 수업반을 골라 주세요.</p>}
+        {list.length > 0 && <ProgressStrip a={a} list={list} label={label} byStudent={byStudent} items={items} />}
         {!readOnly && list.length > 0 && (
           <button type="button" className="btn btn-soft w-full justify-start gap-2" onClick={() => setPasting(true)}>
             <Icon name="copy" size={18} /> 구글 시트 · 엑셀에서 붙여넣기
@@ -664,5 +665,49 @@ function PasteSheet({
         </button>
       </div>
     </BottomSheet>
+  )
+}
+
+/**
+ * 채점 · 제출 현황 (2026-11-09): 진행 막대 · 제출 구분별 수 · 남은 학생 [명단 복사].
+ * 학생 이름은 복사할 때만 — 화면에는 수만 보여 수업 중 띄워도 된다.
+ */
+function ProgressStrip({ a, list, label, byStudent, items }: { a: Assessment; list: Student[]; label: (s: Student) => string; byStudent: Map<string, AssessmentScore>; items: AssessItem[] }) {
+  const [copied, setCopied] = useState(false)
+  const g = gradingProgress(a, list, (id) => byStudent.get(id), items)
+  const pct = g.total ? Math.round((g.done / g.total) * 100) : 0
+  const copy = async () => {
+    const text = g.remaining.map((s) => `${label(s)}번 ${s.name}`).join('\n')
+    if (await copyText(`${a.title} · 아직 채점 안 된 학생 ${g.remaining.length}명\n${text}`)) {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+  return (
+    <section className="card space-y-2 py-3" aria-label="채점 현황">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-bold">
+        <span className="flex-1 whitespace-nowrap">
+          채점 끝 <b className="text-brand tabular-nums">{g.done}</b>/{g.total}명 ({pct}%)
+        </span>
+        {g.bySpecial.map((x) => (
+          <span key={x.label} className="badge bg-fill text-ink-2">
+            {x.label} {x.count}
+          </span>
+        ))}
+      </div>
+      <div className="h-2.5 overflow-hidden rounded-full bg-fill" aria-hidden>
+        <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${pct}%` }} />
+      </div>
+      {g.remaining.length > 0 && (
+        <div className="flex items-center gap-2">
+          <span className="hint flex-1">
+            남은 학생 {g.remaining.length}명{g.started.length ? ` (채점 중 ${g.started.length}명)` : ''} — 미제출 · 미응시 확인용
+          </span>
+          <button type="button" className="btn btn-soft shrink-0 px-3 text-sm" onClick={copy}>
+            <Icon name="copy" size={16} /> {copied ? '복사했어요' : '명단 복사'}
+          </button>
+        </div>
+      )}
+    </section>
   )
 }
