@@ -13,7 +13,9 @@ describe('매년 기안 · 제출 문서 (운영방향 누리집 PDF)', () => {
     expect(DRAFT_DOCS.map((d) => d.id)).toEqual(expect.arrayContaining(['girls', 'club-outside', 'club-year', 'clinic', 'committee']))
     // 교사 지적(11-09): 안전 연간계획 · 공간 확보 · 교구 확충은 따로 기안하는 필수 문서가 아님
     expect(DRAFT_DOCS.map((d) => d.id)).not.toEqual(expect.arrayContaining(['safety']))
-    expect(DRAFT_DOCS.some((d) => ['safety', 'space', 'equipment'].includes(d.id))).toBe(false)
+    expect(DRAFT_DOCS.some((d) => ['safety', 'space', 'equipment', 'league'].includes(d.id))).toBe(false)
+    // 교사 확인(11-10): 스포츠클럽 운영 계획(연간 · 정규교육과정 외)은 필수
+    expect(DRAFT_DOCS.filter((d) => d.id.startsWith('club')).map((d) => d.must)).toEqual(['필수', '필수'])
     for (const f of FORMS) if (f.page) expect(f.page).toBeLessThanOrEqual(max)
   })
   it('기안문 초안: 제목 · 관련 근거 · 세부 계획 빈칸, 학교 이름', () => {
