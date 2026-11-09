@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import PdfPageViewer from '../components/PdfPageViewer'
-import { DRAFT_DOCS, draftText, FORMS, mergeEvents, PLAN_BOARD_URL, submitEvents, SUBMITS, type DraftDoc } from '../data/peDocs'
+import { DRAFT_DOCS, draftText, FORMS, mergeEvents, NOT_DRAFT, PLAN_BOARD_URL, submitEvents, SUBMITS, type DraftDoc } from '../data/peDocs'
 import { WORK_DOCS } from '../data/peWork'
 import { listDocs } from '../db/docStore'
 import { PLAN_FIELDS } from '../lib/clinic'
@@ -139,6 +139,20 @@ export default function WorkDocsPage() {
               </section>
             )
           })}
+
+        {tab === 'draft' && (
+          <section className="card space-y-2">
+            <p className="font-bold">참고: 따로 기안하지 않는 것</p>
+            <p className="hint">운영방향에 '계획 수립'이라고 나오지만 필수 · 의무 표시가 없고, 다른 계획에 담거나 점검 기록으로 하는 것이에요.</p>
+            <ul className="space-y-1.5 text-[0.92rem]">
+              {NOT_DRAFT.map((n) => (
+                <li key={n.title}>
+                  <b>{n.title}</b> — {n.text} <span className="text-xs font-semibold whitespace-nowrap text-ink-3">({n.page}쪽)</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {tab === 'submit' && (
           <section className="space-y-2">
