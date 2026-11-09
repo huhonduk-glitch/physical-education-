@@ -75,6 +75,8 @@ const ClassSummaryPage = lazy(() => import('./pages/ClassSummaryPage'))
 const DataPage = lazy(() => import('./pages/DataPage'))
 const BudgetPage = lazy(() => import('./pages/BudgetPage'))
 const WorkGuidePage = lazy(() => import('./pages/WorkGuidePage'))
+const WorkDocsPage = lazy(() => import('./pages/WorkDocsPage'))
+const CommitteePage = lazy(() => import('./pages/CommitteePage'))
 const SharePage = lazy(() => import('./pages/SharePage'))
 const WorkCalendarPage = lazy(() => import('./pages/WorkCalendarPage'))
 const SpacePage = lazy(() => import('./pages/space/SpacePage'))
@@ -227,6 +229,8 @@ export default function App() {
           <Route path="/work/space" element={<SpacePage />} />
           <Route path="/work/lend" element={<LendPage />} />
           <Route path="/work/book" element={<BookPage />} />
+          <Route path="/work/docs" element={<WorkDocsPage />} />
+          <Route path="/work/committee/meetings" element={<CommitteePage />} />
           <Route path="/work/:topic" element={<WorkGuidePage />} />
           <Route path="/share" element={<SharePage />} />
           <Route path="/more/assessments" element={<AssessmentsPage />} />

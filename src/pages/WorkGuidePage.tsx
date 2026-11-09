@@ -52,6 +52,20 @@ export default function WorkGuidePage() {
           ))}
         </div>
 
+        {topic.id === 'committee' && (
+          <Link to="/work/committee/meetings" className="card flex min-h-[64px] items-center gap-3 active:bg-fill">
+            <Icon name="edit" className="shrink-0 text-brand" />
+            <span className="min-w-0 flex-1">
+              <b className="block">회의 기록 · 회의록</b>
+              <span className="hint">위원 명단 · 학기별 정기회의 현황 · 회의록 인쇄</span>
+            </span>
+            <Icon name="chevronRight" className="text-ink-3" />
+          </Link>
+        )}
+        <Link to="/work/docs" className="block px-1 text-sm font-bold text-brand">
+          나이스와 따로, 매년 기안해야 하는 계획 · 제출 일정 · 양식 ›
+        </Link>
+
         <DocFiles docs={docs} onChange={() => void refresh()} />
 
         <div className="segment" role="tablist">
