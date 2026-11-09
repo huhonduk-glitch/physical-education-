@@ -4,7 +4,7 @@ import ClassPicker from '../../components/ClassPicker'
 import Collapse from '../../components/Collapse'
 import PageHeader from '../../components/PageHeader'
 import { eventName, FACTORS, levelKey, type EventId, type Factor, type StudentPaps } from '../../lib/paps'
-import { classStat, factorValues, gradeEdges, improvement, needsSupport, type StatInput } from '../../lib/papsStats'
+import { classStat, factorGradeDist, factorValues, gradeZones, improvement, needsSupport, type StatInput } from '../../lib/papsStats'
 import { useApp } from '../../state/AppContext'
 import { usePapsClass } from '../../state/usePapsClass'
 import { DotStrip, FactorBars, GENDER_COLORS, GRADE_COLORS, GradeStack, Legend, ProfileBars, roundColors, SERIES_1, TrendLine } from './charts'
@@ -12,6 +12,14 @@ import { usePapsClassKey } from './common'
 import RoundBar, { roundLabel } from './RoundBar'
 import { useRoundSummaries } from './RoundCompare'
 
+/** 종합등급 구간 (종합점수 80·60·40·20점, paps-standards.json totalScore) — 추이 그래프 바탕 띠 */
+const TOTAL_ZONES = [
+  { from: 80, to: 100, grade: 1 },
+  { from: 60, to: 80, grade: 2 },
+  { from: 40, to: 60, grade: 3 },
+  { from: 20, to: 40, grade: 4 },
+  { from: 0, to: 20, grade: 5 },
+]
 const pct = (x: number | null) => (x === null ? '—' : `${Math.round(x * 100)}%`)
 const SHORT: Record<Factor, string> = { 심폐지구력: '심폐지구력', '근력·근지구력': '근력', 유연성: '유연성', 순발력: '순발력', 비만: '비만(BMI)' }
 
@@ -96,7 +104,7 @@ export default function PapsStatsPage() {
       return {
         label: mixed ? (r.g === 'M' ? '남학생' : '여학생') : '전체',
         dots: r.dots,
-        bands: gradeEdges(bands),
+        zones: gradeZones(bands),
       }
     })
   const unit = stripEvent ? (standards.events[stripEvent]?.unit ?? '') : ''
@@ -105,7 +113,10 @@ export default function PapsStatsPage() {
   const student = pc.students.find((s) => s.id === studentId)
   const sRounds: (StudentPaps | null)[] = student ? (byRound?.get(student.id) ?? []) : []
   const sShown = rounds.map((r, i) => ({ r, p: sRounds[i] })).filter((x) => x.p)
-  const colors = roundColors(sShown.length)
+  // 색은 회차를 따라간다(1회차는 늘 파랑) — 기록 없는 회차를 건너뛰어도 색이 바뀌지 않게
+  const allColors = roundColors(rounds.length)
+  const colors = sShown.map((x) => allColors[rounds.indexOf(x.r)])
+  const factorDist = factorGradeDist(inputsAt(ri))
   const support = needsSupport(inputsAt(ri))
 
   return (
@@ -224,6 +235,15 @@ export default function PapsStatsPage() {
 
         <section className="card space-y-3">
           <div>
+            <p className="card-title">체력요인별 등급 분포</p>
+            <p className="hint">요인마다 1~5등급 학생 수예요. 빨간 칸(4·5등급)이 긴 요인이 우리 반이 함께 키울 체력이에요. 비만(BMI)은 판정이라 아래에 따로 있어요.</p>
+          </div>
+          <Legend items={GRADE_COLORS.map((c, i) => ({ label: `${i + 1}등급`, color: c }))} />
+          <GradeStack rows={factorDist.map((d) => ({ label: SHORT[d.factor], dist: d.dist }))} labelW={84} emptyText="측정한 학생이 없어요" />
+        </section>
+
+        <section className="card space-y-3">
+          <div>
             <p className="card-title">회차별 추이</p>
             <p className="hint">{rounds.length < 2 ? '회차가 하나뿐이에요. [+ 새 회차]로 다시 측정하면 변화가 그려져요.' : '반 평균이 회차마다 어떻게 바뀌었는지 봐요.'}</p>
           </div>
@@ -234,14 +254,14 @@ export default function PapsStatsPage() {
               </button>
             ))}
           </div>
-          <TrendLine points={trend} max={trendKey === 'total' ? 100 : 20} unit="점" />
+          <TrendLine points={trend} max={trendKey === 'total' ? 100 : 20} unit="점" zones={trendKey === 'total' ? TOTAL_ZONES : undefined} />
         </section>
 
         <section className="card space-y-3">
           <div>
             <p className="card-title">기록 분포</p>
             <p className="hint">
-              학생 한 명이 점 하나예요. 세로선은 공식 기준표의 등급 경계({lv}
+              학생 한 명이 점 하나예요. 바탕 색 띠는 공식 기준표의 등급 구역({lv}
               {mixed ? ' · 남녀 기준이 달라 줄을 나눠요' : ''}). 점을 누르면 이름·기록이 보여요.
             </p>
           </div>
