@@ -933,3 +933,8 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - **참고 자료 (저장소 밖)**: `C:\Users\user\Desktop\my-apps\pe-log-refs\` — 제주 2026 체육교육운영방향(최종) 176쪽 PDF · 서식 xls · 본문 텍스트(쪽 구분) · README. 앱 쪽수는 이 판 기준(peWork `final`)
 - **캡처 교체 끝 (11-10)**: manual-01 · 10 · 11 · 13을 배포 사이트 시연 모드로 다시 찍음. 도구 `C:\Users\user\Desktop\my-apps\pe-log-demo-video\cap-1110.mjs <저장 폴더>`(4장만) · `capture.mjs`(14장 전체), 폰 390×844 ×2 · PC 1280×760 ×1.5
 - **다음 후보**: 설문 결과 넣기(학생 자기평가 → 세특 참고), 선생님끼리 공지 · 읽음 표시(0-4 예외 넓히기 — 교사 승인 필요), 나이스 소위원회 메뉴 여부 확인(나이스 교육자료 PDF가 다시 있으면)
+
+### 6-16. 기안문 현황 · 설문 넣기 (2026-11-10 교사 '진행', 브랜치 `draft-facts`)
+- **기안문 초안 현황 줄**: `src/lib/draftFacts.ts`(테스트 `tests/draftFacts.test.ts`) — girls(여학생 수 · 학년별 · 여학생/남학생 PAPS) · clinic(대상 후보 · 저체력 비율 · 작년 · 참여 학생) · paps(대상 · 학년별 측정 종목 · 1회차 기간 · 작년 결과) · committee(위원 구성 · 회의 안건). 학생 이름 없음. 스포츠클럽 · 운동부는 앱에 자료가 없어 빈칸. WorkDocsPage가 복사할 때 읽음
+- **설문 · 자기평가** `/seteuk/survey`(평가 → 세특 묶음): `src/lib/survey.ts`(테스트 `tests/survey.test.ts`) — `readSurvey`(머리글 줄, 학번 → 학년반번호 → 이름(한 명일 때), 타임스탬프 · 이메일 · 점수 열 빼기, 같은 학생은 마지막 응답, 학번 · 이름 다르면 막음) · `summarize`(선택형 = 짧은 답 8종류 이하 + 겹침, 체크박스 쉼표 나눔) · `answersOf`. 저장 `settings.surveys[학년도]`. 세특 편집 창 '학생이 쓴 글(참고만)' — **초안 · AI 요청에는 넣지 않음**(길라잡이: 학생 제출 글은 참고만, STUDENT_TEXT_KINDS와 같은 원칙)
+

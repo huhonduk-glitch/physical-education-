@@ -171,6 +171,7 @@ export const NAV: NavSection[] = [
         icon: 'edit',
         items: [
           { to: '/seteuk/write', label: '세특 쓰기', icon: 'edit', desc: '수준 · 초안 · 검사 · AI', feature: 'seteuk' },
+          { to: '/seteuk/survey', label: '설문 · 자기평가', icon: 'clipboard', desc: '구글 설문 결과 넣기 · 세특 참고', feature: 'seteuk' },
           { to: '/more/keywords', label: '세특 키워드', icon: 'tag', desc: '근거 모아보기 · 사전', feature: 'seteuk' },
         ],
       },

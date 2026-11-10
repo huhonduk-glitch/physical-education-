@@ -90,6 +90,8 @@ export interface AppSettings {
   yearLinks: import('../lib/yearLink').YearLinkOverrides
   /** 학교체육소위원회 (학년도 → 위원 · 회의 기록). 교직원 · 학부모 이름만, 학생 정보 없음 */
   committee: Record<string, import('../lib/committee').CommitteeYear>
+  /** 설문 · 자기평가 (학년도 → 설문 목록). 학생이 써 낸 답이라 세특에는 참고만 */
+  surveys: Record<string, import('../lib/survey').Survey[]>
   /** 업무 달력 일정 (같이 쓰기 6-13, 이 기기에만 · 학생 정보 없음) */
   workEvents: import('../lib/workCal').WorkEvent[]
   /** 학교 공유 공간 연결 (0-4 예외 6-13). 비밀번호가 있어 백업 파일에서 뺀다(SECRET_KEYS) */
@@ -184,6 +186,7 @@ export function defaultSettings(): AppSettings {
     clinic: {},
     yearLinks: {},
     committee: {},
+    surveys: {},
     space: null,
     weatherLoc: null,
     weatherCache: null,

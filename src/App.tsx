@@ -76,6 +76,7 @@ const DataPage = lazy(() => import('./pages/DataPage'))
 const BudgetPage = lazy(() => import('./pages/BudgetPage'))
 const WorkGuidePage = lazy(() => import('./pages/WorkGuidePage'))
 const WorkDocsPage = lazy(() => import('./pages/WorkDocsPage'))
+const SurveyPage = lazy(() => import('./pages/seteuk/SurveyPage'))
 const CommitteePage = lazy(() => import('./pages/CommitteePage'))
 const SharePage = lazy(() => import('./pages/SharePage'))
 const WorkCalendarPage = lazy(() => import('./pages/WorkCalendarPage'))
@@ -221,6 +222,7 @@ export default function App() {
           <Route path="/students/:id/report" element={<ReportPage scope="student" />} />
           <Route path="/more/keywords" element={<KeywordsPage />} />
           <Route path="/seteuk/write" element={<SeteukWritePage />} />
+          <Route path="/seteuk/survey" element={<SurveyPage />} />
           <Route path="/seteuk/ai-guide" element={<AiGuidePage />} />
           <Route path="/timetable/pe" element={<PeTimetablePage />} />
           <Route path="/more/data" element={<DataPage />} />
