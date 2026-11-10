@@ -5,7 +5,11 @@ import PageHeader from '../components/PageHeader'
 import PdfPageViewer from '../components/PdfPageViewer'
 import { DRAFT_DOCS, draftText, FORMS, mergeEvents, NOT_DRAFT, PLAN_BOARD_URL, submitEvents, SUBMITS, type DraftDoc } from '../data/peDocs'
 import { WORK_DOCS } from '../data/peWork'
+import { db } from '../db/db'
 import { listDocs } from '../db/docStore'
+import { loadSchoolPaps } from '../db/reportRepo'
+import { draftFacts } from '../lib/draftFacts'
+import { eventName, type EventId } from '../lib/paps'
 import { PLAN_FIELDS } from '../lib/clinic'
 import { copyText } from '../lib/download'
 import { useApp } from '../state/AppContext'
@@ -25,7 +29,7 @@ const pageLabel = (p: number | [number, number]) => (Array.isArray(p) ? `${p[0]}
  * 근거 src/data/peDocs.ts (제주교육청 2026 운영방향 누리집 PDF 쪽).
  */
 export default function WorkDocsPage() {
-  const { settings, updateSettings, readOnly } = useApp()
+  const { settings, standards, updateSettings, readOnly } = useApp()
   const [tab, setTab] = useState<Tab>('draft')
   const [open, setOpen] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
@@ -42,7 +46,29 @@ export default function WorkDocsPage() {
   const copyDraft = async (d: DraftDoc) => {
     // 건강체력교실은 이 기기에 적은 운영계획을 채운다
     const plan = settings.clinic?.[year]?.plan
-    const extra = d.id === 'clinic' && plan ? ['  (앱에 적은 운영계획)', ...PLAN_FIELDS.filter((f) => plan[f.key]).map((f) => `   · ${f.label}: ${plan[f.key]}`)] : undefined
+    const planLines = d.id === 'clinic' && plan && PLAN_FIELDS.some((f) => plan[f.key]) ? ['  (앱에 적은 운영계획)', ...PLAN_FIELDS.filter((f) => plan[f.key]).map((f) => `   · ${f.label}: ${plan[f.key]}`)] : []
+    // 현황 줄: 앱에 있는 학생 수 · PAPS · 측정 종목 · 소위원회 (2026-11-10)
+    const ctx = { standards, schoolLevel: settings.schoolLevel, flexMode: settings.papsFlexMode }
+    const [students, paps, lastPaps, configs, rounds] = await Promise.all([
+      db.students.where('schoolYear').equals(year).toArray(),
+      loadSchoolPaps(db, year, ctx),
+      loadSchoolPaps(db, year - 1, ctx),
+      db.papsConfigs.toArray(),
+      db.papsRounds.where('schoolYear').equals(year).toArray(),
+    ])
+    const facts = draftFacts(d.id, {
+      year,
+      schoolLevel: settings.schoolLevel,
+      students: students.filter((s) => s.status === '재학').map((s) => ({ grade: s.grade, gender: s.gender })),
+      paps,
+      lastPaps,
+      rule: settings.clinicRule,
+      configs: configs.filter((c) => c.schoolYear === year).map((c) => ({ grade: c.grade, events: Object.values(c.selectedEvents).map((e) => eventName(standards, e as EventId)) })),
+      rounds: rounds.map((r) => ({ grade: r.grade, round: r.round, date: r.date })),
+      clinic: settings.clinic?.[year],
+      committee: settings.committee?.[year],
+    })
+    const extra = [...facts, ...planLines]
     if (await copyText(draftText(d, { schoolName: settings.schoolName, year, extra }))) {
       setCopied(d.id)
       setTimeout(() => setCopied(null), 2000)
@@ -133,7 +159,9 @@ export default function WorkDocsPage() {
                         </Link>
                       )}
                     </div>
-                    <p className="hint">초안은 근거와 꼭 넣을 내용을 골자로 만든 것이라 ( ) 빈칸은 학교 상황에 맞게 채워 결재 시스템 본문에 붙여 넣으세요.</p>
+                    <p className="hint">
+                      초안은 근거와 꼭 넣을 내용을 골자로 만든 것이에요. {['girls', 'clinic', 'paps', 'committee'].includes(d.id) ? '현황 줄(학생 수 · PAPS · 측정 종목 · 위원)은 이 기기 자료로 채워 넣어요(학생 이름은 넣지 않음). ' : ''}( ) 빈칸은 학교 상황에 맞게 채워 결재 시스템 본문에 붙여 넣으세요.
+                    </p>
                   </div>
                 )}
               </section>

@@ -15,6 +15,7 @@ import { frameInstruction, type LevelFrame } from '../../lib/seteukLevel'
 import { useApp } from '../../state/AppContext'
 import { aiSettingsOf } from './AiSetupCard'
 import { aiEvidence, basisKeyFor, LEVEL_TONE } from './seteukShared'
+import { answersOf } from '../../lib/survey'
 
 interface Props {
   group: ClassGroup
@@ -152,6 +153,26 @@ export default function SeteukEditor({ group, basis, draft, level, autoLevel, le
             <p className="hint">근거 기록이 없어요. 수업 중 칭찬 · 관찰 메모를 남겨 두면 초안에 들어가요.</p>
           )}
         </Collapse>
+
+        {(() => {
+          // 설문 · 자기평가 답 (2026-11-10): 학생이 써 낸 글은 참고만 — 초안 · AI에는 넣지 않는다
+          const said = answersOf(settings.surveys?.[student.schoolYear] ?? [], student.id)
+          if (!said.length) return null
+          return (
+            <Collapse title={`학생이 쓴 글 ${said.length}개 (참고만)`} sub="설문 · 자기평가 — 그대로 옮기지 말고 선생님이 관찰한 내용으로 확인해 쓰세요">
+              <ul className="space-y-1.5 text-sm">
+                {said.map((x, i) => (
+                  <li key={i} className="rounded-lg bg-fill px-2 py-1.5">
+                    <span className="text-xs font-bold text-ink-3">
+                      {x.kind} · {x.survey} · {x.question}
+                    </span>
+                    <span className="block">{x.answer}</span>
+                  </li>
+                ))}
+              </ul>
+            </Collapse>
+          )
+        })()}
 
         {stale && <p className="rounded-xl bg-caution-light px-3 py-2 text-sm font-bold text-caution">초안을 만든 뒤 근거가 바뀌었어요. 다시 만들거나 새 근거를 글에 더해 주세요.</p>}
 
