@@ -8,6 +8,7 @@ import { featureOn } from '../lib/features'
 import { NAV, visibleGroups, type SectionId } from '../lib/nav'
 import { useApp } from '../state/AppContext'
 import { useGroups } from '../state/useGroups'
+import { useNewMarks } from '../state/useNewMarks'
 
 const SUB: Partial<Record<SectionId, string>> = {
   class: '수업 준비부터 수업 중 도구까지',
@@ -23,6 +24,7 @@ export default function SectionHubPage({ section }: { section: SectionId }) {
   const { settings } = useApp()
   const s = NAV.find((x) => x.id === section)!
   const groups = visibleGroups(s, settings.features)
+  const fresh = useNewMarks()
   const showClasses = section === 'class' && featureOn(settings.features, 'records')
   // 수업 화면은 '수업반' 묶음 대신 반 카드를 바로 보여 준다
   const rest = showClasses ? groups.filter((g) => g.id !== 'classes') : groups
@@ -38,7 +40,7 @@ export default function SectionHubPage({ section }: { section: SectionId }) {
           return (
             <GroupPanel key={g.title} title={g.title} icon={g.icon} tone={tone} count={g.items.length}>
               {g.items.map((i) => (
-                <PanelItem key={i.to} to={i.to} icon={i.icon} title={i.label} desc={i.desc} tone={tone} />
+                <PanelItem key={i.to} to={i.to} icon={i.icon} title={i.label} desc={i.desc} tone={tone} fresh={fresh.has(i.to)} />
               ))}
             </GroupPanel>
           )

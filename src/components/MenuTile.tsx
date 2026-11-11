@@ -55,14 +55,17 @@ export function GroupPanel({ title, icon, tone, count, children }: { title: stri
 }
 
 /** 묶음 판 안의 기능 한 줄 */
-export function PanelItem({ to, icon, title, desc, tone }: { to: string; icon: IconName; title: string; desc?: string; tone: Tone }) {
+export function PanelItem({ to, icon, title, desc, tone, fresh }: { to: string; icon: IconName; title: string; desc?: string; tone: Tone; fresh?: boolean }) {
   return (
     <Link to={to} className="flex min-h-[68px] items-center gap-3 border-r border-b border-line bg-white px-5 py-3 transition-colors hover:bg-fill active:bg-fill-2">
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl" style={{ background: tone.bg, color: tone.fg }}>
         <Icon name={icon} size={20} />
       </span>
       <span className="min-w-0 flex-1">
-        <b className="block truncate text-[1.02rem]">{title}</b>
+        <b className="flex items-center gap-1.5 text-[1.02rem]">
+          <span className="truncate">{title}</span>
+          {fresh && <span className="shrink-0 rounded-full bg-danger px-1.5 py-px text-[0.62rem] font-extrabold text-white">NEW</span>}
+        </b>
         {desc && <span className="block truncate text-sm text-ink-3">{desc}</span>}
       </span>
       <Icon name="chevronRight" size={18} className="shrink-0 text-ink-3" />

@@ -5,6 +5,7 @@ import { NAV, activeItem, sectionOf, visibleGroups, visibleSections, type NavGro
 import { useGroups } from '../state/useGroups'
 import { useFolded, useSideOpen } from '../state/sidebar'
 import { useApp } from '../state/AppContext'
+import { NEW_LABEL, useNewMarks } from '../state/useNewMarks'
 import Icon from './Icon'
 import { toneOf } from './MenuTile'
 
@@ -25,6 +26,9 @@ export default function BottomNav() {
   const item = activeItem(pathname, search, groups.flatMap((g) => g.items))
   const [open, setOpen] = useSideOpen()
   const [folded, toggleFold] = useFolded()
+  // 새 기능 점: 업데이트 소식의 화면 주소. 지금 화면은 본 것으로 표시
+  const fresh = useNewMarks(pathname)
+  const sectionFresh = (s: (typeof NAV)[number]) => fresh.size > 0 && visibleGroups(s, settings.features).some((g) => g.items.some((i) => fresh.has(i.to)))
 
   return (
     <>
@@ -40,7 +44,10 @@ export default function BottomNav() {
                   aria-current={active ? 'page' : undefined}
                   className={`flex min-h-[62px] flex-col items-center justify-center gap-1 text-[0.72rem] font-bold transition-colors ${active ? 'text-ink' : 'text-ink-3'}`}
                 >
-                  <Icon name={s.icon} size={25} strokeWidth={active ? 2.5 : 2} className={active ? 'text-brand' : ''} />
+                  <span className="relative">
+                    <Icon name={s.icon} size={25} strokeWidth={active ? 2.5 : 2} className={active ? 'text-brand' : ''} />
+                    {sectionFresh(s) && <i className="absolute -top-0.5 -right-1.5 h-2 w-2 rounded-full bg-danger" aria-label="새 기능" />}
+                  </span>
                   {s.label}
                 </Link>
               </li>
@@ -76,7 +83,10 @@ export default function BottomNav() {
                   aria-current={active ? 'page' : undefined}
                   className={`flex items-center border-b-[3px] px-3 text-[0.98rem] font-bold transition-colors ${active ? 'border-brand text-ink' : 'border-transparent text-ink-3 hover:text-ink-2'}`}
                 >
-                  {s.label}
+                  <span className="relative">
+                    {s.label}
+                    {sectionFresh(s) && <i className="absolute -top-0.5 -right-2 h-1.5 w-1.5 rounded-full bg-danger" aria-label="새 기능" />}
+                  </span>
                 </Link>
               </li>
             )
@@ -118,6 +128,7 @@ export default function BottomNav() {
                       className={`-ml-[0.6rem] block truncate border-l-2 py-1.5 pr-2 pl-3 text-[0.9rem] ${on ? 'border-brand bg-brand-light font-bold text-brand' : 'border-transparent font-medium text-ink-2 hover:bg-fill hover:text-ink'}`}
                     >
                       {i.label}
+                      {fresh.has(i.to) && <span className="ml-1.5 rounded-full bg-danger px-1.5 py-px align-middle text-[0.62rem] font-extrabold text-white">{NEW_LABEL}</span>}
                     </Link>
                   )
                 })}

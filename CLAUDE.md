@@ -951,3 +951,9 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - **땅콩이 오늘 브리핑**: `src/lib/brief.ts`(테스트 `tests/brief.test.ts`) · `src/state/useBrief.ts` — 오늘 수업 · 옮길 출결 · 늦은 진도 · 남은 채점 · 업무 일정(7일) · 백업. 학생 이름 없음(입력 칸 자체가 없음). 홈에서 하루 한 번 말풍선(`pelog.brief.day`), 대화 창 [오늘 브리핑]
 - **빠른 입력**: `src/lib/quickSay.ts`(테스트 `tests/quickSay.test.ts`) — 번호 · 범위(3~7) · 이름 + 할 일 하나(항목 · 견학 · 출결), 규칙으로만 읽음(AI 없음), 못 읽으면 오류. 화면 `src/pages/groups/QuickSay.tsx`(보드에 접힌 채, 확인 뒤 저장, 같은 항목이 이미 있으면 건너뜀)
 - 넣지 않은 것(교사 결정 필요): 분할점수 · 성취도 예측(공식 근거 확인) · 견적서 AI 읽기(0-4 예외) · 기기 간 동기화(0-4와 충돌)
+
+### 6-19. 화면 다듬기 (2026-11-12, 브랜치 `ui-polish`)
+- **메뉴의 새 기능 표시** (교사 승인 — 스쿨보드 메뉴의 NEW 참고): `src/lib/newMarks.ts`(테스트 `tests/newMarks.test.ts`) · `src/state/useNewMarks.ts`. 따로 목록 없이 `public/changelog.json`의 화면 주소(`to`)를 그대로 씀 — 가장 최근 소식 2개 · 14일 안, 홈('/')은 뺌, 그 화면(또는 아래 화면)을 한 번 열면 사라짐(`localStorage` `pelog.newSeen`, '주소@소식 날짜'라 나중 소식이 같은 화면을 가리키면 다시 뜸). 폰 아래 탭 · PC 위 메뉴 = 빨간 점, PC 왼쪽 메뉴 · 큰 메뉴 화면(`PanelItem` `fresh`) = NEW. **새 기능을 메뉴에 띄우려면 소식 줄의 `to`를 메뉴 표(`nav.ts`)의 주소와 똑같이 적는다**
+- **기록표 찾기 · 거르기**: `filterLedger`(`src/lib/ledger.ts`, 테스트 `tests/ledger.test.ts`) — 번호는 똑같이('11번'도), 이름은 들어 있으면, [기록 있는 학생만] = 이 달 칸에 기록이 하나라도 있는 학생. 화면 `LedgerView` 표 위
+- **홈 이번 주 시간표**: 오늘 요일 머리 = 파란 알약, 오늘 열 빈칸 옅은 파랑 · 수업 칸 옅은 테두리(지금 교시는 굵은 테두리 그대로)
+- 시험 841개 통과(TZ=UTC도). v1.19.1. 화면은 브라우저로 확인하지 않음(코드 · 시험만) — 병합 전에 시연 모드로 보기

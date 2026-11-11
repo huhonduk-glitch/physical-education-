@@ -386,8 +386,9 @@ function WeekTable({
         <tr>
           <th className="w-6" />
           {['월', '화', '수', '목', '금'].map((d, i) => (
-            <th key={d} className={`py-0.5 font-extrabold ${now.getDay() === i + 1 ? 'text-brand' : 'text-ink-3'}`}>
-              {d}
+            <th key={d} className="py-0.5 font-extrabold text-ink-3" aria-current={now.getDay() === i + 1 ? 'date' : undefined}>
+              {/* 오늘 요일은 알약으로, 그 열의 빈칸은 옅은 파랑 (2026-11-12) */}
+              {now.getDay() === i + 1 ? <span className="inline-block rounded-full bg-brand px-2 text-white">{d}</span> : d}
             </th>
           ))}
         </tr>
@@ -399,11 +400,11 @@ function WeekTable({
             {[1, 2, 3, 4, 5].map((d) => {
               const t = timetable.find((x) => x.day === d && x.period === p)
               const g = t ? groupById.get(t.groupId) : undefined
-              if (!g) return <td key={d} className="h-10 rounded-md bg-fill/60" />
+              if (!g) return <td key={d} className={`h-10 rounded-md ${now.getDay() === d ? 'bg-brand-light' : 'bg-fill/60'}`} />
               const c = GROUP_COLORS[g.color as keyof typeof GROUP_COLORS] ?? GROUP_COLORS.blue
               const live = now.getDay() === d && period === p
               return (
-                <td key={d} className={`h-10 rounded-md p-0 ${live ? 'ring-2 ring-brand' : ''}`} style={{ background: c.bg }}>
+                <td key={d} className={`h-10 rounded-md p-0 ${live ? 'ring-2 ring-brand' : now.getDay() === d ? 'ring-1 ring-brand/50' : ''}`} style={{ background: c.bg }}>
                   <Link to={`/groups/${g.id}`} className="line-clamp-2 block px-1 py-0.5 leading-tight font-bold break-all text-ink" title={g.name}>
                     {shortName(g.name)}
                   </Link>
