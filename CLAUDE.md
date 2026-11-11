@@ -938,3 +938,8 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - **기안문 초안 현황 줄**: `src/lib/draftFacts.ts`(테스트 `tests/draftFacts.test.ts`) — girls(여학생 수 · 학년별 · 여학생/남학생 PAPS) · clinic(대상 후보 · 저체력 비율 · 작년 · 참여 학생) · paps(대상 · 학년별 측정 종목 · 1회차 기간 · 작년 결과) · committee(위원 구성 · 회의 안건). 학생 이름 없음. 스포츠클럽 · 운동부는 앱에 자료가 없어 빈칸. WorkDocsPage가 복사할 때 읽음
 - **설문 · 자기평가** `/seteuk/survey`(평가 → 세특 묶음): `src/lib/survey.ts`(테스트 `tests/survey.test.ts`) — `readSurvey`(머리글 줄, 학번 → 학년반번호 → 이름(한 명일 때), 타임스탬프 · 이메일 · 점수 열 빼기, 같은 학생은 마지막 응답, 학번 · 이름 다르면 막음) · `summarize`(선택형 = 짧은 답 8종류 이하 + 겹침, 체크박스 쉼표 나눔) · `answersOf`. 저장 `settings.surveys[학년도]`. 세특 편집 창 '학생이 쓴 글(참고만)' — **초안 · AI 요청에는 넣지 않음**(길라잡이: 학생 제출 글은 참고만, STUDENT_TEXT_KINDS와 같은 원칙)
 
+
+### 6-17. 학교운동부 필수교육 · 서류 (2026-11-11 교사 요청, 브랜치 `team-training`)
+- 근거: 제주 2026 운영방향 누리집 PDF(176쪽, peWork `final`) — 64쪽 '법적 의무교육' 표(5가지 + 선택 1) · 53쪽(학교폭력예방 · 언어폭력) · 55쪽(스포츠윤리 런, 재교육 미이수 조치) · 57~59쪽(기숙사 · 진로) · 61~63쪽(도핑) · 76~78쪽(간담회 · 채용 서류) · 81~83쪽(운영 계획 · 전지훈련 · 점검) · 97쪽(양식 · 엑셀 서식 목록). 표시(법적 의무 · 의무 · 선택)는 원문 문구대로
+- `src/data/peWork.ts`: `WorkTraining` · `trainings` · `trainingNotes` · `formGroups`(운동부만), 화면 `WorkGuidePage` [교육] 탭 + [양식] 탭 묶음, 테스트 `tests/peWork.test.ts`, 땅콩이 `athlete-training`, v1.18.0
+- 같은 날 스쿨보드(schoolboard.cc, 설치본 1.2.7) 분석: 나이스 출결 자동 입력 = 브라우저 원격 디버깅 + Playwright로 담임 일일출결 화면 조작(교과 출결은 안 됨) → PE LOG에는 넣지 않기로 권고. 가져올 후보(교사 결정 대기): 출결 '나이스에 넣음' 표시 · 타이머에 수업 남은 시간 · 땅콩이 오늘 브리핑 · 분할점수 · 견적서 → 품목 표 · 말로 기록(규칙 방식) · 기기 간 동기화(0-4와 충돌)
