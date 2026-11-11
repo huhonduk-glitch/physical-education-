@@ -3,6 +3,9 @@ import { useEffect, useState } from 'react'
 import Icon from '../../components/Icon'
 import { db, newId } from '../../db/db'
 import { formatCountdown, intervalAt, type IntervalConfig } from '../../lib/timerMath'
+import { lessonClock } from '../../lib/timetable'
+import { useApp } from '../../state/AppContext'
+import { useGroups } from '../../state/useGroups'
 import { useTimer } from '../../state/TimerContext'
 import { BigTime, Controls, NumberField, Panel } from './common'
 
@@ -65,6 +68,50 @@ function Presets({ mode, onPick, current, isCurrent }: { mode: 'countdown' | 'in
   )
 }
 
+/** 정리 시간으로 남겨 둘 분 (수업 끝 5분 전에 울리게) */
+const WRAP_MIN = 5
+
+/**
+ * 수업 시간에 맞추기 (2026-11-11): 내 시간표의 지금 수업이 끝날 때까지, 또는 다음 수업 시작까지를
+ * 카운트다운으로 바로 건다. 시간표 · 교시 시각이 없으면 보이지 않는다.
+ */
+function LessonFit({ onSet }: { onSet: (ms: number) => void }) {
+  const { settings } = useApp()
+  const { groups } = useGroups()
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [])
+  const c = lessonClock(now, settings.timetable, settings.periodStarts, settings.periodMinutes)
+  if (!c) return null
+  const name = groups?.find((g) => g.id === c.groupId)?.name ?? ''
+  const wrap = c.seconds - WRAP_MIN * 60
+  return (
+    <Panel>
+      <p className="font-extrabold">
+        수업 시간에 맞추기{' '}
+        <span className="font-bold text-ink-3">
+          · {c.period}교시 {name}
+        </span>
+      </p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <button type="button" className="btn btn-outline justify-between" onClick={() => onSet(c.seconds * 1000)}>
+          <span>{c.kind === 'now' ? '수업 끝까지' : '수업 시작까지'}</span>
+          <b className="tabular-nums">{formatCountdown(c.seconds * 1000)}</b>
+        </button>
+        {c.kind === 'now' && wrap > 0 && (
+          <button type="button" className="btn btn-outline justify-between" onClick={() => onSet(wrap * 1000)}>
+            <span>정리 시간 {WRAP_MIN}분 전까지</span>
+            <b className="tabular-nums">{formatCountdown(wrap * 1000)}</b>
+          </button>
+        )}
+      </div>
+      <p className="hint">누르면 그만큼 바로 세기 시작해요. 교시 시각은 설정의 시간표를 따라요.</p>
+    </Panel>
+  )
+}
+
 export function Countdown({ onFull }: { onFull: () => void }) {
   const t = useTimer()
   const left = Math.max(0, t.countdownMs - t.elapsedMs)
@@ -92,6 +139,15 @@ export function Countdown({ onFull }: { onFull: () => void }) {
         />
         {done && <p className="text-center text-lg font-extrabold text-danger">시간 끝!</p>}
       </Panel>
+      {!t.running && (
+        <LessonFit
+          onSet={(ms) => {
+            const sec = Math.round(ms / 1000)
+            apply(Math.floor(sec / 60), sec % 60)
+            t.start()
+          }}
+        />
+      )}
       <Panel>
         <Presets
           mode="countdown"
