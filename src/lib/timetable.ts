@@ -41,3 +41,27 @@ export function todaysLessons(now: Date, timetable: readonly TimetableEntry[]): 
   const day = now.getDay()
   return timetable.filter((t) => t.day === day).sort((a, b) => a.period - b.period)
 }
+
+/**
+ * 지금 수업이 끝날 때까지 / 다음 수업이 시작할 때까지 남은 초 (2026-11-11 타이머 '수업 시간에 맞추기').
+ * 내 시간표 칸이 있는 교시만 본다. 지금 = 그 교시 시작 ≤ 지금 < 시작 + 수업 시간(분) (이동 10분은 넣지 않음).
+ * 주말 · 오늘 남은 수업이 없으면 null.
+ */
+export function lessonClock(
+  now: Date,
+  timetable: readonly TimetableEntry[],
+  periodStarts: readonly string[],
+  periodMinutes: number,
+): { kind: 'now' | 'next'; period: number; groupId: string; seconds: number } | null {
+  const sec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
+  let next: { kind: 'next'; period: number; groupId: string; seconds: number } | null = null
+  for (const l of todaysLessons(now, timetable)) {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(periodStarts[l.period - 1] ?? '')
+    if (!m) continue
+    const start = (Number(m[1]) * 60 + Number(m[2])) * 60
+    const end = start + periodMinutes * 60
+    if (sec >= start && sec < end) return { kind: 'now', period: l.period, groupId: l.groupId, seconds: end - sec }
+    if (start > sec && (!next || start - sec < next.seconds)) next = { kind: 'next', period: l.period, groupId: l.groupId, seconds: start - sec }
+  }
+  return next
+}

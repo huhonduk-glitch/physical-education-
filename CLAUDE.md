@@ -943,3 +943,11 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - 근거: 제주 2026 운영방향 누리집 PDF(176쪽, peWork `final`) — 64쪽 '법적 의무교육' 표(5가지 + 선택 1) · 53쪽(학교폭력예방 · 언어폭력) · 55쪽(스포츠윤리 런, 재교육 미이수 조치) · 57~59쪽(기숙사 · 진로) · 61~63쪽(도핑) · 76~78쪽(간담회 · 채용 서류) · 81~83쪽(운영 계획 · 전지훈련 · 점검) · 97쪽(양식 · 엑셀 서식 목록). 표시(법적 의무 · 의무 · 선택)는 원문 문구대로
 - `src/data/peWork.ts`: `WorkTraining` · `trainings` · `trainingNotes` · `formGroups`(운동부만), 화면 `WorkGuidePage` [교육] 탭 + [양식] 탭 묶음, 테스트 `tests/peWork.test.ts`, 땅콩이 `athlete-training`, v1.18.0
 - 같은 날 스쿨보드(schoolboard.cc, 설치본 1.2.7) 분석: 나이스 출결 자동 입력 = 브라우저 원격 디버깅 + Playwright로 담임 일일출결 화면 조작(교과 출결은 안 됨) → PE LOG에는 넣지 않기로 권고. 가져올 후보(교사 결정 대기): 출결 '나이스에 넣음' 표시 · 타이머에 수업 남은 시간 · 땅콩이 오늘 브리핑 · 분할점수 · 견적서 → 품목 표 · 말로 기록(규칙 방식) · 기기 간 동기화(0-4와 충돌)
+
+### 6-18. 스쿨보드 참고 기능 4가지 (2026-11-11~12 교사 '추천한 기능들 추가하자', 브랜치 `sb-ideas`)
+- 6-17은 main 병합 · 배포 끝(PR #57, `9410296`, 2026-11-11). 스쿨보드는 아이디어만 참고(코드 · 문구 · 그림 안 가져옴)
+- **나이스에 옮길 출결** `/attend/neis`(수업 → 내 수업반, 출결 보기 아래 링크): `Attendance.neisAt?`(선택 필드, 저장 구조 버전 그대로) · `setNeisCarried` · 상태 · 사유가 바뀌면 `neisAt` 지움(`attendanceRepo`). 계산 `src/lib/neisCarry.ts`(날짜 · 수업반 묶음, 복사 글 — 사유는 고를 때만), 화면 `NeisCarryPage`, 테스트 `tests/neisCarry.test.ts`. **나이스 자동 입력은 만들지 않는다**(0-5)
+- **타이머 수업 시간에 맞추기**: `lessonClock`(`src/lib/timetable.ts`, 테스트 `tests/home.test.ts`) — 지금 수업 끝까지 · 정리 5분 전까지 · 다음 수업 시작까지(한 시간 넘게 남으면 숨김). `CountdownInterval.tsx` `LessonFit`
+- **땅콩이 오늘 브리핑**: `src/lib/brief.ts`(테스트 `tests/brief.test.ts`) · `src/state/useBrief.ts` — 오늘 수업 · 옮길 출결 · 늦은 진도 · 남은 채점 · 업무 일정(7일) · 백업. 학생 이름 없음(입력 칸 자체가 없음). 홈에서 하루 한 번 말풍선(`pelog.brief.day`), 대화 창 [오늘 브리핑]
+- **빠른 입력**: `src/lib/quickSay.ts`(테스트 `tests/quickSay.test.ts`) — 번호 · 범위(3~7) · 이름 + 할 일 하나(항목 · 견학 · 출결), 규칙으로만 읽음(AI 없음), 못 읽으면 오류. 화면 `src/pages/groups/QuickSay.tsx`(보드에 접힌 채, 확인 뒤 저장, 같은 항목이 이미 있으면 건너뜀)
+- 넣지 않은 것(교사 결정 필요): 분할점수 · 성취도 예측(공식 근거 확인) · 견적서 AI 읽기(0-4 예외) · 기기 간 동기화(0-4와 충돌)

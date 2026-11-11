@@ -10,8 +10,10 @@ import TeamSendSheet from '../../components/TeamSendSheet'
 import UndoToast from '../../components/UndoToast'
 import { db } from '../../db/db'
 import { cycleAttendance, setAttendReason, setAttendance } from '../../db/attendanceRepo'
-import { toggleCheck, undo, type UndoToken } from '../../db/recordsRepo'
+import { addAbsences, addRecords, toggleCheck, undo, type UndoToken } from '../../db/recordsRepo'
 import type { Student } from '../../db/types'
+import { actionLabel, type SayAction } from '../../lib/quickSay'
+import { QuickSay } from './QuickSay'
 import { dayStatus, isMissing } from '../../lib/attendance'
 import { cellCounts, checkItems, type CheckItem } from '../../lib/checkBoard'
 import { todayStr } from '../../lib/dates'
@@ -114,6 +116,28 @@ export default function GroupBoardPage() {
     setSelected([])
     setMulti(false)
     setToast({ token, message, key: Date.now() })
+  }
+
+  // 빠른 입력: 읽은 내용을 교사가 확인한 뒤 저장. 이미 같은 항목이 있는 학생은 건너뛴다(두 번 세지 않게)
+  const applySay = async (studentIds: string[], action: SayAction): Promise<string> => {
+    const base = { schoolYear: settings.schoolYear, groupId: id, date, period: nowHere?.period }
+    if (action.kind === 'attend') {
+      for (const studentId of studentIds) await setAttendance(db, { ...base, studentId }, action.status)
+      return `${studentIds.length}명 ${actionLabel(action)} — 기록했어요. 고치려면 [출결]에서 눌러요.`
+    }
+    if (action.kind === 'absence') {
+      const r = await addAbsences(db, { ...base, studentIds, reason: action.reason })
+      setToast({ token: { recordIds: [], absenceIds: r.added, absenceBefore: r.updated }, message: `${studentIds.length}명 ${actionLabel(action)}`, key: Date.now() })
+      return `${studentIds.length}명 ${actionLabel(action)} — 기록했어요.`
+    }
+    const key = `${action.type}|${action.label}`
+    const fresh = studentIds.filter((sid) => !dayData?.counts.get(sid)?.get(key))
+    const skipped = studentIds.length - fresh.length
+    if (fresh.length) {
+      const recordIds = await addRecords(db, { ...base, studentIds: fresh, type: action.type, category: action.label })
+      setToast({ token: { recordIds, absenceIds: [], absenceBefore: [] }, message: `${fresh.length}명 ${actionLabel(action)}`, key: Date.now() })
+    }
+    return `${fresh.length}명 ${actionLabel(action)} — 기록했어요.${skipped ? ` 이미 있는 ${skipped}명은 건너뛰었어요.` : ''}`
   }
 
   const stats = useMemo(() => {
@@ -227,6 +251,8 @@ export default function GroupBoardPage() {
             </div>
           ))}
         </div>
+
+        {group && list.length > 0 && <QuickSay group={group} list={list} items={items} readOnly={readOnly} onApply={applySay} />}
 
         {multi && (
           <p className="anim-pop rounded-2xl bg-brand-light px-4 py-2.5 font-bold text-brand">기록할 학생을 모두 누른 뒤 아래 [기록하기]를 누르세요.</p>
