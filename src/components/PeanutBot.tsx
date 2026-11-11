@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { BOT_FAQ, findAnswer, type BotAnswer } from '../data/botFaq'
+import { todayStr } from '../lib/dates'
+import { useBrief } from '../state/useBrief'
 
 /**
  * 땅콩이 도우미 (2026-11-04 교사 요청). 그림은 교사 포트폴리오 사이트의 땅콩이쌤(교사 캐릭터).
@@ -10,6 +12,22 @@ const BASE = import.meta.env.BASE_URL
 type Msg = { from: 'me'; text: string } | { from: 'bot'; text: string; links?: BotAnswer['links'] }
 const HELLO: Msg = { from: 'bot', text: '안녕하세요! PE LOG 도우미 땅콩이예요 🥜 궁금한 걸 적거나 아래 버튼을 눌러 주세요.' }
 const QUICK = BOT_FAQ.filter((a) => a.quick)
+/** 오늘 브리핑 말풍선을 본(닫은) 날 — 하루에 한 번만 먼저 말을 건다 */
+const BRIEF_KEY = 'pelog.brief.day'
+const seenToday = () => {
+  try {
+    return localStorage.getItem(BRIEF_KEY) === todayStr()
+  } catch {
+    return true
+  }
+}
+const markSeen = () => {
+  try {
+    localStorage.setItem(BRIEF_KEY, todayStr())
+  } catch {
+    /* 무시 */
+  }
+}
 
 export default function PeanutBot() {
   const { pathname } = useLocation()
@@ -19,7 +37,19 @@ export default function PeanutBot() {
   const end = useRef<HTMLDivElement>(null)
   useEffect(() => end.current?.scrollIntoView({ block: 'end' }), [msgs, open])
   // 홈 · 설정 · 사용법에만 (2026-11-04 교사 결정: 수업 중 화면에서 학생 카드 · 시간표를 가리지 않게)
-  if (!/^\/(more|help)?$/.test(pathname)) return null
+  const shown = /^\/(more|help)?$/.test(pathname)
+  // 오늘 브리핑 (2026-11-11): 기기 안 자료만 센다. 홈에서 하루 한 번 말풍선으로 먼저 알린다
+  const brief = useBrief(shown)
+  const [nudged, setNudged] = useState(seenToday)
+  if (!shown) return null
+  const tellBrief = () => {
+    if (!brief) return
+    markSeen()
+    setNudged(true)
+    setOpen(true)
+    setMsgs((m) => [...m, { from: 'me', text: '오늘 브리핑' }, { from: 'bot', text: brief.text, links: brief.links }])
+  }
+  const nudge = pathname === '/' && !open && !nudged && !!brief && brief.count > 0
 
   const ask = (text: string, a?: BotAnswer | null) => {
     const ans = a ?? findAnswer(text)
@@ -65,6 +95,9 @@ export default function PeanutBot() {
               ),
             )}
             <div className="flex flex-wrap gap-1.5 pt-1">
+              <button type="button" className="rounded-full border border-brand px-3 py-1 text-sm font-bold text-brand" onClick={tellBrief} disabled={!brief}>
+                오늘 브리핑
+              </button>
               {QUICK.map((a) => (
                 <button key={a.id} type="button" className="rounded-full border border-line px-3 py-1 text-sm font-bold" onClick={() => ask(a.quick!, a)}>
                   {a.quick}
@@ -87,6 +120,24 @@ export default function PeanutBot() {
             </button>
           </form>
         </section>
+      )}
+      {nudge && (
+        <div className="fixed right-[4.75rem] bottom-[calc(env(safe-area-inset-bottom)+5.4rem)] z-40 flex items-center gap-1 rounded-2xl rounded-br-sm bg-white py-1.5 pr-1 pl-3 shadow-[var(--shadow-float)] ring-1 ring-line md:bottom-8">
+          <button type="button" className="text-sm font-bold text-brand" onClick={tellBrief}>
+            오늘 브리핑 {brief.count}가지 볼까요?
+          </button>
+          <button
+            type="button"
+            className="grid h-8 w-8 place-items-center rounded-full text-lg text-ink-3"
+            aria-label="오늘은 그만 보기"
+            onClick={() => {
+              markSeen()
+              setNudged(true)
+            }}
+          >
+            ×
+          </button>
+        </div>
       )}
       <button
         type="button"
