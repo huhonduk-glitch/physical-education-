@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { Attendance, AttendReason, AttendStatus, ClassGroup, Student } from '../../db/types'
 import { ATTEND_LABEL, ATTEND_ORDER, ATTEND_REASONS, isMissing } from '../../lib/attendance'
 import { memberNo } from '../../lib/groups'
@@ -100,6 +101,9 @@ export function AttendView({ group, list, status, absentIds, period, readOnly, o
           </ul>
         </section>
       )}
+      <Link to="/attend/neis" className="block px-1 text-sm font-bold text-brand">
+        나이스에 아직 안 옮긴 출결 모아 보기 ›
+      </Link>
     </div>
   )
 }

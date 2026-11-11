@@ -373,6 +373,8 @@ export interface Attendance {
   status: AttendStatus
   /** 건강 정보일 수 있어 목록에서는 가린다 */
   reason?: AttendReason
+  /** 나이스에 옮겼다고 교사가 표시한 때 (없으면 아직). 상태 · 사유가 바뀌면 지운다 (2026-11-11) */
+  neisAt?: number
   createdAt: number
   updatedAt: number
 }

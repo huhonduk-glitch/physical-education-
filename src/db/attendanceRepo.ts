@@ -28,7 +28,8 @@ export async function setAttendance(db: PeDatabase, k: AttendKey, status: Attend
     }
     const now = Date.now()
     if (rows[0]) {
-      await db.attendance.update(rows[0].id, { status, updatedAt: now })
+      // 상태가 바뀌면 나이스에 다시 옮겨야 하므로 '옮김' 표시를 지운다
+      await db.attendance.update(rows[0].id, rows[0].status === status ? { updatedAt: now } : { status, neisAt: undefined, updatedAt: now })
       if (rows.length > 1) await db.attendance.bulkDelete(rows.slice(1).map((r) => r.id))
     } else {
       await db.attendance.add({ id: newId(), schoolYear: k.schoolYear, groupId: k.groupId, studentId: k.studentId, date: k.date, period: k.period, status, createdAt: now, updatedAt: now })
@@ -45,5 +46,15 @@ export async function cycleAttendance(db: PeDatabase, k: AttendKey): Promise<Att
 }
 
 export async function setAttendReason(db: PeDatabase, id: string, reason: AttendReason | undefined): Promise<void> {
-  await db.attendance.update(id, { reason, updatedAt: Date.now() })
+  const row = await db.attendance.get(id)
+  if (!row) return
+  await db.attendance.update(id, row.reason === reason ? { updatedAt: Date.now() } : { reason, neisAt: undefined, updatedAt: Date.now() })
+}
+
+/** 나이스에 옮겼다고 표시 / 표시 풀기 */
+export async function setNeisCarried(db: PeDatabase, ids: readonly string[], done: boolean): Promise<void> {
+  const neisAt = done ? Date.now() : undefined
+  await db.transaction('rw', db.attendance, async () => {
+    for (const id of ids) await db.attendance.update(id, { neisAt })
+  })
 }
