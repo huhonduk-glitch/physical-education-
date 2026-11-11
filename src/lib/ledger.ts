@@ -113,3 +113,18 @@ export function shiftMonth(month: string, n: number): string {
   const d = new Date(y, m - 1 + n, 1)
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
 }
+
+/**
+ * 기록표 찾기 · 거르기 (2026-11-12): 번호(똑같이) 또는 이름(들어 있으면)으로 찾고,
+ * onlyMarked면 이 달 칸에 기록(칭찬 · 지도 · 관찰 · 견학 · 출결)이 하나라도 있는 학생만.
+ */
+export function filterLedger<S extends { id: string; name: string }>(students: readonly S[], numberOf: (s: S) => string, cells: ReadonlyMap<string, unknown>, find: string, onlyMarked: boolean): S[] {
+  const q = find.trim().replace(/번$/, '')
+  const marked = new Set<string>()
+  if (onlyMarked) for (const k of cells.keys()) marked.add(k.slice(0, k.lastIndexOf('|')))
+  return students.filter((s) => {
+    if (onlyMarked && !marked.has(s.id)) return false
+    if (!q) return true
+    return /^\d+$/.test(q) ? numberOf(s) === q || numberOf(s) === String(Number(q)) : s.name.includes(q)
+  })
+}

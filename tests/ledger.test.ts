@@ -43,3 +43,23 @@ describe('누가 기록표 (나이스 모양)', () => {
     expect(shiftMonth('2026-01', -1)).toBe('2025-12')
   })
 })
+
+describe('기록표 찾기 · 거르기 (2026-11-12)', () => {
+  it('번호는 똑같이, 이름은 들어 있으면, 기록 있는 학생만', async () => {
+    const { filterLedger } = await import('../src/lib/ledger')
+    const students = [
+      { id: 'a', name: '김가람', no: '1' },
+      { id: 'b', name: '이나래', no: '11' },
+      { id: 'c', name: '박가온', no: '12' },
+    ]
+    const no = (s: { no: string }) => s.no
+    const cells = new Map<string, unknown>([['b|2026-11-12', {}]])
+    const ids = (find: string, only = false) => filterLedger(students, no, cells, find, only).map((s) => s.id)
+    expect(ids('')).toEqual(['a', 'b', 'c'])
+    expect(ids('1')).toEqual(['a']) // 11 · 12는 아님
+    expect(ids('11번')).toEqual(['b'])
+    expect(ids('가')).toEqual(['a', 'c'])
+    expect(ids('', true)).toEqual(['b'])
+    expect(ids('가', true)).toEqual([])
+  })
+})

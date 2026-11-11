@@ -8,7 +8,7 @@ import { checkItems, type CheckItem } from '../../lib/checkBoard'
 import type { Student } from '../../db/types'
 import { todayStr } from '../../lib/dates'
 import { creditRisk } from '../../lib/attendance'
-import { ledgerCells, ledgerColumns, ledgerTotals, shiftMonth, weekSpans, type AttendMark } from '../../lib/ledger'
+import { filterLedger, ledgerCells, ledgerColumns, ledgerTotals, shiftMonth, weekSpans, type AttendMark } from '../../lib/ledger'
 import { useApp } from '../../state/AppContext'
 
 const WD = ['일', '월', '화', '수', '목', '금', '토']
@@ -45,6 +45,9 @@ export default function LedgerView({
 }) {
   const { settings } = useApp()
   const [tool, setTool] = useState<Tool>(null)
+  // 찾기 · 거르기 (2026-11-12): 번호 · 이름으로 찾고, 이 달 기록이 있는 학생만 볼 수 있다
+  const [find, setFind] = useState('')
+  const [onlyMarked, setOnlyMarked] = useState(false)
   const tools = useMemo(() => checkItems(settings.recordButtons), [settings.recordButtons])
   const praiseTools = tools.filter((t) => t.type === 'exemplary')
   const guideTools = tools.filter((t) => t.type === 'unprepared')
@@ -81,6 +84,7 @@ export default function LedgerView({
   }, [month, weekdays, data])
   const cells = useMemo(() => ledgerCells(data?.r ?? [], data?.a ?? [], (data?.t ?? []) as { studentId: string; date: string; status: AttendMark }[]), [data])
   const spans = weekSpans(cols)
+  const shown = useMemo(() => filterLedger(students, numberOf, cells, find, onlyMarked), [students, numberOf, cells, find, onlyMarked])
 
   const tap = (s: Student, date: string) => {
     if (!tool || readOnly) return onCell(s, date)
@@ -163,6 +167,26 @@ export default function LedgerView({
         </div>
       )}
 
+      <div className="flex flex-wrap items-center gap-2">
+        <input
+          type="search"
+          className="field min-h-[44px] min-w-0 flex-1"
+          value={find}
+          onChange={(e) => setFind(e.target.value)}
+          placeholder="번호 · 이름 찾기"
+          aria-label="번호 · 이름 찾기"
+        />
+        <label className="flex min-h-[44px] shrink-0 items-center gap-2 rounded-2xl bg-white px-3 text-sm font-bold text-ink-2 shadow-[var(--shadow-card)]">
+          <input type="checkbox" className="h-5 w-5" checked={onlyMarked} onChange={(e) => setOnlyMarked(e.target.checked)} />
+          기록 있는 학생만
+        </label>
+      </div>
+      {shown.length < students.length && (
+        <p className="px-1 text-sm font-bold text-ink-2">
+          {students.length}명 가운데 {shown.length}명 보는 중
+        </p>
+      )}
+
       <div className="card max-h-[calc(100dvh-13rem)] overflow-auto p-0 lg:max-h-[calc(100dvh-16rem)]">
         <table className="w-max min-w-full border-collapse text-sm">
           <thead>
@@ -195,7 +219,14 @@ export default function LedgerView({
             </tr>
           </thead>
           <tbody>
-            {students.map((s, si) => {
+            {shown.length === 0 && (
+              <tr>
+                <td colSpan={cols.length + 5} className="px-4 py-6 text-center font-bold text-ink-3">
+                  {onlyMarked && !find.trim() ? '이 달에 기록이 있는 학생이 없어요' : '찾는 학생이 없어요'}
+                </td>
+              </tr>
+            )}
+            {shown.map((s, si) => {
               const t = ledgerTotals(cells, s.id, cols)
               const zebra = si % 2 ? 'bg-fill/40' : 'bg-white'
               return (
