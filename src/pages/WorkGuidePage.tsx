@@ -9,10 +9,11 @@ import { NEIS_SCREEN_NOTE, WORK_DOCS, WORK_TOPICS, srcLabel, workTopic, type Wor
 /** 넣어 둔 자료 파일이 있으면 쪽 표시를 눌러 그 쪽을 연다 */
 const OpenCtx = createContext<{ has: (d: WorkDoc) => boolean; open: (src: WorkSrc, title: string) => void }>({ has: () => false, open: () => undefined })
 
-type Tab = 'neis' | 'calendar' | 'rules' | 'forms'
+type Tab = 'neis' | 'calendar' | 'edu' | 'rules' | 'forms'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'neis', label: '나이스' },
   { id: 'calendar', label: '일정' },
+  { id: 'edu', label: '교육' },
   { id: 'rules', label: '규정' },
   { id: 'forms', label: '양식' },
 ]
@@ -69,7 +70,7 @@ export default function WorkGuidePage() {
         <DocFiles docs={docs} onChange={() => void refresh()} />
 
         <div className="segment" role="tablist">
-          {TABS.filter((t) => t.id !== 'neis' || (topic?.menus.length ?? 0) > 0).map((t) => (
+          {TABS.filter((t) => (t.id !== 'neis' || topic.menus.length > 0) && (t.id !== 'edu' || (topic.trainings?.length ?? 0) > 0)).map((t) => (
             <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}>
               {t.label}
             </button>
@@ -134,6 +135,38 @@ export default function WorkGuidePage() {
           </section>
         )}
 
+        {tab === 'edu' && (
+          <section className="space-y-2">
+            <p className="hint px-1">운영방향에 ‘법적 의무교육’ · ‘의무’ · ‘필수’로 적힌 교육이에요. 표시는 원문 그대로 옮겼어요.</p>
+            {(topic.trainings ?? []).map((t) => (
+              <div key={t.name} className="card space-y-1.5">
+                <p className="flex flex-wrap items-center gap-2">
+                  <b>{t.name}</b>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${t.kind === '선택' ? 'bg-fill text-ink-2' : t.kind === '법적 의무' ? 'bg-brand text-white' : 'bg-brand-light text-brand'}`}>{t.kind}</span>
+                </p>
+                <p className="text-sm font-bold text-ink-2">
+                  {t.who} · <span className="text-brand">{t.times}</span>
+                </p>
+                {t.basis && <p className="hint">근거: {t.basis}</p>}
+                <Line line={{ text: t.how ?? '', src: t.src, local: t.local }} />
+              </div>
+            ))}
+            {(topic.trainingNotes?.length ?? 0) > 0 && (
+              <div className="card space-y-2">
+                <p className="font-extrabold">알아 둘 것</p>
+                <ul className="space-y-2">
+                  {(topic.trainingNotes ?? []).map((l, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                      <Line line={l} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+        )}
+
         {tab === 'rules' &&
           topic.rules.map((r) => (
             <section key={r.title} className="card space-y-2">
@@ -164,6 +197,19 @@ export default function WorkGuidePage() {
                 </div>
               ))}
             </div>
+            {(topic.formGroups ?? []).map((g) => (
+              <div key={g.title} className="card space-y-2">
+                <p className="font-extrabold">{g.title}</p>
+                <ul className="space-y-2">
+                  {g.lines.map((l, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
+                      <Line line={l} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
             <p className="hint px-1">
               {has('plan')
                 ? '[열기]로 넣어 둔 파일의 그 쪽을 봐요. 한글 · 엑셀 서식은 공문 첨부 파일에서 받아 쓰세요.'
