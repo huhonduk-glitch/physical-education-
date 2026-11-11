@@ -84,7 +84,8 @@ function LessonFit({ onSet }: { onSet: (ms: number) => void }) {
     return () => clearInterval(id)
   }, [])
   const c = lessonClock(now, settings.timetable, settings.periodStarts, settings.periodMinutes)
-  if (!c) return null
+  // 다음 수업이 한 시간 넘게 남았으면 보이지 않는다 (아침 일찍 · 긴 공강에 쓸모없는 숫자가 뜨지 않게)
+  if (!c || (c.kind === 'next' && c.seconds > 3600)) return null
   const name = groups?.find((g) => g.id === c.groupId)?.name ?? ''
   const wrap = c.seconds - WRAP_MIN * 60
   return (
