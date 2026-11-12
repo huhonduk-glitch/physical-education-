@@ -195,6 +195,7 @@ export const NAV: NavSection[] = [
           { to: '/work/committee', label: '학교체육소위원회', icon: 'list', desc: '구성 · 심의할 일 · 규정 예시', feature: 'work' },
           { to: '/work/committee/meetings', label: '소위원회 회의 · 회의록', icon: 'edit', desc: '연 2회 회의 기록 · 회의록 인쇄', feature: 'work' },
           { to: '/work/budget', label: '체육 예산 현황', icon: 'list', desc: '에듀파인 → 구글 시트', feature: 'work' },
+          { to: '/work/quote', label: '견적서 → 품의', icon: 'clipboard', desc: '품목 표 · 품의 초안 · 예산 잔액', feature: 'work' },
         ],
       },
       {

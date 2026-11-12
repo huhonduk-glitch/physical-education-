@@ -93,7 +93,10 @@ export default function AiSetupCard({ readOnly }: { readOnly: boolean }) {
                         disabled={readOnly}
                       >
                         <b>{m.name}</b>
-                        <span className="block text-ink-3">{m.free ? '무료 · 하루 사용량 제한 · 입력 내용이 학습에 쓰일 수 있음' : `100만 토큰당 입력 $${m.inPrice.toFixed(2)} · 출력 $${m.outPrice.toFixed(2)}`}</span>
+                        <span className="block text-ink-3">
+                          {m.free ? '무료 · 하루 사용량 제한 · 입력 내용이 학습에 쓰일 수 있음' : `100만 토큰당 입력 $${m.inPrice.toFixed(2)} · 출력 $${m.outPrice.toFixed(2)}`}
+                          {m.vision && ' · 사진 읽기'}
+                        </span>
                       </button>
                     </li>
                   ))}
