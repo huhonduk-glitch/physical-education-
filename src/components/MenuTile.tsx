@@ -73,6 +73,56 @@ export function PanelItem({ to, icon, title, desc, tone, fresh }: { to: string; 
   )
 }
 
+/**
+ * 업무 하나 카드 (2026-11-12): 머리(업무 이름 · 한 줄 설명) + 하위 메뉴 칩.
+ * 업무가 여럿이고 하위 메뉴가 4~6개라 줄 목록으로 그리면 폰에서 너무 길어진다. 첫 칩(흐름도)은 색을 채운다
+ */
+export function ChipPanel({
+  title,
+  icon,
+  tone,
+  desc,
+  items,
+  fresh,
+}: {
+  title: string
+  icon: IconName
+  tone: Tone
+  desc?: string
+  items: { to: string; label: string }[]
+  fresh?: (to: string) => boolean
+}) {
+  return (
+    <section className="overflow-hidden rounded-3xl bg-white shadow-[var(--shadow-card)]">
+      <Link to={items[0]?.to ?? '#'} className="flex items-center gap-3 px-5 py-3.5" style={{ background: tone.bg }}>
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-white" style={{ background: tone.fg }}>
+          <Icon name={icon} size={19} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <b className="block text-[1.1rem] font-extrabold" style={{ color: tone.fg }}>
+            {title}
+          </b>
+          {desc && <span className="block truncate text-sm font-semibold text-ink-3">{desc}</span>}
+        </span>
+        <Icon name="chevronRight" size={18} style={{ color: tone.fg }} />
+      </Link>
+      <div className="flex flex-wrap gap-1.5 px-4 py-3">
+        {items.map((i, k) => (
+          <Link
+            key={i.to}
+            to={i.to}
+            className="relative rounded-xl px-3 py-2 text-[0.95rem] font-bold active:opacity-70"
+            style={k === 0 ? { background: tone.fg, color: '#fff' } : { background: tone.bg, color: tone.fg }}
+          >
+            {i.label}
+            {fresh?.(i.to) && <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-danger ring-2 ring-white" aria-label="새 기능" />}
+          </Link>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 /** 화면의 주된 일 하나 (꽉 찬 파란 카드). 한 화면에 하나만 */
 export function HeroLink({ to, icon, title, desc }: { to: string; icon: IconName; title: string; desc?: string }) {
   return (

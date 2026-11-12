@@ -77,7 +77,7 @@ export const WORK_FLOWS: WorkFlow[] = [
         title: '학년 초',
         steps: [
           { when: '학년 초', kind: 'plan', title: '학교운동부 연간 운영 계획 수립 → 학교운영위원회 심의', detail: '일반현황 · 예산 편성 · 집행 계획 · 연간 훈련계획 · 안전대책 · 학생선수 상담 계획', src: F([78, 82]), links: [DOCS] },
-          { when: '학년 초', kind: 'neis', title: '나이스 등록: 학교운동부 → 지도교사 · 지도자 → 학생선수', detail: '학교운동부 소속과 개인 활동 학생선수까지 파악해 등록', src: N([75, 87]), links: [{ to: '/work/team', label: '나이스 순서' }] },
+          { when: '학년 초', kind: 'neis', title: '나이스 등록: 학교운동부 → 지도교사 · 지도자 → 학생선수', detail: '학교운동부 소속과 개인 활동 학생선수까지 파악해 등록', src: N([75, 87]), links: [{ to: '/work/team/neis', label: '나이스 순서' }] },
           { when: '4월 1일 기준', kind: 'submit', title: '학교운동부 현황 · 체육특기자 현황 나이스 입력', src: F(98), local: true },
           { when: '3.20', kind: 'submit', title: '학생선수 현황(엑셀 서식 3) · 졸업생 진로 진학 현황(서식 2) 교데통 제출', detail: '학생선수 현황은 9.11에 한 번 더', src: F(98), local: true },
           { when: '학년 초', kind: 'run', title: '최저학력제 적용 과목 정하고 학생선수 · 학부모에게 안내', detail: '(고) 영어 · 사회를 수학 · 과학으로 바꾸면 소위원회 심의 후 학교장 결정', src: P([65, 70]) },
@@ -88,10 +88,10 @@ export const WORK_FLOWS: WorkFlow[] = [
         title: '연중',
         steps: [
           { when: '매월 1회 이상', kind: 'run', title: '학생선수 상담 (개인별 상담일지 기록 · 결재)', detail: '운동부지도자 상담과 따로', src: P(50) },
-          { when: '수시', kind: 'neis', title: '출결(출석인정결석 허용일수) · 훈련일지 나이스 입력', detail: '출결은 담임교사가 학적에서 마감한 뒤 담당 교사가', src: N([88, 93]), links: [{ to: '/work/team', label: '나이스 순서' }] },
+          { when: '수시', kind: 'neis', title: '출결(출석인정결석 허용일수) · 훈련일지 나이스 입력', detail: '출결은 담임교사가 학적에서 마감한 뒤 담당 교사가', src: N([88, 93]), links: [{ to: '/work/team/neis', label: '나이스 순서' }] },
           { when: '대회 · 훈련 전', kind: 'plan', title: '대회 참가계획 + 보충학습계획(내부결재), 전지훈련은 1개월 전 계획서 사전보고', src: F([78, 82]) },
           { when: '사유가 생기면', kind: 'budget', title: '전국규모대회 참가 지원금 신청서 · 정산서 (양식 2)', detail: '운동부 물품 · 경비 품의는 견적서 → 품의에서 품목 표와 초안을', src: F(98), local: true, links: [QUOTE, BUDGET] },
-          { when: '학기마다', kind: 'edu', title: '학생선수 인권교육 · 학교폭력예방교육 · 진로교육 (학기별 1회)', src: P([46, 51]), links: [{ to: '/work/team', label: '교육 탭' }] },
+          { when: '학기마다', kind: 'edu', title: '학생선수 인권교육 · 학교폭력예방교육 · 진로교육 (학기별 1회)', src: P([46, 51]), links: [{ to: '/work/team/edu', label: '받아야 할 교육' }] },
           { when: '연 1회 이상', kind: 'edu', title: '성폭력 예방교육 · 도핑방지교육', src: P([46, 56]) },
           { when: '학기마다', kind: 'meeting', title: '학교장 주재 학생선수 · 지도자 · 학부모 간담회, 학교장 청렴서한문', src: P(70) },
           { when: '4~6월', kind: 'run', title: '학생선수 폭력피해 실태조사', detail: '2026년부터 시기가 바뀜', src: P(54) },
@@ -102,7 +102,7 @@ export const WORK_FLOWS: WorkFlow[] = [
       {
         title: '학기 말 · 연말',
         steps: [
-          { when: '학기 말', kind: 'neis', title: '최저학력 도달 확인 → 미도달은 기초학력보장 프로그램(e-School Run-Up) 이수', src: P(64), links: [{ to: '/work/team', label: '나이스 순서' }] },
+          { when: '학기 말', kind: 'neis', title: '최저학력 도달 확인 → 미도달은 기초학력보장 프로그램(e-School Run-Up) 이수', src: P(64), links: [{ to: '/work/team/neis', label: '나이스 순서' }] },
           { when: '6.26 · 12.18', kind: 'submit', title: '학생선수 재활치료비 신청서 · 청구서 (양식 4)', src: F(98), local: true },
           { when: '11.20', kind: 'submit', title: '동계강화훈련 계획서 (양식 1)', src: F(98), local: true },
           { when: '1학기말 · 2학기말', kind: 'submit', title: '학생선수 최저학력제 시행 현황 등 보고 (공문 참조)', src: F(98), local: true },
@@ -122,7 +122,7 @@ export const WORK_FLOWS: WorkFlow[] = [
           { when: '3~4월', kind: 'meeting', title: '학교체육소위원회를 거쳐 클럽 조직', detail: '등록 학생이 10명 아래로 불가피하면 소위원회가 등록 여부를 정해요', src: F([37, 38]), local: true, links: [{ to: '/work/committee/meetings', label: '회의 기록' }] },
           { when: '3~4월', kind: 'plan', title: '전체 · 클럽별 연간 운영 계획 기안 (필수)', detail: '클럽 · 지도교사 · 학생 수, 활동 시간 · 장소 · 대회, 활성화 지원비 예산', src: F([37, 38]), links: [DOCS] },
           { when: '활동 시작 전', kind: 'plan', title: '정규교육과정 외 클럽 운영 계획 → 학교장 승인 (필수)', detail: '동아리 시간 밖(0교시 · 점심 · 공휴일 · 토요일)에 활동하는 클럽', src: F([38, 39]), links: [DOCS] },
-          { when: '4월~', kind: 'neis', title: '나이스 등록: 종목 확인 → 지도교사 · 강사 → 클럽 · 구성원', src: N([108, 116]), links: [{ to: '/work/club', label: '나이스 순서' }] },
+          { when: '4월~', kind: 'neis', title: '나이스 등록: 종목 확인 → 지도교사 · 강사 → 클럽 · 구성원', src: N([108, 116]), links: [{ to: '/work/club/neis', label: '나이스 순서' }] },
         ],
       },
       {
@@ -137,7 +137,7 @@ export const WORK_FLOWS: WorkFlow[] = [
         title: '연말',
         steps: [
           { when: '11.20까지', kind: 'submit', title: '학교스포츠클럽 등록 및 실적 나이스 마무리', src: F(98), local: true },
-          { when: '나이스 마무리 뒤', kind: 'neis', title: '담임교사가 학생부로 가져오기', detail: '정규교육과정 밖 클럽은 동아리활동란에 클럽명과 활동시간만(평일 2시간 · 공휴일 4시간까지, 20분 단위). 특기사항은 정규교육과정 안의 클럽(중학교 창체)만', src: P([34, 35]), links: [{ to: '/work/club', label: '나이스 순서' }] },
+          { when: '나이스 마무리 뒤', kind: 'neis', title: '담임교사가 학생부로 가져오기', detail: '정규교육과정 밖 클럽은 동아리활동란에 클럽명과 활동시간만(평일 2시간 · 공휴일 4시간까지, 20분 단위). 특기사항은 정규교육과정 안의 클럽(중학교 창체)만', src: P([34, 35]), links: [{ to: '/work/club/neis', label: '나이스 순서' }] },
         ],
       },
     ],
@@ -168,7 +168,7 @@ export const WORK_FLOWS: WorkFlow[] = [
         title: '필요할 때',
         steps: [
           { when: '필요할 때', kind: 'meeting', title: '임시회의', detail: '위원 3분의 1 이상 요구, 교육감(교육장) 요청, 위원장이 필요하다고 볼 때', src: F(157) },
-          { when: '사안이 생기면', kind: 'meeting', title: '소위원회를 거쳐야 하는 일', detail: '클럽 10명 미만 등록 · 최저학력 과목 변경 · 운동부 창단 · 해체 · 지도자 자격 승인 · 운동부 폭력 신고 조사(7일 안에 학교장에게)', src: [F(38), F(70), F(84), F(29), F(151)], local: true, links: [{ to: '/work/committee', label: '규정 · 심의할 일' }] },
+          { when: '사안이 생기면', kind: 'meeting', title: '소위원회를 거쳐야 하는 일', detail: '클럽 10명 미만 등록 · 최저학력 과목 변경 · 운동부 창단 · 해체 · 지도자 자격 승인 · 운동부 폭력 신고 조사(7일 안에 학교장에게)', src: [F(38), F(70), F(84), F(29), F(151)], local: true, links: [{ to: '/work/committee/rules', label: '지침 · 심의할 일' }] },
         ],
       },
     ],
@@ -269,6 +269,30 @@ export const WORK_FLOWS: WorkFlow[] = [
           { when: '행사 뒤', kind: 'run', title: '결과 · 시상 정리, 예산 정산', detail: '공식 서식 없음 — 다음 해 일정은 업무 달력에', school: true, links: [{ to: '/work/calendar', label: '업무 달력' }] },
         ],
       },
+    ],
+  },
+]
+
+/** 체육대회 [안전] 하위 메뉴: 운영방향 원문 92~94쪽 문장만 (제주 2026) */
+export const SPORTSDAY_SAFETY: { title: string; lines: { text: string; src: WorkSrc; local?: boolean }[] }[] = [
+  {
+    title: '행사 전',
+    lines: [
+      { text: '운동회 · 체육대회 · 학교 축제 등 각종 행사 전 교직원 대상 사전 안전교육 실시 (의무화)', src: F(92), local: true },
+      { text: '학교 단위 교직원 심폐소생술 등 안전교육: 연간 4시간 이상', src: F(92), local: true },
+      { text: '학교체육시설 · 놀이시설 안전 점검 월 1회 의무(매달 4일) · 안전 점검 관리 대장 작성, 일일 점검 권장', src: F(94), local: true },
+      { text: '교외 대회 참가 · 전지훈련 · 생존수영 때는 학생 · 인솔자 휴대폰 비상연락망을 만들어 학교에서 관리', src: F(92), local: true },
+      { text: '경쟁 과열이 우려되는 종목은 규칙을 바꿔 운영 — 예) 반칙하면 2분간 퇴장 (체육수업 안전 지도 내용)', src: F(92), local: true },
+    ],
+  },
+  {
+    title: '사고가 나면 (순서대로)',
+    lines: [
+      { text: '① 사고의 경중과 관계없이 학교 관리자에게 반드시 보고', src: F(93) },
+      { text: '② 응급조치: 환자 상태 관찰 · 응급 처치, 의료기관 이송 여부 결정, 119 · 112 등 협조 요청, 보호자에게 연락', src: F(93) },
+      { text: '③ 사고 원인 · 피해 상황을 파악해 관할 교육(지원)청에 보고', src: F(93) },
+      { text: '보고 체계: 고 · 특수학교 → 도교육청(안전관리과 · 체육건강과), 초 · 중학교 → 교육지원청 → 도교육청', src: F(93), local: true },
+      { text: '이동 중 교통사고, 골절 · 3인 이상 동시 부상 등 입원 치료가 필요한 부상, 익수사고는 즉시 신고하고 학교 · 교육청 담당자에게 바로 보고', src: F(93), local: true },
     ],
   },
 ]

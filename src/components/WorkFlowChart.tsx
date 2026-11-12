@@ -102,16 +102,16 @@ function SrcChip({ src, has, onOpen }: { src: WorkSrc; has: (d: WorkDoc) => bool
   )
 }
 
-/** 제작자가 실제로 쓴 문서 (개인정보 지운 사본, public/docs/) */
+/** 현장 양식: 제작자(현직 체육교사)가 실제로 쓴 문서 — 개인정보 지운 사본, public/docs/ */
 export function AuthorDocsCard({ id, title }: { id: FlowId; title: string }) {
   const list = AUTHOR_DOCS[id]
   return (
     <section className="card space-y-2">
       <p className="flex items-center gap-2 font-extrabold">
-        <Icon name="file" size={20} className="text-brand" /> 제작자가 실제로 쓴 문서 · {title}
+        <Icon name="file" size={20} className="text-brand" /> 현장 양식 · {title}
       </p>
       {list.length === 0 ? (
-        <p className="hint">아직 올린 문서가 없어요. 제작자(현직 체육교사)가 실제 업무에 쓴 양식을 개인정보를 지워 차례로 올릴 예정이에요.</p>
+        <p className="hint">아직 올린 양식이 없어요. PE LOG를 만든 현직 체육교사가 실제 업무에 쓴 양식을 개인정보를 지워 차례로 올릴 예정이에요.</p>
       ) : (
         <ul className="divide-y divide-line">
           {list.map((d) => (
@@ -128,7 +128,7 @@ export function AuthorDocsCard({ id, title }: { id: FlowId; title: string }) {
           ))}
         </ul>
       )}
-      <p className="hint">학교마다 양식이 달라요. 받아서 학교 상황에 맞게 고쳐 쓰세요. 개인정보는 지운 사본이에요.</p>
+      <p className="hint">현직 체육교사가 실제로 쓴 양식이에요(개인정보 지운 사본). 학교마다 양식이 달라요 — 받아서 학교 상황에 맞게 고쳐 쓰세요.</p>
     </section>
   )
 }

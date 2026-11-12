@@ -103,7 +103,9 @@ export default function BottomNav() {
           </Link>
           {groups.map((g, gi) => {
             const key = `${sec.id}/${g.title}`
-            const shut = folded.has(key) && !g.items.includes(item!)
+            // 업무별 묶음(compact)은 지금 보는 업무만 펼친다 — 누르면 펼침/접힘. 다른 묶음은 접어 둔 것만 접힘
+            const here = g.items.includes(item!)
+            const shut = g.compact ? !(here || folded.has(key)) : folded.has(key) && !here
             return (
             <div key={g.title} className="mb-3">
               <button
@@ -160,7 +162,10 @@ export function useCrumb(): string[] {
   const groups = useSideGroups(sec.id)
   if (pathname === '/') return []
   const item = activeItem(pathname, search, groups.flatMap((g) => g.items))
-  return item ? [sec.label, item.label] : [sec.label]
+  if (!item) return [sec.label]
+  // 업무별 묶음은 '업무 › 학교운동부 › 나이스 할 일'처럼 업무 이름을 넣는다
+  const g = groups.find((x) => x.compact && x.items.includes(item))
+  return g ? [sec.label, g.title, item.label] : [sec.label, item.label]
 }
 
 /** 왼쪽 하위 메뉴 묶음: '내 수업반'은 실제 반 이름으로 채운다 */

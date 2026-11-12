@@ -83,7 +83,7 @@ export default function ClinicPage() {
     <>
       <PageHeader title="건강체력교실 운영" sub={`${year}학년도 · 참여 ${data.members.length}명 · 활동 ${data.sessions.length}회`} back />
       <div className="page space-y-4 pb-10">
-        <Link to="/work/flow?f=clinic" className="block px-1 text-sm font-bold text-brand">
+        <Link to="/paps/clinic/flow" className="block px-1 text-sm font-bold text-brand">
           건강체력교실 1년 업무 흐름 ›
         </Link>
         <p className="rounded-2xl bg-fill px-4 py-2 text-[0.85rem] font-semibold text-ink-3">

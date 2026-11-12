@@ -1,5 +1,7 @@
 import type { IconName } from '../components/Icon'
 import type { FeatureId } from '../db/settings'
+import { AUTHOR_DOCS } from '../data/authorDocs'
+import type { FlowId } from '../data/peFlows'
 import { featureOn } from './features'
 
 /**
@@ -28,7 +30,15 @@ export interface NavGroup {
   title: string
   icon: IconName
   items: NavItem[]
+  /** 업무 하나 = 묶음 하나 (2026-11-12): 큰 메뉴 화면에서는 칩 카드, 왼쪽 메뉴에서는 지금 보는 업무만 펼침 */
+  compact?: boolean
+  /** 칩 카드 한 줄 설명 */
+  desc?: string
 }
+
+/** 현장 양식(제작자가 실제로 쓴 문서) 칸: 올린 파일이 있을 때만 메뉴에 보인다 */
+const fieldDocs = (id: FlowId, to: string): NavItem[] =>
+  AUTHOR_DOCS[id].length > 0 ? [{ to, label: '현장 양식', icon: 'file', desc: '현직 체육교사가 실제로 쓴 양식', feature: 'work' }] : []
 
 export interface NavSection {
   id: SectionId
@@ -149,6 +159,15 @@ export const NAV: NavSection[] = [
           { to: '/paps/codes', label: '튼튼몬 코드', icon: 'share', desc: '학생별 코드 · QR', feature: 'paps' },
         ],
       },
+      {
+        title: '업무',
+        icon: 'layers',
+        items: [
+          { to: '/paps/flow', label: 'PAPS 업무 흐름', icon: 'layers', desc: '계획 · 측정 · 나이스 · 통계 · 제출', feature: 'paps' },
+          { to: '/paps/clinic/flow', label: '건강체력교실 업무 흐름', icon: 'layers', desc: '대상 · 계획 · 운영 · 변화 분석', feature: 'paps' },
+          ...(AUTHOR_DOCS.paps.length + AUTHOR_DOCS.clinic.length > 0 ? [{ to: '/paps/docs', label: '현장 양식', icon: 'file' as const, desc: '현직 체육교사가 실제로 쓴 양식', feature: 'paps' as const }] : []),
+        ],
+      },
     ],
   },
   {
@@ -185,19 +204,66 @@ export const NAV: NavSection[] = [
     to: '/work',
     match: ['/work', '/share'],
     groups: [
+      // 업무 하나 = 묶음 하나, 그 안에 흐름도 · 나이스 할 일 · 지침 · 양식 · 현장 양식 (2026-11-12 교사 결정)
       {
-        title: '학교체육 업무',
+        title: '학교운동부',
         icon: 'medal',
+        compact: true,
+        desc: '등록 · 출결 · 최저학력 · 의무교육 · 교육청 제출',
         items: [
-          { to: '/work/flow', label: '업무 흐름도', icon: 'layers', desc: '운동부 · 클럽 · 소위원회 · PAPS · 건강체력교실 · 체육대회', feature: 'work' },
-          { to: '/work/team', label: '학교운동부 · 학생선수', icon: 'medal', desc: '나이스 할 일 · 규정 · 양식', feature: 'work' },
-          { to: '/work/club', label: '학교스포츠클럽', icon: 'team', desc: '등록 · 활동내역 · 학생부', feature: 'work' },
+          { to: '/work/team', label: '흐름도', icon: 'layers', feature: 'work' },
+          { to: '/work/team/neis', label: '나이스 할 일', icon: 'list', feature: 'work' },
+          { to: '/work/team/edu', label: '교육', icon: 'book', feature: 'work' },
+          { to: '/work/team/rules', label: '지침', icon: 'info', feature: 'work' },
+          { to: '/work/team/forms', label: '양식', icon: 'file', feature: 'work' },
+          ...fieldDocs('team', '/work/team/docs'),
+        ],
+      },
+      {
+        title: '학교스포츠클럽',
+        icon: 'team',
+        compact: true,
+        desc: '조직 · 계획 · 나이스 등록 · 활동 입력 · 학생부',
+        items: [
+          { to: '/work/club', label: '흐름도', icon: 'layers', feature: 'work' },
+          { to: '/work/club/neis', label: '나이스 할 일', icon: 'list', feature: 'work' },
+          { to: '/work/club/rules', label: '지침', icon: 'info', feature: 'work' },
+          { to: '/work/club/forms', label: '양식', icon: 'file', feature: 'work' },
+          ...fieldDocs('club', '/work/club/docs'),
+        ],
+      },
+      {
+        title: '학교체육소위원회',
+        icon: 'list',
+        compact: true,
+        desc: '위원 구성 · 연 2회 정기회의 · 심의할 일',
+        items: [
+          { to: '/work/committee', label: '흐름도', icon: 'layers', feature: 'work' },
+          { to: '/work/committee/meetings', label: '회의 · 회의록', icon: 'edit', feature: 'work' },
+          { to: '/work/committee/rules', label: '지침', icon: 'info', feature: 'work' },
+          { to: '/work/committee/forms', label: '양식', icon: 'file', feature: 'work' },
+          ...fieldDocs('committee', '/work/committee/docs'),
+        ],
+      },
+      {
+        title: '체육대회',
+        icon: 'flag',
+        compact: true,
+        desc: '계획 · 종목 · 팀 · 대진 · 안전 · 정산',
+        items: [
+          { to: '/work/sportsday', label: '흐름도', icon: 'layers', feature: 'work' },
+          { to: '/work/sportsday/tools', label: '준비 도구', icon: 'timer', feature: 'work' },
+          { to: '/work/sportsday/safety', label: '안전', icon: 'alert', feature: 'work' },
+          ...fieldDocs('sportsday', '/work/sportsday/docs'),
+        ],
+      },
+      {
+        title: '행정 · 예산',
+        icon: 'file',
+        items: [
           { to: '/work/docs', label: '매년 기안 · 제출 문서', icon: 'file', desc: '필수 계획 · 제출 일정 · 양식', feature: 'work' },
-          { to: '/work/committee', label: '학교체육소위원회', icon: 'list', desc: '구성 · 심의할 일 · 규정 예시', feature: 'work' },
-          { to: '/work/committee/meetings', label: '소위원회 회의 · 회의록', icon: 'edit', desc: '연 2회 회의 기록 · 회의록 인쇄', feature: 'work' },
           { to: '/work/budget', label: '체육 예산 현황', icon: 'list', desc: '에듀파인 → 구글 시트', feature: 'work' },
           { to: '/work/quote', label: '견적서 → 품의', icon: 'clipboard', desc: '품목 표 · 품의 초안 · 예산 잔액', feature: 'work' },
-          { to: '/work/author-docs', label: '제작자 실제 문서', icon: 'file', desc: '현직 교사가 실제로 쓴 양식 (개인정보 지움)', feature: 'work' },
         ],
       },
       {

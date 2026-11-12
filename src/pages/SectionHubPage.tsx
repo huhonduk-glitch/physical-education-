@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import HubStats from '../components/HubStats'
 import Icon from '../components/Icon'
-import { GroupPanel, PanelItem, toneOf } from '../components/MenuTile'
+import { ChipPanel, GroupPanel, PanelItem, toneOf } from '../components/MenuTile'
 import PageHeader from '../components/PageHeader'
 import { GROUP_COLORS, SEMESTER_LABEL } from '../lib/groups'
 import { featureOn } from '../lib/features'
@@ -13,7 +13,7 @@ import { useNewMarks } from '../state/useNewMarks'
 const SUB: Partial<Record<SectionId, string>> = {
   class: '수업 준비부터 수업 중 도구까지',
   eval: '수행평가 · 세특 · 학생 기록',
-  work: '나이스 업무 · 규정 · 예산',
+  work: '업무마다 흐름도 · 나이스 할 일 · 지침 · 양식',
 }
 
 /**
@@ -35,7 +35,17 @@ export default function SectionHubPage({ section }: { section: SectionId }) {
       <div className="page space-y-4 pb-8 lg:max-w-[72rem]">
         <HubStats section={section} />
         {showClasses && <MyClasses />}
-        {rest.map((g) => {
+        {/* 업무별 묶음(compact): 칩 카드로 두 줄씩 */}
+        {rest.some((g) => g.compact) && (
+          <div className="grid gap-3 md:grid-cols-2">
+            {rest
+              .filter((g) => g.compact)
+              .map((g) => (
+                <ChipPanel key={g.title} title={g.title} icon={g.icon} tone={toneOf(groups.indexOf(g))} desc={g.desc} items={g.items} fresh={(to) => fresh.has(to)} />
+              ))}
+          </div>
+        )}
+        {rest.filter((g) => !g.compact).map((g) => {
           const tone = toneOf(groups.indexOf(g))
           return (
             <GroupPanel key={g.title} title={g.title} icon={g.icon} tone={tone} count={g.items.length}>
