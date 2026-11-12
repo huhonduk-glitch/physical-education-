@@ -1012,3 +1012,4 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - 주소: `/work/:topic/:tab`(WorkGuidePage, tab = neis · edu · rules · forms · docs, 없으면 흐름도), `/work/sportsday/:tab`(SportsDayPage, tools · safety · docs). 일정 탭은 흐름도로 합쳐 뺌. `/work/flow` · `/work/author-docs`는 메뉴에서 빼고 주소만 남김(6가지 모아 보기 · 인쇄)
 - 큰 메뉴 화면은 compact 묶음을 칩 카드(`ChipPanel`, 첫 칩 = 흐름도 색 채움)로 두 줄씩, 왼쪽 메뉴는 compact 묶음 중 지금 보는 업무만 펼침, 위치 표시는 '업무 › 학교운동부 › 나이스 할 일'. 업무 바꾸기 단추 줄 `WorkTopicSwitch`(운동부 · 스포츠클럽 · 소위원회 · 체육대회)
 - 체육대회 [안전] = `SPORTSDAY_SAFETY`(운영방향 92~94쪽 문장만, 교육청 전화번호는 넣지 않음)
+- 매뉴얼 캡처 (2026-11-13): manual-13(업무 메뉴 · 업무별 칩 카드) 교체 · manual-17(흐름도 · 학교스포츠클럽) 새로 — 포트폴리오 images · 웹 설명서 img(webp) 둘 다. 도구 `pe-log-demo-video/cap-1113.mjs`(배포 사이트 시연 모드)
