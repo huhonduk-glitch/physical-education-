@@ -10,7 +10,8 @@ import WeatherCard from '../components/WeatherCard'
 import ClockTile from '../components/home/ClockTile'
 import DdayTile from '../components/home/DdayTile'
 import MonthCalendar from '../components/home/MonthCalendar'
-import { periodRange, pickDdays, weekDates } from '../lib/dash'
+import HomeLayoutSheet from '../components/home/HomeLayoutSheet'
+import { periodRange, pickDdays, resolveLayout, weekDates, type HomeWidgetId } from '../lib/dash'
 import WeeklyCard from '../components/WeeklyCard'
 import { longDateLabel, todayStr } from '../lib/dates'
 import { FEATURES, featureOn } from '../lib/features'
@@ -34,6 +35,8 @@ export default function HomePage() {
   const { settings } = useApp()
   const { groups, students, membersOf } = useGroups()
   const [pick, setPick] = useState(false)
+  const [arrange, setArrange] = useState(false)
+  const layout = resolveLayout(settings.homeLayout)
   const now = new Date()
   const lessons = todaysLessons(now, settings.timetable)
   const period = currentPeriod(now, settings.periodStarts, settings.periodMinutes)
@@ -76,52 +79,15 @@ export default function HomePage() {
   const wide = typeof window !== 'undefined' && window.matchMedia?.('(min-width: 1280px)').matches === true
   const shownGroups = (groups ?? []).slice(0, 6)
 
-  return (
-    <>
-      <header className="pt-[env(safe-area-inset-top)]">
-        <div className="page flex items-center gap-3 pt-5 pb-1 xl:max-w-[72rem]">
-          {/* 넓은 화면은 왼쪽 메뉴에 로고가 있어 두 번 보이지 않게 */}
-          <span className="lg:hidden">
-            <Logo size={40} />
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold text-ink-3">{longDateLabel(today)}</p>
-            <h1 className="truncate text-[1.4rem] leading-tight font-black tracking-tight">{settings.schoolName || 'PE LOG'}</h1>
-          </div>
-          <Link to="/help" className="btn btn-ghost px-2 text-ink-3" aria-label="사용법">
-            <Icon name="info" />
-          </Link>
-          <Link to="/more/settings" className="btn btn-ghost px-2 text-ink-3" aria-label="설정">
-            <Icon name="settings" />
-          </Link>
-        </div>
-      </header>
-
-      <div className="page flex flex-col gap-5 pt-3 pb-8 xl:grid xl:max-w-[72rem] xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:items-start xl:gap-6">
-        <div className="order-1 space-y-3 empty:hidden xl:order-none xl:col-span-2">
-          <AutoBackupNotice />
-          {urgentInstall && <InstallGuide place="home" />}
-          {/* 시작 준비에 '첫 백업'이 이미 보이면 겹치지 않게 */}
-          {!showSetup && <BackupWarning hasData={(students?.length ?? 0) > 0} />}
-        </div>
-
-        {/* 맨 위 한 줄 (2026-11-12 대시보드): 시계 · 날씨 · D-day. 폰은 시계 | D-day 두 칸 + 날씨 한 줄 */}
-        <div className="order-1 grid grid-cols-2 gap-3 xl:order-none xl:col-span-2 xl:grid-cols-[1fr_1.25fr_1fr]">
-          <ClockTile timetable={recordsOn ? settings.timetable : []} periodStarts={settings.periodStarts} periodMinutes={settings.periodMinutes} nameOf={(id) => groupById.get(id)?.name} />
-          <div className="order-3 col-span-2 xl:order-none xl:col-span-1">
-            <WeatherCard />
-          </div>
-          <DdayTile list={ddays} />
-        </div>
-
-        {/* 왼쪽: 오늘 (폰에서는 contents로 풀려 아래 order 순서대로 섞인다) */}
-        <div className="contents xl:flex xl:flex-col xl:gap-5">
-
+  // 칸마다 그림 — 순서는 선생님이 정한 배치(settings.homeLayout)대로. 보일 것이 없는 칸은 빈 채로 숨는다
+  const blocks: Record<HomeWidgetId, ReactNode> = {
+    focus: (
+      <>
           {/* ① 지금 수업 — 이 화면에서 꽉 찬 파랑은 이것 하나 */}
           {recordsOn && (focus && focusGroup ? (
             <Link
               to={`/groups/${focusGroup.id}`}
-              className="anim-pop order-2 block rounded-3xl bg-brand p-5 text-white shadow-[var(--shadow-float)] transition-transform active:scale-[0.99] xl:order-none"
+              className="anim-pop block rounded-3xl bg-brand p-5 text-white shadow-[var(--shadow-float)] transition-transform active:scale-[0.99]"
             >
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-sm font-bold">
                 {focus.status === 'now' ? '● 지금 수업' : '다음 수업'} · {focus.entry.period}교시 {focus.start}
@@ -135,7 +101,7 @@ export default function HomePage() {
             </Link>
           ) : (
             lastGroup && (
-              <Link to={`/groups/${lastGroup.id}`} className="card order-2 flex min-h-[72px] items-center gap-3 transition-transform active:scale-[0.99] xl:order-none">
+              <Link to={`/groups/${lastGroup.id}`} className="card flex min-h-[72px] items-center gap-3 transition-transform active:scale-[0.99]">
                 <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-brand text-white">
                   <Icon name="class" />
                 </span>
@@ -147,10 +113,13 @@ export default function HomePage() {
               </Link>
             )
           ))}
-
+      </>
+    ),
+    setup: (
+      <>
           {/* ② 시작 준비 — 처음 쓰는 사람이 순서대로 따라 하게 */}
           {showSetup && (
-            <section className="card order-3 space-y-3 xl:order-none" aria-label="시작 준비">
+            <section className="card space-y-3" aria-label="시작 준비">
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <p className="text-lg font-extrabold">시작 준비</p>
@@ -201,10 +170,13 @@ export default function HomePage() {
               </div>
             </section>
           )}
-
+      </>
+    ),
+    today: (
+      <>
           {/* ③ 오늘 수업 — 세로 목록 (가로 칩은 폰에서 세 번째부터 잘렸다) */}
           {recordsOn && lessons.length > 0 && (
-            <section className="order-4 space-y-2 xl:order-none">
+            <section className="space-y-2">
               <SectionTitle title={`오늘 수업 ${lessons.length}`} action={{ to: '/more/settings/timetable', label: '시간표' }} />
               <div className="card overflow-hidden p-0">
                 {lessons.map((l) => {
@@ -226,10 +198,21 @@ export default function HomePage() {
               </div>
             </section>
           )}
-
+      </>
+    ),
+    calendar: (
+      <>
+          {/* 달력 — 학사일정 · 업무 일정이 바로 보이게 (2026-11-12) */}
+          <div className="xl:order-none">
+            <MonthCalendar today={today} school={schoolEvents} work={settings.workEvents ?? []} />
+          </div>
+      </>
+    ),
+    timetable: (
+      <>
           {/* ⑦ 이번 주 내 시간표 — 폰에서는 맨 아래에 접어 두고, PC에서는 펼침 */}
           {recordsOn && settings.timetable.length > 0 && (
-            <section className="order-8 xl:order-none">
+            <section className="xl:order-none">
               <details className="group card p-0" open={wide}>
                 <summary className="flex min-h-[56px] cursor-pointer list-none items-center gap-2 px-4 [&::-webkit-details-marker]:hidden">
                   <b className="flex-1 text-[1.05rem]">이번 주 내 시간표</b>
@@ -244,23 +227,23 @@ export default function HomePage() {
               </details>
             </section>
           )}
-        </div>
-
-        {/* 오른쪽: 내 것 */}
-        <div className="contents xl:flex xl:flex-col xl:gap-5">
-          {/* 달력 — 학사일정 · 업무 일정이 바로 보이게 (2026-11-12) */}
-          <div className="order-4 xl:order-none">
-            <MonthCalendar today={today} school={schoolEvents} work={settings.workEvents ?? []} />
-          </div>
+      </>
+    ),
+    weekly: (
+      <>
           {/* 이번 주 수업 요약 (2026-11-09) — 숫자만, 이름은 요약 화면에서 */}
           {recordsOn && (
-            <div className="order-5 empty:hidden xl:order-none">
+            <div className="empty:hidden">
               <WeeklyCard />
             </div>
           )}
+      </>
+    ),
+    groups: (
+      <>
           {/* ④ 내 수업반 — 두 칸 격자 (가로로 밀면 뒤 반이 안 보였다) */}
           {recordsOn && groups && groups.length > 0 && (
-            <section className="order-5 space-y-2 xl:order-none">
+            <section className="space-y-2">
               <SectionTitle title={`내 수업반 ${groups.length}`} action={{ to: '/groups', label: '전체' }} />
               <div className="grid grid-cols-2 gap-2">
                 {shownGroups.map((g) => {
@@ -286,9 +269,12 @@ export default function HomePage() {
               )}
             </section>
           )}
-
+      </>
+    ),
+    shortcuts: (
+      <>
           {/* ⑤ 바로가기 — 탭에 없는 기능만, 마지막 칸은 [편집] (줄이 비지 않게) */}
-          <section className="order-6 space-y-2 xl:order-none">
+          <section className="space-y-2">
             <SectionTitle title="바로가기" />
             <div className="card grid grid-cols-4 gap-y-3 px-2 py-4">
               {features.map((f) => (
@@ -307,10 +293,13 @@ export default function HomePage() {
               </button>
             </div>
           </section>
-
+      </>
+    ),
+    work: (
+      <>
           {/* ⑥ 업무 일정 알림 (같이 쓰기 6-13): 14일 안 D-day */}
           {work.length > 0 && (
-            <section className="order-7 space-y-2 xl:order-none">
+            <section className="space-y-2">
               <SectionTitle title="다가오는 업무 일정" action={{ to: '/work/calendar', label: '업무 달력' }} />
               <div className="card overflow-hidden p-0">
                 {work.slice(0, 5).map((e) => (
@@ -325,6 +314,61 @@ export default function HomePage() {
               </div>
             </section>
           )}
+      </>
+    ),
+  }
+
+  return (
+    <>
+      <header className="pt-[env(safe-area-inset-top)]">
+        <div className="page flex items-center gap-3 pt-5 pb-1 xl:max-w-[72rem]">
+          {/* 넓은 화면은 왼쪽 메뉴에 로고가 있어 두 번 보이지 않게 */}
+          <span className="lg:hidden">
+            <Logo size={40} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-ink-3">{longDateLabel(today)}</p>
+            <h1 className="truncate text-[1.4rem] leading-tight font-black tracking-tight">{settings.schoolName || 'PE LOG'}</h1>
+          </div>
+          <Link to="/help" className="btn btn-ghost px-2 text-ink-3" aria-label="사용법">
+            <Icon name="info" />
+          </Link>
+          <Link to="/more/settings" className="btn btn-ghost px-2 text-ink-3" aria-label="설정">
+            <Icon name="settings" />
+          </Link>
+        </div>
+      </header>
+
+      <div className="page flex flex-col gap-5 pt-3 pb-8 xl:max-w-[72rem]">
+        <div className="space-y-3 empty:hidden">
+          <AutoBackupNotice />
+          {urgentInstall && <InstallGuide place="home" />}
+          {/* 시작 준비에 '첫 백업'이 이미 보이면 겹치지 않게 */}
+          {!showSetup && <BackupWarning hasData={(students?.length ?? 0) > 0} />}
+        </div>
+
+        {/* 맨 위 한 줄 (2026-11-12 대시보드): 시계 · 날씨 · D-day. 폰은 시계 | D-day 두 칸 + 날씨 한 줄 */}
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-[1fr_1.25fr_1fr]">
+          <ClockTile timetable={recordsOn ? settings.timetable : []} periodStarts={settings.periodStarts} periodMinutes={settings.periodMinutes} nameOf={(id) => groupById.get(id)?.name} />
+          <div className="order-3 col-span-2 xl:order-none xl:col-span-1">
+            <WeatherCard />
+          </div>
+          <DdayTile list={ddays} />
+        </div>
+
+        {/* 칸들: 폰은 순서대로 한 줄, 넓은 화면은 두 단에 높이가 고르게 나뉜다 */}
+        <div className="flex flex-col gap-5 xl:block xl:columns-2 xl:gap-6">
+          {layout.order
+            .filter((id) => !layout.hidden.has(id))
+            .map((id) => (
+              <div key={id} className="break-inside-avoid empty:hidden xl:mb-5">
+                {blocks[id]}
+              </div>
+            ))}
+        </div>
+        <button type="button" className="mx-auto flex min-h-[44px] items-center gap-1.5 rounded-full bg-white px-4 text-sm font-bold text-ink-2 shadow-[var(--shadow-card)]" onClick={() => setArrange(true)}>
+          <Icon name="grid" size={16} /> 홈 화면 배치 바꾸기
+        </button>
 
           {/* ⑦ 기초 설정 · 평가계획서 넣기 (교사 가안: 초기설정은 홈에) — 메뉴 표 src/lib/nav.ts의 홈 묶음 */}
           {visibleGroups(NAV[0], settings.features).map((g) => (
@@ -357,9 +401,9 @@ export default function HomePage() {
               부터 보세요 · 학생 정보는 이 기기에만 저장돼요
             </p>
           </div>
-        </div>
       </div>
       {pick && <FeatureSheet onClose={() => setPick(false)} />}
+      {arrange && <HomeLayoutSheet onClose={() => setArrange(false)} />}
     </>
   )
 }

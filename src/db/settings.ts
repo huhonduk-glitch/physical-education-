@@ -92,6 +92,8 @@ export interface AppSettings {
   committee: Record<string, import('../lib/committee').CommitteeYear>
   /** 설문 · 자기평가 (학년도 → 설문 목록). 학생이 써 낸 답이라 세특에는 참고만 */
   surveys: Record<string, import('../lib/survey').Survey[]>
+  /** 홈 칸 순서 · 숨긴 칸 (2026-11-12 대시보드). 없으면 기본 배치 */
+  homeLayout: import('../lib/dash').HomeLayout | null
   /** 업무 달력 일정 (같이 쓰기 6-13, 이 기기에만 · 학생 정보 없음) */
   workEvents: import('../lib/workCal').WorkEvent[]
   /** 학교 공유 공간 연결 (0-4 예외 6-13). 비밀번호가 있어 백업 파일에서 뺀다(SECRET_KEYS) */
@@ -181,6 +183,7 @@ export function defaultSettings(): AppSettings {
     budgetCard: null,
     budgetPicks: {},
     budgetManual: [],
+    homeLayout: null,
     workEvents: [],
     clinicRule: { lowGrades: [4, 5], obeseLabels: ['경도비만', '고도비만'] },
     clinic: {},

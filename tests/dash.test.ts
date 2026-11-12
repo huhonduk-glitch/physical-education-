@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ddayText, leftText, marksOn, monthMarks, periodRange, pickDdays, schoolKind, weatherEmoji, weekDates } from '../src/lib/dash'
+import { HOME_WIDGETS, moveWidget, resolveLayout, ddayText, leftText, marksOn, monthMarks, periodRange, pickDdays, schoolKind, weatherEmoji, weekDates } from '../src/lib/dash'
 import type { WorkEvent } from '../src/lib/workCal'
 
 const school = [
@@ -56,5 +56,17 @@ describe('홈 대시보드', () => {
     expect(leftText(3900)).toBe('1시간 5분')
     expect(weekDates('2026-11-12')).toEqual(['2026-11-09', '2026-11-10', '2026-11-11', '2026-11-12', '2026-11-13'])
     expect(weekDates('2026-11-15')[0]).toBe('2026-11-09') // 일요일 → 지난 월요일
+  })
+  it('홈 배치: 저장한 순서 · 숨김, 새 칸은 기본 자리에, 위아래 옮기기', () => {
+    const all = HOME_WIDGETS.map((w) => w.id)
+    expect(resolveLayout(null).order).toEqual(all)
+    const r = resolveLayout({ order: ['calendar', 'focus', '없는칸', 'calendar'], hidden: ['weekly', '없는칸'] })
+    expect(r.order[0]).toBe('calendar')
+    expect(r.order.indexOf('calendar')).toBeLessThan(r.order.indexOf('focus')) // 저장한 순서는 그대로
+    expect([...r.order].sort()).toEqual([...all].sort())
+    expect(r.order.indexOf('setup')).toBe(r.order.indexOf('focus') + 1) // 빠진 칸은 기본 순서의 앞 칸 뒤
+    expect([...r.hidden]).toEqual(['weekly'])
+    expect(moveWidget(['focus', 'today', 'calendar'], 'calendar', -1)).toEqual(['focus', 'calendar', 'today'])
+    expect(moveWidget(['focus', 'today'], 'focus', -1)).toEqual(['focus', 'today'])
   })
 })

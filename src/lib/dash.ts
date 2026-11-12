@@ -129,3 +129,47 @@ export function weekDates(today: string): string[] {
     return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
   })
 }
+
+/* ── 홈 배치 (2026-11-12 교사: '오른쪽 아래로 쏠린다 → 다시 배열 + 선생님이 배열') ──
+ * 칸을 한 줄 순서로만 둔다. 폰은 그 순서대로, 넓은 화면은 두 단에 높이가 고르게 나뉜다(CSS columns).
+ * 맨 위 시계 · 날씨 · D-day 줄은 늘 고정. */
+export const HOME_WIDGETS = [
+  { id: 'focus', label: '지금 수업 · 이어서 기록' },
+  { id: 'setup', label: '시작 준비' },
+  { id: 'today', label: '오늘 수업' },
+  { id: 'calendar', label: '달력 · 학사일정' },
+  { id: 'weekly', label: '이번 주 수업 요약' },
+  { id: 'timetable', label: '이번 주 내 시간표' },
+  { id: 'groups', label: '내 수업반' },
+  { id: 'shortcuts', label: '바로가기' },
+  { id: 'work', label: '다가오는 업무 일정' },
+] as const
+export type HomeWidgetId = (typeof HOME_WIDGETS)[number]['id']
+export interface HomeLayout {
+  order: string[]
+  hidden: string[]
+}
+
+/** 저장한 배치 → 실제 순서. 모르는 이름은 버리고, 새로 생긴 칸은 기본 자리(앞 칸 바로 뒤)에 끼운다 */
+export function resolveLayout(saved?: HomeLayout | null): { order: HomeWidgetId[]; hidden: Set<HomeWidgetId> } {
+  const all = HOME_WIDGETS.map((w) => w.id)
+  const known = new Set<string>(all)
+  const order = (saved?.order ?? []).filter((id, i, a): id is HomeWidgetId => known.has(id) && a.indexOf(id) === i)
+  for (const id of all) {
+    if (order.includes(id)) continue
+    const prev = all[all.indexOf(id) - 1]
+    const at = prev ? order.indexOf(prev) : -1
+    order.splice(at + 1, 0, id)
+  }
+  return { order, hidden: new Set((saved?.hidden ?? []).filter((id): id is HomeWidgetId => known.has(id))) }
+}
+
+/** 한 칸 위(-1) · 아래(+1)로 */
+export function moveWidget(order: readonly HomeWidgetId[], id: HomeWidgetId, dir: -1 | 1): HomeWidgetId[] {
+  const i = order.indexOf(id)
+  const j = i + dir
+  if (i < 0 || j < 0 || j >= order.length) return [...order]
+  const next = [...order]
+  ;[next[i], next[j]] = [next[j], next[i]]
+  return next
+}
