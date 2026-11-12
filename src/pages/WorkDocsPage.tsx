@@ -104,8 +104,10 @@ export default function WorkDocsPage() {
           ))}
         </div>
 
-        {tab === 'draft' &&
-          DRAFT_DOCS.map((d) => {
+        {tab === 'draft' && (
+          // PC에서는 두 줄로 — 짧은 카드가 화면 폭을 다 차지하지 않게
+          <div className="grid items-start gap-3 lg:grid-cols-2">
+          {DRAFT_DOCS.map((d) => {
             const on = open === d.id
             return (
               <section key={d.id} className="card space-y-2">
@@ -167,6 +169,8 @@ export default function WorkDocsPage() {
               </section>
             )
           })}
+          </div>
+        )}
 
         {tab === 'draft' && (
           <section className="card space-y-2">

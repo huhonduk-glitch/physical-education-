@@ -323,51 +323,64 @@ function ItemColumn({
                   <span className={`font-extrabold ${pts === null ? 'text-ink-3' : 'text-brand'}`}>{pts === null ? '—' : `${fmtNum(pts)}점`}</span>
                 </span>
               </div>
-            ) : item.method === 'level' ? (
-              <div className="flex flex-wrap gap-1">
-                {(item.levels ?? []).map((l) => (
-                  <button
-                    key={l.label}
-                    type="button"
-                    disabled={readOnly}
-                    aria-pressed={raw === l.label}
-                    aria-label={`${s.name} ${item.label} ${l.label}`}
-                    className={`h-11 min-w-11 rounded-xl px-2 text-[1rem] font-extrabold ${raw === l.label ? 'bg-brand text-white' : 'bg-fill text-ink'}`}
-                    onClick={() => onSet(s, item.id, raw === l.label ? '' : l.label)}
-                  >
-                    {l.label}
-                  </button>
-                ))}
-              </div>
             ) : (
-              <ScoreInput
-                inputRef={(el) => (refs.current[i] = el)}
-                item={item}
-                raw={raw}
-                label={`${s.name} ${item.label}`}
-                readOnly={readOnly}
-                onCommit={(v) => onSet(s, item.id, v)}
-                onNext={() => refs.current[i + 1]?.focus()}
-              />
+              // 폰에서는 이름 아래 한 줄에 [등급 버튼 · 기록 칸] [미참여] … [점수] — 점수가 따로 한 줄을 차지하지 않게
+              <div className="flex basis-full items-center gap-1 sm:basis-auto">
+                {item.method === 'level' ? (
+                  <div className="flex flex-wrap gap-1">
+                    {(item.levels ?? []).map((l) => (
+                      <button
+                        key={l.label}
+                        type="button"
+                        disabled={readOnly}
+                        aria-pressed={raw === l.label}
+                        aria-label={`${s.name} ${item.label} ${l.label}`}
+                        className={`h-11 min-w-11 rounded-xl px-2 text-[1rem] font-extrabold ${raw === l.label ? 'bg-brand text-white' : 'bg-fill text-ink'}`}
+                        onClick={() => onSet(s, item.id, raw === l.label ? '' : l.label)}
+                      >
+                        {l.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <ScoreInput
+                    inputRef={(el) => (refs.current[i] = el)}
+                    item={item}
+                    raw={raw}
+                    label={`${s.name} ${item.label}`}
+                    readOnly={readOnly}
+                    onCommit={(v) => onSet(s, item.id, v)}
+                    onNext={() => refs.current[i + 1]?.focus()}
+                  />
+                )}
+                {item.nonPartPoints !== undefined && !readOnly && <NonPartButton item={item} raw={raw} onToggle={() => onSet(s, item.id, raw === NON_PART ? '' : NON_PART)} />}
+                {item.method !== 'direct' && (
+                  <span className={`ml-auto w-12 shrink-0 text-right font-extrabold tabular-nums ${pts === null ? 'text-ink-3' : 'text-brand'}`}>{pts === null ? '—' : `${fmtNum(pts)}점`}</span>
+                )}
+              </div>
             )}
-            {item.nonPartPoints !== undefined && !readOnly && (
-              <button
-                type="button"
-                aria-pressed={raw === NON_PART}
-                className={`h-11 shrink-0 rounded-xl px-2 text-sm font-bold ${raw === NON_PART ? 'bg-ink text-white' : 'bg-fill text-ink-3'}`}
-                onClick={() => onSet(s, item.id, raw === NON_PART ? '' : NON_PART)}
-                title={`자발적 미참여 · 장기 미인정 결석 (${fmtNum(item.nonPartPoints)}점)`}
-              >
-                미참여
-              </button>
-            )}
-            {item.method !== 'direct' && !item.checks?.length && (
-              <span className={`w-12 shrink-0 text-right font-extrabold tabular-nums ${pts === null ? 'text-ink-3' : 'text-brand'}`}>{pts === null ? '—' : `${fmtNum(pts)}점`}</span>
-            )}
+            {item.checks?.length && item.nonPartPoints !== undefined && !readOnly ? (
+              <NonPartButton item={item} raw={raw} onToggle={() => onSet(s, item.id, raw === NON_PART ? '' : NON_PART)} />
+            ) : null}
           </li>
         )
       })}
     </ul>
+  )
+}
+
+/** '미참여' 점수 버튼 (자발적 미참여 · 장기 미인정 결석) */
+function NonPartButton({ item, raw, onToggle }: { item: AssessItem; raw: string | number | undefined; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={raw === NON_PART}
+      className={`h-11 shrink-0 rounded-xl px-2 text-sm font-bold ${raw === NON_PART ? 'bg-ink text-white' : 'bg-fill text-ink-3'}`}
+      onClick={onToggle}
+      title={`자발적 미참여 · 장기 미인정 결석 (${fmtNum(item.nonPartPoints ?? 0)}점)`}
+    >
+      미참여
+    </button>
   )
 }
 
