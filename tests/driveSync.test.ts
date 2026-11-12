@@ -82,7 +82,7 @@ describe('구글 동기화 — 올리기 · 내려받기', () => {
 
     // B는 내려받지 않고 자기 기록만 올림 → 구글에는 둘 다
     await b.students.add(stu('sb', '10101', '가나다') as never) // 같은 학생을 따로 넣음
-    await b.records.add(rec('r9', 'sb', 2000) as never)
+    await b.records.add({ ...rec('r9', 'sb', 2000), category: '정리정돈' } as never)
     const up = await pushNow(b, drive, opts('B'))
     expect(up.lines).toContain('누가기록 +1')
     expect(await b.records.count()).toBe(1) // B는 그대로
@@ -164,6 +164,37 @@ describe('구글 동기화 — 올리기 · 내려받기', () => {
     const keys = (file.tables.settings as { key: string }[]).map((r) => r.key)
     expect(keys).not.toContain('syncConf')
     expect(keys).not.toContain('syncTombstones')
+  })
+})
+
+describe('두 기기에서 같은 것을 따로 넣었을 때 (중복)', () => {
+  const lesson = (id: string, at: number, activity: string) => ({ id, schoolYear: 2026, groupId: 'g1', date: '2026-11-13', activity, createdAt: at, updatedAt: at })
+  const absence = (id: string, reason: string) => ({ id, schoolYear: 2026, studentId: 's1', date: '2026-11-13', reason, altTaskDone: false })
+  const praise = (id: string, category = '친구 도움', at = 1) => ({ ...rec(id, 's1', at), groupId: 'g1', category })
+
+  it('수업 일지는 수업반 · 날짜마다 하나 — 나중에 고친 글이 남음', () => {
+    const plan = planMerge({ lessons: [lesson('L1', 100, '드리블')] as never }, { lessons: [lesson('L9', 200, '드리블 · 패스')] as never })
+    expect(plan.put.lessons).toEqual([{ ...lesson('L9', 200, '드리블 · 패스'), id: 'L1' }])
+  })
+  it('견학은 학생 · 날짜마다 하나 (고친 시각이 없으면 보내는 쪽)', () => {
+    const plan = planMerge({ absences: [absence('A1', '부상')] as never }, { absences: [absence('A9', '질병')] as never }, { preferIncoming: true })
+    expect(plan.put.absences).toEqual([{ ...absence('A9', '질병'), id: 'A1' }])
+    expect(planMerge({ absences: [absence('A1', '부상')] as never }, { absences: [absence('A9', '부상')] as never }).put.absences).toBeUndefined()
+  })
+  it('누가기록: 두 기기에서 같은 칭찬을 따로 넣으면 하나, 항목이 다르면 둘', () => {
+    const same = planMerge({ records: [praise('R1')] as never }, { records: [praise('R9', '친구 도움', 5)] as never })
+    expect(same.put.records?.map((r) => r.id)).toEqual(['R1']) // 새 줄이 아니라 같은 줄(나중에 고친 쪽 내용)
+    expect(same.stats.records).toMatchObject({ added: 0, updated: 1 })
+    const diff = planMerge({ records: [praise('R1')] as never }, { records: [praise('R9', '정리정돈')] as never })
+    expect(diff.put.records?.map((r) => r.id)).toEqual(['R9'])
+  })
+  it('누가기록: 한 기기에서 같은 칭찬을 두 번 준 것은 올려도 · 받아도 두 줄', async () => {
+    // 구글에 R1만 있는데 이 기기에 R1 · R2(같은 칭찬 두 번) → 올리면 구글에 둘 다
+    const up = planMerge({ records: [praise('R1')] as never }, { records: [praise('R1'), praise('R2')] as never }, { preferIncoming: true })
+    expect(up.put.records?.map((r) => r.id)).toEqual(['R2'])
+    // 다른 기기에 따로 넣은 같은 칭찬 하나(X1) + 파일에 두 번(R1 · R2) → 하나는 X1과 맞추고 하나는 더함
+    const down = planMerge({ records: [praise('X1')] as never }, { records: [praise('R1'), praise('R2')] as never })
+    expect(down.put.records?.map((r) => r.id)).toEqual(['R2'])
   })
 })
 
