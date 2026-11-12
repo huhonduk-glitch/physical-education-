@@ -83,6 +83,9 @@ export default function ClinicPage() {
     <>
       <PageHeader title="건강체력교실 운영" sub={`${year}학년도 · 참여 ${data.members.length}명 · 활동 ${data.sessions.length}회`} back />
       <div className="page space-y-4 pb-10">
+        <Link to="/paps/clinic/flow" className="block px-1 text-sm font-bold text-brand">
+          건강체력교실 1년 업무 흐름 ›
+        </Link>
         <p className="rounded-2xl bg-fill px-4 py-2 text-[0.85rem] font-semibold text-ink-3">
           학교체육 진흥법 제9조: 저체력 또는 비만 판정 학생을 대상으로 운영해요. 제주교육청 운영방향(누리집 PDF 24쪽): 대상 4~5등급 · 비만 판정 · 참여 희망자, 학년 초 운영계획 수립(필수), 연중 운영, 참여 학생의 체력 변화 분석.
         </p>

@@ -1,21 +1,27 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react'
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import PdfPageViewer, { countPdfPages, forgetPdf } from '../components/PdfPageViewer'
+import WorkFlowChart, { AuthorDocsCard } from '../components/WorkFlowChart'
+import WorkTopicSwitch from '../components/WorkTopicSwitch'
+import { AUTHOR_DOCS } from '../data/authorDocs'
+import { workFlow } from '../data/peFlows'
 import { listDocs, removeDoc, saveDoc, type StoredDocMeta } from '../db/docStore'
-import { NEIS_SCREEN_NOTE, WORK_DOCS, WORK_TOPICS, srcLabel, workTopic, type WorkDoc, type WorkLine, type WorkSrc } from '../data/peWork'
+import { NEIS_SCREEN_NOTE, WORK_DOCS, srcLabel, workTopic, type WorkDoc, type WorkLine, type WorkSrc } from '../data/peWork'
 
 /** 넣어 둔 자료 파일이 있으면 쪽 표시를 눌러 그 쪽을 연다 */
 const OpenCtx = createContext<{ has: (d: WorkDoc) => boolean; open: (src: WorkSrc, title: string) => void }>({ has: () => false, open: () => undefined })
 
-type Tab = 'neis' | 'calendar' | 'edu' | 'rules' | 'forms'
+/** 업무 하나의 하위 메뉴 (2026-11-12 교사 결정): 주소 /work/<업무>/<하위> — 왼쪽 메뉴 · 뒤로 가기와 같이 움직인다. 일정은 흐름도로 합침 */
+type Tab = 'flow' | 'neis' | 'edu' | 'rules' | 'forms' | 'docs'
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'neis', label: '나이스' },
-  { id: 'calendar', label: '일정' },
+  { id: 'flow', label: '흐름도' },
+  { id: 'neis', label: '나이스 할 일' },
   { id: 'edu', label: '교육' },
-  { id: 'rules', label: '규정' },
+  { id: 'rules', label: '지침' },
   { id: 'forms', label: '양식' },
+  { id: 'docs', label: '현장 양식' },
 ]
 
 /**
@@ -23,11 +29,15 @@ const TABS: { id: Tab; label: string }[] = [
  * 내용은 src/data/peWork.ts — 교사가 준 나이스 교육자료 · 학교체육 운영방향의 쪽수를 줄마다 단다.
  */
 export default function WorkGuidePage() {
-  const { topic: id = '' } = useParams()
+  const { topic: id = '', tab: tabParam } = useParams()
   const topic = workTopic(id)
-  const [tabPick, setTab] = useState<Tab>('neis')
-  // 나이스 메뉴가 없는 주제(체육소위원회)는 규정부터
-  const tab: Tab = tabPick === 'neis' && topic && topic.menus.length === 0 ? 'rules' : tabPick
+  const navigate = useNavigate()
+  // 이 업무에 있는 하위 메뉴만 (나이스 메뉴 · 교육 · 현장 양식은 자료가 있을 때)
+  const tabs = topic
+    ? TABS.filter((t) => (t.id !== 'neis' || topic.menus.length > 0) && (t.id !== 'edu' || (topic.trainings?.length ?? 0) > 0) && (t.id !== 'docs' || AUTHOR_DOCS[topic.id].length > 0))
+    : []
+  // 처음에는 1년 흐름부터
+  const tab = (tabParam ?? 'flow') as Tab
   const [open, setOpen] = useState<string | null>(null)
   const [docs, setDocs] = useState<StoredDocMeta[]>([])
   const [viewer, setViewer] = useState<{ doc: WorkDoc; page: number; title: string } | null>(null)
@@ -37,21 +47,17 @@ export default function WorkGuidePage() {
   }, [])
   const has = (d: WorkDoc) => docs.some((x) => x.key === d)
   const openSrc = (src: WorkSrc, title: string) => setViewer({ doc: src.doc, page: Array.isArray(src.page) ? src.page[0] : src.page, title })
-  if (!topic) return <Navigate to="/more" replace />
+  if (!topic) return <Navigate to="/work" replace />
+  if (!tabs.some((t) => t.id === tab)) return <Navigate to={`/work/${topic.id}`} replace />
+  const tabLabel = tabs.find((t) => t.id === tab)!.label
 
   return (
     <OpenCtx.Provider value={{ has, open: openSrc }}>
-      <PageHeader title={topic.title} sub="학교체육 업무" back />
+      <PageHeader title={topic.title} sub={`학교체육 업무 · ${tabLabel}`} back />
       <div className="page space-y-4 pb-10">
         <p className="hint px-1">{topic.summary}</p>
 
-        <div className="flex gap-2">
-          {WORK_TOPICS.map((t) => (
-            <Link key={t.id} to={`/work/${t.id}`} replace className={`btn flex-1 px-2 whitespace-nowrap ${t.id === topic.id ? 'btn-primary' : 'btn-outline'}`}>
-              {t.id === 'team' ? '운동부' : t.id === 'club' ? '스포츠클럽' : '소위원회'}
-            </Link>
-          ))}
-        </div>
+        <WorkTopicSwitch current={topic.id} />
 
         {topic.id === 'committee' && (
           <Link to="/work/committee/meetings" className="card flex min-h-[64px] items-center gap-3 active:bg-fill">
@@ -69,13 +75,16 @@ export default function WorkGuidePage() {
 
         <DocFiles docs={docs} onChange={() => void refresh()} />
 
-        <div className="segment" role="tablist">
-          {TABS.filter((t) => (t.id !== 'neis' || topic.menus.length > 0) && (t.id !== 'edu' || (topic.trainings?.length ?? 0) > 0)).map((t) => (
-            <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}>
+        <div className="segment overflow-x-auto [scrollbar-width:none] [&>button]:shrink-0 [&>button]:px-3 [&>button]:whitespace-nowrap" role="tablist">
+          {tabs.map((t) => (
+            <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => navigate(t.id === 'flow' ? `/work/${topic.id}` : `/work/${topic.id}/${t.id}`, { replace: true })}>
               {t.label}
             </button>
           ))}
         </div>
+
+        {tab === 'flow' && workFlow(topic.id) && <WorkFlowChart flow={workFlow(topic.id)!} />}
+        {tab === 'docs' && <AuthorDocsCard id={topic.id} title={topic.title} />}
 
         {tab === 'neis' && (
           <section className="space-y-2">
@@ -121,17 +130,6 @@ export default function WorkGuidePage() {
                 </div>
               )
             })}
-          </section>
-        )}
-
-        {tab === 'calendar' && (
-          <section className="card overflow-hidden p-0">
-            {topic.calendar.map((c, i) => (
-              <div key={i} className="flex gap-3 border-b border-line px-4 py-3 last:border-b-0">
-                <span className="w-[5.5rem] shrink-0 text-sm font-extrabold text-brand">{c.when}</span>
-                <Line line={{ text: c.what, src: c.src, local: c.local }} />
-              </div>
-            ))}
           </section>
         )}
 

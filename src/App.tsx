@@ -76,6 +76,9 @@ const ClassSummaryPage = lazy(() => import('./pages/ClassSummaryPage'))
 const DataPage = lazy(() => import('./pages/DataPage'))
 const BudgetPage = lazy(() => import('./pages/BudgetPage'))
 const QuotePage = lazy(() => import('./pages/QuotePage'))
+const WorkFlowPage = lazy(() => import('./pages/WorkFlowPage'))
+const AuthorDocsPage = lazy(() => import('./pages/WorkFlowPage').then((m) => ({ default: m.AuthorDocsPage })))
+const SportsDayPage = lazy(() => import('./pages/SportsDayPage'))
 const WorkGuidePage = lazy(() => import('./pages/WorkGuidePage'))
 const WorkDocsPage = lazy(() => import('./pages/WorkDocsPage'))
 const SurveyPage = lazy(() => import('./pages/seteuk/SurveyPage'))
@@ -231,13 +234,21 @@ export default function App() {
           <Route path="/more/data" element={<DataPage />} />
           <Route path="/work/budget" element={<BudgetPage />} />
           <Route path="/work/quote" element={<QuotePage />} />
+          <Route path="/work/flow" element={<WorkFlowPage />} />
+          <Route path="/work/author-docs" element={<AuthorDocsPage />} />
           <Route path="/work/calendar" element={<WorkCalendarPage />} />
           <Route path="/work/space" element={<SpacePage />} />
           <Route path="/work/lend" element={<LendPage />} />
           <Route path="/work/book" element={<BookPage />} />
           <Route path="/work/docs" element={<WorkDocsPage />} />
           <Route path="/work/committee/meetings" element={<CommitteePage />} />
+          <Route path="/work/sportsday" element={<SportsDayPage />} />
+          <Route path="/work/sportsday/:tab" element={<SportsDayPage />} />
           <Route path="/work/:topic" element={<WorkGuidePage />} />
+          <Route path="/work/:topic/:tab" element={<WorkGuidePage />} />
+          <Route path="/paps/flow" element={<WorkFlowPage only="paps" />} />
+          <Route path="/paps/clinic/flow" element={<WorkFlowPage only="clinic" />} />
+          <Route path="/paps/docs" element={<AuthorDocsPage ids={['paps', 'clinic']} />} />
           <Route path="/share" element={<SharePage />} />
           <Route path="/more/assessments" element={<AssessmentsPage />} />
           <Route path="/more/assessments/new" element={<AssessmentEditPage />} />

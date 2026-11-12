@@ -36,6 +36,9 @@ export default function PapsPage() {
         }
       />
       <div className="page space-y-4 pb-6">
+        <Link to="/paps/flow" className="block px-1 text-sm font-bold text-brand">
+          PAPS 1년 업무 흐름 (계획 · 측정 · 나이스 · 통계 · 제출) ›
+        </Link>
         {classes.length === 0 ? (
           <div className="card text-center">
             <p className="card-title">먼저 학생 명렬을 올려 주세요</p>
