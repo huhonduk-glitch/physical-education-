@@ -364,6 +364,15 @@ export default function HelpPage() {
           </ol>
         </section>
 
+        <a href={`${import.meta.env.BASE_URL}manual/`} target="_blank" rel="noopener" className="card flex items-center gap-3 no-underline">
+          <Icon name="book" />
+          <span className="min-w-0 flex-1">
+            <b className="block">자세한 사용 설명서 (화면 사진 포함)</b>
+            <span className="hint">새 창으로 열려요 · 다른 선생님께 링크로 알려 줄 수 있어요</span>
+          </span>
+          <Icon name="chevronRight" size={18} />
+        </a>
+
         <nav className="-mx-4 flex gap-2 overflow-x-auto md:flex-wrap md:overflow-visible px-4 py-1 [scrollbar-width:none]" aria-label="주제">
           {TOPICS.map((t) => (
             <a key={t.id} href={`#help-${t.id}`} className="chip shrink-0" onClick={(e) => {

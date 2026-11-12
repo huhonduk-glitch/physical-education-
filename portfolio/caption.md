@@ -29,6 +29,7 @@
 
 무료 · 인터넷 없이도 · 학생 정보는 내 폰 안에만 🔒
 가상 학생으로 먼저 써 보기 👉 프로필 링크 (시연 모드)
+사용 설명서 👉 https://huhonduk-glitch.github.io/physical-education-/manual/
 
 #체육교사 #체육수업 #PELOG #수행평가 #PAPS #세특 #학교체육 #교사앱 #에듀테크 #선생님일상
 

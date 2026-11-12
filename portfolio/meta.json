@@ -26,6 +26,10 @@
     {
       "label": "시연 모드 (가상 학생)",
       "url": "https://huhonduk-glitch.github.io/physical-education-/?demo=1"
+    },
+    {
+      "label": "사용 설명서",
+      "url": "https://huhonduk-glitch.github.io/physical-education-/manual/"
     }
   ]
 }

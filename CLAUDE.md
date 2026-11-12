@@ -983,3 +983,10 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - 확인: 시연 모드 폰 390으로 가상 견적서 엑셀(공급가액 · 세액 칸) → 345,000 + 부가세 34,500 = 견적서 합계 379,500 '같음', 가상 견적서 사진 → 자르기 화면, 잠금 파일 만들기 → 틀린 비밀번호 거절 → 열기 → 합치기('새로 더할 자료 없음'). 실제 AI 호출은 키가 없어 못 해 봄(요청 모양은 시험). v1.21.0
 - **배포 (11-12)**: PR #61 → main 병합 · GitHub Pages 배포 성공(배포 사이트 changelog `2026-11-12-4` 확인). **실제 AI 시험**: 교사 OpenRouter 키(이 PC의 다른 앱 폴더 `.env`, 저장소 · 대화에 넣지 않음)로 앱 코드(`runAi` → `parseQuoteAnswer`)를 Node에서 돌려 가상 견적서 사진을 읽음 → `nvidia/nemotron-3.5-super-vl:free` 5초, 품목 2줄 · 수량 · 단가 · 합계 325,000 · 상호 모두 맞음, 전화 · 계좌는 답에 안 옮김. `thinkingmachines/inkling-2-small:free`는 403(에이전트 전용) → 앱이 쉬운 말 오류로 보여 줌. 무료 사진 모델은 자주 바뀜
 - 매뉴얼 캡처 01(홈 대시보드) · 03(기록표) · 05(출결 일간) · 13(업무 메뉴, 견적서 → 품의) 교체 (도구 `pe-log-demo-video/cap-1112.mjs`, 배포 사이트 시연 모드)
+
+### 6-22. 웹 사용 설명서 (2026-11-12 교사 요청 '인스타 · SNS 댓글 단 사람에게 DM으로 앱 주소와 사용 메뉴얼 자동으로', 브랜치 `manual-web`)
+- 주소 `https://huhonduk-glitch.github.io/physical-education-/manual/` = `public/manual/index.html`(정적 HTML 한 장, 인라인 CSS · JS, 외부 글꼴 · 스크립트 · 추적 없음, 로그인 · 이용 안내 · PIN 없이 열림). 앱 기능을 바꾸면 **이 페이지도 같이 고친다**(내용은 HelpPage · portfolio/manual.md와 같은 사실만)
+- 그림 `public/manual/img/manual-01~16.webp`(portfolio/images 캡처를 WebP로, PC 캡처는 1280px), 링크 미리보기 `public/manual/og.png`(1200 × 630, og:image 절대 주소). 캡처 15 · 16은 `pe-log-demo-video/cap-manual-new.mjs`(가상 견적서 엑셀)
+- 서비스워커: `vite.config.ts` workbox `globIgnores: ['manual/**']`(앱 저장 공간에 설명서 그림을 미리 받지 않음) · `navigateFallbackDenylist: [/\/manual\//]`(설명서 주소를 앱 화면으로 바꿔치지 않음). 앱을 이미 설치한 기기는 옛 서비스워커가 [업데이트]를 누르기 전까지 /manual/을 앱으로 열 수 있음
+- 인스타 · 카톡 안 브라우저로 열었을 때 '다른 브라우저로 열기' 안내를 표지에, [PDF로 저장 · 인쇄](print CSS), 목차는 PC 왼쪽 고정 · 폰 2열, 사진은 누르면 크게
+- 앱 [사용법] 맨 위에 설명서 링크(새 창), portfolio/meta.json links · caption.md에 주소. v1.21.1
