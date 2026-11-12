@@ -13,7 +13,7 @@ PE LOG는 체육 수업에 필요한 일을 **메뉴 6개**에 모았어요. 휴
 
 > 먼저 써 보고 싶다면 주소 끝에 `?demo=1`을 붙인 **시연 모드**로 여세요. 가상 학생으로 모든 기능을 눌러 볼 수 있고, 실제 자료와는 완전히 따로예요.
 
-> 화면 사진이 더 많은 **자세한 사용 설명서**: https://huhonduk-glitch.github.io/physical-education-/manual/
+> 화면 사진이 더 많은 **자세한 사용 설명서**: [웹으로 열기 (화면 사진 16장)](https://huhonduk-glitch.github.io/physical-education-/manual/)
 
 ## 처음 시작하기
 
