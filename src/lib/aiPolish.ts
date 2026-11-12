@@ -82,7 +82,18 @@ export function manualPromptText(p: { system: string; user: string }): string {
 
 export class AiError extends Error {}
 
-export async function runAi(s: AiSettings, p: { system: string; user: string }): Promise<{ text: string; model: string }> {
+/** AI에 같이 보내는 그림 (견적서 사진 읽기, 6-21). data = base64 (data: 머리 없이) */
+export interface AiImage {
+  mediaType: 'image/jpeg' | 'image/png' | 'image/webp'
+  data: string
+}
+export interface AiPrompt {
+  system: string
+  user: string
+  images?: AiImage[]
+}
+
+export async function runAi(s: AiSettings, p: AiPrompt): Promise<{ text: string; model: string }> {
   if (s.provider === 'manual') throw new AiError('키 없이 쓰기는 [요청문 복사]로 해 주세요.')
   const text = s.provider === 'claude' ? await runClaude(s, p) : await runOpenRouter(s, p)
   const clean = text.text.replace(/^["'“”]+|["'“”]+$/g, '').trim()
@@ -90,7 +101,7 @@ export async function runAi(s: AiSettings, p: { system: string; user: string }):
   return { text: clean, model: text.model }
 }
 
-async function runClaude(s: AiSettings, p: { system: string; user: string }): Promise<{ text: string; model: string }> {
+async function runClaude(s: AiSettings, p: AiPrompt): Promise<{ text: string; model: string }> {
   if (!s.claudeApiKey.trim()) throw new AiError('Claude API 키를 먼저 넣어 주세요.')
   const { default: Anthropic } = await import('@anthropic-ai/sdk')
   const client = new Anthropic({ apiKey: s.claudeApiKey.trim(), dangerouslyAllowBrowser: true })
@@ -103,7 +114,14 @@ async function runClaude(s: AiSettings, p: { system: string; user: string }): Pr
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
       system: p.system,
-      messages: [{ role: 'user', content: p.user }],
+      messages: [
+        {
+          role: 'user',
+          content: p.images?.length
+            ? [...p.images.map((im) => ({ type: 'image' as const, source: { type: 'base64' as const, media_type: im.mediaType, data: im.data } })), { type: 'text' as const, text: p.user }]
+            : p.user,
+        },
+      ],
     })
     if (res.stop_reason === 'refusal') throw new AiError('AI가 이 요청을 처리하지 못했어요. 선생님이 직접 써 주세요.')
     const text = res.content
@@ -122,7 +140,7 @@ async function runClaude(s: AiSettings, p: { system: string; user: string }): Pr
   }
 }
 
-async function runOpenRouter(s: AiSettings, p: { system: string; user: string }): Promise<{ text: string; model: string }> {
+async function runOpenRouter(s: AiSettings, p: AiPrompt): Promise<{ text: string; model: string }> {
   if (!s.openrouterApiKey.trim()) throw new AiError('OpenRouter 키를 먼저 넣어 주세요.')
   if (!s.openrouterModel.trim()) throw new AiError('OpenRouter 모델을 골라 주세요.')
   let res: Response
@@ -139,7 +157,10 @@ async function runOpenRouter(s: AiSettings, p: { system: string; user: string })
         model: s.openrouterModel.trim(),
         messages: [
           { role: 'system', content: p.system },
-          { role: 'user', content: p.user },
+          {
+            role: 'user',
+            content: p.images?.length ? [{ type: 'text', text: p.user }, ...p.images.map((im) => ({ type: 'image_url', image_url: { url: `data:${im.mediaType};base64,${im.data}` } }))] : p.user,
+          },
         ],
       }),
     })
@@ -151,6 +172,8 @@ async function runOpenRouter(s: AiSettings, p: { system: string; user: string })
     if (res.status === 401) throw new AiError('OpenRouter 키가 맞지 않아요.')
     if (res.status === 402) throw new AiError('OpenRouter 크레딧(잔액)이 부족해요. 무료 모델을 고르거나 충전해 주세요.')
     if (res.status === 429) throw new AiError('요청이 많아요(무료 모델은 하루 사용량 제한이 있어요). 잠시 뒤 다시 해 보세요.')
+    if (p.images?.length && (res.status === 400 || res.status === 404) && /image|vision|modalit/i.test(body?.error?.message ?? ''))
+      throw new AiError('이 모델은 사진을 못 읽어요. 모델 목록에서 ‘사진 읽기’ 표시가 있는 모델을 골라 주세요.')
     throw new AiError(`AI 요청이 실패했어요 (${res.status}${body?.error?.message ? `: ${body.error.message.slice(0, 80)}` : ''}).`)
   }
   return { text: body?.choices?.[0]?.message?.content ?? '', model: body?.model ?? s.openrouterModel }
@@ -160,6 +183,8 @@ export interface RouterModel {
   id: string
   name: string
   free: boolean
+  /** 사진을 읽을 수 있는 모델 (견적서 사진 읽기) */
+  vision: boolean
   /** 100만 토큰당 달러 (입력 · 출력) */
   inPrice: number
   outPrice: number
@@ -169,13 +194,13 @@ export interface RouterModel {
 export async function loadRouterModels(): Promise<RouterModel[]> {
   const res = await fetch(OPENROUTER_MODELS_URL)
   if (!res.ok) throw new AiError('모델 목록을 불러오지 못했어요.')
-  const data = (await res.json()) as { data: { id: string; name: string; pricing?: { prompt?: string; completion?: string }; architecture?: { output_modalities?: string[] } }[] }
+  const data = (await res.json()) as { data: { id: string; name: string; pricing?: { prompt?: string; completion?: string }; architecture?: { input_modalities?: string[]; output_modalities?: string[] } }[] }
   return data.data
     .filter((m) => !m.id.endsWith(':batch') && (m.architecture?.output_modalities ?? ['text']).includes('text'))
     .map((m) => {
       const inP = Number(m.pricing?.prompt ?? 0) * 1e6
       const outP = Number(m.pricing?.completion ?? 0) * 1e6
-      return { id: m.id, name: m.name, free: m.id.endsWith(':free') || (inP === 0 && outP === 0), inPrice: inP, outPrice: outP }
+      return { id: m.id, name: m.name, free: m.id.endsWith(':free') || (inP === 0 && outP === 0), vision: (m.architecture?.input_modalities ?? []).includes('image'), inPrice: inP, outPrice: outP }
     })
     .sort((a, b) => Number(b.free) - Number(a.free) || a.outPrice - b.outPrice)
 }

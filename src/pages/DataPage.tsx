@@ -8,7 +8,9 @@ import PinPad from '../components/PinPad'
 import { backupFileName, checkBackup, compareCounts, countAll, exportAll, restoreAll, TABLE_LABELS, type BackupFile } from '../db/backup'
 import { listSnapshots, type AutoSnapshot } from '../db/autoBackup'
 import { db } from '../db/db'
+import { mergeInto, mergeSummary } from '../db/syncMerge'
 import { saveText } from '../lib/download'
+import { LockError, isLocked, lockJson, lockedFileName, passwordProblem, unlockJson, type LockedFile } from '../lib/lockFile'
 import { PIN_SETTING_KEY, verifyPin, type StoredPin } from '../lib/pin'
 import { useApp } from '../state/AppContext'
 
@@ -18,6 +20,16 @@ export default function DataPage() {
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
   const [pending, setPending] = useState<BackupFile | null>(null)
+  const [locked, setLocked] = useState<LockedFile | null>(null)
+  const [merged] = useState(() => {
+    try {
+      const t = sessionStorage.getItem(MERGED_KEY)
+      sessionStorage.removeItem(MERGED_KEY)
+      return t ? (JSON.parse(t) as string[]) : null
+    } catch {
+      return null
+    }
+  })
   const nowCounts = useLiveQuery(() => countAll(db), [])
   const [snapshots, setSnapshots] = useState<AutoSnapshot[] | null>(null)
   useEffect(() => {
@@ -45,12 +57,37 @@ export default function DataPage() {
     setErr('')
     if (!f) return
     try {
-      const c = checkBackup(JSON.parse(await f.text()))
+      const raw = JSON.parse(await f.text())
+      if (isLocked(raw)) {
+        setPending(null)
+        return setLocked(raw)
+      }
+      const c = checkBackup(raw)
       if (!c.ok) return setErr(c.error)
       setPending(c.file)
     } catch {
       setErr('백업 파일을 읽지 못했어요')
     }
+  }
+
+  const unlocked = (value: unknown) => {
+    const c = checkBackup(value)
+    if (!c.ok) throw new LockError(c.error)
+    setLocked(null)
+    setPending(c.file)
+  }
+
+  const doMerge = async () => {
+    if (!pending) return
+    await backup(true) // 합치기 전에 지금 자료를 자동 백업
+    const plan = await mergeInto(db, pending)
+    const lines = mergeSummary(plan, TABLE_LABELS)
+    try {
+      sessionStorage.setItem(MERGED_KEY, JSON.stringify(lines.length ? lines : ['새로 더할 자료가 없었어요 (이미 같은 자료)']))
+    } catch {
+      /* 무시 */
+    }
+    location.reload()
   }
 
   const doRestore = async () => {
@@ -72,6 +109,16 @@ export default function DataPage() {
       <PageHeader title="백업 · 학년도" back />
       <div className="page space-y-4 pb-8">
         {msg && <p className="card bg-ok-light font-bold text-ok shadow-none">{msg}</p>}
+        {merged && (
+          <div className="card space-y-1 bg-ok-light text-ok shadow-none">
+            <p className="font-extrabold">다른 기기 자료를 합쳤어요</p>
+            {merged.map((l) => (
+              <p key={l} className="text-sm font-bold">
+                {l}
+              </p>
+            ))}
+          </div>
+        )}
 
         {nowCounts && (
           <section className="card space-y-2">
@@ -97,6 +144,8 @@ export default function DataPage() {
             <Icon name="download" /> 지금 백업 파일 받기
           </button>
         </section>
+
+        <LockedSection onMade={() => void updateSettings({ lastBackupAt: Date.now() })} />
 
         {snapshots && snapshots.length > 0 && (
           <section className="card space-y-3">
@@ -130,16 +179,17 @@ export default function DataPage() {
         )}
 
         <section className="card space-y-3">
-          <p className="card-title">복원</p>
-          <p className="hint">백업 파일로 지금 자료를 바꿔요. 바꾸기 전에 지금 자료를 자동으로 한 번 더 백업해요.</p>
+          <p className="card-title">복원 · 다른 기기 자료 합치기</p>
+          <p className="hint">백업 파일(잠금 파일 포함)을 고르면 [합치기] 또는 [통째로 바꾸기]를 골라요. 어느 쪽이든 그 전에 지금 자료를 자동으로 한 번 더 백업해요.</p>
           <label className="btn btn-soft relative w-full">
-            <Icon name="upload" /> 백업 파일 고르기
+            <Icon name="upload" /> 백업 · 잠금 파일 고르기
             <input type="file" accept="application/json,.json" className="sr-only" onChange={(e) => (void pickRestore(e.target.files?.[0]), (e.target.value = ''))} />
           </label>
           {err && <p className="font-bold text-danger">{err}</p>}
+          {locked && <UnlockForm file={locked} onOpen={unlocked} onCancel={() => setLocked(null)} />}
           {pending && (
             <div className="space-y-2 rounded-2xl bg-caution-light p-4 text-caution">
-              <p className="font-extrabold">이 백업으로 바꿀까요?</p>
+              <p className="font-extrabold">이 백업을 어떻게 넣을까요?</p>
               <p className="text-sm font-semibold">{new Date(pending.createdAt).toLocaleString('ko-KR')}에 만든 백업</p>
               {nowCounts && (
                 <table className="w-full rounded-xl bg-white text-sm text-ink">
@@ -164,12 +214,24 @@ export default function DataPage() {
               {nowCounts && compareCounts(nowCounts, pending).some((r) => r.fewer) && (
                 <p className="text-sm font-bold text-danger">빨간 줄은 백업 파일 쪽이 더 적어요. 더 오래된 백업일 수 있으니 날짜를 확인하세요.</p>
               )}
-              <div className="flex gap-2">
-                <button type="button" className="btn btn-soft flex-1 bg-white" onClick={() => setPending(null)}>
+              <ul className="space-y-1 text-sm font-semibold">
+                <li>
+                  · <b>합치기</b>: 지금 자료는 그대로 두고 파일에만 있는 기록을 더해요. 같은 학생 · 수업반은 하나로 맞추고, 같은 기록을 양쪽에서 고쳤으면 더 최근 것을 써요. 설정은 이 기기 것을 둬요.
+                </li>
+                <li>
+                  · <b>통째로 바꾸기</b>: 지금 자료를 지우고 파일 그대로 바꿔요(설정 · PIN 포함).
+                </li>
+                <li>· 한쪽에서 지운 기록은 합치면 다시 생겨요. 지우기 · 정리는 한 기기에서 한 뒤, 다른 기기는 [통째로 바꾸기]를 쓰세요.</li>
+              </ul>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" className="btn btn-primary col-span-2" onClick={() => void doMerge()} disabled={readOnly}>
+                  합치기 (지금 자료 자동 백업)
+                </button>
+                <button type="button" className="btn btn-soft bg-white" onClick={() => setPending(null)}>
                   취소
                 </button>
-                <button type="button" className="btn btn-danger flex-[2]" onClick={doRestore}>
-                  바꾸기 (지금 자료 자동 백업)
+                <button type="button" className="btn btn-danger" onClick={doRestore}>
+                  통째로 바꾸기
                 </button>
               </div>
             </div>
@@ -210,6 +272,96 @@ export default function DataPage() {
       </div>
       {wipe && <WipeSheet onClose={() => setWipe(false)} />}
     </>
+  )
+}
+
+const MERGED_KEY = 'pelog.mergedSummary'
+
+/** 다른 기기로 옮기기: 비밀번호로 잠근 백업 파일 만들기 (6-21) */
+function LockedSection({ onMade }: { onMade: () => void }) {
+  const [pw, setPw] = useState('')
+  const [pw2, setPw2] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const [done, setDone] = useState('')
+  const problem = pw ? passwordProblem(pw) : null
+  const make = async () => {
+    setErr('')
+    setDone('')
+    if (problem) return setErr(problem)
+    if (pw !== pw2) return setErr('두 비밀번호가 달라요.')
+    setBusy(true)
+    try {
+      const file = await lockJson(await exportAll(db), pw)
+      saveText(lockedFileName(), JSON.stringify(file), 'application/json')
+      onMade()
+      setPw('')
+      setPw2('')
+      setDone('잠금 파일을 저장했어요. 다른 기기에서 [백업 · 잠금 파일 고르기]로 열고 비밀번호를 넣으면 돼요.')
+    } catch (e) {
+      setErr(e instanceof LockError ? e.message : '잠금 파일을 만들지 못했어요.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <section className="card space-y-3">
+      <p className="card-title">다른 기기로 옮기기 (잠금 파일)</p>
+      <p className="hint">
+        폰 ↔ 교무실 PC처럼 다른 기기로 자료를 옮길 때 써요. 비밀번호로 잠근 백업 파일을 만들고, 다른 기기에서 열어 [합치기]를 누르면 두 기기 기록이 하나로 모여요. 서버 · 클라우드로 보내지 않아요. 파일을 어디에 둘지는 선생님이 정해요.
+      </p>
+      <ul className="space-y-1 rounded-2xl bg-fill p-3 text-sm font-semibold text-ink-2">
+        <li>· 파일 안에는 학생 이름 · 출결 · 견학 사유 · 점수가 들어 있어요. 잠가도 학교 · 교육청 정보보안 지침을 따라 주세요(개인 클라우드 · 공용 PC에 두지 않기, 옮긴 뒤 지우기).</li>
+        <li>· 비밀번호는 어디에도 저장하지 않아요. 잊으면 아무도 열 수 없어요.</li>
+        <li>· 메신저로 보낼 때는 비밀번호를 같은 대화방에 적지 마세요.</li>
+      </ul>
+      <input className="field" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="비밀번호 (8자 이상)" aria-label="비밀번호" />
+      <input className="field" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="비밀번호 한 번 더" aria-label="비밀번호 확인" />
+      {problem && <p className="text-sm font-bold text-caution">{problem}</p>}
+      <button type="button" className="btn btn-primary w-full" disabled={busy || !pw || !pw2} onClick={() => void make()}>
+        <Icon name="lock" /> {busy ? '잠그는 중…' : '잠금 파일 만들기'}
+      </button>
+      {err && <p className="font-bold text-danger">{err}</p>}
+      {done && <p className="font-bold text-ok">{done}</p>}
+    </section>
+  )
+}
+
+function UnlockForm({ file, onOpen, onCancel }: { file: LockedFile; onOpen: (v: unknown) => void; onCancel: () => void }) {
+  const [pw, setPw] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const open = async () => {
+    setErr('')
+    setBusy(true)
+    try {
+      onOpen(await unlockJson(file, pw))
+    } catch (e) {
+      setErr(e instanceof LockError ? e.message : '파일을 열지 못했어요.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <form
+      className="space-y-2 rounded-2xl bg-fill p-4"
+      onSubmit={(e) => {
+        e.preventDefault()
+        void open()
+      }}
+    >
+      <p className="font-extrabold">잠금 파일이에요 · {new Date(file.createdAt).toLocaleString('ko-KR')}에 만듦</p>
+      <input className="field" type="password" autoComplete="current-password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="만들 때 넣은 비밀번호" aria-label="잠금 파일 비밀번호" />
+      {err && <p className="text-sm font-bold text-danger">{err}</p>}
+      <div className="flex gap-2">
+        <button type="button" className="btn btn-soft flex-1 bg-white" onClick={onCancel}>
+          취소
+        </button>
+        <button type="submit" className="btn btn-primary flex-[2]" disabled={busy || !pw}>
+          {busy ? '여는 중…' : '열기'}
+        </button>
+      </div>
+    </form>
   )
 }
 

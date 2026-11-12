@@ -44,6 +44,18 @@ describe('OpenRouter 연결', () => {
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer sk-or-x')
     expect(JSON.parse(init.body as string)).toEqual({ model: 'test/model:free', messages: [{ role: 'system', content: 'S' }, { role: 'user', content: 'U' }] })
   })
+  it('그림을 같이 보내면 image_url 칸으로, 사진을 못 읽는 모델은 쉬운 말로', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ choices: [{ message: { content: '{}' } }] }), { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    await runAi(base, { system: 'S', user: 'U', images: [{ mediaType: 'image/jpeg', data: 'AAAA' }] })
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit]
+    expect(JSON.parse(init.body as string).messages[1].content).toEqual([
+      { type: 'text', text: 'U' },
+      { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,AAAA' } },
+    ])
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: { message: 'No endpoints found that support image input' } }), { status: 404 })))
+    await expect(runAi(base, { system: 'S', user: 'U', images: [{ mediaType: 'image/jpeg', data: 'AAAA' }] })).rejects.toThrow('사진을 못 읽어요')
+  })
   it('오류를 쉬운 말로: 키 · 잔액 · 사용량', async () => {
     for (const [status, word] of [
       [401, '키가 맞지 않아요'],
