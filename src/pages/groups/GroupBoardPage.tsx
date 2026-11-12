@@ -23,6 +23,8 @@ import { classForNow } from '../../lib/timetable'
 import { useApp } from '../../state/AppContext'
 import { useGroups } from '../../state/useGroups'
 import { AttendView } from './AttendView'
+import AttendMonthView from './AttendMonthView'
+import Segmented from '../../components/Segmented'
 import ClassToolsSheet from './ClassToolsSheet'
 import { ItemCheckView, TableCheckView } from './CheckViews'
 import LedgerView from './LedgerView'
@@ -65,6 +67,8 @@ export default function GroupBoardPage() {
   const day = dayData?.summary
   const items = useMemo(() => checkItems(settings.recordButtons), [settings.recordButtons])
   const [mode, setModeState] = useState<BoardMode>(readMode)
+  // 출결 보기: 일간(카드) · 월간(표) — 2026-11-12
+  const [attendSpan, setAttendSpan] = useState<'day' | 'month'>('day')
   const setMode = (m: BoardMode) => {
     setModeState(m)
     setMulti(false)
@@ -282,6 +286,21 @@ export default function GroupBoardPage() {
           />
         )}
         {group && list.length > 0 && mode === 'attend' && (
+          <div className="flex items-center gap-2">
+            <Segmented
+              label="출결 보기"
+              value={attendSpan}
+              options={[
+                { id: 'day', label: '일간' },
+                { id: 'month', label: '월간' },
+              ]}
+              onChange={setAttendSpan}
+            />
+            <span className="hint">{attendSpan === 'day' ? '오늘 한 시간' : '한 달 표'}</span>
+          </div>
+        )}
+        {group && list.length > 0 && mode === 'attend' && attendSpan === 'month' && <AttendMonthView groupId={id} students={list} numberOf={(s) => memberNo(group, s)} readOnly={readOnly} />}
+        {group && list.length > 0 && mode === 'attend' && attendSpan === 'day' && (
           <AttendView
             group={group}
             list={list}

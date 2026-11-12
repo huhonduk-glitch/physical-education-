@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { PeDatabase } from '../src/db/db'
 import { exportAll, restoreAll } from '../src/db/backup'
 import { attendanceOn, cycleAttendance, setAttendReason, setAttendance } from '../src/db/attendanceRepo'
-import { attendTally, dayStatus, isMissing, nextStatus, tallyText } from '../src/lib/attendance'
+import { attendByDay, attendTally, dayStatus, isMissing, nextStatus, tallyText } from '../src/lib/attendance'
 import type { Attendance } from '../src/db/types'
 
 let n = 0
@@ -85,5 +85,16 @@ describe('고교학점제 출석률 2/3 (2026-11-04)', () => {
     expect(creditRisk(5, 16)).toBe('caution')
     expect(creditRisk(6, 16)).toBe('danger')
     expect(creditRisk(0, 0)).toBe('ok')
+  })
+})
+
+describe('월간 출결표', () => {
+  it('같은 날 여러 교시면 무거운 것 하나, 날짜별 출석 아닌 학생 수', () => {
+    const rows = [row('a', 'late', 1), row('a', 'absent', 2), row('b', 'early', 1), { ...row('b', 'result', 3), date: '2026-10-29', id: 'x' }]
+    const { cell, perDay } = attendByDay(rows)
+    expect(cell.get('a|2026-10-30')?.status).toBe('absent')
+    expect(cell.get('b|2026-10-29')?.status).toBe('result')
+    expect(perDay.get('2026-10-30')).toBe(2)
+    expect(perDay.get('2026-10-29')).toBe(1)
   })
 })

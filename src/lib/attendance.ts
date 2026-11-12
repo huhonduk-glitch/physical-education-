@@ -64,3 +64,20 @@ export function creditRisk(missing: number, held: number): 'ok' | 'caution' | 'd
   if ((attended - 2) * 3 < held * 2) return 'caution'
   return 'ok'
 }
+
+/**
+ * 월간 출결표 (2026-11-12): '학생id|날짜' → 그날 줄 하나. 같은 날 여러 교시면 무거운 것(결석 > 결과 > 조퇴 > 지각).
+ * 날짜별로 출석 아닌 학생 수도 같이 센다.
+ */
+const HEAVY: Record<AttendStatus, number> = { absent: 4, result: 3, early: 2, late: 1 }
+export function attendByDay(rows: readonly Attendance[]): { cell: Map<string, Attendance>; perDay: Map<string, number> } {
+  const cell = new Map<string, Attendance>()
+  for (const r of rows) {
+    const k = `${r.studentId}|${r.date}`
+    const cur = cell.get(k)
+    if (!cur || HEAVY[r.status] > HEAVY[cur.status]) cell.set(k, r)
+  }
+  const perDay = new Map<string, number>()
+  for (const r of cell.values()) perDay.set(r.date, (perDay.get(r.date) ?? 0) + 1)
+  return { cell, perDay }
+}
