@@ -13,6 +13,8 @@ import { setDone, toggleGroupSkip, updatePlan } from '../../db/plansRepo'
 import type { PlanItem } from '../../db/types'
 import { shortDateLabel, todayStr } from '../../lib/dates'
 import { saveXlsx } from '../../lib/download'
+import Segmented from '../../components/Segmented'
+import { PlanMonth, PlanWeek } from './PlanCalendar'
 import { fitToTarget, groupProgress, itemsFromUnits, meetings, moveItem, newItemId, planRows, schedule, standardCoverage, unitBlocks } from '../../lib/progressPlan'
 import { useApp } from '../../state/AppContext'
 import { useGroups } from '../../state/useGroups'
@@ -348,6 +350,9 @@ function GroupDates({
   const hideN = Math.max(0, (firstOpen < 0 ? sched.length : firstOpen) - 1)
   const [showAll, setShowAll] = useState(false)
   const shown = showAll ? sched : sched.slice(hideN)
+  // 보기: 목록(차시 순) · 주간 · 월간 달력 (2026-11-12)
+  const [view, setView] = useState<'list' | 'week' | 'month'>('list')
+  const cal = { sched, done: doneSet, today, readOnly, onDone: (itemId: string, on: boolean) => void setDone(db, planId, groupId, itemId, on), onSkip: (m: { date: string; period: number }) => void toggleGroupSkip(db, planId, groupId, m) }
   if (noSlots)
     return (
       <section className="card space-y-2">
@@ -372,8 +377,20 @@ function GroupDates({
           </div>
         ))}
       </section>
+      <Segmented
+        label="진도 보기"
+        value={view}
+        options={[
+          { id: 'list', label: '목록' },
+          { id: 'week', label: '주간' },
+          { id: 'month', label: '월간' },
+        ]}
+        onChange={setView}
+      />
       <p className="hint px-1">행사·휴강으로 수업이 빠지면 그 줄의 [빠짐]을 누르세요. 뒤 차시가 한 칸씩 밀려요. 다시 누르면 되돌아와요.</p>
-      <section className="card overflow-hidden p-0">
+      {view === 'week' && <PlanWeek {...cal} />}
+      {view === 'month' && <PlanMonth {...cal} />}
+      <section className={`card overflow-hidden p-0 ${view === 'list' ? '' : 'hidden'}`}>
         {hideN > 0 && (
           <button type="button" className="list-row w-full justify-center font-bold text-brand" aria-expanded={showAll} onClick={() => setShowAll((v) => !v)}>
             {showAll ? '끝낸 차시 접기' : `끝낸 차시 ${hideN}개 더 보기 (1~${hideN}차시)`}

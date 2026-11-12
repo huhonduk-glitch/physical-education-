@@ -20,6 +20,7 @@ import {
 } from '../lib/weather'
 import { GRID_SIDO, airSido, placeFromAddress, placeFromGrid, rowOf, sigunguOf, suggestStation, type GridRow } from '../lib/weatherPlace'
 import { useApp } from '../state/AppContext'
+import { weatherEmoji } from '../lib/dash'
 import Icon from './Icon'
 
 const GRADE_STYLE: Record<number, string> = { 1: 'bg-[#e8f0fe] text-[#1d5fd6]', 2: 'bg-ok-light text-ok', 3: 'bg-caution-light text-ink', 4: 'bg-danger text-white' }
@@ -77,55 +78,67 @@ export default function WeatherCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loc?.nx, loc?.ny, loc?.station])
 
-  if (!loc || setup) return <WeatherSetup relay={relay} onDone={() => setSetup(false)} onCancel={loc ? () => setSetup(false) : undefined} />
+  if (setup) return <WeatherSetup relay={relay} onDone={() => setSetup(false)} onCancel={() => setSetup(false)} />
+  // 위치를 아직 안 정했으면 작은 칸으로만 (맨 위 줄 높이를 늘리지 않게)
+  if (!loc)
+    return (
+      <button type="button" className="dash-tile flex w-full flex-col items-center justify-center bg-white text-center" onClick={() => setSetup(true)}>
+        <span className="text-[2.2rem] leading-none" aria-hidden>
+          ⛅
+        </span>
+        <b className="mt-1.5 text-[0.98rem]">날씨 · 미세먼지 보기</b>
+        <span className="text-[0.82rem] font-semibold text-brand">학교 위치 정하기 ›</span>
+      </button>
+    )
 
   const n: Ncst | undefined = cache?.ncst
   const f: Fcst | undefined = cache?.fcst
   const a: Air | undefined = cache?.air
   const adv = outdoorAdvice(n, a, f)
   const tone = adv.level === 'stop' ? 'border-danger bg-danger-light' : adv.level === 'caution' ? 'border-caution bg-caution-light' : 'border-line bg-white'
-  const grade = (label: string, g?: number, v?: number, unit = '') => (
-    <div className={`rounded-xl px-3 py-2 ${g ? GRADE_STYLE[g] : 'bg-fill text-ink-3'}`}>
-      <p className="text-xs font-bold opacity-80">{label}</p>
-      <p className="font-black">
-        {g ? GRADE_LABEL[g] : '—'}
-        {v !== undefined && <span className="ml-1 text-xs font-bold opacity-80">{v}{unit}</span>}
-      </p>
-    </div>
+  const emoji = weatherEmoji(n?.pty, f?.sky, new Date().getHours())
+  const skyText = n?.pty ? PTY_LABEL[n.pty] : f?.sky ? SKY_LABEL[f.sky] : ''
+  const grade = (label: string, g?: number, v?: number) => (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[0.8rem] font-extrabold ${g ? GRADE_STYLE[g] : 'bg-fill text-ink-3'}`}>
+      <span className="font-bold opacity-80">{label}</span>
+      {g ? GRADE_LABEL[g] : '—'}
+      {v !== undefined && <span className="font-bold tabular-nums opacity-70">{v}</span>}
+    </span>
   )
 
   return (
-    <section className={`card space-y-3 border-2 ${tone}`} aria-label="오늘 날씨 · 미세먼지">
-      <div className="flex items-start gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-ink-3">
-            오늘 날씨 · {loc.label || loc.station}
+    <section className={`dash-tile relative border-2 ${tone}`} aria-label="오늘 날씨 · 미세먼지">
+      <div className="absolute top-1.5 right-1.5 flex">
+        <button type="button" className="grid h-9 w-9 place-items-center rounded-full text-ink-3 hover:bg-fill" aria-label="날씨 새로 받기" disabled={busy} onClick={() => void refresh()}>
+          <Icon name="reset" size={16} className={busy ? 'animate-spin' : ''} />
+        </button>
+        <button type="button" className="grid h-9 w-9 place-items-center rounded-full text-ink-3 hover:bg-fill" aria-label="위치 · 측정소 바꾸기" onClick={() => setSetup(true)}>
+          <Icon name="settings" size={16} />
+        </button>
+      </div>
+      <p className="pr-16 text-[0.82rem] font-bold text-ink-3">{loc.label || loc.station}</p>
+      <div className="flex items-center gap-2.5">
+        <span className="text-[2.6rem] leading-none" role="img" aria-label={skyText || '날씨'}>
+          {emoji}
+        </span>
+        <div className="min-w-0">
+          <p className="leading-none font-black tracking-tight tabular-nums">
+            <span className="text-[2.1rem] xl:text-[2.4rem]">{n?.temp !== undefined ? `${n.temp}°` : '—'}</span>
+            {skyText && <span className="ml-1.5 text-[1rem] font-extrabold text-ink-2">{skyText}</span>}
           </p>
-          <p className="text-[1.9rem] leading-tight font-black tabular-nums">
-            {n?.temp !== undefined ? `${n.temp}℃` : '—'}
-            <span className="ml-2 text-base font-bold text-ink-2">
-              {n?.pty ? PTY_LABEL[n.pty] : f?.sky ? SKY_LABEL[f.sky] : ''}
-            </span>
-          </p>
-          <p className="text-sm font-semibold text-ink-2">
-            {f?.tmx !== undefined && `최고 ${f.tmx}℃ `}
-            {f?.tmn !== undefined && `· 최저 ${f.tmn}℃ `}
-            {f?.pop !== undefined && `· 강수확률 ${f.pop}%`}
+          <p className="mt-1 text-[0.8rem] font-bold text-ink-3 tabular-nums">
+            {f?.tmx !== undefined && <span className="text-danger">↑{f.tmx}° </span>}
+            {f?.tmn !== undefined && <span className="text-[#2a78d6]">↓{f.tmn}° </span>}
+            {f?.pop !== undefined && <span>☔ {f.pop}%</span>}
           </p>
         </div>
-        <button type="button" className="btn btn-ghost h-10 min-h-0 px-2 text-ink-3" aria-label="날씨 새로 받기" disabled={busy} onClick={() => void refresh()}>
-          <Icon name="reset" size={18} />
-        </button>
-        <button type="button" className="btn btn-ghost h-10 min-h-0 px-2 text-ink-3" aria-label="위치 · 측정소 바꾸기" onClick={() => setSetup(true)}>
-          <Icon name="settings" size={18} />
-        </button>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        {grade('미세먼지', a?.pm10Grade, a?.pm10, '㎍')}
-        {grade('초미세먼지', a?.pm25Grade, a?.pm25, '㎍')}
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {grade('미세', a?.pm10Grade, a?.pm10)}
+        {grade('초미세', a?.pm25Grade, a?.pm25)}
       </div>
       {adv.reasons.length > 0 ? (
-        <ul className="space-y-1 text-sm font-bold">
+        <ul className="mt-1.5 space-y-0.5 text-[0.84rem] font-bold">
           {adv.reasons.map((r) => (
             <li key={r} className={adv.level === 'stop' ? 'text-danger' : 'text-ink'}>
               ⚠️ {r}
@@ -133,12 +146,11 @@ export default function WeatherCard() {
           ))}
         </ul>
       ) : (
-        cache && <p className="text-sm font-bold text-ok">실외 수업하기 괜찮은 날이에요</p>
+        cache && <p className="mt-1.5 text-[0.84rem] font-bold text-ok">실외 수업하기 괜찮은 날이에요</p>
       )}
-      {err && <p className="text-xs font-bold text-danger">{err}</p>}
-      <p className="text-[0.72rem] text-ink-3">
-        기상청 · 에어코리아 자료 {cache ? `· ${new Date(cache.fetchedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 받음` : ''}
-        {a?.time ? ` · 측정 ${a.time.slice(11)}` : ''} · 실외 수업 여부는 학교 지침을 따라 주세요
+      {err && <p className="mt-1 text-xs font-bold text-danger">{err}</p>}
+      <p className="mt-1 text-[0.68rem] leading-snug text-ink-3">
+        기상청 · 에어코리아{cache ? ` · ${new Date(cache.fetchedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })} 받음` : ''} · 실외 수업 여부는 학교 지침대로
       </p>
     </section>
   )

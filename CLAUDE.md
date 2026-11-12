@@ -957,3 +957,16 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - **기록표 찾기 · 거르기**: `filterLedger`(`src/lib/ledger.ts`, 테스트 `tests/ledger.test.ts`) — 번호는 똑같이('11번'도), 이름은 들어 있으면, [기록 있는 학생만] = 이 달 칸에 기록이 하나라도 있는 학생. 화면 `LedgerView` 표 위
 - **홈 이번 주 시간표**: 오늘 요일 머리 = 파란 알약, 오늘 열 빈칸 옅은 파랑 · 수업 칸 옅은 테두리(지금 교시는 굵은 테두리 그대로)
 - 시험 841개 통과(TZ=UTC도). v1.19.1. 화면은 브라우저로 확인하지 않음(코드 · 시험만) — 병합 전에 시연 모드로 보기
+
+### 6-20. 홈 대시보드 · 출결 월간 · 진도표 달력 (2026-11-12 교사 요청 '스쿨보드 대시보드처럼 가독성 · 가시성', 브랜치 `dashboard-1112`)
+- 참고: 스쿨보드 공개 소개 화면(schoolboard.cc 대시보드 그림)의 **구성만** — 시계 · 날씨 그림 · D-day · 달력에 학사일정. 코드 · 문구 · 그림은 가져오지 않음
+- **홈 맨 위 줄**(늘 고정): `src/components/home/ClockTile.tsx`(1초마다 이 칸만, `lessonClock`으로 수업 끝까지 · 다음 수업까지) · `WeatherCard`(날씨 그림 글자 `weatherEmoji` · 큰 기온 · ↑최고 ↓최저 ☔강수확률 · 미세/초미세 칩, 위치 안 정했으면 작은 칸) · `DdayTile`(`pickDdays`: 업무 일정 · 고사가 먼저, 없으면 가장 가까운 학사일정). 공통 모양 `.dash-tile`(index.css)
+- **달력** `MonthCalendar.tsx`: `workCal.monthGrid`(월요일 시작) + `monthMarks`(업무 일정 = WORK_KIND 색, 학사일정 = 쉬는 날 빨강 · 고사 보라 · 그 밖 회색). 넓은 화면은 칸 안 이름, 폰은 점 → 날짜를 누르면 아래 목록. 예전 '다가오는 학사일정' 목록은 뺌
+- **배치**: 칸 9개(`HOME_WIDGETS`: focus · setup · today · calendar · weekly · timetable · groups · shortcuts · work)를 **순서 한 줄**로. 폰은 그대로, xl은 CSS `columns-2`로 두 단 높이가 고르게(교사: '오른쪽 아래로 쏠린다'). `settings.homeLayout {order, hidden}`(기본값 null — **설정 칸은 `defaultSettings`에 있어야 저장됨**) · `resolveLayout`(새 칸은 기본 자리에 끼움) · `moveWidget` · 화면 `HomeLayoutSheet.tsx`(위 · 아래 · 보임/숨김 · 처음 배치로). 끌어 놓기 · 크기 조절은 안 넣음
+- 이번 주 시간표: 요일 아래 날짜(`weekDates`), 교시 아래 시각(`periodRange`, 폰은 시작 시각만). 폰에서는 여전히 접힘
+- **출결 [일간 | 월간]**(`Segmented.tsx`): 월간 = `src/pages/groups/AttendMonthView.tsx` — 학생 × 이 달 수업일(`ledgerColumns`), 칸 누르기 = `nextStatus` 순서, 같은 날 여러 교시는 무거운 것 하나(`attendByDay`), 학생별 결 · 지 · 조 · 과 합계 · 날짜별 출석 아닌 수. 사유는 일간에서만(건강 정보)
+- **진도표 [목록 | 주간 | 월간]**: `src/pages/plans/PlanCalendar.tsx`(`PlanWeek` · `PlanMonth`) — 계산한 날짜(`schedule`)를 그대로, 끝냄 · 빠짐은 목록과 같은 동작. 월간 칸: 할 차시 파랑 · 끝낸 차시 초록
+- 시연 자료: 가상 학사일정 7 · 업무 일정 3 · 날씨 위치(서울 60,127 중구). 이미 연 기기는 [가상 자료 처음 상태로]
+- 계산 `src/lib/dash.ts`(테스트 `tests/dash.test.ts`) · `tests/attendance.test.ts`. v1.20.0. 시연 모드 PC 1440 · 폰 390으로 홈, PC로 출결 월간 · 진도표 월간 확인
+- **3단계 소메뉴 화면 다듬기(같은 날, 교사 '다 하고 배포')**: 공통 `.segment` 고른 칸 = 파랑 · 굵게, `.hint` 0.875rem. 수업반 보드 = lg에서 날짜 줄 · 수업 일지 한 줄, 요약 칸은 sm부터 '참여 20'처럼 한 줄(낮게) → 기록표가 더 위에서 시작. 기록표 = 달 넘기기를 출결 월간과 같은 모양(◀ ▶ 글자 대신 화살표 아이콘 · [이번 달]), 칸 표시 글자 0.8rem · 표 0.92rem. PAPS 기록 입력 = lg 두 줄 격자(`PageHeader wide="xl"`, 엔터 순서는 그대로 번호순). 수행평가 채점 = 안 고른 등급 글자 진하게. 수행평가 채점 화면 구조는 그대로 둠(이미 읽기 좋음)
+- 캡처 교체 필요: manual-01(홈) · manual-03(기록표) · manual-05(출결). 폰에서 이번 주 시간표를 위로 올릴지는 교사가 [홈 화면 배치 바꾸기]로 직접 정함
