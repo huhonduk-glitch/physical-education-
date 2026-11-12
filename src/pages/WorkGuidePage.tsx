@@ -3,19 +3,23 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
 import PdfPageViewer, { countPdfPages, forgetPdf } from '../components/PdfPageViewer'
+import WorkFlowChart, { AuthorDocsCard } from '../components/WorkFlowChart'
+import { workFlow } from '../data/peFlows'
 import { listDocs, removeDoc, saveDoc, type StoredDocMeta } from '../db/docStore'
 import { NEIS_SCREEN_NOTE, WORK_DOCS, WORK_TOPICS, srcLabel, workTopic, type WorkDoc, type WorkLine, type WorkSrc } from '../data/peWork'
 
 /** 넣어 둔 자료 파일이 있으면 쪽 표시를 눌러 그 쪽을 연다 */
 const OpenCtx = createContext<{ has: (d: WorkDoc) => boolean; open: (src: WorkSrc, title: string) => void }>({ has: () => false, open: () => undefined })
 
-type Tab = 'neis' | 'calendar' | 'edu' | 'rules' | 'forms'
+type Tab = 'flow' | 'neis' | 'calendar' | 'edu' | 'rules' | 'forms' | 'docs'
 const TABS: { id: Tab; label: string }[] = [
+  { id: 'flow', label: '흐름' },
   { id: 'neis', label: '나이스' },
   { id: 'calendar', label: '일정' },
   { id: 'edu', label: '교육' },
   { id: 'rules', label: '규정' },
   { id: 'forms', label: '양식' },
+  { id: 'docs', label: '실제 문서' },
 ]
 
 /**
@@ -25,7 +29,8 @@ const TABS: { id: Tab; label: string }[] = [
 export default function WorkGuidePage() {
   const { topic: id = '' } = useParams()
   const topic = workTopic(id)
-  const [tabPick, setTab] = useState<Tab>('neis')
+  // 처음에는 1년 흐름부터 (2026-11-12 교사 요청 '업무 흐름도')
+  const [tabPick, setTab] = useState<Tab>('flow')
   // 나이스 메뉴가 없는 주제(체육소위원회)는 규정부터
   const tab: Tab = tabPick === 'neis' && topic && topic.menus.length === 0 ? 'rules' : tabPick
   const [open, setOpen] = useState<string | null>(null)
@@ -69,13 +74,16 @@ export default function WorkGuidePage() {
 
         <DocFiles docs={docs} onChange={() => void refresh()} />
 
-        <div className="segment" role="tablist">
+        <div className="segment overflow-x-auto [scrollbar-width:none] [&>button]:shrink-0 [&>button]:px-3 [&>button]:whitespace-nowrap" role="tablist">
           {TABS.filter((t) => (t.id !== 'neis' || topic.menus.length > 0) && (t.id !== 'edu' || (topic.trainings?.length ?? 0) > 0)).map((t) => (
             <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}>
               {t.label}
             </button>
           ))}
         </div>
+
+        {tab === 'flow' && workFlow(topic.id) && <WorkFlowChart flow={workFlow(topic.id)!} />}
+        {tab === 'docs' && <AuthorDocsCard id={topic.id} title={topic.title} />}
 
         {tab === 'neis' && (
           <section className="space-y-2">

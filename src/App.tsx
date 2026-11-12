@@ -76,6 +76,8 @@ const ClassSummaryPage = lazy(() => import('./pages/ClassSummaryPage'))
 const DataPage = lazy(() => import('./pages/DataPage'))
 const BudgetPage = lazy(() => import('./pages/BudgetPage'))
 const QuotePage = lazy(() => import('./pages/QuotePage'))
+const WorkFlowPage = lazy(() => import('./pages/WorkFlowPage'))
+const AuthorDocsPage = lazy(() => import('./pages/WorkFlowPage').then((m) => ({ default: m.AuthorDocsPage })))
 const WorkGuidePage = lazy(() => import('./pages/WorkGuidePage'))
 const WorkDocsPage = lazy(() => import('./pages/WorkDocsPage'))
 const SurveyPage = lazy(() => import('./pages/seteuk/SurveyPage'))
@@ -231,6 +233,8 @@ export default function App() {
           <Route path="/more/data" element={<DataPage />} />
           <Route path="/work/budget" element={<BudgetPage />} />
           <Route path="/work/quote" element={<QuotePage />} />
+          <Route path="/work/flow" element={<WorkFlowPage />} />
+          <Route path="/work/author-docs" element={<AuthorDocsPage />} />
           <Route path="/work/calendar" element={<WorkCalendarPage />} />
           <Route path="/work/space" element={<SpacePage />} />
           <Route path="/work/lend" element={<LendPage />} />
