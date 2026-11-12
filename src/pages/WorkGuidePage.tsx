@@ -242,7 +242,8 @@ function DocFiles({ docs, onChange }: { docs: StoredDocMeta[]; onChange: () => v
   const [show, setShow] = useState(false)
   const keys = Object.keys(WORK_DOCS) as WorkDoc[]
   const missing = keys.filter((k) => !docs.some((d) => d.key === k))
-  const expanded = show || missing.length > 0
+  // 파일을 안 넣었어도 처음에는 접어 둔다(펼쳐 두면 폰 첫 화면을 다 차지해 나이스 할 일이 밀려남)
+  const expanded = show
 
   const onFile = async (f: File) => {
     setBusy(true)
@@ -277,7 +278,7 @@ function DocFiles({ docs, onChange }: { docs: StoredDocMeta[]; onChange: () => v
         <Icon name="file" size={20} className="shrink-0 text-brand" />
         <span className="min-w-0 flex-1">
           <b className="block">자료 파일 (이 기기에만)</b>
-          <span className="hint block">{missing.length ? `PDF ${missing.length}개를 넣으면 쪽 표시를 눌러 바로 열려요` : '넣어 둔 파일의 쪽을 바로 열 수 있어요'}</span>
+          <span className="hint block">{missing.length ? `${keys.length - missing.length}/${keys.length}개 넣음 · 공문 PDF를 넣으면 쪽 표시를 눌러 바로 열려요` : '넣어 둔 파일의 쪽을 바로 열 수 있어요'}</span>
         </span>
         <Icon name="chevronDown" size={18} className={`shrink-0 text-ink-3 ${expanded ? 'rotate-180' : ''}`} />
       </button>

@@ -990,3 +990,13 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - 서비스워커: `vite.config.ts` workbox `globIgnores: ['manual/**']`(앱 저장 공간에 설명서 그림을 미리 받지 않음) · `navigateFallbackDenylist: [/\/manual\//]`(설명서 주소를 앱 화면으로 바꿔치지 않음). 앱을 이미 설치한 기기는 옛 서비스워커가 [업데이트]를 누르기 전까지 /manual/을 앱으로 열 수 있음
 - 인스타 · 카톡 안 브라우저로 열었을 때 '다른 브라우저로 열기' 안내를 표지에, [PDF로 저장 · 인쇄](print CSS), 목차는 PC 왼쪽 고정 · 폰 2열, 사진은 누르면 크게
 - 앱 [사용법] 맨 위에 설명서 링크(새 창), portfolio/meta.json links · caption.md에 주소. v1.21.1
+
+### 6-23. 화면 다듬기 2 · 종목 그림 더 (2026-11-12 교사 '4 · 5 · 6번 가자', 브랜치 `ui-polish-2`)
+- 점검 도구 `pe-log-demo-video/review-1112.mjs`(시연 모드 · 로컬 서버, 세특 · 종목 · 업무 · 진도표 주간/월간 · 채점 폰/PC 캡처)
+- `PageHeader` 제목 `line-clamp-2` + `[word-break:normal]`(긴 평가 · 진도표 이름이 '…'로 잘리던 것 — 오른쪽 아이콘 4개인 화면)
+- 채점(`AssessmentGradePage`): 등급표 · 기록표 · 점수 요소는 [버튼 · 칸][미참여] … [점수]를 한 줄(`basis-full sm:basis-auto`) — 폰에서 학생마다 한 줄 줄어듦. `NonPartButton` 부품
+- 세특 쓰기: 기재요령 AI 규정은 처음 한 번만 펼침(localStorage `pelog.seteukRulesSeen`), 학생 줄 수준은 '4 우수' 칩(`frameFor().name`)
+- 종목 안내: 슬라이드 · 보조심판 버튼 PC 나란히, 핵심 규칙 카드 → 한 장 그림(PC 2열) 순서
+- 업무: 학교운동부 등 자료 파일 칸 기본 접힘('n/3개 넣음'), 매년 기안 문서 PC 2열. 진도표 달력 [빠짐] = 테두리 버튼
+- 그림 8장(위키미디어 공용, 눈으로 확인, `sportPhotos.ts` · `sportIllustrations.ts`): 농구 포지션 · 2-3 지역 방어(PD), 배구 코트(CC0) · 모건 사진(PD) · 픽토그램(PD), 배드민턴 코트(CC0) · 서브 위치(CC BY-SA 3.0 Cmglee) · 픽토그램(PD). 저작자가 비어 있는 'Badminton Serve Double.png'은 뺌. 그림 설명에는 앱 자료에 있는 사실만(배구 공격선 거리는 자료에 없어 숫자를 쓰지 않음)
+- 포트폴리오 `meta.json` videoUrl = PE LOG 쇼츠 `UE9g0-eCBEk` (PR #65)

@@ -78,7 +78,7 @@ function Lesson({ s, done, today, readOnly, onDone, onSkip }: { s: Scheduled } &
         {(s.item.method || s.item.evalNote) && <span className="block truncate text-[0.8rem] font-semibold text-ink-3">{[s.item.method, s.item.evalNote].filter(Boolean).join(' · ')}</span>}
       </span>
       {!s.item.lockedDate && !readOnly && (
-        <button type="button" className="btn btn-ghost shrink-0 px-3 text-sm" onClick={() => onSkip(s.meeting!)}>
+        <button type="button" className="btn btn-outline h-10 min-h-0 shrink-0 bg-white px-3 text-sm" title="행사 · 휴강으로 이 수업이 빠짐 — 뒤 차시가 한 칸씩 밀려요" onClick={() => onSkip(s.meeting!)}>
           빠짐
         </button>
       )}

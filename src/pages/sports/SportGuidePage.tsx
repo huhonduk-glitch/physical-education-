@@ -20,6 +20,8 @@ export default function SportGuidePage() {
     <>
       <PageHeader title={`${s.emoji} ${s.name}`} sub={s.summary} back />
       <div className="page space-y-3 pb-10">
+        {/* 슬라이드 · 보조심판: PC에서는 나란히 */}
+        <div className="grid gap-3 md:grid-cols-2">
         <Link to={`/sports/${s.id}/slides`} className="flex min-h-[64px] items-center gap-3 rounded-3xl bg-brand px-5 text-white shadow-[var(--shadow-float)] active:scale-[0.99]">
           <Icon name="play" />
           <span className="min-w-0 flex-1">
@@ -38,7 +40,7 @@ export default function SportGuidePage() {
             <Icon name="chevronRight" className="text-ink-3" />
           </Link>
         )}
-        {SPORT_KEYS[s.id] && <PosterSection s={s} />}
+        </div>
         {SPORT_KEYS[s.id] && (
           <section className="space-y-2">
             <p className="card-title px-1">{s.name.replace(/\s*\(.*\)\s*$/, '')}다운 핵심 규칙</p>
@@ -62,6 +64,8 @@ export default function SportGuidePage() {
             </ul>
           </section>
         )}
+        {/* 같은 핵심 규칙을 한 장 그림으로 (빔 · 인쇄 · 단톡방용) — 카드 다음에 */}
+        {SPORT_KEYS[s.id] && <PosterSection s={s} />}
         <p className="hint px-1">공식 규칙서를 직접 읽고 쉬운 말로 줄였어요. 작은 글씨 [ ]가 규칙서 조항이에요. 학교 수업에서는 시간 · 점수를 줄여 써도 돼요.</p>
         {s.sections.map((sec, i) => (
           <Collapse key={sec.title} title={<b className="text-ink">{sec.title}</b>} sub={`${sec.items.length}가지`} defaultOpen={i < 2} className="card px-2 py-1">
@@ -184,6 +188,7 @@ function PosterSection({ s }: { s: SportGuide }) {
   return (
     <section className="space-y-2">
       <p className="card-title px-1">한 장으로 보는 규칙</p>
+      <div className="grid items-start gap-3 md:grid-cols-2">
       {(SPORT_POSTERS[s.id] ?? []).map((p) => (
         <figure key={p.src} className="overflow-hidden rounded-3xl bg-white shadow-[var(--shadow-card)]">
           <a href={`${BASE}${p.src}`} target="_blank" rel="noreferrer">
@@ -206,13 +211,14 @@ function PosterSection({ s }: { s: SportGuide }) {
           <RulePoster sport={s} />
         </div>
         <figcaption className="flex items-center gap-2 p-3 text-sm">
-          <span className="min-w-0 flex-1 text-ink-3">아래 핵심 규칙을 PE LOG가 한 장으로 그렸어요. 빔 · 인쇄 · 단톡방에 그림으로 쓰세요.</span>
+          <span className="min-w-0 flex-1 text-ink-3">위 핵심 규칙을 PE LOG가 한 장으로 그렸어요. 빔 · 인쇄 · 단톡방에 그림으로 쓰세요.</span>
           <button type="button" onClick={save} disabled={busy} className="btn btn-primary shrink-0 px-4">
             <Icon name="download" /> {busy ? '만드는 중…' : '그림 받기'}
           </button>
         </figcaption>
         {err && <p className="px-3 pb-3 text-sm font-bold text-danger">{err}</p>}
       </figure>
+      </div>
     </section>
   )
 }

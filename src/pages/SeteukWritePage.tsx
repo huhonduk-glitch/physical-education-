@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Collapse from '../components/Collapse'
 import GroupPicker from '../components/GroupPicker'
@@ -26,8 +26,25 @@ import { aiEvidence, basisKeyFor, LEVEL_TONE } from './seteuk/seteukShared'
  * → 선생님이 고침 → (선택) AI 초안 · 다듬기(이름 가림) → 다시 고치고 확인 → 확정 → 복사 · 엑셀.
  * 기재요령(2026 고등학교) 총칙 5-다: AI 생성 글을 그대로 입력 금지, 윤문 보조는 최종 입력 전 확인.
  */
+const RULES_SEEN = 'pelog.seteukRulesSeen'
+
 export default function SeteukWritePage() {
   const { settings, standards, readOnly } = useApp()
+  // 기재요령 AI 규정: 처음 한 번만 펼쳐 보여 주고, 다음부터는 접어 둔다(눌러서 다시 볼 수 있음)
+  const [rulesFirst] = useState(() => {
+    try {
+      return !localStorage.getItem(RULES_SEEN)
+    } catch {
+      return true
+    }
+  })
+  useEffect(() => {
+    try {
+      localStorage.setItem(RULES_SEEN, '1')
+    } catch {
+      /* 무시 */
+    }
+  }, [])
   const [sp, setSp] = useSearchParams()
   const { groups, membersOf } = useGroups()
   const want = sp.get('g') ?? readLastGroup()
@@ -132,7 +149,7 @@ export default function SeteukWritePage() {
       <div className="page space-y-4 pb-8">
         {groups && groups.length > 1 && <GroupPicker groups={groups} value={group?.id ?? null} onChange={(g) => setSp({ g }, { replace: true })} />}
 
-        <Collapse title="기재요령 AI 규정 (꼭 읽어 주세요)" sub="AI 글을 그대로 입력하면 안 돼요" defaultOpen={!settings.claudeApiKey && !settings.openrouterApiKey}>
+        <Collapse title="기재요령 AI 규정 (꼭 읽어 주세요)" sub="AI 글을 그대로 입력하면 안 돼요" defaultOpen={rulesFirst && !settings.claudeApiKey && !settings.openrouterApiKey}>
           <div className="space-y-2 text-sm text-ink-2">
             <p>
               <b>2026학년도 학교생활기록부 기재요령(고등학교) 총칙 5-다</b>: &ldquo;AI를 활용하여 생성한 자료를 학교생활기록부의 서술형 항목에 그대로 입력하는 행위&rdquo;는 금지돼요. 윤문 등 보조로 쓸 때는 최종 입력 전에 허위·과장 여부와 기재요령 유의사항을 꼭 확인해야 해요.
@@ -206,8 +223,9 @@ export default function SeteukWritePage() {
                     )}
                     <button type="button" className="list-row min-w-0 flex-1 text-left hover:bg-fill" onClick={() => setOpenId(s.id)}>
                       <span className="w-10 shrink-0 font-extrabold tabular-nums">{memberNo(group, s)}</span>
-                      <span className={`w-7 shrink-0 text-center text-lg font-black ${LEVEL_TONE(lv, count)}`} title="수준">
-                        {lv}
+                      <span className="mr-2 shrink-0 rounded-lg bg-fill px-1.5 py-0.5 text-center leading-tight" title="수준 (제안 또는 선생님이 정한 수준)">
+                        <b className={`text-base font-black ${LEVEL_TONE(lv, count)}`}>{lv}</b>
+                        <span className="ml-0.5 text-xs font-bold text-ink-2">{frameFor(lv, count, settings.seteukFrames).name}</span>
                       </span>
                       <span className="min-w-0 flex-1">
                         <b className="block">

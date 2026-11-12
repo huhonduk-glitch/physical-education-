@@ -20,7 +20,8 @@ export default function PageHeader({ title, sub, back, right, wide }: { title: R
         )}
         <div className={`min-w-0 flex-1 ${back ? '' : 'pl-2'}`}>
           {trail.length > 0 && <p className="hidden truncate text-xs font-bold text-ink-3 lg:block">{trail.join(" › ")}</p>}
-          <h1 className="truncate text-[1.4rem] leading-tight font-extrabold tracking-tight">{title}</h1>
+          {/* 긴 제목(평가 · 진도표 이름)은 잘라 '…'로 숨기지 않고 두 줄까지 보여 준다 */}
+          <h1 className="line-clamp-2 text-[1.4rem] leading-tight font-extrabold tracking-tight [word-break:normal]">{title}</h1>
           {sub && <p className="truncate text-sm font-semibold text-ink-3">{sub}</p>}
         </div>
         {right && <div className="flex shrink-0 items-center gap-2 pr-1">{right}</div>}
