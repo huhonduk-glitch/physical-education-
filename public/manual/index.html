@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PE LOG 사용 설명서</title>
+<meta name="description" content="체육수업 종합 플랫폼 PE LOG 사용 설명서. 설치부터 기록표 · 출결 · PAPS · 수행평가 · 세특 · 학교체육 업무까지. 무료, 학생 정보는 내 기기 안에만.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="PE LOG">
+<meta property="og:title" content="PE LOG 사용 설명서 · 체육수업 종합 플랫폼">
+<meta property="og:description" content="설치부터 기록표 · 출결 · PAPS · 수행평가 · 세특 · 학교체육 업무까지. 무료, 학생 정보는 내 기기 안에만.">
+<meta property="og:image" content="https://huhonduk-glitch.github.io/physical-education-/manual/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://huhonduk-glitch.github.io/physical-education-/manual/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#021536">
+<link rel="icon" href="../icons/favicon-64.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<style>
+  :root {
+    color-scheme: light;
+    --brand: #1b64da;
+    --brand-d: #1957c2;
+    --brand-l: #e8f3ff;
+    --navy: #021536;
+    --ink: #191f28;
+    --ink2: #4e5968;
+    --ink3: #6b7684;
+    --line: #e5e8eb;
+    --fill: #f2f4f6;
+    --bg: #f6f7f9;
+    --ok: #0a7d50;
+    --ok-l: #e7f6ee;
+    --warn: #8a5300;
+    --warn-l: #fff4df;
+    --danger: #d22030;
+    --danger-l: #fdecee;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 72px; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+    font-size: 17px;
+    line-height: 1.75;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  a { color: var(--brand); }
+  b, strong { font-weight: 700; }
+  img { max-width: 100%; height: auto; display: block; }
+
+  /* 맨 위 */
+  .top {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(255,255,255,.92); backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .top .in { max-width: 1180px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 10px; }
+  .top img { width: 32px; height: 32px; border-radius: 9px; }
+  .top .name { font-weight: 800; letter-spacing: -.01em; white-space: nowrap; }
+  .top .name small { display: block; font-weight: 600; color: var(--ink3); font-size: 12px; line-height: 1.2; }
+  .top .go { margin-left: auto; display: flex; gap: 8px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    min-height: 48px; padding: 0 20px; border-radius: 14px; border: 0;
+    font: inherit; font-weight: 700; font-size: 16px; text-decoration: none; cursor: pointer; white-space: nowrap;
+  }
+  .btn.sm { min-height: 40px; padding: 0 14px; font-size: 14px; border-radius: 11px; }
+  .btn.primary { background: var(--brand); color: #fff; }
+  .btn.primary:hover { background: var(--brand-d); }
+  .btn.soft { background: var(--brand-l); color: var(--brand); }
+  .btn.ghost { background: rgba(255,255,255,.14); color: #fff; border: 1px solid rgba(255,255,255,.35); }
+  .btn.white { background: #fff; color: var(--navy); }
+
+  /* 표지 */
+  .hero { background: linear-gradient(160deg, #021536 0%, #0b2a66 60%, #1b4fae 100%); color: #fff; }
+  .hero .in { max-width: 1180px; margin: 0 auto; padding: 44px 16px 40px; display: grid; gap: 28px; }
+  .hero .kicker { display: inline-flex; gap: 8px; align-items: center; font-weight: 700; color: #b9cdf0; font-size: 15px; }
+  .hero h1 { margin: 6px 0 10px; font-size: clamp(34px, 8vw, 56px); line-height: 1.15; letter-spacing: -.03em; }
+  .hero p.lead { margin: 0 0 22px; color: #dbe6fb; font-size: 18px; max-width: 36em; }
+  .hero .cta { display: flex; flex-wrap: wrap; gap: 10px; }
+  .hero .meta { margin-top: 18px; font-size: 14px; color: #a9bfe6; }
+  .hero .phone { justify-self: center; width: min(300px, 78vw); border-radius: 30px; border: 8px solid #0b1f45; box-shadow: 0 24px 60px rgba(0,0,0,.35); overflow: hidden; }
+  .inapp {
+    margin-top: 18px; padding: 12px 14px; border-radius: 14px; background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.22); font-size: 15px; color: #fff; line-height: 1.6;
+  }
+  @media (min-width: 900px) {
+    .hero .in { grid-template-columns: minmax(0,1fr) 320px; align-items: center; padding: 64px 16px 56px; }
+  }
+
+  /* 본문 + 목차 */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px 80px; display: grid; gap: 28px; }
+  @media (min-width: 1040px) { .wrap { grid-template-columns: 236px minmax(0,1fr); gap: 44px; } }
+  nav.toc { padding-top: 24px; }
+  nav.toc .box { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 14px 10px; }
+  nav.toc p { margin: 0 8px 6px; font-size: 13px; font-weight: 800; color: var(--ink3); }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; }
+  nav.toc a { display: flex; gap: 8px; align-items: center; padding: 7px 10px; border-radius: 10px; text-decoration: none; color: var(--ink2); font-weight: 600; font-size: 15px; line-height: 1.35; }
+  nav.toc a .n { flex: none; width: 22px; height: 22px; border-radius: 7px; background: var(--fill); color: var(--ink3); font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+  nav.toc a:hover { background: var(--fill); }
+  nav.toc a.on { background: var(--brand-l); color: var(--brand); }
+  nav.toc a.on .n { background: var(--brand); color: #fff; }
+  @media (max-width: 1039px) {
+    nav.toc ol { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+  }
+  @media (min-width: 1040px) { nav.toc .box { position: sticky; top: 76px; max-height: calc(100vh - 96px); overflow: auto; } }
+
+  main { min-width: 0; }
+  section.part { padding-top: 34px; }
+  section.part > h2 {
+    display: flex; gap: 12px; align-items: center;
+    margin: 0 0 6px; font-size: clamp(25px, 5.4vw, 31px); letter-spacing: -.02em; line-height: 1.3;
+  }
+  section.part > h2 .n { flex: none; width: 38px; height: 38px; border-radius: 12px; background: var(--brand); color: #fff; font-size: 18px; display: grid; place-items: center; }
+  section.part > p.sub { margin: 0 0 18px; color: var(--ink2); font-size: 17px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 20px 20px 18px; margin: 14px 0; }
+  .card > h3 { margin: 0 0 6px; font-size: 20px; letter-spacing: -.01em; line-height: 1.4; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .card > p { margin: 6px 0; }
+  .card ul, .card ol { margin: 8px 0; padding-left: 1.3em; }
+  .card li { margin: 5px 0; }
+  .path { display: inline-block; padding: 1px 9px; border-radius: 8px; background: var(--fill); color: var(--ink2); font-size: 14px; font-weight: 700; white-space: nowrap; }
+  .key { display: inline-block; padding: 0 7px; border-radius: 7px; border: 1px solid var(--line); background: #fff; font-size: 14px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .new { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--danger); color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .02em; vertical-align: 2px; }
+
+  ol.steps { list-style: none; counter-reset: s; padding: 0; margin: 10px 0; }
+  ol.steps > li { counter-increment: s; position: relative; padding: 2px 0 10px 44px; margin: 0; }
+  ol.steps > li::before {
+    content: counter(s); position: absolute; left: 0; top: 2px; width: 30px; height: 30px; border-radius: 50%;
+    background: var(--brand-l); color: var(--brand); font-weight: 800; font-size: 15px; display: grid; place-items: center;
+  }
+
+  .note { border-radius: 16px; padding: 12px 16px; margin: 12px 0; font-size: 16px; line-height: 1.65; }
+  .note.tip { background: var(--brand-l); color: #12408f; }
+  .note.safe { background: var(--ok-l); color: #075b3a; }
+  .note.warn { background: var(--warn-l); color: var(--warn); }
+  .note b { color: inherit; }
+
+  .grid2 { display: grid; gap: 12px; }
+  @media (min-width: 640px) { .grid2 { grid-template-columns: 1fr 1fr; } }
+  .mini { background: var(--fill); border-radius: 16px; padding: 14px 16px; }
+  .mini h4 { margin: 0 0 4px; font-size: 17px; }
+  .mini p { margin: 0; font-size: 15px; color: var(--ink2); line-height: 1.6; }
+
+  .shots { display: grid; gap: 14px; margin: 16px 0 6px; justify-items: center; }
+  @media (min-width: 640px) { .shots.two { grid-template-columns: 1fr 1fr; align-items: start; } }
+  figure.shot { margin: 0; width: 100%; }
+  figure.shot img { border-radius: 18px; border: 1px solid var(--line); background: #fff; box-shadow: 0 8px 26px rgba(16,40,90,.08); }
+  figure.shot.phone { max-width: 300px; }
+  figure.shot figcaption { margin-top: 8px; font-size: 14px; color: var(--ink3); text-align: center; line-height: 1.5; }
+
+  table.menu { width: 100%; border-collapse: collapse; font-size: 16px; }
+  table.menu th, table.menu td { text-align: left; padding: 10px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+  table.menu th { white-space: nowrap; width: 72px; color: var(--brand); }
+
+  details.faq { background: #fff; border: 1px solid var(--line); border-radius: 16px; margin: 10px 0; }
+  details.faq summary { cursor: pointer; padding: 14px 18px; font-weight: 700; list-style: none; display: flex; gap: 10px; align-items: baseline; }
+  details.faq summary::-webkit-details-marker { display: none; }
+  details.faq summary::before { content: 'Q'; color: var(--brand); font-weight: 900; }
+  details.faq[open] summary { border-bottom: 1px solid var(--line); }
+  details.faq div { padding: 12px 18px 16px; color: var(--ink2); }
+
+  .news h4 { margin: 14px 0 4px; font-size: 16px; }
+  .news ul { margin: 0; }
+
+  footer { border-top: 1px solid var(--line); background: #fff; }
+  footer .in { max-width: 1180px; margin: 0 auto; padding: 26px 16px 40px; color: var(--ink3); font-size: 14px; display: grid; gap: 10px; }
+  footer .cta { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  @media (max-width: 520px) {
+    body { font-size: 16.5px; }
+    .top .name small { display: none; }
+    .card { padding: 18px 16px 16px; border-radius: 18px; }
+    .btn { padding: 0 16px; }
+  }
+  @media print {
+    .top, nav.toc, .hero .cta, .inapp, footer .cta, .noprint { display: none !important; }
+    body { background: #fff; font-size: 12pt; }
+    .hero { background: #fff; color: var(--ink); }
+    .hero .in { padding: 0 0 12px; grid-template-columns: 1fr 180px; }
+    .hero h1, .hero p.lead, .hero .kicker, .hero .meta { color: var(--ink); }
+    .wrap { display: block; padding: 0; }
+    .card, figure.shot, details.faq { break-inside: avoid; }
+    figure.shot.phone { max-width: 200px; }
+    details.faq div { display: block; }
+    a { color: var(--ink); text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="in">
+    <img src="../icons/icon-192.png" alt="" width="32" height="32">
+    <div class="name">PE LOG 설명서<small>체육수업 종합 플랫폼</small></div>
+    <div class="go">
+      <a class="btn sm soft" href="../?demo=1">먼저 써 보기</a>
+      <a class="btn sm primary" href="../">앱 열기</a>
+    </div>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="in">
+    <div>
+      <span class="kicker"><img src="../icons/icon-192.png" alt="" width="22" height="22" style="border-radius:6px"> PE LOG · 체육수업 종합 플랫폼</span>
+      <h1>사용 설명서</h1>
+      <p class="lead">종이 출석부, 엑셀 점수표, 규칙 PPT, PAPS 계산표, 세특 메모장을 따로 쓰고 계셨나요? PE LOG는 이것들을 <b>앱 하나</b>에 모았어요. 설치부터 수업 기록, PAPS, 수행평가, 세특, 학교체육 업무까지 차례대로 안내해 드릴게요.</p>
+      <div class="cta">
+        <a class="btn white" href="../">앱 열기</a>
+        <a class="btn ghost" href="../?demo=1">가상 학생으로 먼저 써 보기</a>
+        <button class="btn ghost noprint" type="button" onclick="window.print()">PDF로 저장 · 인쇄</button>
+      </div>
+      <div class="inapp">📱 <b>인스타그램 · 카카오톡에서 이 링크를 열었다면</b> 오른쪽 위 <b>⋯</b>(또는 공유)에서 <b>‘다른 브라우저로 열기’</b>를 눌러 사파리 · 크롬으로 열어 주세요. 앱 안 브라우저에서는 자료가 쉽게 지워져요.</div>
+      <p class="meta">무료 · 회원가입 없음 · 학생 정보는 선생님 기기 안에만 · 2026년 11월 12일 기준(v1.21.0)</p>
+    </div>
+    <div class="phone"><img src="img/manual-01.webp" alt="PE LOG 홈 화면 (가상 학생 시연 모드)" width="780" height="1688"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <nav class="toc" aria-label="목차">
+    <div class="box">
+      <p>목차</p>
+      <ol>
+        <li><a href="#start"><span class="n">1</span>3분 만에 시작</a></li>
+        <li><a href="#setup"><span class="n">2</span>처음 설정</a></li>
+        <li><a href="#home"><span class="n">3</span>홈</a></li>
+        <li><a href="#class"><span class="n">4</span>수업</a></li>
+        <li><a href="#tools"><span class="n">5</span>수업 자료 · 도구</a></li>
+        <li><a href="#paps"><span class="n">6</span>PAPS</a></li>
+        <li><a href="#eval"><span class="n">7</span>수행평가</a></li>
+        <li><a href="#seteuk"><span class="n">8</span>세특</a></li>
+        <li><a href="#work"><span class="n">9</span>학교체육 업무</a></li>
+        <li><a href="#share"><span class="n">10</span>같이 쓰기</a></li>
+        <li><a href="#backup"><span class="n">11</span>백업 · 다른 기기</a></li>
+        <li><a href="#privacy"><span class="n">12</span>개인정보 · 인터넷</a></li>
+        <li><a href="#faq"><span class="n">13</span>자주 묻는 질문</a></li>
+        <li><a href="#news"><span class="n">14</span>최근 업데이트</a></li>
+      </ol>
+    </div>
+  </nav>
+
+  <main>
+
+  <!-- 1 -->
+  <section class="part" id="start">
+    <h2><span class="n">1</span>3분 만에 시작하기</h2>
+    <p class="sub">설치할 파일은 없어요. 인터넷 주소를 열고 홈 화면에 추가하면 앱처럼 써요.</p>
+
+    <div class="card">
+      <h3>먼저 가상 학생으로 둘러보기 (시연 모드)</h3>
+      <p>실제 학생을 넣기 전에 <a href="../?demo=1"><b>시연 모드</b></a>로 모든 기능을 눌러 보세요. 가상 학교 · 가상 학생 80명 · 기록 · PAPS · 수행평가가 미리 들어 있어요. 실제 자료와는 완전히 따로 저장돼요.</p>
+      <p>화면 맨 위 주황 띠의 <span class="key">메뉴</span>에서 <b>가상 자료 처음 상태로</b> 되돌리거나 <b>시연 끝내기</b>를 할 수 있어요.</p>
+    </div>
+
+    <div class="card">
+      <h3>홈 화면에 추가하기 (꼭 해 주세요)</h3>
+      <div class="grid2">
+        <div class="mini"><h4>아이폰 · 아이패드</h4><p><b>사파리</b>로 앱 주소를 열고 → 아래 공유 버튼 → <b>홈 화면에 추가</b>. 사파리로만 쓰면 7일 동안 안 열었을 때 자료가 지워질 수 있어서 꼭 추가해 주세요.</p></div>
+        <div class="mini"><h4>안드로이드</h4><p><b>크롬</b>으로 열고 → 오른쪽 위 <b>⋮</b> → <b>앱 설치</b>(또는 홈 화면에 추가).</p></div>
+        <div class="mini"><h4>교무실 PC</h4><p>크롬 · 엣지로 열고 주소창 오른쪽 <b>설치</b> 아이콘을 누르면 창 하나짜리 앱이 돼요. 공용 PC에서는 쓰지 마세요.</p></div>
+        <div class="mini"><h4>인스타 · 카톡에서 열었다면</h4><p>앱 안 브라우저는 자료가 쉽게 사라져요. <b>⋯ → 다른 브라우저로 열기</b>로 사파리 · 크롬에서 다시 여세요.</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>처음 켜면</h3>
+      <ol class="steps">
+        <li><b>이용 안내</b>를 읽고 체크해요. 자료는 이 기기에만 있고, 백업이 꼭 필요하다는 안내예요.</li>
+        <li>4~6자리 <b>PIN</b>을 정해요. 앱을 열 때마다 물어봐서 폰을 잃어버려도 학생 정보를 지켜요.</li>
+        <li>홈 맨 위 <b>시작 준비</b>를 순서대로 따라 해요: 명렬 → 수업반 → 시간표(선택) → 첫 백업. 다음 장에서 자세히 설명해요.</li>
+      </ol>
+      <div class="note tip">💡 오른쪽 아래 <b>땅콩이</b>에게 “명렬은 어떻게 올려?”처럼 물어보면 사용법과 바로가기를 알려 줘요. 인터넷 없이 앱 안에서 답해요.</div>
+    </div>
+
+    <div class="card">
+      <h3>메뉴 6개</h3>
+      <p>휴대폰은 아래 탭, PC는 위쪽 큰 메뉴와 왼쪽 하위 메뉴로 움직여요.</p>
+      <table class="menu">
+        <tr><th>홈</th><td>시계 · 날씨 · D-day · 오늘 수업 · 달력 · 이번 주 시간표 · 기초 설정</td></tr>
+        <tr><th>수업</th><td>내 수업반(기록표 · 카드 · 출결 · 일지) · 종목 수업자료 · 진도표 · 수업 도구 · 학생 관리</td></tr>
+        <tr><th>PAPS</th><td>기록 입력 → 자동 등급 → 통계 · 그래프 → 나이스 업로드 파일</td></tr>
+        <tr><th>평가</th><td>수행평가 채점 · 기록지 · 나이스 파일, 세특 쓰기, 설문 · 자기평가</td></tr>
+        <tr><th>업무</th><td>학교운동부 · 스포츠클럽 · 매년 기안 문서 · 소위원회 · 예산 · 견적서 → 품의 · 같이 쓰기</td></tr>
+        <tr><th>설정</th><td>학교 정보 · PIN · 기록 버튼 · 백업 · 사용법 · 업데이트 소식</td></tr>
+      </table>
+      <div class="shots"><figure class="shot"><img src="img/manual-02.webp" alt="PC 화면: 위 큰 메뉴, 왼쪽 하위 메뉴" width="1280" height="760" loading="lazy"><figcaption>PC 화면 — 위 큰 메뉴, 왼쪽 하위 메뉴(☰로 접기)</figcaption></figure></div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="part" id="setup">
+    <h2><span class="n">2</span>처음 설정 (학기 초 한 번)</h2>
+    <p class="sub"><span class="path">홈 › 기초 설정</span>을 위에서부터 따라 하면 돼요. 명렬 → 수업반, 이 두 가지면 기록을 시작할 수 있어요.</p>
+
+    <div class="card">
+      <h3>① 명렬 올리기</h3>
+      <ul>
+        <li>나이스 PAPS 일괄업로드 메뉴에서 받은 <b>학생명렬표 엑셀</b>을 그대로 올려요. 다른 모양의 엑셀도 머리글(학년 · 반 · 번호 · 이름 · 성별 · 학번)을 찾아 읽어요.</li>
+        <li>엑셀에서 <b>복사해 붙여 넣기</b>도 돼요. “1-3-12 홍길동”, “10312 홍길동”, 반을 고른 뒤 “12 홍길동”이나 이름만 적어도 알아봐요.</li>
+        <li>미리보기 표에서 빠진 이름 · 겹친 번호는 빨갛게 보여요. 표 안에서 바로 고친 뒤 저장해요.</li>
+        <li><b>생년월일은 읽기만 하고 저장하지 않아요.</b> 전출생은 지우지 않고 상태만 바꿔 기록을 남겨요.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>② 수업반 만들기</h3>
+      <ul>
+        <li><b>학적반</b>: 명렬의 반 그대로예요. 내가 수업하는 반만 골라요. 명렬을 다시 올리면 학생이 자동으로 바뀌어요.</li>
+        <li><b>수강반</b>: 선택과목 · 합반처럼 여러 반 학생을 모은 반이에요. 명렬에서 체크하거나 명단을 붙여 넣어 만들어요.</li>
+        <li>이름 · 과목 · 기간(1년 · 1학기 · 2학기) · 색을 정해요. 학기가 끝난 반은 숨겨도 기록은 남아요.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>③ 시간표 · 학사일정 (선택, 하면 편해요)</h3>
+      <ul>
+        <li><span class="path">홈 › 나이스에서 불러오기</span>: 학교를 찾으면 학급 · 반별 시간표 · 학사일정을 나이스 공개 자료로 불러와요. 체육 과목 칸만 골라 내 시간표와 수업반을 자동으로 만들어요.</li>
+        <li><span class="path">홈 › 전체 체육 시간표</span>: 컴시간알리미를 쓰는 학교는 학교와 <b>내 이름</b>만 넣으면 내 수업이 시간표에 들어가고, 교시 시작 시각도 자동으로 정해져요. 다른 체육 선생님과 체육관이 겹치는 시간도 빨갛게 보여요.</li>
+        <li>시간표를 넣으면 수업 시간에 홈에 <b>지금 수업</b>이 크게 뜨고, 그 반으로 바로 들어가요.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>④ 평가계획서 넣기 (학기 초에 한 번에)</h3>
+      <p>학교 평가계획서 PDF(한글 파일은 <b>PDF로 저장</b>해서)를 넣으면 두 가지를 한 번에 만들어요.</p>
+      <ul>
+        <li><b>교과 진도표 초안</b>: ‘교수학습 운영 계획’ 표를 읽어 주마다 시수만큼 차시로 펼쳐요.</li>
+        <li><b>수행평가</b>: 평가마다 성취기준 · 평가 시기 · 반영비율 · 채점 기준(남녀 기준, 미참여 점수, 체크리스트)을 읽어 만들어요. 채점 구간이 겹치거나 비면 알려 줘요.</li>
+      </ul>
+      <div class="note warn">스캔한 PDF(글자 없이 그림만 있는 파일)는 읽지 못해요.</div>
+    </div>
+
+    <div class="card">
+      <h3>⑤ 쓰지 않는 기능 숨기기</h3>
+      <p><span class="path">설정 › 기능 고르기</span>에서 맡은 일(체육 수업 · PAPS 측정 · 체육부장 운영 · 학교체육 업무)을 고르면 필요한 메뉴만 켜져요. 숨겨도 자료는 지워지지 않아요.</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="part" id="home">
+    <h2><span class="n">3</span>홈 — 오늘 할 일을 한눈에</h2>
+    <p class="sub">앱을 열면 가장 먼저 보이는 화면이에요.</p>
+    <div class="card">
+      <ul>
+        <li><b>맨 위 줄</b>: 큰 시계(지금 수업 끝까지 · 다음 수업까지 남은 시간), 날씨, D-day(가장 가까운 고사 · 업무 일정).</li>
+        <li><b>날씨 카드</b>: 날씨 그림 · 기온 · 강수확률, 미세먼지 · 초미세먼지 등급(에어코리아). 나쁨 이상 · 비 · 폭염 · 한파면 실외 수업 주의를 알려 줘요. 학교 위치는 나이스 학교 주소로 자동으로 정해지고, 시도 · 시군구로 직접 골라도 돼요.</li>
+        <li><b>지금 수업 · 오늘 수업</b>: 누르면 그 반 기록 화면으로 바로 가요.</li>
+        <li><b>달력</b>: 이번 달 학사일정 · 업무 일정. 날짜를 누르면 그날 일정이 아래에 나와요.</li>
+        <li><b>이번 주 시간표</b>: 요일 × 교시 표에 수업반 색, 지금 교시는 테두리.</li>
+        <li><b>이번 주 수업</b>: 칭찬 · 지도 · 견학 · 결석을 지난주 같은 때와 비교해요. 누르면 지도가 쌓이는 학생, 칭찬을 아직 못 받은 학생, 늦은 진도, 덜 끝난 채점이 모여 있어요.</li>
+        <li><b>땅콩이 · 오늘 브리핑</b>: 오늘 수업 · 나이스에 안 옮긴 출결 · 늦은 진도 · 남은 채점 · 다가오는 업무를 학생 이름 없이 수만 알려 줘요.</li>
+        <li><b>홈 화면 배치 바꾸기</b>(맨 아래): 칸 순서를 위아래로 옮기거나 안 쓰는 칸을 숨겨요.</li>
+      </ul>
+      <div class="shots"><figure class="shot phone"><img src="img/manual-01.webp" alt="홈 화면: 시계 · D-day · 날씨 · 이어서 기록하기 · 오늘 수업" width="780" height="1688" loading="lazy"><figcaption>홈 (휴대폰) — 시계 · D-day · 날씨 · 오늘 수업</figcaption></figure></div>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="part" id="class">
+    <h2><span class="n">4</span>수업 — 기록표 · 카드 · 출결</h2>
+    <p class="sub"><span class="path">수업 › 내 수업반</span>에서 반을 열면 기록 화면이 나와요. 보기는 5가지예요: <b>기록표 · 카드 · 항목 · 체크표 · 출결</b>. 처음에는 기록표가 열려요.</p>
+
+    <div class="card">
+      <h3>기록표 — 나이스처럼 한 장에</h3>
+      <p>왼쪽은 학생, 위는 이 달의 수업 날짜(주차별)예요. 칸에 ★칭찬 · ▲지도 · 견학 · 결석 · 지각 · 조퇴 · 결과가 보여요.</p>
+      <ol class="steps">
+        <li>위 <b>입력</b> 줄에서 출결(결석 · 지각 · 조퇴 · 결과), <b>★칭찬 항목</b>(정리정돈 · 친구 도움 …), <b>▲지도 항목</b>(체육복 · 실내화 · 교구) 중 하나를 골라요.</li>
+        <li>학생 × 날짜 칸을 누르면 바로 기록돼요. 다시 누르면 빠져요(나이스 출결 입력과 같은 방식).</li>
+        <li>아무것도 고르지 않고 칸을 누르면 그 날짜의 기록 창이 열려요.</li>
+      </ol>
+      <ul>
+        <li>표 위 <b>번호 · 이름 찾기</b>로 학생을 바로 찾고, <b>기록 있는 학생만</b>을 켜면 이 달에 기록이 있는 학생만 보여요.</li>
+        <li>오른쪽 끝에 이 달 합계, 결석이 많아 출석률이 부족해질 학생은 이름 옆에 <b>주의 · 미달</b>이 떠요(담임 확인용 참고).</li>
+      </ul>
+      <div class="shots"><figure class="shot"><img src="img/manual-03.webp" alt="기록표: 친구 도움을 고르고 칸을 눌러 기록" width="1280" height="760" loading="lazy"><figcaption>기록표 (PC) — ‘친구 도움’을 고르고 칸을 눌러 기록</figcaption></figure></div>
+    </div>
+
+    <div class="card">
+      <h3>카드 — 수업 중 한 손으로</h3>
+      <ul>
+        <li>학생 카드를 누르면 왼쪽 <b>칭찬</b>, 오른쪽 <b>지도</b> 버튼이 나란히 나와요. 버튼 한 번이면 기록 끝이에요.</li>
+        <li>기록 직후 5초 동안 <b>실행취소</b>가 떠요. 견학 · 관찰 메모 · 세특 키워드도 같은 창에서 남겨요.</li>
+        <li>카드의 ★숫자는 이 반에서 받은 칭찬 누적이에요. 지도 횟수는 학생들이 볼 수 있는 카드에 띄우지 않아요.</li>
+        <li><b>여러 명</b>을 켜면 체육복을 안 가져온 5명처럼 여러 학생에게 한 번에 기록해요. 날짜 줄을 눌러 지난 날짜에도 기록할 수 있어요.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>항목 · 체크표 — 여러 명을 빠르게</h3>
+      <ul>
+        <li><b>항목</b>: 항목(예: 체육복)을 먼저 고르고 해당 학생들을 차례로 눌러요. 한 번 더 누르면 풀려요.</li>
+        <li><b>체크표</b>: 출석부처럼 학생 × 항목 표에 체크해요. 한 반을 1분 안에 체크할 수 있어요.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>출결 — 일간 · 월간</h3>
+      <ul>
+        <li><b>일간</b>: 모두 출석에서 시작해요. 안 온 학생 카드를 누를 때마다 <b>결석 → 지각 → 조퇴 → 결과 → 출석</b>으로 바뀌어요(나이스 출결 이름). 결석 · 결과 학생은 그날 참여 수에서 빠져요.</li>
+        <li>사유(질병 · 인정 · 미인정 · 기타)는 <span class="key">사유 보기 · 넣기</span>를 눌러야 보여요. 건강 정보라 기본으로 가려 둬요.</li>
+        <li><b>월간</b>: 학생 × 이 달 수업일 표로 한 달 출결을 한눈에 보고, 칸을 눌러 바로 고쳐요.</li>
+      </ul>
+      <div class="shots two">
+        <figure class="shot phone"><img src="img/manual-04.webp" alt="카드를 눌러 칭찬 · 지도 기록" width="780" height="1688" loading="lazy"><figcaption>카드 → 칭찬 · 지도 기록 창</figcaption></figure>
+        <figure class="shot phone"><img src="img/manual-05.webp" alt="출결 일간: 결석 · 지각 표시" width="780" height="1688" loading="lazy"><figcaption>출결 (일간) — 결석 · 지각</figcaption></figure>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>빠른 입력 — 글로 적어서 한 번에</h3>
+      <p>보드의 <span class="key">빠른 입력 열기</span>에 “3 7 체육복”, “12 견학 부상”, “5 지각”처럼 적고 <span class="key">읽기</span>를 눌러요. 누구에게 무엇을 기록할지 보여 주고, <span class="key">기록</span>을 눌러야 저장돼요. 번호 범위(3~7)와 이름도 돼요. 정해진 규칙으로만 읽어서 인터넷 없이 써요.</p>
+    </div>
+
+    <div class="card">
+      <h3>나이스에 옮길 출결</h3>
+      <p><span class="path">수업 › 나이스에 옮길 출결</span>에 아직 나이스에 안 옮긴 출결이 날짜 · 수업반별로 모여요. <span class="key">복사</span>해서 옆에 두고 나이스에 넣은 뒤 <span class="key">옮겼어요</span>를 누르면 목록에서 빠져요. 출결을 고치면 다시 나와요. 앱이 나이스에 대신 넣지는 않아요.</p>
+    </div>
+
+    <div class="card">
+      <h3>요약 · 누적 · 수업 일지</h3>
+      <ul>
+        <li><span class="path">수업 › 이번 주 요약</span>: 수업반마다 지난주와 비교, 지도가 쌓이는 학생(최근 2주 3번 이상) · 칭찬을 아직 못 받은 학생 · 늦은 진도 · 덜 끝난 채점. 횟수만 세요.</li>
+        <li>반 화면 오른쪽 위 <span class="key">⋯</span> → <b>누적 기록</b>: 기간별(이번 달 · 1학기 · 2학기 · 학년도) 학생 합계와 항목별 횟수, 엑셀로 받기.</li>
+        <li><b>수업 일지</b>: 반 화면 날짜 아래에서 단원 · 한 일 · 다음 시간 메모를 적어요. 다음 시간에 지난 메모가 먼저 보이고, 진도표의 그날 차시를 ✓로 끝낼 수 있어요.</li>
+        <li><span class="path">수업 › 학생 관리</span>: 전체 학생 명렬(학생별 기록 · 리포트), 반 요약, 견학(목록 · 대체 과제), 체육부장(지정 · 활동 체크).</li>
+        <li>칭찬 · 지도 항목은 <span class="path">설정 › 기록 버튼</span>에서 더하고 바꿔요.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="part" id="tools">
+    <h2><span class="n">5</span>수업 자료 · 수업 도구</h2>
+    <p class="sub"><span class="path">수업 › 수업 자료</span>와 <span class="path">수업 › 수업 도구</span>에 있어요. 반 화면 <span class="key">⋯</span>에서도 그 반으로 바로 열려요.</p>
+
+    <div class="card">
+      <h3>종목 수업자료 · 슬라이드 · PPT</h3>
+      <ul>
+        <li><b>23개 종목</b>(농구 · 축구 · 넷볼 · 배구 · 배드민턴 · 탁구 · 피클볼 · 티볼 · 플라잉디스크 · 육상 · 체조 등)을 영역형 · 네트형 · 필드형 · 기술형으로 나눴어요.</li>
+        <li>경기 진행 · 주요 규칙 · 반칙 · 용구 규격(공기압까지) · 경기장 그림을 줄마다 <b>공식 규칙서 조항</b>과 함께 보여 줘요.</li>
+        <li><b>핵심 규칙</b>: 그 종목다운 규칙(예: 넷볼 — 몸싸움 없음 · 드리블 없음 · 포지션마다 구역)을 그림으로 맨 앞에.</li>
+        <li><b>한 장으로 보는 규칙</b>: 핵심 규칙을 그림 한 장으로. <span class="key">그림 받기</span>로 빔 · 인쇄 · 단톡방에.</li>
+        <li><b>슬라이드로 보기</b>: 검은 화면에 큰 그림, 누를 때마다 한 줄씩 나와요(→ · 스페이스 다음, ← 이전, O 전체 보기, F 전체 화면). 끝에는 O/X 퀴즈. <span class="key">PPT로 받기</span>로 같은 모양의 파일도 받아요.</li>
+      </ul>
+      <div class="shots two">
+        <figure class="shot phone"><img src="img/manual-06.webp" alt="종목 수업자료: 한 장으로 보는 규칙" width="780" height="1688" loading="lazy"><figcaption>한 장으로 보는 규칙 (넷볼)</figcaption></figure>
+        <figure class="shot phone"><img src="img/manual-08.webp" alt="보조심판: 트래블링 판정" width="780" height="1688" loading="lazy"><figcaption>보조심판 — 트래블링 판정</figcaption></figure>
+      </div>
+      <div class="shots"><figure class="shot"><img src="img/manual-07.webp" alt="슬라이드로 보기" width="1280" height="760" loading="lazy"><figcaption>슬라이드로 보기 (빔 화면)</figcaption></figure></div>
+    </div>
+
+    <div class="card">
+      <h3>AI 보조심판</h3>
+      <ul>
+        <li>점수 · 경기 시간 · 팀 파울(농구 5번째 · 풋살 6번째 알림)을 한 화면에서 봐요.</li>
+        <li>반칙 버튼을 누르면 <b>판정 · 다시 시작 방법 · 심판 신호 · 학생에게 할 한마디 · 조항</b>이 크게 떠요.</li>
+        <li><b>우리 반 규칙</b>을 적어 두면 늘 위에 보여요.</li>
+        <li>버튼에 없는 상황은 <span class="key">AI에게 묻기</span>(선택)로 물어봐요. 상황 글 속 학생 이름은 가려서 보내고, AI가 앱 자료에 없는 조항을 대면 ‘확인 필요’로 표시해요. 영상으로 반칙을 자동 판정하지는 않아요.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>교과 진도표</h3>
+      <ol class="steps">
+        <li>과목 · 학년 · 학기 · <b>주당 시간</b>을 고르면 목표 차시(주당 시간 × 17주)가 정해져요. 다르면 직접 고쳐요. 이 진도표를 쓰는 수업반을 골라요(여러 반이 같은 차시를 써요).</li>
+        <li>차시는 평가계획서 PDF · 엑셀로 채우거나, 표처럼 바로 입력해요(Enter → 다음 차시).</li>
+        <li><b>날짜 · 진도</b>: 시간표 · 학기 기간 · 쉬는 날로 각 차시가 몇 월 며칠 몇 교시인지 저절로 채워요. 행사로 수업이 빠지면 <span class="key">빠짐</span>을 눌러요 — 뒤 차시가 한 칸씩 밀리고, 다시 누르면 되돌아와요. 평가일처럼 움직이면 안 되는 차시는 날짜를 고정해요.</li>
+        <li>[목록 | 주간 | 월간] 달력으로 보고, <b>반별 비교</b>로 늦은 반을 찾아요. 엑셀로도 받아요.</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>수업 도구</h3>
+      <div class="grid2">
+        <div class="mini"><h4>타이머 · 스톱워치</h4><p>카운트다운 · 인터벌 · 크게 보기(빔). <b>수업 시간에 맞추기</b>: 지금 수업 끝까지 · 정리 5분 전까지 · 다음 수업까지. 스톱워치 랩을 학생에게 붙이면 PAPS · 수행평가 기록으로 바로 들어가요. 다른 화면으로 가도 계속 돌아요.</p></div>
+        <div class="mini"><h4>뽑기 · 팀 나누기</h4><p>오늘 견학 학생을 빼고 뽑아요. 팀 수나 팀당 인원을 정하고 남녀 · 실력을 고르게(실력은 평가 정보라 기본 끔). 학생을 누르면 다음 팀으로 옮겨요.</p></div>
+        <div class="mini"><h4>동작 영상</h4><p>폰을 세워 두고 2~10초 늦게 보여 줘서 학생이 동작하고 돌아와 자기 모습을 봐요. 최근 10초를 0.25× · 0.5×로, 한 장씩, 선 · 관절 각도 그리기. 영상은 기기 메모리에만 있고 화면을 나가면 지워져요.</p></div>
+        <div class="mini"><h4>대진표 · 팀 편성 · 전술 보드</h4><p>반 명단을 SPORTS BRACKET(팀 편성 · 대진표 · 리그전)에 복사해 넣거나 K-TacticBoard(전술 보드)에 넣은 채로 열어요. 종목마다 그 앱에서 고를 경기 방식 · 승점을 안내해요.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="part" id="paps">
+    <h2><span class="n">6</span>PAPS — 입력하면 등급이 바로</h2>
+    <p class="sub">교육부 공식 기준표 그대로 계산해요. 나이스 산출값과 다르면 나이스 값이 우선이에요.</p>
+
+    <div class="card">
+      <h3>측정 · 입력</h3>
+      <ol class="steps">
+        <li><span class="path">PAPS › 측정 설정</span>: 반마다 체력요인별 종목을 골라요. 나이스 PAPS 양식 파일(또는 머리글 한 줄)을 등록하면 종목 · 칸이 양식과 똑같아져요.</li>
+        <li><span class="path">PAPS › 기록 입력</span>: 종목을 고르고 번호순으로 입력하면 Enter로 다음 학생. 칸마다 등급 · 점수가 바로 색으로 보여요. 측정 제외 · 사유도 넣어요.</li>
+        <li><span class="path">PAPS › 붙여넣기 입력</span>: 엑셀에서 복사한 기록을 붙여 넣으면 번호 · 학번 · 이름으로 학생을 맞춰요. 덮어쓰는 칸은 노랗게 알려 줘요.</li>
+        <li><b>여러 번 측정</b>: <span class="key">+ 새 회차</span>로 2회차 · 3회차를 날짜와 함께 따로 기록하고, 회차별 종합점수 변화(▲▼)를 비교해요.</li>
+      </ol>
+      <div class="grid2">
+        <div class="mini"><h4>왕복오래달리기</h4><p>내 mp3를 틀고, 신호가 울릴 때마다 <b>[신호 +1]</b> 한 번, 신호 전에 못 들어온 학생 카드만 눌러요(첫 번째 △, 두 번째 끝 → 직전 횟수). 한 반 약 1,000번 누르던 것이 약 90번이 돼요.</p></div>
+        <div class="mini"><h4>PAPS 신호음</h4><p>윗몸말아올리기 3초 신호, 스텝검사 메트로놈 · 심박 측정 알림. 측정한 심박수는 PEI 계산으로 바로 넘어가요.</p></div>
+      </div>
+      <div class="shots two">
+        <figure class="shot phone"><img src="img/manual-09.webp" alt="PAPS 기록 입력: 칸마다 등급 · 점수" width="780" height="1688" loading="lazy"><figcaption>기록 입력 — 칸마다 등급 · 점수</figcaption></figure>
+        <figure class="shot"><img src="img/manual-10.webp" alt="PAPS 통계 그래프" width="1280" height="760" loading="lazy"><figcaption>통계 · 그래프 — 1·2등급 파랑 · 3등급 회색 · 4·5등급 빨강</figcaption></figure>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>결과 · 통계 · 건강체력교실</h3>
+      <ul>
+        <li><b>통계 · 그래프</b>: 종합등급 분포(회차마다), 체력요인별 평균(남녀 따로), 회차별 추이, 기록 분포(공식 등급 경계), 학생별 변화, 4 · 5등급 학생. 그래프를 누르면 숫자, <span class="key">표로 보기</span>도 있어요.</li>
+        <li><b>학교 전체 결과</b>: 학급 · 학년별 등급 분포, 저체력 · 비만 수, 교육청 서식(PAPS 측정결과 · 미측정 학생 관리부) 채워 받기, 작년 같은 학년과 비교 · 전년 대비 향상 학생.</li>
+        <li><b>건강체력교실</b>: 운영계획 → 참여 학생(대상 후보 + 희망 학생) → 활동 기록 · 참여 체크 → 1회차 → 최근 회차 변화 분석, 엑셀로 받기. 대상 기준은 학교 지침에 맞게 골라요.</li>
+        <li>학생 화면의 <b>학년별 PAPS 변화</b>: 지난 학년도 명렬이 이 기기에 있으면 고1 → 고2 → 고3을 이어서 보여 줘요.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>나이스 파일 — 업로드 실패 막기</h3>
+      <p>나이스는 기록이 하나라도 비었거나 범위를 벗어난 값이 있으면 파일 전체를 거부해요. 그래서 앱은 <b>문제가 있으면 파일을 만들지 않고 목록을 보여 줘요</b>. 목록을 누르면 그 학생 칸으로 바로 가요.</p>
+      <ul>
+        <li>측정 제외 학생은 파일에서 빠져요(나이스에서 따로 처리).</li>
+        <li>문제 있는 학생만 빼고 받을 수도 있어요(뺀 학생 이름을 알려 줘요).</li>
+        <li>여러 번 측정했으면 <b>최근 회차 · 최고 회차 · 요인별 최고</b> 중에 골라요. 한 요인 안의 1차 · 2차 · 좌우 칸은 섞지 않아요.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>튼튼몬 코드</h3>
+      <p>학생마다 7글자 코드와 QR을 만들어 체력 키우기 게임 ‘튼튼몬’과 이어요. 코드에는 체력요인 4개 등급과 측정일만 들어 있어요(이름 · 학번 · 측정값 없음). A4 한 장에 12명 쪽지로 인쇄되고, 이름은 인쇄되지 않아요.</p>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="part" id="eval">
+    <h2><span class="n">7</span>수행평가 — 만들기 · 채점 · 나이스 파일</h2>
+    <p class="sub"><span class="path">평가 › 평가 목록 · 채점</span>. 평가 1개 = 나이스 양식의 영역 1칸이에요.</p>
+
+    <div class="card">
+      <h3>평가 만들기 — 편한 방법으로</h3>
+      <div class="grid2">
+        <div class="mini"><h4>평가계획서로 만들기</h4><p>PDF를 넣으면 평가마다 성취기준 · 시기 · 반영비율 · 성취수준 · 채점 기준까지 읽어 한 번에 만들어요. 서술형 채점 기준은 ‘기준 점수’로 넣어 밖의 점수를 경고해요.</p></div>
+        <div class="mini"><h4>예시로 만들기</h4><p><b>체크리스트형 탐구활동</b>(만족한 개수로 점수)과 <b>루브릭형 탐구보고서</b>(요소별 점수 → 상 · 중 · 하) 예시를 고쳐 써요.</p></div>
+        <div class="mini"><h4>루브릭 만들기</h4><p>성취기준(2022 개정 190개 + 2015 개정 105개)을 고르고 평가 내용(예: 농구 레이업 슛)을 적으면 평가 방법 추천과 요소 × 등급 판단 기준 초안을 만들어요.</p></div>
+        <div class="mini"><h4>직접 만들기</h4><p>채점 요소마다 <b>등급표</b>(A~E → 점수) · <b>기록표</b>(기록 → 구간 점수, 남녀 따로) · <b>점수 입력</b> · 체크리스트 중에 골라요.</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>채점 · 기록지</h3>
+      <ul>
+        <li>수업반 명렬이 자동으로 들어간 채점표에서 등급을 누르거나 기록 · 점수를 넣으면 합계가 자동 계산돼요. 견학 · 대체과제 학생도 표시돼요.</li>
+        <li>위 <b>채점 현황</b>에서 남은 학생 수를 보고 <span class="key">명단 복사</span>로 미제출 학생을 알려 줘요.</li>
+        <li>체크리스트는 학생마다 ①~⑦만 누르면 만족 수 → 점수, 백지 제출 · 미응시 · 상중하 수준까지 자동이에요.</li>
+        <li>구글 시트 · 엑셀에 채점해 둔 표는 <span class="key">구글 시트 · 엑셀에서 붙여넣기</span>로 머리글 줄부터 붙여 넣어요.</li>
+        <li>채점 기준 + 기록지(빈 기록지도)를 <b>인쇄 · PDF · 엑셀</b>로 받아요.</li>
+      </ul>
+      <div class="shots"><figure class="shot phone"><img src="img/manual-11.webp" alt="수행평가 체크리스트 채점과 채점 현황" width="780" height="1688" loading="lazy"><figcaption>체크리스트 채점 — 위에 채점 현황</figcaption></figure></div>
+    </div>
+
+    <div class="card">
+      <h3>나이스로 내보내기</h3>
+      <p><span class="path">평가 › 나이스 파일</span>: 나이스에서 받은 <b>빈 양식을 올리면 점수만 채워서</b> 돌려줘요(나머지 칸 · 병합 · 시트 이름은 그대로). 만점이 다르거나 채점이 덜 됐으면 파일을 만들지 않아요. 반영비율 환산은 나이스가 해요.</p>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="part" id="seteuk">
+    <h2><span class="n">8</span>세특 — 기록을 근거로, 수준별로</h2>
+    <p class="sub"><span class="path">평가 › 세특 쓰기</span>. 기록에 없는 내용은 넣지 않고, 기재요령을 바로 검사해요.</p>
+
+    <div class="card">
+      <ol class="steps">
+        <li><b>수준 나누기</b>: 수행평가 점수 · 칭찬 · 관찰 기록 · PAPS 종합등급 · 지도 기록(감점)의 비중을 정하면 반 안 순위로 3~5수준을 <b>제안</b>해요. 근거가 표로 보이고, 학생마다 수준을 바꿀 수 있어요.</li>
+        <li><b>근거 보기</b>: 학생을 누르면 근거가 #1 · #2 번호로 보여요. ☆로 중요 표시, <span class="key">빼기</span>로 뺄 수 있어요.</li>
+        <li><b>수준 틀로 초안 넣기</b>: 그 수준의 분량(예: 가장 높은 수준 1,300~1,500바이트)과 짜임으로 틀 초안을 만들어요. 지도 기록은 글에 넣지 않아요.</li>
+        <li><b>선생님 문장으로 고치기</b>: 나이스 1,500바이트와 기재요령 금지 사항(대회 · 수상, 어학 · 인증시험, 모의고사, 대학 · 기관 · 학원 · 상호명, 학교명, 유의어 등)을 바로 검사해요.</li>
+        <li><span class="key">확정</span> → <span class="key">나이스용 복사</span> 또는 엑셀.</li>
+      </ol>
+      <div class="note warn"><b>AI 초안 · 다듬기(선택)</b>: 학생 이름은 ‘학생’으로 가리고, 과목 · 근거 · 초안과 분량 지시만 보내요(수준 숫자 · 점수는 안 보냄). 기재요령(총칙 5-다)상 AI 글을 그대로 입력할 수 없어서, 선생님이 고치고 확인 4개를 체크해야 확정돼요. 연결은 키 없이(무료 챗봇에 복사) · OpenRouter · Claude 중에 골라요.</div>
+      <div class="shots"><figure class="shot phone"><img src="img/manual-12.webp" alt="세특 쓰기: 수준 틀 초안과 바이트 검사" width="780" height="1688" loading="lazy"><figcaption>세특 쓰기 — 수준 틀 초안 · 바이트 검사</figcaption></figure></div>
+    </div>
+
+    <div class="card">
+      <h3>설문 · 자기평가 · 키워드 · 리포트</h3>
+      <ul>
+        <li><span class="path">평가 › 설문 · 자기평가</span>: 구글 설문 응답 시트를 머리글 줄부터 붙여 넣으면 학번 · 이름으로 학생을 맞춰 보관해요. 세특 편집 창에 <b>학생이 쓴 글(참고만)</b>으로 보이고, 초안 · AI에는 넣지 않아요.</li>
+        <li><span class="path">평가 › 세특 키워드</span>: 학생별 키워드와 근거 기록을 모아 보여 줘요. 기본 키워드 11개 묶음 137개.</li>
+        <li><b>학생 리포트</b>: 한 장에 한 명씩 인쇄 · PDF(상담 · 피드백용). 견학 사유는 넣지 않아요.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="part" id="work">
+    <h2><span class="n">9</span>학교체육 업무</h2>
+    <p class="sub"><span class="path">업무 › 학교체육 업무</span>. 나이스에서 할 일과 매년 해야 하는 문서를 출처 쪽수와 함께 정리했어요.</p>
+
+    <div class="card">
+      <h3>견적서 → 품의 <span class="new">NEW</span></h3>
+      <ol class="steps">
+        <li>업체 견적서를 넣어요. <b>엑셀 · 글자가 있는 PDF</b>는 이 기기 안에서 읽고, 메신저로 받은 견적은 <span class="key">글로 붙여 넣기</span>에 붙여 넣어요. 업체마다 양식이 달라도 머리글(품명 · 규격 · 수량 · 단가 · 금액)로 칸을 찾아요.</li>
+        <li><b>사진 · 스캔본</b>은 <span class="key">AI로 읽기</span>(선택). 위아래를 잘라 업체 전화 · 주소 · 계좌 칸을 빼고 보낼 수 있어요. 키 없이 쓰면 요청문을 복사해 챗봇에 사진과 같이 붙여 넣고, 받은 답을 다시 붙여 넣어요.</li>
+        <li>읽은 품목을 견적서와 맞춰 보고 고쳐요. 수량 · 단가를 고치면 금액을 다시 계산하고, 견적서 합계와 다르면 노란 알림이 떠요. 부가세 별도면 <span class="key">부가세 10% 더하기</span>.</li>
+        <li><b>어느 예산에서 쓸까요?</b>: 체육 예산 항목을 고르면 지금 잔액 → 쓰고 난 뒤 잔액(모자라면 빨강).</li>
+        <li><span class="key">내용 복사</span>(제목 · 목적 · 소요 예산 ‘금379,500원(금삼십칠만구천오백원)’ · 예산 과목 · 붙임) · <span class="key">품목 표 복사</span> · 엑셀 → 에듀파인 품의에 붙여 넣고 학교 양식에 맞게 고쳐요.</li>
+      </ol>
+      <div class="shots"><figure class="shot phone"><img src="img/manual-15.webp" alt="견적서 → 품의: 품목 합계와 부가세, 견적서 합계 같음" width="780" height="1688" loading="lazy"><figcaption>견적서 → 품의 — 부가세까지 맞춰 견적서 합계와 비교</figcaption></figure></div>
+    </div>
+
+    <div class="card">
+      <h3>체육 예산 현황</h3>
+      <p>에듀파인 <b>사업관리카드(예산)</b> 엑셀을 넣으면 체육 · 건강체력 · 스포츠 항목만 골라 잔액 · 집행률을 보여 줘요. <span class="key">표 복사</span> → 선생님들이 같이 쓰는 구글 시트에 붙이면 지출금액 · 잔액 수식까지 들어가요. 엑셀 없이 직접 입력해도 돼요.</p>
+    </div>
+
+    <div class="card">
+      <h3>매년 기안 · 제출 문서 · 소위원회</h3>
+      <ul>
+        <li><b>매년 기안 문서 7가지</b>(스포츠클럽 연간 운영 계획, 정규교육과정 외 스포츠클럽 운영 계획, 여학생 체육활동 활성화 계획, 건강체력교실 운영 계획, PAPS 실시 계획, 소위원회 개최, 운동부 연간 운영 계획)의 근거 · 꼭 넣을 내용을 보고, 앱 자료로 현황(여학생 수 · PAPS 결과 · 측정 종목 · 대상 학생 수)을 채운 <b>기안문 초안</b>을 복사해요. 교육청 제출 일정은 업무 달력에 한 번에 넣어요.</li>
+        <li><b>학교체육소위원회</b>: 구성(5~7명, 외부위원 1명 이상) · 심의할 일 · 운영 규정 예시. <b>회의 · 회의록</b>에서 위원 명단, 연 2회 정기회의 기록(성원 · 의결 기준 자동 계산), 회의록 인쇄.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>학교운동부 · 학교스포츠클럽</h3>
+      <ul>
+        <li><b>나이스</b> 탭: 메뉴 경로(학교행정업무 › …)와 버튼 순서. <b>일정 · 규정 · 양식</b> 탭도 있어요.</li>
+        <li>학교운동부 <b>교육</b> 탭: 꼭 받아야 하는 교육(법적 의무교육 5가지 등)의 대상 · 횟수 · 근거 · 받는 곳.</li>
+        <li>교육청 공문 PDF(나이스 교육자료 · 학교체육 운영방향)를 이 기기에 넣어 두면 쪽 표시를 눌러 그 쪽이 앱 안에서 바로 열려요.</li>
+      </ul>
+      <div class="note warn">‘제주’ 표시는 제주교육청 2026 기준이에요. 다른 시도는 자기 교육청 계획을 함께 확인하세요.</div>
+      <div class="shots"><figure class="shot phone"><img src="img/manual-13.webp" alt="업무 메뉴" width="780" height="1688" loading="lazy"><figcaption>업무 메뉴 (휴대폰)</figcaption></figure></div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="part" id="share">
+    <h2><span class="n">10</span>같이 쓰기 — 같은 학교 선생님과</h2>
+    <p class="sub"><span class="path">업무 › 같이 쓰기</span>. 학생 정보는 오가지 않아요.</p>
+    <div class="card">
+      <ul>
+        <li><b>진도표 · 수행평가 틀 보내기</b>: 화면 위 보내기(↗) → 링크 복사 · 파일. 학생 이름 · 점수 · 수업반 · 진도는 빠지고 틀만 가요. 받은 선생님은 링크를 누르거나 <span class="path">업무 › 받은 자료 넣기</span>에서 내 수업반을 골라 넣어요.</li>
+        <li><b>업무 달력</b>: PAPS 기간 · 나이스 마감 · 대회 · 행사를 적으면 홈에 D-day로 알려 줘요. 일정 묶음도 같은 방법으로 주고받아요.</li>
+        <li><b>학교 공유 공간</b>: 한 선생님이 공간을 만들고 공유 코드를 알려 주면, 나머지는 코드와 비밀번호로 들어와 <b>교구 대여 장부</b>(빌린 것 · 남은 수량 · 반납)와 <b>체육관 · 운동장 예약</b>(요일 × 교시, 겹침 빨강)을 함께 봐요. 학생 이름은 적지 마세요.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="part" id="backup">
+    <h2><span class="n">11</span>백업 · 다른 기기로 옮기기</h2>
+    <p class="sub">자료는 이 기기 안에만 있어요. <b>1주일에 한 번은 백업</b>해 주세요. 7일이 지나면 홈에 알림이 떠요.</p>
+
+    <div class="card">
+      <h3>백업 · 복원</h3>
+      <ul>
+        <li><span class="path">설정 › 백업 · 학년도</span> → <span class="key">지금 백업 파일 받기</span>. 받은 파일은 학교 업무용 저장 공간에 옮겨 두세요.</li>
+        <li>폰을 바꾸면 새 폰에서 백업 파일을 고르고 <span class="key">통째로 바꾸기</span>. 바꾸기 전에 지금 자료를 한 번 더 자동 백업해요.</li>
+        <li>학년도가 바뀌면 <span class="key">새 학년도 시작</span>. 지난 학년도 기록은 읽기 전용으로 남고, 키워드 · 설정은 이어져요.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>다른 기기로 옮기기 (잠금 파일) <span class="new">NEW</span></h3>
+      <p>폰과 교무실 PC를 같이 쓸 때 써요. 서버 · 클라우드 없이 파일로 옮겨요.</p>
+      <ol class="steps">
+        <li>기록이 있는 기기에서 비밀번호(8자 이상)를 두 번 넣고 <span class="key">잠금 파일 만들기</span>.</li>
+        <li>파일을 다른 기기로 옮겨요(학교 업무용 메신저 · USB 등).</li>
+        <li>다른 기기에서 <span class="key">백업 · 잠금 파일 고르기</span> → 비밀번호 → <span class="key">합치기</span>.</li>
+      </ol>
+      <ul>
+        <li><b>합치기</b>: 지금 자료는 그대로 두고 파일에만 있는 기록을 더해요. 두 기기에서 따로 올린 같은 학생 · 수업반은 하나로 맞추고, 같은 기록을 양쪽에서 고쳤으면 더 최근 것을 써요. 설정은 이 기기 것을 둬요. 같은 파일을 두 번 합쳐도 늘어나지 않아요.</li>
+        <li><b>통째로 바꾸기</b>: 지금 자료를 지우고 파일 그대로 바꿔요(설정 · PIN 포함).</li>
+      </ul>
+      <div class="note warn">· 비밀번호는 어디에도 저장하지 않아요. <b>잊으면 아무도 열 수 없어요.</b><br>· 한쪽에서 지운 기록은 합치면 다시 생겨요. 지우기 · 정리는 한 기기에서 한 뒤, 다른 기기는 [통째로 바꾸기]를 쓰세요.<br>· 잠근 파일이라도 학교 · 교육청 정보보안 지침을 따라 주세요(개인 클라우드 · 공용 PC에 두지 않기, 옮긴 뒤 지우기, 비밀번호는 같은 대화방에 적지 않기).</div>
+      <div class="shots two">
+        <figure class="shot phone"><img src="img/manual-16.webp" alt="다른 기기로 옮기기: 잠금 파일 만들기" width="780" height="1688" loading="lazy"><figcaption>다른 기기로 옮기기 (잠금 파일)</figcaption></figure>
+        <figure class="shot phone"><img src="img/manual-14.webp" alt="설정 화면" width="780" height="1688" loading="lazy"><figcaption>설정 — 사용법 · 기능 고르기 · 백업 · 잠그기</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section class="part" id="privacy">
+    <h2><span class="n">12</span>개인정보 · 인터넷 없이 쓰기</h2>
+    <p class="sub">학생 정보는 서버로 보내지 않아요. 운동장처럼 와이파이가 끊겨도 돼요.</p>
+    <div class="card">
+      <div class="note safe">🔒 학생 명렬과 모든 기록은 <b>이 기기의 브라우저 안에만</b> 저장돼요. 서버 · 분석 도구 · 광고 추적을 쓰지 않아요.</div>
+      <ul>
+        <li>한 번 열어 두면 <b>인터넷이 없어도</b> 기록 · 출결 · PAPS · 채점 · 타이머가 모두 동작해요.</li>
+        <li>PIN은 화면 잠금이에요. 자료를 암호로 바꾸지는 않으니 교무실 공용 PC에서는 쓰지 마세요. <span class="path">설정 › 잠그기</span>로 바로 잠가요.</li>
+      </ul>
+      <h3 style="margin-top:14px">인터넷은 선생님이 누를 때만 써요</h3>
+      <ul>
+        <li><b>나이스 · 컴시간 시간표</b>: 학교 이름 · 학교 코드만 보내고 공개 시간표 · 학사일정을 받아요.</li>
+        <li><b>날씨 · 미세먼지</b>: 학교 위치의 격자 번호 · 시도 이름만 보내요.</li>
+        <li><b>세특 AI · 보조심판 AI</b>: 학생 이름은 가리고, 고른 내용만 선생님이 고른 AI로 보내요.</li>
+        <li><b>견적서 사진 AI</b>: 잘라 낸 견적서 그림만 보내요. 학생 정보는 없어요.</li>
+        <li><b>학교 공유 공간</b>: 교구 · 예약 정보만 오가요. 학생 정보는 올리지 않아요.</li>
+      </ul>
+      <p style="color:var(--ink3);font-size:15px">개인정보 처리는 학교 · 교육청 지침을 따라 주세요. 앱의 계산(PAPS 등급 · 출석률 등)은 확인용이고, 나이스 값이 우선이에요.</p>
+    </div>
+  </section>
+
+  <!-- 13 -->
+  <section class="part" id="faq">
+    <h2><span class="n">13</span>자주 묻는 질문</h2>
+    <details class="faq"><summary>정말 무료인가요? 회원가입이 필요한가요?</summary><div>무료이고 회원가입이 없어요. 주소를 열고 홈 화면에 추가하면 바로 써요. AI 기능을 쓸 때만 선생님이 고른 AI 서비스의 요금 정책을 따라요(키 없이 무료 챗봇에 복사하는 방법도 있어요).</div></details>
+    <details class="faq"><summary>학생 정보가 서버로 가나요?</summary><div>아니요. 명렬과 모든 기록은 이 기기의 브라우저 안에만 저장돼요. 시간표 · 날씨 · 공유 공간도 학생 정보는 보내지 않아요.</div></details>
+    <details class="faq"><summary>폰과 PC에서 같이 쓸 수 있나요?</summary><div>기기마다 자료가 따로 저장돼요. <a href="#backup">다른 기기로 옮기기</a>에서 잠금 파일을 만들어 다른 기기에서 [합치기]를 누르면 두 기기 기록이 하나로 모여요.</div></details>
+    <details class="faq"><summary>폰을 바꾸거나 브라우저 기록을 지우면요?</summary><div>백업 파일이 없으면 자료가 사라져요. 1주일에 한 번 백업해 두고, 새 폰에서는 [통째로 바꾸기]로 되살려요. 아이폰은 꼭 홈 화면에 추가해서 쓰세요.</div></details>
+    <details class="faq"><summary>운동장에서 인터넷이 안 돼도 되나요?</summary><div>네. 한 번 열어 둔 뒤에는 기록 · 출결 · PAPS · 채점 · 타이머가 인터넷 없이 동작해요. 시간표 · 날씨 불러오기와 AI 기능만 인터넷이 필요해요.</div></details>
+    <details class="faq"><summary>PIN을 잊어버렸어요.</summary><div>PIN은 이 기기의 화면 잠금이라 되찾을 수 없어요. 자료를 지우고 백업 파일로 다시 시작해야 하니 백업을 꼭 해 두세요.</div></details>
+    <details class="faq"><summary>PAPS 등급이 나이스와 달라요.</summary><div>앱은 교육부 공식 기준표 그대로 계산하지만 확인용이에요. 나이스 산출값이 우선이에요. 종합유연성 점수는 <b>PAPS › 측정 설정</b>에서 법령 기준 · 기준표 기준을 고를 수 있어요.</div></details>
+    <details class="faq"><summary>나이스에 자동으로 입력해 주나요?</summary><div>아니요. 나이스 화면을 대신 조작하지 않아요. PAPS · 수행평가는 나이스 일괄업로드 파일을 만들어 드리고, 출결 · 세특은 [복사]해서 붙여 넣어요.</div></details>
+    <details class="faq"><summary>세특을 AI가 대신 써 주나요?</summary><div>기재요령상 AI가 만든 글을 그대로 입력할 수 없어요. 앱은 선생님 기록으로 틀 초안을 만들고, AI는 선택해서 다듬기만 해요. 선생님이 고치고 확인해야 확정돼요.</div></details>
+    <details class="faq"><summary>다른 학교 · 다른 지역에서도 쓸 수 있나요?</summary><div>네. 나이스 · 컴시간 · 날씨는 전국 학교에서 돼요. 학교체육 업무 메뉴의 ‘제주’ 표시 내용만 자기 교육청 계획을 함께 확인하세요.</div></details>
+  </section>
+
+  <!-- 14 -->
+  <section class="part" id="news">
+    <h2><span class="n">14</span>최근 업데이트</h2>
+    <p class="sub">앱 안에서는 <span class="path">설정 › 업데이트 소식</span>에서 봐요. 새 기능은 메뉴에 빨간 점 · NEW로 표시돼요.</p>
+    <div class="card news">
+      <h4>v1.21.0 · 2026-11-12</h4>
+      <ul>
+        <li>견적서 → 품의: 견적서(엑셀 · PDF · 사진)로 품목 표 · 품의 초안 · 예산 잔액</li>
+        <li>다른 기기로 옮기기: 비밀번호 잠금 파일 + 합치기</li>
+      </ul>
+      <h4>v1.20.0 · 2026-11-12</h4>
+      <ul>
+        <li>홈 대시보드(시계 · 날씨 그림 · D-day · 달력), 홈 화면 배치 바꾸기</li>
+        <li>출결 월간 보기, 교과 진도표 주간 · 월간 달력</li>
+      </ul>
+      <h4>v1.19 · 2026-11-12</h4>
+      <ul>
+        <li>나이스에 옮길 출결, 빠른 입력, 타이머 수업 시간에 맞추기, 땅콩이 오늘 브리핑</li>
+        <li>기록표 번호 · 이름 찾기, 메뉴의 새 기능 표시</li>
+      </ul>
+      <h4>v1.18.0 · 2026-11-11</h4>
+      <ul><li>학교운동부 교육 · 양식 탭</li></ul>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="in">
+    <div class="cta">
+      <a class="btn primary" href="../">앱 열기</a>
+      <a class="btn soft" href="../?demo=1">가상 학생으로 먼저 써 보기</a>
+    </div>
+    <p style="margin:0">PE LOG · 체육수업 종합 플랫폼 · 제작 DEOK TT · 무료 · 학생 정보는 선생님 기기 안에만<br>화면 사진은 모두 가상 학생으로 찍었어요.</p>
+  </div>
+</footer>
+
+<script>
+  // 목차: 지금 보고 있는 장을 표시
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'))
+    if (!('IntersectionObserver' in window) || !links.length) return
+    var byId = {}
+    links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a })
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return
+        links.forEach(function (a) { a.classList.remove('on') })
+        var a = byId[e.target.id]
+        if (a) a.classList.add('on')
+      })
+    }, { rootMargin: '-30% 0px -60% 0px' })
+    document.querySelectorAll('section.part').forEach(function (s) { io.observe(s) })
+  })()
+  // 화면 사진: 누르면 크게 (새 창)
+  document.querySelectorAll('figure.shot img').forEach(function (img) {
+    var a = document.createElement('a')
+    a.href = img.getAttribute('src')
+    a.target = '_blank'
+    a.rel = 'noopener'
+    a.title = '크게 보기'
+    img.parentNode.insertBefore(a, img)
+    a.appendChild(img)
+  })
+</script>
+</body>
+</html>
