@@ -10,6 +10,7 @@ import { todayStr } from '../../lib/dates'
 import { creditRisk } from '../../lib/attendance'
 import { filterLedger, ledgerCells, ledgerColumns, ledgerTotals, shiftMonth, weekSpans, type AttendMark } from '../../lib/ledger'
 import { useApp } from '../../state/AppContext'
+import Icon from '../../components/Icon'
 
 const WD = ['일', '월', '화', '수', '목', '금', '토']
 const ATT_NAME: Record<AttendMark, string> = { absent: '결석', late: '지각', early: '조퇴', result: '결과' }
@@ -102,16 +103,22 @@ export default function LedgerView({
 
   return (
     <section className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <button type="button" className="btn btn-soft h-11 min-h-0 px-3" aria-label="지난달" onClick={() => setMonth(shiftMonth(month, -1))}>
-          ◀
+      <div className="flex items-center gap-1">
+        <button type="button" className="btn btn-ghost h-11 min-h-0 min-w-11 px-2" aria-label="지난달" onClick={() => setMonth(shiftMonth(month, -1))}>
+          <Icon name="chevronLeft" size={20} />
         </button>
-        <b className="text-lg">
-          {y}년 {Number(m)}월 누가 기록표
+        <b className="min-w-[7.5rem] text-center text-[1.2rem] font-black tracking-tight tabular-nums">
+          {y}년 {Number(m)}월
         </b>
-        <button type="button" className="btn btn-soft h-11 min-h-0 px-3" aria-label="다음 달" onClick={() => setMonth(shiftMonth(month, 1))}>
-          ▶
+        <button type="button" className="btn btn-ghost h-11 min-h-0 min-w-11 px-2" aria-label="다음 달" onClick={() => setMonth(shiftMonth(month, 1))}>
+          <Icon name="chevronRight" size={20} />
         </button>
+        {month !== today.slice(0, 7) && (
+          <button type="button" className="rounded-full bg-fill px-3 py-1.5 text-sm font-bold text-ink-2" onClick={() => setMonth(today.slice(0, 7))}>
+            이번 달
+          </button>
+        )}
+        <span className="ml-auto hidden text-sm font-bold text-ink-3 sm:inline">누가 기록표</span>
       </div>
 
       {!readOnly && (
@@ -188,10 +195,10 @@ export default function LedgerView({
       )}
 
       <div className="card max-h-[calc(100dvh-13rem)] overflow-auto p-0 lg:max-h-[calc(100dvh-16rem)]">
-        <table className="w-max min-w-full border-collapse text-sm">
+        <table className="w-max min-w-full border-collapse text-[0.92rem]">
           <thead>
             <tr className="sticky top-0 z-20 bg-fill text-ink-2">
-              <th rowSpan={2} className="sticky left-0 z-30 w-10 border-r border-b border-line bg-fill px-2 py-1.5 font-bold">
+              <th rowSpan={2} className="sticky left-0 z-30 w-10 border-r border-b border-line bg-fill px-0.5 py-1.5 text-[0.82rem] font-bold whitespace-nowrap">
                 번호
               </th>
               <th rowSpan={2} className="sticky left-10 z-30 min-w-[4.5rem] border-r border-b border-line bg-fill px-2 py-1.5 text-left font-bold">
@@ -257,10 +264,10 @@ export default function LedgerView({
                           aria-label={`${s.name} ${c.day}일 기록`}
                           onClick={() => tap(s, c.date)}
                         >
-                          {x?.attend && <span className={`rounded px-1 text-[0.7rem] leading-4 font-black ${ATT[x.attend].c}`}>{ATT[x.attend].t}</span>}
-                          {x?.absence && <span className="rounded bg-fill-2 px-1 text-[0.7rem] leading-4 font-bold text-ink-2">견</span>}
+                          {x?.attend && <span className={`rounded-md px-1.5 text-[0.8rem] leading-[1.15rem] font-black ${ATT[x.attend].c}`}>{ATT[x.attend].t}</span>}
+                          {x?.absence && <span className="rounded-md bg-fill-2 px-1.5 text-[0.8rem] leading-[1.15rem] font-bold text-ink-2">견</span>}
                           {(x?.praise || x?.guide) ? (
-                            <span className="text-[0.72rem] leading-4 font-black tabular-nums">
+                            <span className="text-[0.82rem] leading-4 font-black tabular-nums">
                               {x.praise > 0 && <span className="text-brand">★{x.praise > 1 ? x.praise : ''}</span>}
                               {x.guide > 0 && <span className="text-danger">▲{x.guide > 1 ? x.guide : ''}</span>}
                             </span>

@@ -303,7 +303,7 @@ function ItemColumn({
                     aria-pressed={on.includes(k)}
                     aria-label={`${s.name} ${k + 1}번 ${c}`}
                     title={c}
-                    className={`h-11 min-w-11 rounded-xl px-2 text-lg font-extrabold ${on.includes(k) ? 'bg-brand text-white' : 'bg-fill text-ink-2'}`}
+                    className={`h-11 min-w-11 rounded-xl px-2 text-lg font-extrabold ${on.includes(k) ? 'bg-brand text-white' : 'bg-fill text-ink'}`}
                     onClick={() => onCheck(s, item.id, k)}
                   >
                     {circled(k)}
@@ -332,7 +332,7 @@ function ItemColumn({
                     disabled={readOnly}
                     aria-pressed={raw === l.label}
                     aria-label={`${s.name} ${item.label} ${l.label}`}
-                    className={`h-11 min-w-11 rounded-xl px-2 text-[0.95rem] font-extrabold ${raw === l.label ? 'bg-brand text-white' : 'bg-fill text-ink-2'}`}
+                    className={`h-11 min-w-11 rounded-xl px-2 text-[1rem] font-extrabold ${raw === l.label ? 'bg-brand text-white' : 'bg-fill text-ink'}`}
                     onClick={() => onSet(s, item.id, raw === l.label ? '' : l.label)}
                   >
                     {l.label}

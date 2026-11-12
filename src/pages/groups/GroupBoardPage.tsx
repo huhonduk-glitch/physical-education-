@@ -210,8 +210,10 @@ export default function GroupBoardPage() {
       />
       <div className={`page space-y-3 pb-4 ${mode === 'ledger' ? 'lg:max-w-[72rem]' : ''}`}>
         {groups && groups.length > 1 && <GroupPicker groups={groups} value={id} onChange={choose} />}
+        {/* 넓은 화면: 날짜 · 수업 일지를 한 줄로 (표가 더 위로 올라오게, 2026-11-12) */}
+        <div className="space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3 lg:space-y-0">
         <DateBar value={date} onChange={setDate} marked={marked} />
-        <Link to={`/groups/${id}/journal?d=${date}`} className="flex min-h-[52px] items-center gap-3 rounded-2xl bg-white px-4 shadow-[var(--shadow-card)]">
+        <Link to={`/groups/${id}/journal?d=${date}`} className="flex min-h-[56px] items-center gap-3 rounded-2xl bg-white px-4 shadow-[var(--shadow-card)]">
           <Icon name="book" className="text-brand" />
           <span className="min-w-0 flex-1 truncate">
             {dayData?.lesson ? (
@@ -225,6 +227,7 @@ export default function GroupBoardPage() {
           </span>
           <Icon name="chevronRight" className="text-ink-3" />
         </Link>
+        </div>
         <div className="segment" role="tablist" aria-label="기록 방법">
           {(
             [
@@ -249,9 +252,9 @@ export default function GroupBoardPage() {
             { label: '지도', n: stats.unprepared, cls: 'text-danger' },
             { label: '칭찬', n: stats.exemplary, cls: 'text-brand' },
           ].map((x) => (
-            <div key={x.label} className="rounded-2xl bg-white py-2 shadow-[var(--shadow-card)]">
-              <p className={`text-xl font-extrabold tabular-nums ${x.cls}`}>{x.n}</p>
-              <p className="text-[0.75rem] font-bold text-ink-3">{x.label}</p>
+            <div key={x.label} className="flex flex-col items-center justify-center rounded-2xl bg-white py-2 shadow-[var(--shadow-card)] sm:flex-row sm:items-baseline sm:gap-1.5 sm:py-2.5">
+              <p className="order-2 text-[0.78rem] font-bold text-ink-3 sm:order-1 sm:text-[0.9rem]">{x.label}</p>
+              <p className={`order-1 text-xl leading-tight font-black tabular-nums sm:order-2 ${x.cls}`}>{x.n}</p>
             </div>
           ))}
         </div>

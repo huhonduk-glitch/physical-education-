@@ -59,13 +59,13 @@ export default function PapsInputPage() {
 
   return (
     <>
-      <PageHeader title={title} sub={cls ? `${cls.grade}학년 ${cls.classNo}반 · 엔터를 누르면 다음 칸` : undefined} back />
-      <div className="page space-y-3 pb-8">
+      <PageHeader wide="xl" title={title} sub={cls ? `${cls.grade}학년 ${cls.classNo}반 · 엔터를 누르면 다음 칸` : undefined} back />
+      <div className="page space-y-3 pb-8 xl:max-w-[72rem]">
         <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
         {cls && <RoundBar rounds={pc.rounds} readOnly={readOnly} />}
         {readOnly && <p className="rounded-2xl bg-caution-light px-4 py-2.5 font-bold text-caution">지난 학년도는 읽기 전용이에요.</p>}
         <p className="hint px-1">{standards.events[key as EventId] ? `기록 단위 ${standards.events[key as EventId].unit} · 칸마다 등급을 따로 보여주고, 대표 기록에는 ★를 붙여요.` : ''}</p>
-        <ul className="space-y-2">
+        <ul className="space-y-2 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3 lg:space-y-0">
           {pc.students.map((s) => (
             <StudentRow
               key={s.id}
