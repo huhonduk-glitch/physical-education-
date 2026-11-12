@@ -9,7 +9,7 @@
  */
 
 /** 구글 클라우드 'OAuth 클라이언트 ID' (공개 값 — 비밀이 아님). 비어 있으면 기능이 '준비 중'으로 보인다 */
-export const GOOGLE_CLIENT_ID = ''
+export const GOOGLE_CLIENT_ID = '130208598798-hcdl9jfmp8hpgnshnkivo6ugen5rgq6q.apps.googleusercontent.com'
 export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata'
 export const SYNC_FILE_NAME = 'pelog-sync.json'
 const GIS_SRC = 'https://accounts.google.com/gsi/client'
@@ -93,14 +93,21 @@ export async function requestDriveToken(clientId = GOOGLE_CLIENT_ID): Promise<Dr
   if (!clientId) throw new DriveError('아직 구글 연결이 설정되지 않았어요(앱 관리자 설정 필요).')
   const gis = await loadGis()
   return new Promise<DriveToken>((resolve, reject) => {
+    // 로그인 창을 닫았는데 구글이 알려 주지 못하는 때가 있다(창 사이 보안 정책) → 5분이면 멈춘 것으로 본다
+    const timer = setTimeout(() => reject(new DriveError('구글 로그인이 끝나지 않았어요. 다시 눌러 주세요.', 'auth')), 5 * 60_000)
+    const fail = (e: DriveError) => {
+      clearTimeout(timer)
+      reject(e)
+    }
     const client = gis.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: DRIVE_SCOPE,
       callback: (r) => {
-        if (r.error || !r.access_token) return reject(new DriveError(r.error === 'access_denied' ? '구글 연결을 허용하지 않았어요.' : '구글 로그인에 실패했어요.', 'auth'))
+        if (r.error || !r.access_token) return fail(new DriveError(r.error === 'access_denied' ? '구글 연결을 허용하지 않았어요.' : '구글 로그인에 실패했어요.', 'auth'))
+        clearTimeout(timer)
         resolve({ token: r.access_token, expiresAt: Date.now() + Math.max(60, (r.expires_in ?? 3600) - 60) * 1000 })
       },
-      error_callback: (e) => reject(new DriveError(e.type === 'popup_closed' ? '구글 로그인 창을 닫았어요.' : e.type === 'popup_failed_to_open' ? '팝업이 막혔어요. 브라우저에서 팝업을 허용해 주세요.' : '구글 로그인에 실패했어요.', 'auth')),
+      error_callback: (e) => fail(new DriveError(e.type === 'popup_closed' ? '구글 로그인 창을 닫았어요.' : e.type === 'popup_failed_to_open' ? '팝업이 막혔어요. 브라우저에서 팝업을 허용해 주세요.' : '구글 로그인에 실패했어요.', 'auth')),
     })
     client.requestAccessToken({ prompt: '' })
   })
