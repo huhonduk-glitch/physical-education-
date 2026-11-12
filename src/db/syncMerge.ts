@@ -20,7 +20,6 @@
  * 한쪽에서 지운 줄은 합치면 다시 생긴다(지운 기록을 남기지 않으므로) → 화면에서 알린다.
  */
 import { BACKUP_TABLES, SECRET_KEYS, type BackupFile } from './backup'
-import type { Tombstone } from './syncState'
 
 type Row = Record<string, unknown> & { id?: string; key?: string }
 type Tables = Partial<Record<(typeof BACKUP_TABLES)[number], Row[]>>
@@ -31,15 +30,11 @@ export interface TableStat {
   updated: number
   kept: number
   same: number
-  /** 다른 기기에서 지워서 여기서도 지운 줄 (구글 동기화) */
-  removed?: number
 }
 
 export interface MergePlan {
   /** 표마다 넣을(덧쓸) 줄 */
   put: Partial<Record<TableName, Row[]>>
-  /** 표마다 지울 줄 id (다른 기기의 지운 기록, 구글 동기화에서만) */
-  remove: Partial<Record<TableName, string[]>>
   stats: Partial<Record<TableName, TableStat>>
   /** 같은 것으로 맞춘 수 (학생 · 수업반 …) */
   matched: number
@@ -69,7 +64,6 @@ const SLOT: Partial<Record<TableName, (r: Row) => string | null>> = {
   lessons: (r) => `${s(r.groupId)}|${s(r.date)}`,
   absences: (r) => `${s(r.studentId)}|${s(r.date)}`,
   // 누가기록: 두 기기에서 같은 학생 · 날짜 · 교시 · 수업반 · 항목 · 메모로 따로 넣은 것은 같은 기록 하나로 본다
-  // (한 기기 안에서 같은 칭찬을 두 번 누른 것은 id가 달라도 그대로 둔다 — 이 기기 줄끼리는 비교하지 않음)
   records: (r) => `${s(r.studentId)}|${s(r.date)}|${s(r.period)}|${s(r.groupId)}|${s(r.type)}|${s(r.category)}|${s(r.note)}`,
 }
 
@@ -114,15 +108,8 @@ function stable(x: unknown): string {
 
 const uniq = <T,>(xs: T[]) => [...new Set(xs)]
 
-/**
- * 지금 자료(here)와 파일(incoming) → 넣을 줄 · 지울 줄 (순수 함수, 저장소를 건드리지 않는다)
- * 지운 기록(구글 동기화): localTomb = 이 기기에서 지운 줄 → 파일에 있어도 되살리지 않음(지운 뒤에 고친 줄이면 살림),
- * remoteTomb = 다른 기기에서 지운 줄 → 여기서도 지움(지운 뒤에 여기서 고친 줄이면 둠)
- * preferIncoming(구글 동기화의 올리기 · 내려받기): 같은 줄이 다르고 고친 시각으로 가릴 수 없으면 보내는 쪽(incoming)을 남긴다.
- *   없으면(잠금 파일 '합치기') 이 기기 것을 둔다.
- */
-export function planMerge(here: Tables, incoming: Tables, opts: { localTomb?: readonly Tombstone[]; remoteTomb?: readonly Tombstone[]; preferIncoming?: boolean } = {}): MergePlan {
-  const localDel = new Map((opts.localTomb ?? []).map((x) => [`${x.t}:${x.id}`, x.at]))
+/** 지금 자료(here)와 파일(incoming) → 넣을 줄 (순수 함수, 저장소를 건드리지 않는다) */
+export function planMerge(here: Tables, incoming: Tables): MergePlan {
   // 1) 같은 것 찾기 → id 표
   const map = new Map<string, string>()
   for (const [t, keyOf] of Object.entries(IDENTITY) as [TableName, (r: Row) => string | null][]) {
@@ -181,11 +168,6 @@ export function planMerge(here: Tables, incoming: Tables, opts: { localTomb?: re
         }
         if (done.has(r.id!)) continue // 파일 안에서 같은 자리가 두 번
         done.add(r.id!)
-        const delAt = localDel.get(`${t}:${r.id}`)
-        if (!old && delAt !== undefined && (timeOf(r) ?? 0) <= delAt) {
-          stat.kept++ // 이 기기에서 지운 줄 — 되살리지 않음
-          continue
-        }
         if (!old) {
           rows.push(r)
           stat.added++
@@ -206,7 +188,7 @@ export function planMerge(here: Tables, incoming: Tables, opts: { localTomb?: re
         }
         const a = timeOf(old)
         const b = timeOf(r)
-        if (a !== null && b !== null ? b > a : !!opts.preferIncoming) {
+        if (a !== null && b !== null && b > a) {
           rows.push(r)
           stat.updated++
         } else stat.kept++
@@ -215,50 +197,13 @@ export function planMerge(here: Tables, incoming: Tables, opts: { localTomb?: re
     if (rows.length) put[t] = rows
     if (stat.added || stat.updated || stat.kept || stat.same) stats[t] = stat
   }
-
-  // 다른 기기에서 지운 줄 → 여기서도 (지운 뒤에 여기서 고쳤으면 둔다)
-  const remove: MergePlan['remove'] = {}
-  for (const x of opts.remoteTomb ?? []) {
-    const t = x.t as TableName
-    if (t === 'settings' || !BACKUP_TABLES.includes(t)) continue
-    const id = map.get(x.id) ?? x.id
-    const row = (here[t] ?? []).find((r) => r.id === id)
-    if (!row || (timeOf(row) ?? 0) > x.at) continue
-    ;(remove[t] ??= []).push(id)
-    if (put[t]) put[t] = put[t]!.filter((r) => r.id !== id)
-    const st = (stats[t] ??= { added: 0, updated: 0, kept: 0, same: 0 })
-    st.removed = (st.removed ?? 0) + 1
-  }
-  return { put, remove, stats, matched: map.size }
-}
-
-/** 계획을 저장소가 아닌 표 묶음(구글 사본)에 적용한 새 표 묶음 */
-export function applyPlanToTables(tables: Tables, plan: MergePlan): Tables {
-  const out: Tables = {}
-  for (const t of BACKUP_TABLES) {
-    const pk = t === 'settings' ? 'key' : 'id'
-    const m = new Map<string, Row>()
-    for (const r of tables[t] ?? []) m.set(String(r[pk]), r)
-    for (const r of plan.put[t] ?? []) m.set(String(r[pk]), r)
-    for (const id of plan.remove[t] ?? []) m.delete(id)
-    out[t] = [...m.values()]
-  }
-  return out
-}
-
-/** 계획대로 넣고 지우기 (한 번에) */
-export async function applyPlan(db: import('./db').PeDatabase, plan: MergePlan): Promise<void> {
-  const tables = BACKUP_TABLES.map((t) => db.table(t))
-  await db.transaction('rw', tables, async () => {
-    for (const [t, rows] of Object.entries(plan.put)) if (rows?.length) await db.table(t).bulkPut(rows)
-    for (const [t, ids] of Object.entries(plan.remove)) if (ids?.length) await db.table(t).bulkDelete(ids)
-  })
+  return { put, stats, matched: map.size }
 }
 
 /** 이 기기 저장소에 합치기 (한 번에 — 중간에 실패하면 아무것도 안 바뀐다) */
 export async function mergeInto(db: import('./db').PeDatabase, file: BackupFile): Promise<MergePlan> {
   const tables = BACKUP_TABLES.map((t) => db.table(t))
-  let plan: MergePlan = { put: {}, remove: {}, stats: {}, matched: 0 }
+  let plan: MergePlan = { put: {}, stats: {}, matched: 0 }
   await db.transaction('rw', tables, async () => {
     const here: Tables = {}
     for (const t of BACKUP_TABLES) here[t] = (await db.table(t).toArray()) as Row[]
@@ -274,14 +219,13 @@ export async function mergeInto(db: import('./db').PeDatabase, file: BackupFile)
   return plan
 }
 
-/** 합친 결과 요약 (사람이 읽는 줄): '누가기록 +3 · 바뀜 1 · 지움 2' */
+/** 합친 결과 요약 (사람이 읽는 줄) */
 export function mergeSummary(plan: MergePlan, labels: Partial<Record<string, string>>): string[] {
   const out: string[] = []
   for (const [t, st] of Object.entries(plan.stats)) {
     const label = labels[t]
-    if (!label || !st || (!st.added && !st.updated && !st.removed)) continue
-    const parts = [st.added ? `+${st.added}` : '', st.updated ? `바뀜 ${st.updated}` : '', st.removed ? `지움 ${st.removed}` : ''].filter(Boolean)
-    out.push(`${label} ${parts.join(' · ')}`)
+    if (!label || !st || (!st.added && !st.updated)) continue
+    out.push(`${label} ${st.added ? `+${st.added}` : ''}${st.added && st.updated ? ' · ' : ''}${st.updated ? `바뀜 ${st.updated}` : ''}`)
   }
   return out
 }

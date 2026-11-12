@@ -3,17 +3,20 @@ import { db } from '../db/db'
 import { changeCount, installSyncHooks, readSyncConf, type SyncConf } from '../db/syncState'
 import { IS_DEMO } from '../lib/demo'
 import { DriveError, GOOGLE_CLIENT_ID, preloadGis } from '../lib/gdrive'
-import { SYNC_EVENT, ensureToken, isAutoUp, resultNote, runSync, sessionToken, syncedCount } from '../state/driveSync'
+import { SYNC_EVENT, isAutoUp, runSync, sessionToken, syncedCount, type AskReason } from '../state/driveSync'
+import { takeDoneNote, useSyncRunner } from '../state/useSyncRunner'
+import SyncAskSheet from './SyncAskSheet'
 
 const DISMISS_KEY = 'pelog.driveBarDismissed'
 /** 마지막으로 고친 뒤 이만큼 조용하면 자동으로 올린다 */
 const QUIET_MS = 30_000
 
 /**
- * 앱 전체 구글 동기화 도우미 (2026-11-13):
- * - 지운 기록 잡기(Dexie 훅)를 앱을 켤 때 건다
- * - 구글 동기화를 켰고 이 탭에 구글 연결이 살아 있으면: 기록하고 잠시 조용하면 · 앱을 내릴 때 자동으로 올린다(자동 올리기를 끈 경우 빼고)
- * - 연결이 없으면(앱을 새로 연 뒤) 맨 위에 [내려받기] 한 줄 — 다른 기기에서 한 기록을 먼저 받는다. 구글 정책상 선생님이 한 번 눌러야 한다
+ * 앱 전체 구글 동기화 도우미 (2026-11-13, 구글 사본이 기준):
+ * - 앱을 연 뒤(구글 연결이 없을 때) 맨 위 한 줄 [동기화]: 바뀐 쪽 → 안 바뀐 쪽(구글이 새로우면 내려받기, 이 기기만 바뀌었으면 올리기),
+ *   둘 다 바뀌었으면 묻는다. 구글 정책상 선생님이 한 번 눌러야 한다
+ * - 연결이 살아 있으면 기록하고 잠시 조용하면 · 앱을 내릴 때 자동으로 올린다(자동 올리기를 끈 경우 빼고).
+ *   구글 사본이 그새 다른 기기에서 바뀌었으면 올리지 않고 맨 위에서 묻는다(덮어써서 사라지지 않게)
  */
 export default function DriveSyncAgent() {
   const [conf, setConf] = useState<SyncConf | null>(null)
@@ -25,14 +28,18 @@ export default function DriveSyncAgent() {
       return false
     }
   })
-  const [busy, setBusy] = useState(false)
-  const [msg, setMsg] = useState('')
-  const [done, setDone] = useState('')
+  const [done, setDone] = useState(() => takeDoneNote())
+  const [conflict, setConflict] = useState<{ reason: AskReason; remoteAt?: string } | null>(null)
+  const runner = useSyncRunner((o) => {
+    setConflict(null)
+    setHasToken(true)
+    if (!o.reload) setDone(o.note)
+  })
   const lastSeen = useRef(0)
   const lastChangeAt = useRef(0)
 
   useEffect(() => {
-    void installSyncHooks(db)
+    installSyncHooks(db)
     const load = () =>
       void readSyncConf(db)
         .then(setConf)
@@ -47,14 +54,20 @@ export default function DriveSyncAgent() {
   }, [])
 
   // 자동 올리기 (연결이 살아 있을 때만, 버튼 없이)
-  const auto = isAutoUp(conf) && !IS_DEMO && !!GOOGLE_CLIENT_ID
+  const auto = isAutoUp(conf) && !IS_DEMO && !!GOOGLE_CLIENT_ID && !conflict
   useEffect(() => {
     if (!auto) return
+    let running = false
     const up = async () => {
+      if (running) return
+      running = true
       try {
-        await runSync(db, 'up', false)
+        const o = await runSync(db, 'up', { interactive: false })
+        if (o?.kind === 'ask') setConflict({ reason: o.reason, remoteAt: o.remoteAt })
       } catch (e) {
         if (e instanceof DriveError && e.kind === 'auth') setHasToken(false)
+      } finally {
+        running = false
       }
     }
     const tick = () => {
@@ -81,30 +94,18 @@ export default function DriveSyncAgent() {
   // 결과 한 줄은 잠깐 보이고 사라진다
   useEffect(() => {
     if (!done) return
-    const t = setTimeout(() => setDone(''), 6_000)
+    const t = setTimeout(() => setDone(''), 7_000)
     return () => clearTimeout(t)
   }, [done])
 
-  const showBar = !!conf?.enabled && !!GOOGLE_CLIENT_ID && !IS_DEMO && ((!hasToken && !dismissed) || !!done)
+  const on = !!conf?.enabled && !!GOOGLE_CLIENT_ID && !IS_DEMO
+  const needTap = on && !hasToken && !dismissed
+  const showBar = on && (needTap || !!done || !!conflict)
   useEffect(() => {
-    if (showBar) preloadGis()
-  }, [showBar])
-  if (!showBar) return null
+    if (needTap) preloadGis()
+  }, [needTap])
+  if (!showBar && !runner.ask) return null
 
-  const pull = async () => {
-    setBusy(true)
-    setMsg('')
-    try {
-      await ensureToken(true) // 구글 로그인 창을 먼저 (팝업 차단 방지)
-      const r = await runSync(db, 'down', true)
-      setHasToken(true)
-      if (r) setDone(resultNote('down', r))
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : '내려받지 못했어요.')
-    } finally {
-      setBusy(false)
-    }
-  }
   const close = () => {
     setDone('')
     setDismissed(true)
@@ -114,19 +115,35 @@ export default function DriveSyncAgent() {
       /* 무시 */
     }
   }
+  const text = runner.err
+    ? runner.err
+    : conflict
+      ? '구글 사본이 다른 기기에서 바뀌어서 자동으로 올리지 않았어요'
+      : done || '구글 동기화 · 앱을 연 뒤 한 번 눌러 주세요'
   return (
-    <div className="flex items-center gap-2 border-b border-line bg-brand-light px-4 py-2 text-sm print:hidden" role="status">
-      <span className={`min-w-0 flex-1 font-bold ${msg ? 'text-danger' : 'text-brand-ink'}`}>
-        {done || msg || '구글 동기화 · 다른 기기에서 기록했다면 먼저 내려받으세요'}
-      </span>
-      {!done && (
-        <button type="button" className="btn btn-primary h-9 min-h-0 shrink-0 px-3 text-sm" disabled={busy} onClick={() => void pull()}>
-          {busy ? '받는 중…' : '내려받기'}
-        </button>
+    <>
+      {showBar && (
+        <div className="flex items-center gap-2 border-b border-line bg-brand-light px-4 py-2 text-sm print:hidden" role="status">
+          <span className={`min-w-0 flex-1 font-bold ${runner.err || conflict ? 'text-danger' : 'text-brand-ink'}`}>{text}</span>
+          {conflict ? (
+            <button type="button" className="btn btn-primary h-9 min-h-0 shrink-0 px-3 text-sm" onClick={() => runner.showAsk(conflict)}>
+              어떻게 할지 고르기
+            </button>
+          ) : (
+            !done && (
+              <button type="button" className="btn btn-primary h-9 min-h-0 shrink-0 px-3 text-sm" disabled={!!runner.busy} onClick={() => runner.run('auto')}>
+                {runner.busy ? '맞추는 중…' : '동기화'}
+              </button>
+            )
+          )}
+          {!conflict && (
+            <button type="button" className="btn btn-ghost h-9 min-h-0 shrink-0 px-2 text-sm text-ink-3" aria-label="닫기" onClick={close}>
+              닫기
+            </button>
+          )}
+        </div>
       )}
-      <button type="button" className="btn btn-ghost h-9 min-h-0 shrink-0 px-2 text-sm text-ink-3" aria-label="닫기" onClick={close}>
-        닫기
-      </button>
-    </div>
+      {runner.ask && <SyncAskSheet reason={runner.ask.reason} remoteAt={runner.ask.remoteAt} busy={!!runner.busy} onChoose={runner.choose} onClose={runner.closeAsk} />}
+    </>
   )
 }

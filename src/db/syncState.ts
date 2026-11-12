@@ -1,9 +1,8 @@
 /**
- * 구글 동기화 상태 · 지운 기록(tombstone) (2026-11-13).
- * - syncConf: 켰는지 · 비밀번호 · 기기 이름 · 마지막 맞춘 때. 비밀번호는 이 기기에만(백업 파일 · 합치기에서 빠짐, backup.ts SECRET_KEYS)
- * - syncTombstones: 이 기기에서 지운 줄 { 표, id, 지운 때 } — 다른 기기에서도 지우려고 드라이브 파일에 같이 넣는다.
- *   (잠금 파일 '합치기'는 지운 기록을 몰라서 지운 줄이 되살아났다 — 구글 동기화에서는 지운 것도 따라가야 한다)
- * - Dexie 'deleting' 훅으로 모든 자료 표의 지우기를 잡는다(설정 표 · 표 비우기(복원)는 빼고). 구글 동기화에 연결했을 때만 적는다.
+ * 구글 동기화 상태 (2026-11-13). 교사 결정: 구글 드라이브 사본이 기준 — 올리기 = 구글 사본을 이 기기 자료로 바꿈,
+ * 내려받기 = 이 기기 자료를 구글 사본으로 바꿈(덮어쓰기). 지운 기록은 따로 남기지 않는다(통째로 바꾸므로 따라간다).
+ * - syncConf: 연결했는지 · 비밀번호 · 기기 이름 · 마지막으로 구글과 같아진 때의 표시(base). 이 기기에만(백업 파일 · 합치기에서 빠짐)
+ * - 바뀜 세기: Dexie 훅으로 자료 표가 바뀔 때마다 센다(자동 올리기 때를 정하려고, 이 탭 안에서만)
  */
 import type { PeDatabase } from './db'
 import { BACKUP_TABLES } from './backup'
@@ -18,6 +17,9 @@ export interface SyncConf {
   account?: string
   /** 기록하면 자동으로 올리기 (없으면 켜짐) */
   autoUp?: boolean
+  /** 마지막으로 구글과 같아졌을 때: 구글 사본의 바뀐 때(드라이브 modifiedTime) · 이 기기 자료 지문 */
+  baseRemote?: string
+  baseHash?: string
   /** 이 기기에서 마지막으로 올린 때 · 내려받은 때 (ms) */
   upAt?: number
   downAt?: number
@@ -28,16 +30,7 @@ export interface SyncConf {
   lastNote?: string
 }
 
-export interface Tombstone {
-  t: string
-  id: string
-  at: number
-}
-
 export const SYNC_CONF_KEY = 'syncConf'
-export const SYNC_TOMB_KEY = 'syncTombstones'
-/** 지운 기록은 이만큼만 둔다 (그 사이 모든 기기가 한 번은 맞춘다고 봄) */
-export const TOMB_KEEP_MS = 180 * 24 * 3600 * 1000
 
 export async function readSyncConf(db: PeDatabase): Promise<SyncConf | null> {
   const row = await db.settings.get(SYNC_CONF_KEY)
@@ -47,85 +40,43 @@ export async function readSyncConf(db: PeDatabase): Promise<SyncConf | null> {
 export async function writeSyncConf(db: PeDatabase, conf: SyncConf | null): Promise<void> {
   if (conf) await db.settings.put({ key: SYNC_CONF_KEY, value: conf })
   else await db.settings.delete(SYNC_CONF_KEY)
-  recording.set(db, !!conf?.enabled)
 }
 
-export async function readTombstones(db: PeDatabase): Promise<Tombstone[]> {
-  const row = await db.settings.get(SYNC_TOMB_KEY)
-  return (row?.value as Tombstone[] | undefined) ?? []
+/** 설정을 조금 고치기 (읽고 · 합쳐 · 쓰기) */
+export async function patchSyncConf(db: PeDatabase, patch: Partial<SyncConf>): Promise<SyncConf | null> {
+  const cur = await readSyncConf(db)
+  if (!cur) return null
+  const next = { ...cur, ...patch }
+  await writeSyncConf(db, next)
+  return next
 }
 
-/** 지운 기록 합치기: 같은 줄이면 늦은 때, 오래된 것은 버림 */
-export function mergeTombstones(a: readonly Tombstone[], b: readonly Tombstone[], now = Date.now()): Tombstone[] {
-  const m = new Map<string, Tombstone>()
-  for (const x of [...a, ...b]) {
-    if (now - x.at > TOMB_KEEP_MS) continue
-    const k = `${x.t}:${x.id}`
-    const old = m.get(k)
-    if (!old || x.at > old.at) m.set(k, x)
-  }
-  return [...m.values()]
-}
+// ── 바뀜 세기 (Dexie 훅) ──
 
-export async function writeTombstones(db: PeDatabase, list: readonly Tombstone[]): Promise<void> {
-  await db.settings.put({ key: SYNC_TOMB_KEY, value: mergeTombstones(list, []) })
-}
-
-// ── 지우기 잡기 (Dexie 훅) ──
-
-const recording = new WeakMap<PeDatabase, boolean>()
-const pending = new WeakMap<PeDatabase, Tombstone[]>()
-const timers = new WeakMap<PeDatabase, ReturnType<typeof setTimeout>>()
 const installed = new WeakSet<PeDatabase>()
-/** 바뀐 수 (자동 올리기 때를 정하려고) */
 const dirty = new WeakMap<PeDatabase, number>()
 
+/** 이 탭에서 자료 표가 바뀐 수 */
 export function changeCount(db: PeDatabase): number {
   return dirty.get(db) ?? 0
 }
 
-async function flush(db: PeDatabase) {
-  const add = pending.get(db) ?? []
-  pending.set(db, [])
-  if (!add.length) return
-  const cur = await readTombstones(db)
-  await writeTombstones(db, mergeTombstones(cur, add))
-}
-
-/** 앱을 켤 때 한 번. 구글 동기화에 연결돼 있으면 지운 줄을 적는다 */
-export async function installSyncHooks(db: PeDatabase): Promise<void> {
-  if (!installed.has(db)) {
-    installed.add(db)
-    for (const t of BACKUP_TABLES) {
-      if (t === 'settings') continue
-      const table = db.table(t)
-      const bump = () => dirty.set(db, (dirty.get(db) ?? 0) + 1)
-      table.hook('creating', function () {
-        this.onsuccess = bump
-      })
-      table.hook('updating', function () {
-        this.onsuccess = bump
-      })
-      table.hook('deleting', function (primKey) {
-        this.onsuccess = () => {
-          bump()
-          if (!recording.get(db)) return
-          pending.set(db, [...(pending.get(db) ?? []), { t, id: String(primKey), at: Date.now() }])
-          clearTimeout(timers.get(db))
-          timers.set(
-            db,
-            setTimeout(() => void flush(db).catch(() => undefined), 200),
-          )
-        }
-      })
-    }
+/** 앱을 켤 때 한 번 */
+export function installSyncHooks(db: PeDatabase): void {
+  if (installed.has(db)) return
+  installed.add(db)
+  for (const t of BACKUP_TABLES) {
+    if (t === 'settings') continue
+    const bump = () => dirty.set(db, (dirty.get(db) ?? 0) + 1)
+    const table = db.table(t)
+    table.hook('creating', function () {
+      this.onsuccess = bump
+    })
+    table.hook('updating', function () {
+      this.onsuccess = bump
+    })
+    table.hook('deleting', function () {
+      this.onsuccess = bump
+    })
   }
-  const conf = await readSyncConf(db).catch(() => null)
-  recording.set(db, !!conf?.enabled)
-}
-
-/** 시험 · 올리기 · 내려받기 직전에: 아직 안 적은 지운 줄을 바로 적기 */
-export async function flushTombstones(db: PeDatabase): Promise<void> {
-  clearTimeout(timers.get(db))
-  await flush(db)
 }

@@ -1,32 +1,36 @@
 import 'fake-indexeddb/auto'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { listSnapshots, SYNC_SNAPSHOT_REASON } from '../src/db/autoBackup'
 import { exportAll } from '../src/db/backup'
 import { PeDatabase } from '../src/db/db'
-import { SyncPassError, peekRemote, pullNow, pushNow, removeRemote } from '../src/db/driveSync'
+import { SyncPassError, downloadNow, mergeBothNow, peekRemote, removeRemote, syncStatus, uploadNow, type SyncBase } from '../src/db/driveSync'
 import { ensureKeywordSeed } from '../src/db/recordsRepo'
-import { applyPlanToTables, planMerge } from '../src/db/syncMerge'
-import { installSyncHooks, mergeTombstones, readTombstones, writeSyncConf, flushTombstones, TOMB_KEEP_MS } from '../src/db/syncState'
+import { planMerge } from '../src/db/syncMerge'
+import { writeSyncConf } from '../src/db/syncState'
 import { DRIVE_SCOPE, DriveError, driveApi, type DriveApi } from '../src/lib/gdrive'
 import { isLocked } from '../src/lib/lockFile'
+import { decide } from '../src/state/driveSync'
 
 // 학생 이름은 모두 지어낸 가명
 const FAST = 100_000
 const PASS = '체육관2026봄'
 
-/** 드라이브 앱 전용 칸 흉내 (파일 하나) */
-function fakeDrive(): DriveApi & { file: { id: string; text: string } | null } {
+/** 드라이브 앱 전용 칸 흉내 (파일 하나, 올릴 때마다 바뀐 때가 달라짐) */
+function fakeDrive(): DriveApi & { file: { id: string; text: string; modifiedTime: string } | null } {
+  let tick = 0
   const d = {
-    file: null as { id: string; text: string } | null,
+    file: null as { id: string; text: string; modifiedTime: string } | null,
     async find() {
-      return d.file ? { id: d.file.id } : null
+      return d.file ? { id: d.file.id, modifiedTime: d.file.modifiedTime } : null
     },
     async download(id: string) {
       if (d.file?.id !== id) throw new Error('없음')
       return d.file.text
     },
     async upload(text: string, id?: string) {
-      d.file = { id: id ?? 'f1', text }
-      return d.file.id
+      tick += 1
+      d.file = { id: id ?? 'f1', text, modifiedTime: `2026-11-13T00:00:${String(tick).padStart(2, '0')}.000Z` }
+      return { id: d.file.id, modifiedTime: d.file.modifiedTime }
     },
     async remove() {
       d.file = null
@@ -36,208 +40,178 @@ function fakeDrive(): DriveApi & { file: { id: string; text: string } | null } {
 }
 
 let n = 0
-async function device() {
+async function device(pin: string) {
   n += 1
   const db = new PeDatabase(`sync-${n}`)
-  await installSyncHooks(db)
+  await ensureKeywordSeed(db)
+  await db.settings.put({ key: 'pinHash', value: pin })
   await writeSyncConf(db, { enabled: true, pass: PASS, device: `기기${n}` })
   return db
 }
-const stu = (id: string, code: string, name: string, memo = '') => ({ id, schoolYear: 2026, grade: 1, classNo: 1, classCode: '01', number: Number(code.slice(-2)), name, gender: 'M', studentCode: code, status: '재학', memo })
-const rec = (id: string, studentId: string, at: number) => ({ id, schoolYear: 2026, studentId, date: '2026-11-13', type: 'exemplary', category: '친구 도움', keywordIds: [], createdAt: at, updatedAt: at })
-const opts = (device: string) => ({ pass: PASS, device, iterations: FAST, labels: { records: '누가기록', students: '학생' } })
+const stu = (id: string, code: string, name: string) => ({ id, schoolYear: 2026, grade: 1, classNo: 1, classCode: '01', number: Number(code.slice(-2)), name, gender: 'M', studentCode: code, status: '재학', memo: '' })
+const rec = (id: string, studentId: string, at: number, category = '친구 도움') => ({ id, schoolYear: 2026, studentId, date: '2026-11-13', type: 'exemplary', category, keywordIds: [], createdAt: at, updatedAt: at })
+const opts = (dev: string, base?: SyncBase) => ({ pass: PASS, device: dev, iterations: FAST, labels: { records: '누가기록', students: '학생' }, autoDb: `autobk-${dev}-${n}`, base })
+const st = async (db: PeDatabase, drive: DriveApi, base: SyncBase) => {
+  const s = await syncStatus(db, drive, base)
+  return { remote: !!s.remote, remoteChanged: s.remoteChanged, localChanged: s.localChanged }
+}
 
-describe('구글 동기화 — 올리기 · 내려받기', () => {
-  it('실제처럼: 두 기기 모두 기본 키워드가 있고, A에만 학생 → A 올리기 → B 내려받기', async () => {
+describe('구글 동기화 — 구글 사본이 기준(덮어쓰기)', () => {
+  it('A 올리기 → B(새 기기) 동기화 = 내려받기: 학생 2명 · B의 PIN은 그대로 · 바꾸기 전 자료는 자동 백업', async () => {
     const drive = fakeDrive()
-    const a = await device()
-    const b = await device()
-    await ensureKeywordSeed(a)
-    await ensureKeywordSeed(b)
-    const kw = await a.keywords.count()
-    expect(kw).toBeGreaterThan(100)
+    const a = await device('A-pin')
+    const b = await device('B-pin')
     await a.students.bulkAdd([stu('sa', '10101', '가나다'), stu('sb', '10102', '라마바')] as never)
 
-    expect((await pullNow(b, drive, opts('B'))).empty).toBe(true) // 아직 받을 것 없음
-    const up = await pushNow(a, drive, opts('A'))
-    expect(up.empty).toBe(true)
+    expect(decide('auto', await st(a, drive, {}))).toBe('up') // 구글 사본 없음 + A에 자료
+    const upA = await uploadNow(a, drive, opts('A'))
     expect(isLocked(JSON.parse(drive.file!.text))).toBe(true)
     expect(drive.file!.text).not.toContain('가나다')
+    expect(upA.lines).toContain('학생 2')
 
-    const down = await pullNow(b, drive, opts('B'))
-    expect(down.empty).toBe(false)
-    expect(down.lines).toContain('학생 +2')
+    const sB = await st(b, drive, {})
+    expect(sB).toEqual({ remote: true, remoteChanged: true, localChanged: false }) // B엔 기본 키워드뿐
+    expect(decide('auto', sB)).toBe('down')
+    const o = opts('B')
+    const downB = await downloadNow(b, drive, o)
+    expect(downB?.device).toBe('A')
     expect(await b.students.count()).toBe(2)
-    expect(await b.keywords.count()).toBe(kw) // 키워드는 겹치지 않음
-    expect(down.remote?.device).toBe('A')
+    expect(await b.keywords.count()).toBe(await a.keywords.count())
+    expect((await b.settings.get('pinHash'))?.value).toBe('B-pin')
+    expect((await b.settings.get('syncConf'))?.value).toMatchObject({ device: '기기2' }) // 이 기기 동기화 설정도 그대로
+    const snaps = await listSnapshots(o.autoDb)
+    expect(snaps.map((s) => s.reason)).toEqual([SYNC_SNAPSHOT_REASON])
+
+    // 맞춘 뒤에는 둘 다 그대로
+    expect(await st(b, drive, downB!.base)).toEqual({ remote: true, remoteChanged: false, localChanged: false })
+    expect(decide('down', await st(b, drive, downB!.base))).toBe('none')
   })
 
-  it('올리기는 이 기기를 바꾸지 않고, 다른 기기가 올린 기록도 지우지 않음 / 내려받기는 구글 사본을 바꾸지 않음', async () => {
+  it('덮어쓰면 사라질 때 묻기 · 둘 다 살리기 · 지운 기록은 통째로 바꾸니 따라감', async () => {
     const drive = fakeDrive()
-    const a = await device()
-    const b = await device()
+    const a = await device('A-pin')
+    const b = await device('B-pin')
     await a.students.add(stu('sa', '10101', '가나다') as never)
-    await a.records.bulkAdd([rec('r1', 'sa', 1000)] as never)
-    await pushNow(a, drive, opts('A'))
+    await a.records.add(rec('r1', 'sa', 1000) as never)
+    let baseA = (await uploadNow(a, drive, opts('A'))).base
+    let baseB = (await downloadNow(b, drive, opts('B')))!.base
 
-    // B는 내려받지 않고 자기 기록만 올림 → 구글에는 둘 다
-    await b.students.add(stu('sb', '10101', '가나다') as never) // 같은 학생을 따로 넣음
-    await b.records.add({ ...rec('r9', 'sb', 2000), category: '정리정돈' } as never)
-    const up = await pushNow(b, drive, opts('B'))
-    expect(up.lines).toContain('누가기록 +1')
-    expect(await b.records.count()).toBe(1) // B는 그대로
-    const before = drive.file!.text
+    // B에서 기록 → 올리기 (구글은 그대로였으니 묻지 않음)
+    await b.records.add(rec('r2', 'sa', 2000, '정리정돈') as never)
+    expect(decide('up', await st(b, drive, baseB))).toBe('up')
+    baseB = (await uploadNow(b, drive, opts('B', baseB))).base
 
-    const down = await pullNow(a, drive, opts('A'))
-    expect(down.lines).toContain('누가기록 +1')
-    expect(down.lines.join()).not.toContain('학생') // 같은 학생으로 맞춤
-    const recs = await a.records.toArray()
-    expect(recs.map((r) => r.id).sort()).toEqual(['r1', 'r9'])
-    expect(recs.every((r) => r.studentId === 'sa')).toBe(true) // B 쪽 학생 id를 A 학생으로
-    expect(drive.file!.text).toBe(before) // 내려받기는 구글 사본을 안 바꿈
+    // A도 따로 기록 → 이제 양쪽 모두 바뀜
+    await a.records.add(rec('r3', 'sa', 3000, '리더십') as never)
+    const sA = await st(a, drive, baseA)
+    expect(sA).toEqual({ remote: true, remoteChanged: true, localChanged: true })
+    expect(decide('up', sA)).toEqual({ ask: 'both' })
+    expect(decide('down', sA)).toEqual({ ask: 'both' })
+    expect(decide('auto', sA)).toEqual({ ask: 'both' })
+    // 한쪽만 바뀐 경우
+    expect(decide('up', { remote: true, remoteChanged: true, localChanged: false })).toEqual({ ask: 'remote' })
+    expect(decide('down', { remote: true, remoteChanged: false, localChanged: true })).toEqual({ ask: 'local' })
+    expect(decide('down', { remote: false, remoteChanged: false, localChanged: true })).toBe('empty')
+
+    // 둘 다 살리기 → A에 셋 다, 구글에도
+    const merged = await mergeBothNow(a, drive, opts('A', baseA))
+    expect(merged.lines).toContain('누가기록 +1')
+    expect((await a.records.toArray()).map((r) => r.id).sort()).toEqual(['r1', 'r2', 'r3'])
+    baseA = merged.base
+    expect(decide('down', await st(b, drive, baseB))).toBe('down')
+    baseB = (await downloadNow(b, drive, opts('B', baseB)))!.base
+    expect(await b.records.count()).toBe(3)
+
+    // B에서 지우고 올리면 A가 내려받을 때 같이 사라짐
+    await b.records.delete('r1')
+    baseB = (await uploadNow(b, drive, opts('B', baseB))).base
+    expect(decide('auto', await st(a, drive, baseA))).toBe('down')
+    await downloadNow(a, drive, opts('A', baseA))
+    expect((await a.records.toArray()).map((r) => r.id).sort()).toEqual(['r2', 'r3'])
   })
 
-  it('지운 기록 따라가기: B에서 지우고 올리면 A가 내려받을 때 지움, A가 다시 올려도 되살아나지 않음', async () => {
+  it('비밀번호가 다르면 확인 · 내려받기 · 둘 다 살리기 · (남이 바꾼 사본) 올리기 모두 막음', async () => {
     const drive = fakeDrive()
-    const a = await device()
-    const b = await device()
-    await a.students.add(stu('sa', '10101', '가나다') as never)
-    await a.records.bulkAdd([rec('r1', 'sa', 1000), rec('r2', 'sa', 1000)] as never)
-    await pushNow(a, drive, opts('A'))
-    await pullNow(b, drive, opts('B'))
-
-    await b.records.delete('r2')
-    await flushTombstones(b)
-    expect((await readTombstones(b)).map((x) => x.id)).toEqual(['r2'])
-    await pushNow(b, drive, opts('B'))
-
-    // A가 내려받기 전에 올려도 구글에서 되살아나지 않음
-    await pushNow(a, drive, opts('A'))
-    const back = await pullNow(a, drive, opts('A'))
-    expect(back.lines).toContain('누가기록 지움 1')
-    expect(await a.records.count()).toBe(1)
-    await pullNow(b, drive, opts('B'))
-    expect(await b.records.count()).toBe(1)
-  })
-
-  it('고친 시각이 없는 줄은 보내는 쪽이 남음 (올린 학생 메모가 내려받은 기기에 반영)', async () => {
-    const drive = fakeDrive()
-    const a = await device()
-    const b = await device()
-    await a.students.add(stu('sa', '10101', '가나다') as never)
-    await pushNow(a, drive, opts('A'))
-    await pullNow(b, drive, opts('B'))
-    await a.students.update('sa', { memo: '왼손잡이' })
-    await pushNow(a, drive, opts('A'))
-    await pullNow(b, drive, opts('B'))
-    expect((await b.students.get('sa'))?.memo).toBe('왼손잡이')
-  })
-
-  it('비밀번호가 다르면 연결 확인 · 올리기 · 내려받기 모두 막음', async () => {
-    const drive = fakeDrive()
-    const a = await device()
-    await pushNow(a, drive, opts('A'))
-    const c = await device()
+    const a = await device('A-pin')
+    await uploadNow(a, drive, opts('A'))
+    const c = await device('C-pin')
     const wrong = { ...opts('C'), pass: '다른비밀번호123' }
     await expect(peekRemote(drive, wrong.pass)).rejects.toBeInstanceOf(SyncPassError)
-    await expect(pullNow(c, drive, wrong)).rejects.toBeInstanceOf(SyncPassError)
-    await expect(pushNow(c, drive, wrong)).rejects.toBeInstanceOf(SyncPassError)
+    await expect(downloadNow(c, drive, wrong)).rejects.toBeInstanceOf(SyncPassError)
+    await expect(mergeBothNow(c, drive, wrong)).rejects.toBeInstanceOf(SyncPassError)
+    await expect(uploadNow(c, drive, wrong)).rejects.toBeInstanceOf(SyncPassError)
     expect(await peekRemote(drive, PASS)).toMatchObject({ device: 'A' })
     expect(await peekRemote(fakeDrive(), PASS)).toBeNull()
+    expect(await downloadNow(c, fakeDrive(), opts('C'))).toBeNull() // 받을 것 없음
   })
 
   it('연결 끊으면서 구글 사본 지우기', async () => {
     const drive = fakeDrive()
-    const a = await device()
-    await pushNow(a, drive, opts('A'))
+    const a = await device('A-pin')
+    await uploadNow(a, drive, opts('A'))
     expect(await removeRemote(drive)).toBe(true)
     expect(drive.file).toBeNull()
     expect(await removeRemote(drive)).toBe(false)
   })
 
-  it('동기화 비밀번호 · 지운 기록은 백업 파일에 들어가지 않음', async () => {
-    const a = await device()
-    await a.records.add(rec('x', 's', 1) as never)
-    await a.records.delete('x')
-    await flushTombstones(a)
-    const file = await exportAll(a)
-    const keys = (file.tables.settings as { key: string }[]).map((r) => r.key)
+  it('동기화 비밀번호는 백업 파일 · 구글 사본에 들어가지 않음', async () => {
+    const a = await device('A-pin')
+    const keys = ((await exportAll(a)).tables.settings as { key: string }[]).map((r) => r.key)
     expect(keys).not.toContain('syncConf')
-    expect(keys).not.toContain('syncTombstones')
   })
 })
 
-describe('두 기기에서 같은 것을 따로 넣었을 때 (중복)', () => {
+describe('두 기기에서 같은 것을 따로 넣었을 때 (잠금 파일 합치기 · 둘 다 살리기)', () => {
   const lesson = (id: string, at: number, activity: string) => ({ id, schoolYear: 2026, groupId: 'g1', date: '2026-11-13', activity, createdAt: at, updatedAt: at })
   const absence = (id: string, reason: string) => ({ id, schoolYear: 2026, studentId: 's1', date: '2026-11-13', reason, altTaskDone: false })
-  const praise = (id: string, category = '친구 도움', at = 1) => ({ ...rec(id, 's1', at), groupId: 'g1', category })
+  const praise = (id: string, category = '친구 도움', at = 1) => ({ ...rec(id, 's1', at, category), groupId: 'g1' })
 
   it('수업 일지는 수업반 · 날짜마다 하나 — 나중에 고친 글이 남음', () => {
     const plan = planMerge({ lessons: [lesson('L1', 100, '드리블')] as never }, { lessons: [lesson('L9', 200, '드리블 · 패스')] as never })
     expect(plan.put.lessons).toEqual([{ ...lesson('L9', 200, '드리블 · 패스'), id: 'L1' }])
   })
-  it('견학은 학생 · 날짜마다 하나 (고친 시각이 없으면 보내는 쪽)', () => {
-    const plan = planMerge({ absences: [absence('A1', '부상')] as never }, { absences: [absence('A9', '질병')] as never }, { preferIncoming: true })
-    expect(plan.put.absences).toEqual([{ ...absence('A9', '질병'), id: 'A1' }])
-    expect(planMerge({ absences: [absence('A1', '부상')] as never }, { absences: [absence('A9', '부상')] as never }).put.absences).toBeUndefined()
+  it('견학은 학생 · 날짜마다 하나', () => {
+    const plan = planMerge({ absences: [absence('A1', '부상')] as never }, { absences: [absence('A9', '질병')] as never })
+    expect(plan.put.absences).toBeUndefined()
+    expect(plan.stats.absences).toMatchObject({ added: 0, kept: 1 })
   })
   it('누가기록: 두 기기에서 같은 칭찬을 따로 넣으면 하나, 항목이 다르면 둘', () => {
     const same = planMerge({ records: [praise('R1')] as never }, { records: [praise('R9', '친구 도움', 5)] as never })
-    expect(same.put.records?.map((r) => r.id)).toEqual(['R1']) // 새 줄이 아니라 같은 줄(나중에 고친 쪽 내용)
+    expect(same.put.records?.map((r) => r.id)).toEqual(['R1'])
     expect(same.stats.records).toMatchObject({ added: 0, updated: 1 })
     const diff = planMerge({ records: [praise('R1')] as never }, { records: [praise('R9', '정리정돈')] as never })
     expect(diff.put.records?.map((r) => r.id)).toEqual(['R9'])
   })
-  it('누가기록: 한 기기에서 같은 칭찬을 두 번 준 것은 올려도 · 받아도 두 줄', async () => {
-    // 구글에 R1만 있는데 이 기기에 R1 · R2(같은 칭찬 두 번) → 올리면 구글에 둘 다
-    const up = planMerge({ records: [praise('R1')] as never }, { records: [praise('R1'), praise('R2')] as never }, { preferIncoming: true })
+  it('누가기록: 한 기기에서 같은 칭찬을 두 번 준 것은 두 줄', () => {
+    const up = planMerge({ records: [praise('R1')] as never }, { records: [praise('R1'), praise('R2')] as never })
     expect(up.put.records?.map((r) => r.id)).toEqual(['R2'])
-    // 다른 기기에 따로 넣은 같은 칭찬 하나(X1) + 파일에 두 번(R1 · R2) → 하나는 X1과 맞추고 하나는 더함
     const down = planMerge({ records: [praise('X1')] as never }, { records: [praise('R1'), praise('R2')] as never })
     expect(down.put.records?.map((r) => r.id)).toEqual(['R2'])
   })
 })
 
-describe('지운 기록 합치기 규칙', () => {
-  it('여기서 지운 줄은 되살리지 않고, 지운 뒤 다른 기기에서 고친 줄은 살림', () => {
-    const plan = planMerge({}, { records: [rec('r1', 's', 100), rec('r2', 's', 900)] as never }, { localTomb: [{ t: 'records', id: 'r1', at: 500 }, { t: 'records', id: 'r2', at: 500 }] })
-    expect(plan.put.records?.map((r) => r.id)).toEqual(['r2'])
-  })
-  it('다른 기기에서 지운 줄은 여기서도 지움 — 지운 뒤 여기서 고친 줄은 둠', () => {
-    const plan = planMerge({ records: [rec('r1', 's', 100), rec('r2', 's', 900)] as never }, {}, { remoteTomb: [{ t: 'records', id: 'r1', at: 500 }, { t: 'records', id: 'r2', at: 500 }, { t: 'settings', id: 'x', at: 1 }] })
-    expect(plan.remove.records).toEqual(['r1'])
-    expect(plan.remove.settings).toBeUndefined()
-  })
-  it('같은 줄은 늦은 때 하나, 오래된 것은 버림', () => {
-    const now = 10 * TOMB_KEEP_MS
-    const m = mergeTombstones([{ t: 'records', id: 'a', at: now - 5 }], [{ t: 'records', id: 'a', at: now - 1 }, { t: 'records', id: 'old', at: now - TOMB_KEEP_MS - 1 }], now)
-    expect(m).toEqual([{ t: 'records', id: 'a', at: now - 1 }])
-  })
-  it('계획을 표 묶음에 적용 (설정은 key로)', () => {
-    const tables = { settings: [{ key: 'a', value: 1 }], records: [rec('r1', 's', 1), rec('r2', 's', 1)] } as never
-    const out = applyPlanToTables(tables, { put: { settings: [{ key: 'b', value: 2 }], records: [rec('r3', 's', 1)] }, remove: { records: ['r1'] }, stats: {}, matched: 0 } as never)
-    expect(out.settings?.map((r) => r.key)).toEqual(['a', 'b'])
-    expect(out.records?.map((r) => r.id)).toEqual(['r2', 'r3'])
-  })
-})
-
 describe('드라이브 요청 모양', () => {
   afterEach(() => vi.unstubAllGlobals())
-  it('앱 전용 칸만 찾고, 새 파일은 appDataFolder에 만듦, 토큰은 머리글로', async () => {
+  it('앱 전용 칸만 찾고, 새 파일은 appDataFolder에 만듦, 바뀐 때를 받음, 토큰은 머리글로', async () => {
     const calls: [string, RequestInit][] = []
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string, init: RequestInit) => {
         calls.push([url, init])
-        return new Response(url.includes('uploadType') ? JSON.stringify({ id: 'new1' }) : url.includes('/about') ? JSON.stringify({ user: { emailAddress: 'teacher@example.com' } }) : JSON.stringify({ files: [] }), { status: 200 })
+        return new Response(
+          url.includes('uploadType') ? JSON.stringify({ id: 'new1', modifiedTime: '2026-11-13T01:02:03.000Z' }) : url.includes('/about') ? JSON.stringify({ user: { emailAddress: 'teacher@example.com' } }) : JSON.stringify({ files: [] }),
+          { status: 200 },
+        )
       }),
     )
     const api = driveApi('tok')
     expect(await api.find()).toBeNull()
     expect(calls[0][0]).toContain('spaces=appDataFolder')
+    expect(calls[0][0]).toContain('modifiedTime')
     expect((calls[0][1].headers as Record<string, string>).Authorization).toBe('Bearer tok')
-    expect(await api.upload('{"a":1}')).toBe('new1')
+    expect(await api.upload('{"a":1}')).toEqual({ id: 'new1', modifiedTime: '2026-11-13T01:02:03.000Z' })
     expect(String(calls[1][1].body)).toContain('"parents":["appDataFolder"]')
+    expect(calls[1][0]).toContain('fields=id,modifiedTime')
     expect(await api.account?.()).toBe('teacher@example.com')
     expect(DRIVE_SCOPE).toBe('https://www.googleapis.com/auth/drive.appdata')
   })

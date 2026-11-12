@@ -42,8 +42,8 @@ export interface DriveFileMeta {
 export interface DriveApi {
   find(): Promise<DriveFileMeta | null>
   download(id: string): Promise<string>
-  /** id가 없으면 새로 만든다. 만든(바꾼) 파일 id를 돌려준다 */
-  upload(text: string, id?: string): Promise<string>
+  /** id가 없으면 새로 만든다. 만든(바꾼) 파일의 id · 바뀐 때를 돌려준다 */
+  upload(text: string, id?: string): Promise<DriveFileMeta>
   remove(id: string): Promise<void>
   /** 연결한 구글 계정 메일 (화면에 보여 줄 것, 못 읽으면 null) */
   account?(): Promise<string | null>
@@ -155,14 +155,14 @@ export function driveApi(token: string): DriveApi {
     },
     async upload(text, id) {
       if (id) {
-        const res = await call(token, `${UPLOAD}/${encodeURIComponent(id)}?uploadType=media&fields=id`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: text })
-        return ((await res.json()) as { id: string }).id
+        const res = await call(token, `${UPLOAD}/${encodeURIComponent(id)}?uploadType=media&fields=id,modifiedTime`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: text })
+        return (await res.json()) as DriveFileMeta
       }
       const boundary = `pelog${Math.random().toString(36).slice(2)}`
       const meta = JSON.stringify({ name: SYNC_FILE_NAME, parents: ['appDataFolder'], mimeType: 'application/json' })
       const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${text}\r\n--${boundary}--`
-      const res = await call(token, `${UPLOAD}?uploadType=multipart&fields=id`, { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body })
-      return ((await res.json()) as { id: string }).id
+      const res = await call(token, `${UPLOAD}?uploadType=multipart&fields=id,modifiedTime`, { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body })
+      return (await res.json()) as DriveFileMeta
     },
     async remove(id) {
       await call(token, `${API}/${encodeURIComponent(id)}`, { method: 'DELETE' })
