@@ -11,7 +11,7 @@ export const BACKUP_FORMAT = 'pe-records-backup'
 export const BACKUP_VERSION = 6
 
 /** 백업 파일에 넣지 않는 설정 (이 기기에만) */
-// syncConf(드라이브 맞추기 비밀번호) · syncTombstones(지운 기록)는 이 기기 것 — 백업 · 합치기에서 빼고, 드라이브 파일에는 지운 기록을 따로 넣는다
+// syncConf(구글 동기화 비밀번호) · syncTombstones(지운 기록)는 이 기기 것 — 백업 · 합치기에서 빼고, 드라이브 파일에는 지운 기록을 따로 넣는다
 export const SECRET_KEYS = ['claudeApiKey', 'openrouterApiKey', 'space', 'syncConf', 'syncTombstones']
 
 export const BACKUP_TABLES = ['settings', 'students', 'records', 'captains', 'absences', 'keywords', 'papsConfigs', 'papsResults', 'papsRounds', 'assessments', 'assessmentScores', 'timerPresets', 'groups', 'lessons', 'progressPlans', 'seteukDrafts', 'leagues', 'attendance'] as const

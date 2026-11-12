@@ -1,21 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { db } from '../db/db'
-import { changeCount, installSyncHooks, readSyncConf } from '../db/syncState'
+import { changeCount, installSyncHooks, readSyncConf, type SyncConf } from '../db/syncState'
 import { IS_DEMO } from '../lib/demo'
 import { DriveError, GOOGLE_CLIENT_ID, preloadGis } from '../lib/gdrive'
-import { SYNC_EVENT, ensureToken, runSync, sessionToken } from '../state/driveSync'
+import { SYNC_EVENT, ensureToken, isAutoUp, resultNote, runSync, sessionToken, syncedCount } from '../state/driveSync'
 
 const DISMISS_KEY = 'pelog.driveBarDismissed'
-const QUIET_MS = 45_000
+/** 마지막으로 고친 뒤 이만큼 조용하면 자동으로 올린다 */
+const QUIET_MS = 30_000
 
 /**
- * 앱 전체 드라이브 맞추기 도우미 (2026-11-13):
+ * 앱 전체 구글 동기화 도우미 (2026-11-13):
  * - 지운 기록 잡기(Dexie 훅)를 앱을 켤 때 건다
- * - 맞추기를 켰고 이 탭에 구글 토큰이 살아 있으면: 기록이 바뀐 뒤 잠시 조용하면 · 앱을 내릴 때 자동으로 맞춘다
- * - 토큰이 없으면(앱을 새로 연 뒤) 맨 위에 [맞추기] 한 줄 — 구글 정책상 선생님이 한 번 눌러야 한다
+ * - 구글 동기화를 켰고 이 탭에 구글 연결이 살아 있으면: 기록하고 잠시 조용하면 · 앱을 내릴 때 자동으로 올린다(자동 올리기를 끈 경우 빼고)
+ * - 연결이 없으면(앱을 새로 연 뒤) 맨 위에 [내려받기] 한 줄 — 다른 기기에서 한 기록을 먼저 받는다. 구글 정책상 선생님이 한 번 눌러야 한다
  */
 export default function DriveSyncAgent() {
-  const [enabled, setEnabled] = useState(false)
+  const [conf, setConf] = useState<SyncConf | null>(null)
   const [hasToken, setHasToken] = useState(() => !!sessionToken())
   const [dismissed, setDismissed] = useState(() => {
     try {
@@ -26,15 +27,16 @@ export default function DriveSyncAgent() {
   })
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
-  const seen = useRef(0)
-  const lastRun = useRef(0)
+  const [done, setDone] = useState('')
+  const lastSeen = useRef(0)
+  const lastChangeAt = useRef(0)
 
   useEffect(() => {
     void installSyncHooks(db)
     const load = () =>
       void readSyncConf(db)
-        .then((c) => setEnabled(!!c?.enabled))
-        .catch(() => setEnabled(false))
+        .then(setConf)
+        .catch(() => setConf(null))
     load()
     const onSync = () => {
       load()
@@ -44,54 +46,67 @@ export default function DriveSyncAgent() {
     return () => window.removeEventListener(SYNC_EVENT, onSync)
   }, [])
 
-  // 자동 맞추기 (토큰이 있을 때만, 버튼 없이)
+  // 자동 올리기 (연결이 살아 있을 때만, 버튼 없이)
+  const auto = isAutoUp(conf) && !IS_DEMO && !!GOOGLE_CLIENT_ID
   useEffect(() => {
-    if (!enabled || IS_DEMO) return
-    const tick = async (force = false) => {
-      if (!sessionToken()) return setHasToken(false)
-      const c = changeCount(db)
-      if (c === seen.current) return
-      if (!force && Date.now() - lastRun.current < QUIET_MS) return
-      seen.current = c
-      lastRun.current = Date.now()
+    if (!auto) return
+    const up = async () => {
       try {
-        await runSync(db, false)
+        await runSync(db, 'up', false)
       } catch (e) {
         if (e instanceof DriveError && e.kind === 'auth') setHasToken(false)
       }
     }
-    seen.current = changeCount(db)
-    const id = setInterval(() => void tick(), 15_000)
-    const onHide = () => document.visibilityState === 'hidden' && void tick(true)
+    const tick = () => {
+      const c = changeCount(db)
+      if (c !== lastSeen.current) {
+        lastSeen.current = c
+        lastChangeAt.current = Date.now()
+      }
+      if (!sessionToken() || c === syncedCount()) return
+      if (Date.now() - lastChangeAt.current >= QUIET_MS) void up()
+    }
+    lastSeen.current = changeCount(db)
+    const id = setInterval(tick, 5_000)
+    const onHide = () => {
+      if (document.visibilityState === 'hidden' && sessionToken() && changeCount(db) !== syncedCount()) void up()
+    }
     document.addEventListener('visibilitychange', onHide)
     return () => {
       clearInterval(id)
       document.removeEventListener('visibilitychange', onHide)
     }
-  }, [enabled])
+  }, [auto])
 
-  const showBar = enabled && !!GOOGLE_CLIENT_ID && !IS_DEMO && !hasToken && !dismissed
+  // 결과 한 줄은 잠깐 보이고 사라진다
+  useEffect(() => {
+    if (!done) return
+    const t = setTimeout(() => setDone(''), 6_000)
+    return () => clearTimeout(t)
+  }, [done])
+
+  const showBar = !!conf?.enabled && !!GOOGLE_CLIENT_ID && !IS_DEMO && ((!hasToken && !dismissed) || !!done)
   useEffect(() => {
     if (showBar) preloadGis()
   }, [showBar])
   if (!showBar) return null
 
-  const go = async () => {
+  const pull = async () => {
     setBusy(true)
     setMsg('')
     try {
       await ensureToken(true) // 구글 로그인 창을 먼저 (팝업 차단 방지)
-      await runSync(db, true)
-      seen.current = changeCount(db)
-      lastRun.current = Date.now()
+      const r = await runSync(db, 'down', true)
       setHasToken(true)
+      if (r) setDone(resultNote('down', r))
     } catch (e) {
-      setMsg(e instanceof Error ? e.message : '맞추지 못했어요.')
+      setMsg(e instanceof Error ? e.message : '내려받지 못했어요.')
     } finally {
       setBusy(false)
     }
   }
   const close = () => {
+    setDone('')
     setDismissed(true)
     try {
       sessionStorage.setItem(DISMISS_KEY, '1')
@@ -101,11 +116,15 @@ export default function DriveSyncAgent() {
   }
   return (
     <div className="flex items-center gap-2 border-b border-line bg-brand-light px-4 py-2 text-sm print:hidden" role="status">
-      <span className="min-w-0 flex-1 font-bold text-brand-ink">{msg || '구글 드라이브와 맞추기 — 앱을 연 뒤 한 번 눌러 주세요'}</span>
-      <button type="button" className="btn btn-primary h-9 min-h-0 shrink-0 px-3 text-sm" disabled={busy} onClick={() => void go()}>
-        {busy ? '맞추는 중…' : '맞추기'}
-      </button>
-      <button type="button" className="btn btn-ghost h-9 min-h-0 shrink-0 px-2 text-sm text-ink-3" aria-label="이번에는 닫기" onClick={close}>
+      <span className={`min-w-0 flex-1 font-bold ${msg ? 'text-danger' : 'text-brand-ink'}`}>
+        {done || msg || '구글 동기화 · 다른 기기에서 기록했다면 먼저 내려받으세요'}
+      </span>
+      {!done && (
+        <button type="button" className="btn btn-primary h-9 min-h-0 shrink-0 px-3 text-sm" disabled={busy} onClick={() => void pull()}>
+          {busy ? '받는 중…' : '내려받기'}
+        </button>
+      )}
+      <button type="button" className="btn btn-ghost h-9 min-h-0 shrink-0 px-2 text-sm text-ink-3" aria-label="닫기" onClick={close}>
         닫기
       </button>
     </div>

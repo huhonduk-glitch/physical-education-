@@ -1,9 +1,9 @@
 /**
- * 구글 드라이브 자동 맞추기 (2026-11-13 교사 결정 '잠근 채로 · 선택 기능 · 지운 기록까지').
+ * 구글 동기화 (2026-11-13 교사 결정 '잠근 채로 · 선택 기능 · 지운 기록까지', 화면은 '올리기 · 내려받기').
  * - 권한은 drive.appdata 하나: 앱 전용 숨은 칸(appDataFolder)만 — 선생님 드라이브의 다른 파일은 보지도 건드리지도 못한다.
  *   (구글 분류: 민감하지 않은 권한)
  * - 서버 없음: 구글 로그인(Google Identity Services 토큰 방식)으로 받은 짧은 토큰(약 1시간)으로 브라우저가 바로 드라이브 API를 부른다.
- *   토큰을 다시 받으려면 선생님이 한 번 눌러야 한다(구글 정책) → 앱을 열 때 [맞추기] 한 번.
+ *   토큰을 다시 받으려면 선생님이 한 번 눌러야 한다(구글 정책) → 앱을 열 때 맨 위 [내려받기] 한 번.
  * - 올리는 것은 잠금 파일(lockFile.ts, 기기에서 비밀번호로 잠근 것) 하나뿐. 구글은 내용을 볼 수 없다.
  * - 이 파일만 구글과 통신한다. 구글 로그인 스크립트는 선생님이 켤 때만 불러온다.
  */
@@ -45,6 +45,8 @@ export interface DriveApi {
   /** id가 없으면 새로 만든다. 만든(바꾼) 파일 id를 돌려준다 */
   upload(text: string, id?: string): Promise<string>
   remove(id: string): Promise<void>
+  /** 연결한 구글 계정 메일 (화면에 보여 줄 것, 못 읽으면 null) */
+  account?(): Promise<string | null>
 }
 
 // ── 구글 로그인 (토큰) ──
@@ -132,7 +134,7 @@ async function call(token: string, url: string, init: RequestInit = {}): Promise
   } catch {
     throw new DriveError('인터넷에 연결되지 않았어요.', 'net')
   }
-  if (res.status === 401) throw new DriveError('구글 연결 시간이 끝났어요. [맞추기]를 다시 눌러 주세요.', 'auth')
+  if (res.status === 401) throw new DriveError('구글 연결 시간이 끝났어요. [올리기]나 [내려받기]를 다시 눌러 주세요.', 'auth')
   if (res.status === 403) throw new DriveError('구글 드라이브가 요청을 막았어요(권한 · 사용량). 잠시 뒤 다시 해 보세요.', 'other')
   if (!res.ok) throw new DriveError(`구글 드라이브 요청이 실패했어요 (${res.status}).`, 'other')
   return res
@@ -164,6 +166,14 @@ export function driveApi(token: string): DriveApi {
     },
     async remove(id) {
       await call(token, `${API}/${encodeURIComponent(id)}`, { method: 'DELETE' })
+    },
+    async account() {
+      try {
+        const res = await call(token, 'https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)')
+        return ((await res.json()) as { user?: { emailAddress?: string } }).user?.emailAddress ?? null
+      } catch {
+        return null
+      }
     },
   }
 }

@@ -1,9 +1,9 @@
 /**
- * 구글 드라이브 자동 맞추기 상태 · 지운 기록(tombstone) (2026-11-13).
+ * 구글 동기화 상태 · 지운 기록(tombstone) (2026-11-13).
  * - syncConf: 켰는지 · 비밀번호 · 기기 이름 · 마지막 맞춘 때. 비밀번호는 이 기기에만(백업 파일 · 합치기에서 빠짐, backup.ts SECRET_KEYS)
  * - syncTombstones: 이 기기에서 지운 줄 { 표, id, 지운 때 } — 다른 기기에서도 지우려고 드라이브 파일에 같이 넣는다.
- *   (잠금 파일 '합치기'는 지운 기록을 몰라서 지운 줄이 되살아났다 — 자동 맞추기에서는 지운 것도 따라가야 한다)
- * - Dexie 'deleting' 훅으로 모든 자료 표의 지우기를 잡는다(설정 표 · 표 비우기(복원)는 빼고). 맞추기를 켰을 때만 적는다.
+ *   (잠금 파일 '합치기'는 지운 기록을 몰라서 지운 줄이 되살아났다 — 구글 동기화에서는 지운 것도 따라가야 한다)
+ * - Dexie 'deleting' 훅으로 모든 자료 표의 지우기를 잡는다(설정 표 · 표 비우기(복원)는 빼고). 구글 동기화에 연결했을 때만 적는다.
  */
 import type { PeDatabase } from './db'
 import { BACKUP_TABLES } from './backup'
@@ -12,9 +12,19 @@ export interface SyncConf {
   enabled: boolean
   /** 잠금 비밀번호 (이 기기에만) */
   pass: string
-  /** 이 기기 이름 (드라이브 파일에 마지막으로 올린 기기 표시) */
+  /** 이 기기 이름 (구글 사본에 '마지막으로 올린 기기'로) */
   device: string
-  lastAt?: number
+  /** 연결한 구글 계정 메일 (화면 표시용, 못 읽으면 없음) */
+  account?: string
+  /** 기록하면 자동으로 올리기 (없으면 켜짐) */
+  autoUp?: boolean
+  /** 이 기기에서 마지막으로 올린 때 · 내려받은 때 (ms) */
+  upAt?: number
+  downAt?: number
+  /** 구글 사본: 마지막으로 올린 때(ISO) · 기기 */
+  remoteAt?: string
+  remoteDevice?: string
+  /** 마지막 결과 한 줄 */
   lastNote?: string
 }
 
@@ -67,7 +77,7 @@ const recording = new WeakMap<PeDatabase, boolean>()
 const pending = new WeakMap<PeDatabase, Tombstone[]>()
 const timers = new WeakMap<PeDatabase, ReturnType<typeof setTimeout>>()
 const installed = new WeakSet<PeDatabase>()
-/** 바뀐 것이 있으면 true (자동 맞추기 때를 정하려고) */
+/** 바뀐 수 (자동 올리기 때를 정하려고) */
 const dirty = new WeakMap<PeDatabase, number>()
 
 export function changeCount(db: PeDatabase): number {
@@ -82,7 +92,7 @@ async function flush(db: PeDatabase) {
   await writeTombstones(db, mergeTombstones(cur, add))
 }
 
-/** 앱을 켤 때 한 번. 맞추기가 켜져 있으면 지운 줄을 적는다 */
+/** 앱을 켤 때 한 번. 구글 동기화에 연결돼 있으면 지운 줄을 적는다 */
 export async function installSyncHooks(db: PeDatabase): Promise<void> {
   if (!installed.has(db)) {
     installed.add(db)
@@ -114,7 +124,7 @@ export async function installSyncHooks(db: PeDatabase): Promise<void> {
   recording.set(db, !!conf?.enabled)
 }
 
-/** 시험 · 맞추기 직전에: 아직 안 적은 지운 줄을 바로 적기 */
+/** 시험 · 올리기 · 내려받기 직전에: 아직 안 적은 지운 줄을 바로 적기 */
 export async function flushTombstones(db: PeDatabase): Promise<void> {
   clearTimeout(timers.get(db))
   await flush(db)
