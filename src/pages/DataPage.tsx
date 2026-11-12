@@ -13,6 +13,7 @@ import { saveText } from '../lib/download'
 import { LockError, isLocked, lockJson, lockedFileName, passwordProblem, unlockJson, type LockedFile } from '../lib/lockFile'
 import { PIN_SETTING_KEY, verifyPin, type StoredPin } from '../lib/pin'
 import { useApp } from '../state/AppContext'
+import DriveSyncCard from './DriveSyncCard'
 
 /** 백업 · 복원 · 학년도 넘기기 · 전체 삭제 (CLAUDE.md 4-11) */
 export default function DataPage() {
@@ -146,6 +147,8 @@ export default function DataPage() {
         </section>
 
         <LockedSection onMade={() => void updateSettings({ lastBackupAt: Date.now() })} />
+
+        <DriveSyncCard />
 
         {snapshots && snapshots.length > 0 && (
           <section className="card space-y-3">
