@@ -7,9 +7,12 @@ import FeatureSheet from '../components/FeatureSheet'
 import Icon from '../components/Icon'
 import InstallGuide from '../components/InstallGuide'
 import WeatherCard from '../components/WeatherCard'
+import ClockTile from '../components/home/ClockTile'
+import DdayTile from '../components/home/DdayTile'
+import MonthCalendar from '../components/home/MonthCalendar'
+import { periodRange, pickDdays, weekDates } from '../lib/dash'
 import WeeklyCard from '../components/WeeklyCard'
-import { longDateLabel, shortDateLabel, todayStr } from '../lib/dates'
-import { dday as ddayOf, upcomingEvents } from '../lib/neisOpenApi'
+import { longDateLabel, todayStr } from '../lib/dates'
 import { FEATURES, featureOn } from '../lib/features'
 import { GROUP_COLORS, readLastGroup, SEMESTER_LABEL } from '../lib/groups'
 import { lessonFocus, setupProgress, setupSteps } from '../lib/home'
@@ -39,8 +42,8 @@ export default function HomePage() {
   const features = FEATURES.filter((f) => featureOn(settings.features, f.id) && !TAB_FEATURES.includes(f.id))
   const recordsOn = featureOn(settings.features, 'records')
   const today = todayStr()
-  const upcoming = upcomingEvents(settings.neisSchedule?.events ?? [], today)
-  const dday = (d: string) => ddayOf(d, today)
+  const schoolEvents = settings.neisSchedule?.events ?? []
+  const ddays = pickDdays(schoolEvents, settings.workEvents ?? [], today)
   const work = upcomingWork(settings.workEvents ?? [], today, 14)
   const install = currentInstallInfo()
   // 아이폰 · 카톡 안 브라우저의 빨간 안내는 자료가 지워질 수 있어 맨 위, 설치 권유(파랑)는 맨 아래
@@ -95,14 +98,24 @@ export default function HomePage() {
       </header>
 
       <div className="page flex flex-col gap-5 pt-3 pb-8 xl:grid xl:max-w-[72rem] xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:items-start xl:gap-6">
+        <div className="order-1 space-y-3 empty:hidden xl:order-none xl:col-span-2">
+          <AutoBackupNotice />
+          {urgentInstall && <InstallGuide place="home" />}
+          {/* 시작 준비에 '첫 백업'이 이미 보이면 겹치지 않게 */}
+          {!showSetup && <BackupWarning hasData={(students?.length ?? 0) > 0} />}
+        </div>
+
+        {/* 맨 위 한 줄 (2026-11-12 대시보드): 시계 · 날씨 · D-day. 폰은 시계 | D-day 두 칸 + 날씨 한 줄 */}
+        <div className="order-1 grid grid-cols-2 gap-3 xl:order-none xl:col-span-2 xl:grid-cols-[1fr_1.25fr_1fr]">
+          <ClockTile timetable={recordsOn ? settings.timetable : []} periodStarts={settings.periodStarts} periodMinutes={settings.periodMinutes} nameOf={(id) => groupById.get(id)?.name} />
+          <div className="order-3 col-span-2 xl:order-none xl:col-span-1">
+            <WeatherCard />
+          </div>
+          <DdayTile list={ddays} />
+        </div>
+
         {/* 왼쪽: 오늘 (폰에서는 contents로 풀려 아래 order 순서대로 섞인다) */}
         <div className="contents xl:flex xl:flex-col xl:gap-5">
-          <div className="order-1 space-y-3 empty:hidden xl:order-none">
-            <AutoBackupNotice />
-            {urgentInstall && <InstallGuide place="home" />}
-            {/* 시작 준비에 '첫 백업'이 이미 보이면 겹치지 않게 */}
-            {!showSetup && <BackupWarning hasData={(students?.length ?? 0) > 0} />}
-          </div>
 
           {/* ① 지금 수업 — 이 화면에서 꽉 찬 파랑은 이것 하나 */}
           {recordsOn && (focus && focusGroup ? (
@@ -226,7 +239,7 @@ export default function HomePage() {
                   <Icon name="chevronDown" size={18} className="text-ink-3 transition-transform group-open:rotate-180" />
                 </summary>
                 <div className="overflow-x-auto px-2 pb-2">
-                  <WeekTable now={now} period={period} timetable={settings.timetable} groupById={groupById} />
+                  <WeekTable now={now} period={period} timetable={settings.timetable} groupById={groupById} dates={weekDates(today)} starts={settings.periodStarts} minutes={settings.periodMinutes} />
                 </div>
               </details>
             </section>
@@ -235,9 +248,9 @@ export default function HomePage() {
 
         {/* 오른쪽: 내 것 */}
         <div className="contents xl:flex xl:flex-col xl:gap-5">
-          {/* 날씨 · 미세먼지 — 실외 수업 참고 (6-11 H) */}
-          <div className="order-3 xl:order-none">
-            <WeatherCard />
+          {/* 달력 — 학사일정 · 업무 일정이 바로 보이게 (2026-11-12) */}
+          <div className="order-4 xl:order-none">
+            <MonthCalendar today={today} school={schoolEvents} work={settings.workEvents ?? []} />
           </div>
           {/* 이번 주 수업 요약 (2026-11-09) — 숫자만, 이름은 요약 화면에서 */}
           {recordsOn && (
@@ -313,23 +326,6 @@ export default function HomePage() {
             </section>
           )}
 
-          {/* ⑥ 학사일정 */}
-          {upcoming.length > 0 && (
-            <section className="order-7 space-y-2 xl:order-none">
-              <SectionTitle title="다가오는 학사일정" />
-              <div className="card overflow-hidden p-0">
-                {upcoming.map((e) => (
-                  <div key={`${e.date}-${e.name}`} className="list-row min-h-[52px]">
-                    <span className="w-20 shrink-0 font-bold text-ink-2 tabular-nums">{shortDateLabel(e.date)}</span>
-                    <span className="min-w-0 flex-1 truncate font-semibold">{e.name}</span>
-                    {e.grades.length > 0 && e.grades.length < 3 && <span className="hint">{e.grades.join('·')}학년</span>}
-                    <span className="badge bg-fill text-ink-3">{dday(e.date)}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
           {/* ⑦ 기초 설정 · 평가계획서 넣기 (교사 가안: 초기설정은 홈에) — 메뉴 표 src/lib/nav.ts의 홈 묶음 */}
           {visibleGroups(NAV[0], settings.features).map((g) => (
             <section key={g.title} className="order-9 space-y-2 lg:hidden">
@@ -374,21 +370,30 @@ function WeekTable({
   period,
   timetable,
   groupById,
+  dates,
+  starts,
+  minutes,
 }: {
+  dates: string[]
+  starts: readonly string[]
+  minutes: number
   now: Date
   period: number | null
   timetable: { day: number; period: number; groupId: string }[]
   groupById: Map<string, { id: string; name: string; color: string }>
 }) {
   return (
-    <table className="w-full table-fixed border-separate border-spacing-1 text-[0.78rem]">
+    <table className="w-full table-fixed border-separate border-spacing-1 text-[0.8rem] xl:text-[0.86rem]">
       <thead>
         <tr>
-          <th className="w-6" />
+          <th className="w-9 xl:w-[4.6rem]" />
           {['월', '화', '수', '목', '금'].map((d, i) => (
             <th key={d} className="py-0.5 font-extrabold text-ink-3" aria-current={now.getDay() === i + 1 ? 'date' : undefined}>
               {/* 오늘 요일은 알약으로, 그 열의 빈칸은 옅은 파랑 (2026-11-12) */}
               {now.getDay() === i + 1 ? <span className="inline-block rounded-full bg-brand px-2 text-white">{d}</span> : d}
+              <span className={`block text-[0.68rem] font-bold tabular-nums ${now.getDay() === i + 1 ? 'text-brand' : 'text-ink-3/80'}`}>
+                {Number(dates[i].slice(5, 7))}/{Number(dates[i].slice(8))}
+              </span>
             </th>
           ))}
         </tr>
@@ -396,15 +401,19 @@ function WeekTable({
       <tbody>
         {Array.from({ length: Math.max(6, ...timetable.map((t) => t.period)) }, (_, i) => i + 1).map((p) => (
           <tr key={p}>
-            <th className="text-center font-bold text-ink-3 tabular-nums">{p}</th>
+            <th className="text-center font-bold text-ink-3 tabular-nums">
+              <span className="block text-[0.86rem] font-extrabold text-ink-2">{p}</span>
+              <span className="block text-[0.6rem] leading-tight font-semibold xl:hidden">{starts[p - 1] ?? ''}</span>
+              <span className="hidden text-[0.64rem] leading-tight font-semibold xl:block">{periodRange(starts[p - 1], minutes)}</span>
+            </th>
             {[1, 2, 3, 4, 5].map((d) => {
               const t = timetable.find((x) => x.day === d && x.period === p)
               const g = t ? groupById.get(t.groupId) : undefined
-              if (!g) return <td key={d} className={`h-10 rounded-md ${now.getDay() === d ? 'bg-brand-light' : 'bg-fill/60'}`} />
+              if (!g) return <td key={d} className={`h-11 rounded-lg ${now.getDay() === d ? 'bg-brand-light' : 'bg-fill/60'}`} />
               const c = GROUP_COLORS[g.color as keyof typeof GROUP_COLORS] ?? GROUP_COLORS.blue
               const live = now.getDay() === d && period === p
               return (
-                <td key={d} className={`h-10 rounded-md p-0 ${live ? 'ring-2 ring-brand' : now.getDay() === d ? 'ring-1 ring-brand/50' : ''}`} style={{ background: c.bg }}>
+                <td key={d} className={`h-11 rounded-lg p-0 text-center ${live ? 'ring-2 ring-brand' : now.getDay() === d ? 'ring-1 ring-brand/50' : ''}`} style={{ background: c.bg }}>
                   <Link to={`/groups/${g.id}`} className="line-clamp-2 block px-1 py-0.5 leading-tight font-bold break-all text-ink" title={g.name}>
                     {shortName(g.name)}
                   </Link>

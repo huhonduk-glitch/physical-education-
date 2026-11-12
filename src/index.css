@@ -205,6 +205,13 @@ textarea {
     padding: 1.1rem;
     box-shadow: var(--shadow-card);
   }
+  /* 홈 맨 위 칸(시계 · 날씨 · D-day, 2026-11-12): 같은 높이로 나란히 */
+  .dash-tile {
+    border-radius: 20px;
+    padding: 0.9rem 1rem;
+    min-height: 132px;
+    box-shadow: var(--shadow-card);
+  }
   .card-title {
     font-size: 1.1rem;
     font-weight: 800;

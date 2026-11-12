@@ -358,6 +358,25 @@ export async function seedDemo(db: PeDatabase, opts: DemoSeedOptions = {}): Prom
       timetable,
       termsAgreed: { version: TERMS_VERSION, at: ts },
       lastBackupAt: ts, // 시연 중에 백업 경고가 뜨지 않게
+      // 홈 대시보드(2026-11-12): 달력 · D-day · 날씨가 비어 보이지 않게 가상 일정과 서울 한가운데 위치
+      neisSchedule: {
+        fetchedAt: ts,
+        events: [
+          { date: addDays(today, -6), name: '학부모 공개수업', grades: [] },
+          { date: addDays(today, 2), name: '동아리 발표회', grades: [] },
+          { date: addDays(today, 9), name: '2학기 2차 지필평가', grades: [] },
+          { date: addDays(today, 10), name: '2학기 2차 지필평가', grades: [] },
+          { date: addDays(today, 11), name: '2학기 2차 지필평가', grades: [] },
+          { date: addDays(today, 17), name: '개교기념일', grades: [] },
+          { date: addDays(today, 30), name: '겨울 방학식', grades: [] },
+        ],
+      },
+      workEvents: [
+        { id: 'demo-w1', date: addDays(today, 4), end: addDays(today, 6), title: 'PAPS 2회차 측정', kind: 'paps' },
+        { id: 'demo-w2', date: addDays(today, 13), title: '수행평가 나이스 입력 마감', kind: 'neis' },
+        { id: 'demo-w3', date: addDays(today, 20), title: '학교스포츠클럽 리그 결승', kind: 'contest' },
+      ],
+      weatherLoc: { nx: 60, ny: 127, sido: '서울', station: '중구', label: '서울 (시연)' },
     })
     await db.settings.put({ key: PIN_SETTING_KEY, value: pin })
     await db.settings.put({ key: DEMO_SEEDED_KEY, value: ts })
