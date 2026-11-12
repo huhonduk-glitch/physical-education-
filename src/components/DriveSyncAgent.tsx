@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { db } from '../db/db'
 import { changeCount, installSyncHooks, readSyncConf } from '../db/syncState'
 import { IS_DEMO } from '../lib/demo'
-import { DriveError, preloadGis } from '../lib/gdrive'
+import { DriveError, GOOGLE_CLIENT_ID, preloadGis } from '../lib/gdrive'
 import { SYNC_EVENT, ensureToken, runSync, sessionToken } from '../state/driveSync'
 
 const DISMISS_KEY = 'pelog.driveBarDismissed'
@@ -70,7 +70,7 @@ export default function DriveSyncAgent() {
     }
   }, [enabled])
 
-  const showBar = enabled && !IS_DEMO && !hasToken && !dismissed
+  const showBar = enabled && !!GOOGLE_CLIENT_ID && !IS_DEMO && !hasToken && !dismissed
   useEffect(() => {
     if (showBar) preloadGis()
   }, [showBar])

@@ -83,10 +83,12 @@ function OffView({ onChange }: { onChange: () => void }) {
       <p className="hint">폰 · 교무실 PC처럼 여러 기기를 쓸 때, 파일을 옮기지 않아도 기록이 저절로 하나로 모여요. 처음엔 꺼져 있어요.</p>
       <ul className="space-y-1.5 rounded-2xl bg-fill p-3 text-sm font-semibold text-ink-2">
         {NOTES.map((n) => (
-          <li key={n}>· {n}</li>
+          <li key={n} className="pl-3 -indent-3">
+            · {n}
+          </li>
         ))}
       </ul>
-      <input className="field" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="맞추기 비밀번호 (8자 이상, 다른 기기에서도 같게)" aria-label="맞추기 비밀번호" />
+      <input className="field" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="맞추기 비밀번호 (8자 이상)" aria-label="맞추기 비밀번호 (다른 기기에서도 같게)" />
       <input className="field" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="비밀번호 한 번 더" aria-label="맞추기 비밀번호 확인" />
       {problem && <p className="text-sm font-bold text-caution">{problem}</p>}
       <label className="flex min-h-[48px] items-start gap-3">
@@ -142,7 +144,7 @@ function OnView({ conf, onChange }: { conf: SyncConf; onChange: () => void }) {
     <div className="space-y-3">
       <p className="rounded-2xl bg-ok-light px-3 py-2 text-sm font-bold text-ok">
         켜져 있어요 · 이 기기 {conf.device}
-        {conf.lastAt ? ` · 마지막 ${new Date(conf.lastAt).toLocaleString('ko-KR')}` : ''}
+        {conf.lastAt ? ` · 마지막 ${new Date(conf.lastAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : ''}
       </p>
       {conf.lastNote && <p className="hint">{conf.lastNote}</p>}
       <p className="hint">앱을 연 뒤 한 번 [지금 맞추기](또는 맨 위 [맞추기])를 누르면, 그다음엔 기록할 때마다 자동으로 맞춰요.</p>
