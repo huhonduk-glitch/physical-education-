@@ -110,6 +110,9 @@ function OffView({ onChange }: { onChange: () => void }) {
       <input className="field" type="password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="동기화 비밀번호 (8자 이상)" aria-label="동기화 비밀번호 (다른 기기에서도 같게)" />
       <input className="field" type="password" autoComplete="new-password" value={pw2} onChange={(e) => setPw2(e.target.value)} placeholder="비밀번호 한 번 더" aria-label="동기화 비밀번호 확인" />
       {problem && <p className="text-sm font-bold text-caution">{problem}</p>}
+      <a href={`${import.meta.env.BASE_URL}privacy/`} target="_blank" rel="noopener" className="block text-sm font-bold text-brand">
+        개인정보 처리방침(구글 데이터를 어떻게 쓰는지) ›
+      </a>
       <label className="flex min-h-[48px] items-start gap-3">
         <input type="checkbox" className="mt-1 h-5 w-5 shrink-0" checked={agree} onChange={(e) => setAgree(e.target.checked)} />
         <span className="text-[0.95rem] font-bold">위 내용을 읽었고, 학교 · 교육청 정보보안 지침을 확인했어요.</span>

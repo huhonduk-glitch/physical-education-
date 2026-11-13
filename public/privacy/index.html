@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PE LOG 개인정보 처리방침</title>
+<meta name="description" content="PE LOG(체육수업 종합 플랫폼) 개인정보 처리방침. 서버가 없고 학생 정보는 선생님 기기 안에만 저장돼요. 선택 기능(구글 동기화 · AI · 날씨 등)이 보내는 것을 모두 적었어요.">
+<meta name="theme-color" content="#021536">
+<link rel="icon" href="../icons/favicon-64.png">
+<style>
+  :root {
+    color-scheme: light;
+    --brand: #1b64da;
+    --navy: #021536;
+    --ink: #191f28;
+    --ink2: #4e5968;
+    --ink3: #6b7684;
+    --line: #e5e8eb;
+    --fill: #f2f4f6;
+    --bg: #f6f7f9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+    font-size: 17px;
+    line-height: 1.75;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+  a { color: var(--brand); }
+  header { background: var(--navy); color: #fff; padding: 36px 16px 28px; }
+  header .in, main, footer .in { max-width: 820px; margin: 0 auto; }
+  header h1 { margin: 0 0 6px; font-size: 1.7rem; line-height: 1.3; }
+  header p { margin: 0; color: #c9d6ea; font-size: .95rem; }
+  main { padding: 20px 16px 8px; }
+  section { background: #fff; border: 1px solid var(--line); border-radius: 20px; padding: 20px 20px 8px; margin-bottom: 16px; }
+  h2 { font-size: 1.2rem; margin: 0 0 10px; }
+  h3 { font-size: 1.02rem; margin: 16px 0 4px; }
+  p, li { color: var(--ink); }
+  ul { padding-left: 1.2em; margin: 6px 0 14px; }
+  li { margin: 4px 0; }
+  .lead { font-weight: 700; }
+  .muted { color: var(--ink3); font-size: .92rem; }
+  .items { display: grid; gap: 10px; margin: 6px 0 14px; }
+  .item { border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; }
+  .item h3 { margin: 0; }
+  .item p { margin: 2px 0; }
+  .item .when { color: var(--ink2); font-size: .92rem; font-weight: 600; }
+  .item .when::before { content: '언제 · '; }
+  code { background: var(--fill); padding: 1px 6px; border-radius: 6px; font-size: .9em; }
+  footer { padding: 8px 16px 40px; color: var(--ink3); font-size: .9rem; }
+  @media print { header { background: none; color: #000; } header p { color: #333; } section { border: 0; padding: 0; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="in">
+    <h1>PE LOG 개인정보 처리방침</h1>
+    <p>체육수업 종합 플랫폼 · 시행일 2026년 11월 13일</p>
+  </div>
+</header>
+
+<main>
+  <section>
+    <h2>1. 한눈에 보기</h2>
+    <ul>
+      <li class="lead">PE LOG는 학생 정보를 서버로 보내지 않아요. 제작자는 학생 정보를 받지도, 모으지도, 보관하지도 않아요.</li>
+      <li>제작자가 운영하는 저장 공간은 선생님이 고를 때만 쓰는 <b>학교 공유 공간</b>(교구 대여 · 체육관 예약, 학생 정보 없음) 하나뿐이에요.</li>
+      <li>학생 명렬과 모든 기록은 <b>선생님 기기(브라우저) 안</b>에만 저장돼요.</li>
+      <li>아래 <b>선택 기능</b>을 선생님이 켜거나 버튼을 누를 때만, 정해진 내용이 그 기능의 상대(구글 · 선생님이 고른 AI · 공공 데이터 등)로 가요. 무엇이 가는지 모두 적었어요.</li>
+      <li>광고 · 분석 · 추적 도구를 쓰지 않아요.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2. 기기 안에 저장하는 것</h2>
+    <p>선생님이 넣은 학생 명렬(학년 · 반 · 번호 · 이름 · 성별 · 학번), 누가기록 · 출결 · 견학 · PAPS · 수행평가 · 세특 글 · 수업 일지 · 진도표 등과 앱 설정은 이 기기 브라우저의 저장 공간(IndexedDB · localStorage)에만 있어요. 생년월일은 명렬 파일에 있어도 저장하지 않아요.</p>
+    <p>브라우저 자료를 지우거나 앱을 지우면 함께 사라지므로, 선생님이 [설정 → 백업 · 학년도]에서 백업 파일을 받아 보관해요. 백업 파일은 선생님 기기에 내려받아지며 어디로도 보내지 않아요.</p>
+  </section>
+
+  <section>
+    <h2>3. 선택 기능이 밖으로 보내는 것</h2>
+    <div class="items">
+      <div class="item"><h3>구글 동기화</h3><p class="when">선생님이 연결하고 올리기 · 내려받기 할 때</p><p>선생님 본인 구글 드라이브의 앱 전용 칸 — <b>비밀번호로 잠근 사본 하나</b>(아래 4절)</p></div>
+      <div class="item"><h3>세특 AI 초안 · 다듬기</h3><p class="when">[AI 초안] · [AI로 다듬기]를 누를 때</p><p>선생님이 고른 AI(OpenRouter 또는 Anthropic Claude. '키 없이'를 고르면 앱은 보내지 않고 요청문만 복사해요) — 과목, 근거 기록 또는 초안, 분량 지시. <b>학생 이름은 보내지 않아요</b>(글 속 이름도 '학생'으로 가림). 수준 숫자 · 점수도 보내지 않아요</p></div>
+      <div class="item"><h3>AI 보조심판</h3><p class="when">[AI에게 묻기]를 누를 때</p><p>같은 AI — 상황 글(학생 이름은 '학생'으로 가림), 그 종목 규칙 요약, 우리 반 규칙</p></div>
+      <div class="item"><h3>견적서 AI 읽기</h3><p class="when">[AI로 읽기]를 누를 때</p><p>같은 AI — 선생님이 잘라 낸 견적서 그림과 정해진 요청문. 학생 정보 없음</p></div>
+      <div class="item"><h3>나이스 · 컴시간 시간표, 학사일정</h3><p class="when">불러오기 버튼을 누를 때</p><p>나이스 교육정보 개방 포털 · 컴시간알리미 — 학교 이름 · 학교 코드 · 날짜 · 주 번호(나이스는 선생님이 넣은 인증키도). 컴시간과, 인증키를 넣지 않은 나이스는 제작자의 중계 서버를 거쳐요. 학생 정보 없음</p></div>
+      <div class="item"><h3>날씨 · 미세먼지</h3><p class="when">홈 날씨 칸을 켰을 때</p><p>기상청 · 에어코리아(중계 서버를 거침) — 지역 격자 번호 · 날짜 · 시각 · 시도 이름. 위도 · 경도는 저장하거나 보내지 않아요</p></div>
+      <div class="item"><h3>학교 공유 공간</h3><p class="when">선생님이 공유 공간에 연결했을 때</p><p>제작자의 중계 서버 저장소 — 교구 이름 · 수량 · 선생님 이름 · 날짜 · 교시 · 장소 · 짧은 메모. <b>학생 정보는 받지 않아요</b>(서버가 막음). 공유 코드와 비밀번호를 아는 사람만 봐요</p></div>
+    </div>
+    <p class="muted">AI 키 · 동기화 비밀번호 · 공유 공간 비밀번호는 이 기기 설정에만 두고 백업 파일에서도 빠져요. AI로 보낸 내용은 그 AI 회사의 정책을 따르며, 무료 AI는 받은 내용을 학습에 쓸 수 있어요. 중계 서버는 정해진 주소만 전달하고 내용을 저장하지 않아요(같은 요청 10분 동안 임시 보관).</p>
+  </section>
+
+  <section>
+    <h2>4. 구글 동기화와 구글 사용자 데이터</h2>
+    <h3>쓰는 권한</h3>
+    <p><code>https://www.googleapis.com/auth/drive.appdata</code> 하나만 써요. 구글 드라이브 안에서 <b>PE LOG 전용 숨은 칸(appDataFolder)</b>만 열 수 있는 권한이라, 선생님 드라이브의 다른 파일(사진 · 문서 등)은 보지도 바꾸지도 못해요.</p>
+    <h3>읽고 쓰는 것</h3>
+    <ul>
+      <li>앱 전용 칸의 파일 <code>pelog-sync.json</code> 하나를 만들고, 읽고, 바꾸고, (선생님이 고르면) 지워요.</li>
+      <li>이 파일은 선생님 기기에서 <b>선생님이 정한 비밀번호로 잠근 뒤</b>(PBKDF2-SHA256 60만 번 → AES-GCM 256) 올라가요. 구글도 제작자도 내용을 볼 수 없어요. 비밀번호는 그 기기에만 있어요.</li>
+      <li>어느 계정에 연결했는지 화면에 보여 주려고 구글 계정 메일 주소를 읽을 수 있어요. 그 기기 설정에만 두고 어디로도 보내지 않아요.</li>
+    </ul>
+    <h3>쓰는 목적과 지키는 것</h3>
+    <ul>
+      <li>선생님이 자기 기기들(휴대폰 · 교무실 PC 등) 사이에서 자기 자료를 백업하고 옮기는 데에만 써요.</li>
+      <li>서버를 거치지 않고 선생님 브라우저와 구글 사이에서만 오가요. 제작자에게 전송 · 저장되지 않아요.</li>
+      <li>구글 사용자 데이터를 판매 · 공유하거나, 광고에 쓰거나, AI 학습에 쓰지 않아요.</li>
+      <li>구글 로그인 토큰(약 1시간)은 그 브라우저 탭에만 두고, 기기에 오래 남기지 않아요.</li>
+    </ul>
+    <h3>지우기 · 연결 해제</h3>
+    <ul>
+      <li>앱: [설정 → 백업 · 학년도 → 구글 동기화 → 구글 연결 끊기]에서 <b>구글 사본도 지우기</b>를 고르면 드라이브의 사본을 지워요.</li>
+      <li>구글 드라이브: 설정 → 앱 관리 → PE LOG → <b>숨겨진 앱 데이터 삭제</b></li>
+      <li>권한 거두기: <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>에서 PE LOG 연결 삭제</li>
+    </ul>
+    <p class="muted">PE LOG가 구글 API로 받은 정보를 쓰고 옮기는 방식은 제한적 사용(Limited Use) 요건을 포함한 <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API 서비스 사용자 데이터 정책</a>을 따릅니다.</p>
+  </section>
+
+  <section>
+    <h2>5. 학생 정보와 선생님의 책임</h2>
+    <p>PE LOG는 선생님이 수업 기록을 정리하는 도구예요. 학생 정보를 앱에 넣고, 백업 파일을 보관하고, 선택 기능(구글 동기화 · AI 등)을 쓰는 것은 소속 학교 · 교육청의 개인정보 보호 지침에 따라 선생님이 정해요. 공용 PC에서는 쓰지 말고, 앱 잠금 PIN을 꼭 쓰세요(PIN은 화면 잠금이며 자료 암호화는 아니에요).</p>
+  </section>
+
+  <section>
+    <h2>6. 앱 파일과 문의</h2>
+    <p>앱 파일은 GitHub Pages(<code>huhonduk-glitch.github.io</code>)에서 받아요. GitHub는 웹사이트 운영을 위해 일반적인 접속 기록을 남길 수 있으며, 이는 <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub 개인정보 처리방침</a>을 따릅니다. PE LOG 자체는 쿠키 · 분석 도구를 쓰지 않아요.</p>
+    <p>문의 · 오류 제보: <a href="https://github.com/huhonduk-glitch/physical-education-/issues">GitHub 저장소 Issues</a>. 이 방침이 바뀌면 이 페이지의 시행일을 고치고 앱 '업데이트 소식'에 알려요.</p>
+  </section>
+
+  <section lang="en">
+    <h2>English summary (Google user data)</h2>
+    <ul>
+      <li>PE LOG is a free web app for PE teachers with no backend for user records. All records stay in the teacher's own browser. The developer does not collect, receive, or store student data. (The only developer-run storage is an optional "school shared space" for equipment loans and gym booking, which contains no student data and no Google user data.)</li>
+      <li><b>Google Drive sync (optional)</b> uses only the <code>drive.appdata</code> scope. PE LOG creates, reads, updates, and (on request) deletes a single file, <code>pelog-sync.json</code>, in the app's hidden appDataFolder. It cannot see any other Drive files.</li>
+      <li>The file is encrypted on the teacher's device with a password only the teacher knows (PBKDF2-SHA256, 600,000 iterations → AES-GCM 256) before upload. Neither Google nor the developer can read it. PE LOG may read the account's email address only to show which account is connected; it stays on the device.</li>
+      <li>The data is used only to back up and move the teacher's own records between the teacher's own devices. It goes directly between the browser and Google; it is never sent to the developer, sold, shared, used for advertising, or used to train AI models.</li>
+      <li>Delete: in the app (Disconnect → also delete the Google copy), or Google Drive → Settings → Manage apps → PE LOG → Delete hidden app data. Revoke access at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</li>
+      <li>PE LOG's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</li>
+      <li>Contact: <a href="https://github.com/huhonduk-glitch/physical-education-/issues">GitHub Issues</a>.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="in">
+    <p style="margin:0"><a href="../manual/">사용 설명서</a> · <a href="../">앱 열기</a> · PE LOG · 체육수업 종합 플랫폼 · 제작 DEOK TT · 무료</p>
+  </div>
+</footer>
+</body>
+</html>

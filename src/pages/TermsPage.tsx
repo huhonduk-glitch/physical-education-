@@ -106,6 +106,11 @@ export default function TermsPage() {
       <div className="page space-y-4 pb-8">
         <InstallGuide place="help" />
         <TermsList />
+        <p className="text-center">
+          <a href={`${import.meta.env.BASE_URL}privacy/`} target="_blank" rel="noopener" className="font-bold text-brand">
+            개인정보 처리방침 보기 ›
+          </a>
+        </p>
         {at && <p className="hint text-center">{new Date(at).toLocaleDateString('ko-KR')}에 확인했어요.</p>}
       </div>
     </>
