@@ -10,6 +10,11 @@
 
 /** 구글 클라우드 'OAuth 클라이언트 ID' (공개 값 — 비밀이 아님). 비어 있으면 기능이 '준비 중'으로 보인다 */
 export const GOOGLE_CLIENT_ID = '130208598798-hcdl9jfmp8hpgnshnkivo6ugen5rgq6q.apps.googleusercontent.com'
+/**
+ * 구글 클라우드 동의 화면이 아직 '테스트 중'인지 (2026-11-13: 테스트 중 — 등록한 테스트 사용자만 로그인됨).
+ * [앱 게시]로 '프로덕션'이 되면 false로 바꾼다 → 연결 화면의 '시범 운영' 안내가 사라진다
+ */
+export const GOOGLE_TESTING = true
 export const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata'
 export const SYNC_FILE_NAME = 'pelog-sync.json'
 const GIS_SRC = 'https://accounts.google.com/gsi/client'

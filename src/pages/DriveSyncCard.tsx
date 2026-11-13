@@ -5,7 +5,7 @@ import { db } from '../db/db'
 import { SyncPassError, peekRemote, removeRemote } from '../db/driveSync'
 import { patchSyncConf, readSyncConf, writeSyncConf, type SyncConf } from '../db/syncState'
 import { IS_DEMO } from '../lib/demo'
-import { GOOGLE_CLIENT_ID, driveApi, preloadGis, revokeDriveToken } from '../lib/gdrive'
+import { GOOGLE_CLIENT_ID, GOOGLE_TESTING, driveApi, preloadGis, revokeDriveToken } from '../lib/gdrive'
 import { passwordProblem } from '../lib/lockFile'
 import { SYNC_EVENT, deviceName, ensureToken, saveSessionToken, sessionToken, when } from '../state/driveSync'
 import { useSyncRunner } from '../state/useSyncRunner'
@@ -95,6 +95,11 @@ function OffView({ onChange }: { onChange: () => void }) {
   }
   return (
     <div className="space-y-3">
+      {GOOGLE_TESTING && (
+        <p className="rounded-2xl bg-caution-light px-3 py-2 text-sm font-bold text-caution">
+          지금은 시범 운영 중이라, 앱 제작자가 등록한 구글 계정만 연결돼요. 연결이 막히면 위 [다른 기기로 옮기기]를 써 주세요.
+        </p>
+      )}
       <ul className="space-y-1.5 rounded-2xl bg-fill p-3 text-sm font-semibold text-ink-2">
         {NOTES.map((n) => (
           <li key={n} className="pl-3 -indent-3">
