@@ -7,6 +7,9 @@ import type { StudentPaps } from '../lib/paps'
 import { applyOverrides, linkAcrossYears, type YearLink, type YearLinkOverrides } from '../lib/yearLink'
 import type { SchoolPapsRow } from '../lib/schoolPaps'
 import type { ClinicChange } from '../lib/clinic'
+import type { KingStudent } from '../lib/fitKing'
+import { FACTORS, representative, type Cell } from '../lib/paps'
+import { EXCLUDED_KEY } from './papsRepo'
 
 /** 학생 여러 명의 리포트를 한 번에 (반마다 PAPS 설정을 따로 읽는다) */
 export async function loadReports(
@@ -127,6 +130,45 @@ export async function loadClinicChanges(
         latest: studentSummary(ctx.standards, s, ctx.schoolLevel, sel(latest.config), l.get(s.id), ctx.flexMode),
         latestRound: rid ? (roundNo.get(rid) ?? 1) : 1,
       })
+    }
+  }
+  return out
+}
+
+/**
+ * 체력왕 선발 (2026-11-13): 한 학년 재학생의 종목별 **가장 좋은 기록** — 모든 회차 · 차수 · 좌우 가운데 대표 기록 규칙대로
+ * (높을수록 좋은 종목은 최고값, 낮을수록 좋은 종목은 최저값). BMI는 쓰지 않는다. 종목은 그 반의 측정 종목 설정.
+ */
+export async function loadKingStudents(db: PeDatabase, schoolYear: number, grade: number, std: PapsStandards): Promise<KingStudent[]> {
+  const students = (await db.students.where('schoolYear').equals(schoolYear).toArray()).filter((s) => s.status === '재학' && s.grade === grade)
+  const byClass = new Map<number, Student[]>()
+  for (const s of students) byClass.set(s.classNo, [...(byClass.get(s.classNo) ?? []), s])
+  const out: KingStudent[] = []
+  for (const [classNo, list] of [...byClass].sort((a, b) => a[0] - b[0])) {
+    const d = await loadClassPaps(db, schoolYear, grade, classNo, list.map((s) => s.id), 'all')
+    const selected = (d.config?.selectedEvents ?? {}) as Partial<Record<Factor, EventId>>
+    const events: Partial<Record<Factor, EventId>> = {}
+    for (const f of FACTORS) if (f !== '비만' && selected[f]) events[f] = selected[f]
+    const used = new Set<string>(Object.values(events))
+    const cells = new Map<string, Map<string, Cell[]>>()
+    const excluded = new Set<string>()
+    for (const r of d.results) {
+      if (r.eventId === EXCLUDED_KEY) {
+        if (r.excluded) excluded.add(r.studentId)
+        continue
+      }
+      if (r.value === undefined || !used.has(r.eventId)) continue
+      let m = cells.get(r.studentId)
+      if (!m) cells.set(r.studentId, (m = new Map()))
+      m.set(r.eventId, [...(m.get(r.eventId) ?? []), { attempt: r.attempt, side: r.side, value: r.value }])
+    }
+    for (const s of [...list].sort((a, b) => a.number - b.number)) {
+      const best: Partial<Record<EventId, number>> = {}
+      for (const [e, cs] of cells.get(s.id) ?? []) {
+        const rep = representative(std, e as EventId, cs)
+        if (rep) best[e as EventId] = rep.value
+      }
+      out.push({ studentId: s.id, grade, classNo, number: s.number, name: s.name, gender: s.gender ?? null, excluded: excluded.has(s.id), events, best })
     }
   }
   return out

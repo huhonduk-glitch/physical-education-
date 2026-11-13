@@ -106,6 +106,22 @@ export default function BottomNav() {
             // 업무별 묶음(compact)은 지금 보는 업무만 펼친다 — 누르면 펼침/접힘. 다른 묶음은 접어 둔 것만 접힘
             const here = g.items.includes(item!)
             const shut = g.compact ? !(here || folded.has(key)) : folded.has(key) && !here
+            if (g.solo && g.items.length === 1) {
+              const i = g.items[0]
+              const on = item === i
+              return (
+                <Link
+                  key={g.title}
+                  to={i.to}
+                  aria-current={on ? 'page' : undefined}
+                  className={`mb-3 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[0.95rem] font-extrabold ${on ? 'bg-brand-light text-brand' : 'text-ink hover:bg-fill'}`}
+                >
+                  <Icon name={g.icon} size={18} style={{ color: toneOf(gi).fg }} />
+                  <span className="flex-1">{g.title}</span>
+                  {fresh.has(i.to) && <span className="rounded-full bg-danger px-1.5 py-px text-[0.62rem] font-extrabold text-white">{NEW_LABEL}</span>}
+                </Link>
+              )
+            }
             return (
             <div key={g.title} className="mb-3">
               <button

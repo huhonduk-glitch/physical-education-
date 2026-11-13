@@ -34,6 +34,8 @@ export interface NavGroup {
   compact?: boolean
   /** 칩 카드 한 줄 설명 */
   desc?: string
+  /** 항목이 하나뿐인 묶음: 왼쪽 메뉴에서 묶음 이름이 바로 그 화면으로 가는 링크가 된다(아래로 펼치지 않음) */
+  solo?: boolean
 }
 
 /** 현장 양식(제작자가 실제로 쓴 문서) 칸: 올린 파일이 있을 때만 메뉴에 보인다 */
@@ -158,6 +160,13 @@ export const NAV: NavSection[] = [
           { to: '/paps/export', label: '나이스 파일', icon: 'download', desc: '업로드 파일 만들기', feature: 'paps' },
           { to: '/paps/codes', label: '튼튼몬 코드', icon: 'share', desc: '학생별 코드 · QR', feature: 'paps' },
         ],
+      },
+      // 체력왕 선발은 '결과' 아래가 아니라 PAPS 바로 아래 메뉴로 (2026-11-13 교사 요청)
+      {
+        title: '체력왕 선발',
+        icon: 'medal',
+        solo: true,
+        items: [{ to: '/paps/king', label: '체력왕 선발', icon: 'medal', desc: '종목별 최고 기록 → 점수 → 순위 · 시상 명단', feature: 'paps' }],
       },
       {
         title: '업무',
