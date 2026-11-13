@@ -39,9 +39,9 @@ export default defineConfig({
         globPatterns: ['**/*.{js,mjs,css,html,svg,png,json,woff2,xlsx}'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         // 웹 사용 설명서(public/manual/)는 앱과 따로 연다: 앱 화면으로 바꿔치지 않고, 그림을 앱 저장 공간에 미리 받지 않는다
-        globIgnores: ['manual/**'],
+        globIgnores: ['manual/**', 'privacy/**'],
         navigateFallback: `${BASE}index.html`,
-        navigateFallbackDenylist: [/\/manual\//],
+        navigateFallbackDenylist: [/\/manual\//, /\/privacy\//],
       },
     }),
   ],
