@@ -35,6 +35,12 @@ describe('메뉴 표 (6-12)', () => {
     const cls = NAV.find((s) => s.id === 'class')!.groups.flatMap((g) => g.items)
     expect(activeItem('/groups/g1/journal', '', cls)?.label).toBe('수업반 목록')
   })
+  it('체력왕 선발은 PAPS 바로 아래 메뉴 (묶음 안 항목이 아니라 묶음 자체가 링크)', () => {
+    const g = NAV.find((s) => s.id === 'paps')!.groups.find((x) => x.title === '체력왕 선발')!
+    expect(g.solo).toBe(true)
+    expect(g.items.map((i) => i.to)).toEqual(['/paps/king'])
+    expect(sectionOf('/paps/king')).toBe('paps')
+  })
   it('같은 주소가 한 큰 메뉴 안에서 두 번 나오지 않음', () => {
     for (const s of NAV) {
       const tos = s.groups.flatMap((g) => g.items.map((i) => i.to))

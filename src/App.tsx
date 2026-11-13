@@ -58,6 +58,7 @@ const PapsPastePage = lazy(() => import('./pages/paps/PapsPastePage'))
 const PapsResultsPage = lazy(() => import('./pages/paps/PapsResultsPage'))
 const PapsStatsPage = lazy(() => import('./pages/paps/PapsStatsPage'))
 const PapsSchoolPage = lazy(() => import('./pages/paps/PapsSchoolPage'))
+const PapsKingPage = lazy(() => import('./pages/paps/PapsKingPage'))
 const ClinicPage = lazy(() => import('./pages/paps/ClinicPage'))
 const WeeklyPage = lazy(() => import('./pages/WeeklyPage'))
 const NeisCarryPage = lazy(() => import('./pages/NeisCarryPage'))
@@ -216,6 +217,7 @@ export default function App() {
           <Route path="/paps/results" element={<PapsResultsPage />} />
           <Route path="/paps/stats" element={<PapsStatsPage />} />
           <Route path="/paps/school" element={<PapsSchoolPage />} />
+          <Route path="/paps/king" element={<PapsKingPage />} />
           <Route path="/paps/clinic" element={<ClinicPage />} />
           <Route path="/paps/export" element={<PapsExportPage />} />
           <Route path="/paps/setup" element={<PapsSetupPage />} />
