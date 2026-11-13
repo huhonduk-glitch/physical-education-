@@ -13,6 +13,7 @@ import { saveText } from '../lib/download'
 import { LockError, isLocked, lockJson, lockedFileName, passwordProblem, unlockJson, type LockedFile } from '../lib/lockFile'
 import { PIN_SETTING_KEY, verifyPin, type StoredPin } from '../lib/pin'
 import { useApp } from '../state/AppContext'
+import DriveSyncCard from './DriveSyncCard'
 
 /** 백업 · 복원 · 학년도 넘기기 · 전체 삭제 (CLAUDE.md 4-11) */
 export default function DataPage() {
@@ -147,10 +148,12 @@ export default function DataPage() {
 
         <LockedSection onMade={() => void updateSettings({ lastBackupAt: Date.now() })} />
 
+        <DriveSyncCard />
+
         {snapshots && snapshots.length > 0 && (
           <section className="card space-y-3">
-            <p className="card-title">업데이트 전 자동 백업</p>
-            <p className="hint">저장 방식이 바뀌는 업데이트 때 앱이 바꾸기 전 자료를 이 기기 안에 복사해 둔 거예요. 파일로 받거나, 아래 [복원]과 같은 확인을 거쳐 되돌릴 수 있어요.</p>
+            <p className="card-title">자동 백업</p>
+            <p className="hint">저장 방식이 바뀌는 업데이트 때, 그리고 구글에서 내려받기 전에 앱이 바꾸기 전 자료를 이 기기 안에 복사해 둔 거예요. 파일로 받거나, 아래 [복원]과 같은 확인을 거쳐 되돌릴 수 있어요.</p>
             <ul className="divide-y divide-line rounded-2xl bg-fill">
               {snapshots.map((s) => (
                 <li key={s.id} className="space-y-2 px-4 py-3">

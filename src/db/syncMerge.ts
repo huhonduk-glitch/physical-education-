@@ -12,7 +12,9 @@
  *    - 내용이 같으면 그대로
  *    - 둘 다 고친 시각(updatedAt · measuredAt)이 있으면 더 최근 것
  *    - 시각이 없으면 이 기기 것을 둔다 (수강반 학생 목록만 양쪽을 합친다)
- *    PAPS 칸 · 출결 · 채점 · 세특 글 · 측정 종목 · 체육부장은 id가 달라도 같은 자리(학생 · 칸 · 날짜)면 같은 줄로 본다.
+ *    PAPS 칸 · 출결 · 채점 · 세특 글 · 측정 종목 · 체육부장 · 수업 일지(수업반 · 날짜) · 견학(학생 · 날짜)은
+ *    id가 달라도 같은 자리면 같은 줄로 본다. 누가기록은 학생 · 날짜 · 교시 · 수업반 · 항목 · 메모가 모두 같으면 같은 기록
+ *    (두 기기에서 같은 것을 따로 넣은 것) — 다만 한 기기에서 같은 칭찬을 두 번 준 것은 두 줄 그대로.
  * 3) 설정은 이 기기 것을 그대로 두고, 이 기기에 없는 설정만 가져온다. 비밀 값(AI 키 · 공유 공간)은 오가지 않는다.
  *
  * 한쪽에서 지운 줄은 합치면 다시 생긴다(지운 기록을 남기지 않으므로) → 화면에서 알린다.
@@ -58,7 +60,15 @@ const SLOT: Partial<Record<TableName, (r: Row) => string | null>> = {
   assessmentScores: (r) => `${s(r.assessmentId)}|${s(r.studentId)}`,
   seteukDrafts: (r) => `${s(r.groupId)}|${s(r.studentId)}`,
   captains: (r) => `${s(r.studentId)}|${s(r.role)}|${s(r.from)}`,
+  // 수업 일지는 수업반 · 날짜마다 한 줄, 견학은 학생 · 날짜마다 한 줄(앱이 그렇게 저장한다)
+  lessons: (r) => `${s(r.groupId)}|${s(r.date)}`,
+  absences: (r) => `${s(r.studentId)}|${s(r.date)}`,
+  // 누가기록: 두 기기에서 같은 학생 · 날짜 · 교시 · 수업반 · 항목 · 메모로 따로 넣은 것은 같은 기록 하나로 본다
+  records: (r) => `${s(r.studentId)}|${s(r.date)}|${s(r.period)}|${s(r.groupId)}|${s(r.type)}|${s(r.category)}|${s(r.note)}`,
 }
+
+/** 같은 자리에 여러 줄이 정상인 표 (같은 칭찬을 두 번 줄 수 있음) */
+const MULTI = new Set<TableName>(['records'])
 
 const timeOf = (r: Row): number | null => {
   const t = r.updatedAt ?? r.measuredAt
@@ -137,7 +147,10 @@ export function planMerge(here: Tables, incoming: Tables): MergePlan {
       const byId = new Map(hereRows.map((r) => [r.id, r]))
       const slotOf = SLOT[t]
       const bySlot = new Map<string, Row>()
-      if (slotOf) for (const r of hereRows) bySlot.set(slotOf(r) ?? '', r)
+      const multi = MULTI.has(t)
+      // 여러 줄이 될 수 있는 표(누가기록): 상대가 이미 아는 줄(같은 id가 파일에 있음)과는 자리로 맞추지 않는다
+      const known = multi ? new Set((incoming[t] ?? []).map((r) => (r.id ? (map.get(r.id) ?? r.id) : ''))) : null
+      if (slotOf) for (const r of hereRows) if (!known?.has(r.id!)) bySlot.set(slotOf(r) ?? '', r)
       const done = new Set<string>()
       for (const raw of incoming[t] ?? []) {
         if (!raw.id) continue
@@ -149,6 +162,8 @@ export function planMerge(here: Tables, incoming: Tables): MergePlan {
           if (hit) {
             r = { ...r, id: hit.id }
             old = hit
+            // 누가기록은 한 줄과 한 번만 맞춘다 — 상대 쪽에 같은 기록이 두 번이면 하나는 새로 더한다
+            if (multi) bySlot.delete(k!)
           }
         }
         if (done.has(r.id!)) continue // 파일 안에서 같은 자리가 두 번

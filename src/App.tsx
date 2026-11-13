@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import PeanutBot from './components/PeanutBot'
 import BottomNav, { ContentFrame } from './components/BottomNav'
 import DemoBanner from './components/DemoBanner'
+import DriveSyncAgent from './components/DriveSyncAgent'
 import { AfterUpdate } from './components/WhatsNew'
 import MiniTimer from './components/MiniTimer'
 import { IS_DEMO } from './lib/demo'
@@ -173,6 +174,7 @@ export default function App() {
       <MiniTimer />
       <ContentFrame>
         <DemoBanner />
+        <DriveSyncAgent />
         <AfterUpdate />
         <Suspense fallback={<div className="p-6 text-ink-3">불러오는 중…</div>}>
         <Routes>

@@ -9,8 +9,9 @@ import type { ReactNode } from 'react'
 export default function ActionBar({ edge = false, children }: { edge?: boolean; children: ReactNode }) {
   return (
     <div
-      className={`sticky z-20 -mx-1 mt-4 print:hidden ${
-        edge ? 'bottom-0 pb-[env(safe-area-inset-bottom)]' : 'bottom-[calc(62px+env(safe-area-inset-bottom))] lg:bottom-0'
+      className={`sticky z-20 mt-4 print:hidden ${
+        // edge = 화면 끝에 붙는 줄(이용 안내) — 바깥 여백이 없어 -mx-1이면 폰에서 옆으로 4px 밀린다
+        edge ? 'bottom-0 pb-[env(safe-area-inset-bottom)]' : '-mx-1 bottom-[calc(62px+env(safe-area-inset-bottom))] lg:bottom-0'
       }`}
     >
       <div className={`space-y-2 rounded-t-3xl border-t border-line bg-white/95 px-4 pt-3 pb-3 shadow-[var(--shadow-float)] backdrop-blur-md ${edge ? 'mx-auto max-w-md' : ''}`}>

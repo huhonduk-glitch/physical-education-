@@ -19,6 +19,8 @@ export const UPGRADE_TO = 9 // db.ts의 마지막 version()과 같게
 export const AUTO_BACKUP_NOTICE_KEY = 'pelog.autoBackupNotice'
 /** 자동 백업은 최근 이만큼만 남긴다 */
 const KEEP = 5
+/** 구글 동기화 [내려받기]가 이 기기 자료를 바꾸기 전에 남기는 자동 백업의 이유 */
+export const SYNC_SNAPSHOT_REASON = '구글에서 내려받기 전'
 
 export interface AutoSnapshot {
   id: string
@@ -102,13 +104,32 @@ export async function prepareUpgrade(opts: { mainDb?: string; autoDb?: string; u
     const store = new AutoBackupDb(autoDb)
     const snap: AutoSnapshot = { id: crypto.randomUUID(), createdAt: Date.now(), reason, fromVersion, file }
     await store.snapshots.add(snap)
-    const all = await store.snapshots.orderBy('createdAt').toArray()
+    // 업데이트 전 백업끼리만 센다 (구글 내려받기 전 백업은 saveSnapshot이 따로 센다)
+    const all = (await store.snapshots.orderBy('createdAt').toArray()).filter((s) => s.reason !== SYNC_SNAPSHOT_REASON)
     if (all.length > KEEP) await store.snapshots.bulkDelete(all.slice(0, all.length - KEEP).map((s) => s.id))
     store.close()
     return { status: 'saved', snapshotId: snap.id, counts: file.counts }
   } catch (e) {
     idb?.close()
     return { status: 'failed', error: e instanceof Error ? e.message : String(e), file }
+  }
+}
+
+/**
+ * 지금 자료를 자동 백업 저장소에 하나 넣기 (구글에서 내려받기 전 등).
+ * 같은 이유(reason)로 만든 것은 최근 keep개만 남긴다 — 업데이트 전 백업을 밀어내지 않게 이유마다 따로 센다.
+ */
+export async function saveSnapshot(file: BackupFile, reason: string, opts: { autoDb?: string; keep?: number; fromVersion?: number } = {}): Promise<string> {
+  const { autoDb = AUTO_DB, keep = 3, fromVersion = UPGRADE_TO } = opts
+  const store = new AutoBackupDb(autoDb)
+  try {
+    const snap: AutoSnapshot = { id: crypto.randomUUID(), createdAt: Date.now(), reason, fromVersion, file }
+    await store.snapshots.add(snap)
+    const same = (await store.snapshots.orderBy('createdAt').toArray()).filter((s) => s.reason === reason)
+    if (same.length > keep) await store.snapshots.bulkDelete(same.slice(0, same.length - keep).map((s) => s.id))
+    return snap.id
+  } finally {
+    store.close()
   }
 }
 
