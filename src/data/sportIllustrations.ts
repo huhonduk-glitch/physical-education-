@@ -28,10 +28,27 @@ export const SECTION_ILLUST: Record<string, Record<string, Figure>> = {
     서브: { kind: 'photo', photo: 'il-bd-serve', caption: '서브가 떨어져야 하는 곳(초록) — 서버 점수가 짝수면 오른쪽, 홀수면 왼쪽 서비스 코트에서 대각선으로. 단식은 길고 좁게, 복식은 짧고 넓게. 맨 아래는 서브 뒤 랠리 때 코트' },
     기술: { kind: 'photo', photo: 'il-bd-picto', caption: '몸을 뻗어 셔틀콕을 치는 모습(배드민턴 픽토그램)' },
   },
-  tabletennis: { '한눈에 보기': { kind: 'photo', photo: 'il-tt-players', caption: '탁구 경기' } },
-  tennis: { '한눈에 보기': { kind: 'photo', photo: 'il-tn-player', caption: '포핸드를 준비하는 선수' } },
-  baseball: { '한눈에 보기': { kind: 'photo', photo: 'il-bs-scene', caption: '타자 · 포수 · 주심' } },
-  softball: { 기술: { kind: 'photo', photo: 'il-bs-batter', caption: '타격 준비 자세 (야구 그림)' } },
+  tabletennis: {
+    '한눈에 보기': { kind: 'photo', photo: 'il-tt-players', caption: '탁구 경기' },
+    기술: { kind: 'photo', photo: 'il-tt-picto', caption: '라켓으로 공을 치는 모습(탁구 픽토그램)' },
+  },
+  tennis: {
+    '한눈에 보기': { kind: 'photo', photo: 'il-tn-player', caption: '포핸드를 준비하는 선수' },
+    경기장: { kind: 'photo', photo: 'il-tn-court', caption: '테니스 코트 — 안쪽 세로선 사이가 단식(8.23 m), 바깥 세로선 사이가 복식(10.97 m)이에요' },
+  },
+  baseball: {
+    '한눈에 보기': { kind: 'photo', photo: 'il-bs-scene', caption: '타자 · 포수 · 주심' },
+    경기장: { kind: 'photo', photo: 'il-bs-diamond', caption: '내야 — 홈 플레이트 · 1루 · 2루 · 3루가 정사각형을 이루고, 가운데에 투수 마운드, 양쪽으로 파울 라인이 뻗어요' },
+    포지션: { kind: 'photo', photo: 'il-bs-positions', caption: '수비 아홉 자리 — 그림 속 번호는 기록할 때 쓰는 수비 번호예요(1 투수 · 2 포수 · 3 1루수 · 4 2루수 · 5 3루수 · 6 유격수 · 7 좌익수 · 8 중견수 · 9 우익수)' },
+  },
+  softball: {
+    '한눈에 보기': { kind: 'photo', photo: 'il-sb-picto', caption: '공을 던지는 모습(소프트볼 픽토그램)' },
+    기술: { kind: 'photo', photo: 'il-bs-batter', caption: '타격 준비 자세 (야구 그림)' },
+  },
+  handball: { 기술: { kind: 'photo', photo: 'il-hb-picto', caption: '뛰어올라 공을 던지는 모습(핸드볼 픽토그램)' } },
+  netball: { '한눈에 보기': { kind: 'photo', photo: 'il-nb-picto', caption: '골 링을 향해 공을 던지는 모습(넷볼 픽토그램)' } },
+  athletics: { '한눈에 보기': { kind: 'photo', photo: 'il-at-picto', caption: '달리는 모습(육상 픽토그램)' } },
+  gymnastics: { '한눈에 보기': { kind: 'photo', photo: 'il-gy-picto', caption: '거꾸로 선 동작(기계체조 픽토그램)' } },
   teeball: { 기술: { kind: 'photo', photo: 'il-bs-batter', caption: '타격 준비 자세 (야구 그림)' } },
   jumprope: { '한눈에 보기': { kind: 'photo', photo: 'il-jr-longrope', caption: '긴 줄넘기 — 두 사람이 줄을 돌리고 가운데서 뛰어요' } },
 }
