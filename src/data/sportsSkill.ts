@@ -233,6 +233,7 @@ const DISCGOLF: SportGuide = {
   name: '플라잉디스크 골프',
   emoji: '🥏',
   group: 'skill',
+  cover: 'dg-sunset',
   summary: '골프처럼, 원반을 적게 던져 바스켓에 — 던진 횟수 + 벌타가 점수',
   sections: [
     {

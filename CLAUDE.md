@@ -1048,3 +1048,9 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - **땅콩이 AI 답**: `src/lib/botAi.ts`(`botDigest` · `botPrompt` · `parseBotAnswer`, 테스트 `tests/botAi.test.ts`). 직접 적은 질문의 답(준비된 답이 있어도 · 없어도) 아래 [AI에게 물어보기] — AI 연결(Claude · OpenRouter 키)이 있을 때만, 없으면 준비된 답이 없을 때 'AI를 연결하면…' 안내(`/seteuk/ai-guide`). AI 답에는 'AI 답 · 틀릴 수 있어요' 표시, 모름(unsure)이면 사용법 링크만. 실제 AI 호출 시험은 못 함(교사 키를 읽는 것이 막힘) — 가짜 키로 오류 경로 · 화면만 확인(나가는 요청 openrouter.ai)
 - **종목 그림 9장**(위키미디어 공용, API로 저작자 · 라이선스, 눈으로 확인): 핸드볼 · 탁구 · 소프트볼 · 육상 · 체조 · 넷볼 픽토그램(PD), 테니스 코트(CC BY-SA 3.0 NielsF) · 야구 내야(CC BY-SA 3.0 Cburnett) · 야구 수비 번호(CC BY-SA 4.0 Michael J). 플로어볼 링크 그림은 저작자 칸이 비어 뺌, 얼티미트 경기장 그림은 옛 규격이라 뺌
 - **출석률 수업 횟수**(`src/lib/creditBase.ts`): `termFromSchedule` — 1학기 끝 = 방학식(없으면 첫 '여름방학' 전날), 2학기 시작 = 8월 개학(없으면 마지막 '여름방학' 다음 날), 끝 = 12~2월 방학식 · 종업식(없으면 첫 '겨울방학' 전날), 못 찾으면 어림값. `planSessions` = 진도표 기간 · 쉬는 날 · 이 반 빠진 수업으로 시간표를 센 수 → 기준은 그대로 진도표 목표 차시(교사 결정), 다르면 '시간표로 세면 N번'(`heldNote`)을 같이 보여 줌(누적 기록 · 기록표)
+- 배포: PR #75 → main `60afab0` (2026-11-15)
+
+### 6-28. 배포 도구 새 판 · 종목 그림 더 (2026-11-15 교사 '1, 2번 먼저', 브랜치 `actions-illust`)
+- GitHub Actions: checkout · setup-node v4 → v7, upload-pages-artifact v3 → v5, deploy-pages v4 → v5 (`deploy.yml` · `ci.yml`) — 'Node.js 20 지원 끝' 경고. upload-pages-artifact v4부터 점 파일(.으로 시작)은 빠지는데 `dist`에 점 파일 없음 확인
+- 그림 11장(위키미디어 공용, API로 저작자 · 라이선스, 눈으로 확인): 플로어볼 표지 경기 사진 · 스틱과 공 · 링크 그림 · 픽토그램, 디스크 골프 표지 · 바스켓 · 포핸드, 피클볼 패들과 공(실내 · 실외 공), 킨볼 체험 사진(CC0), 츄크볼 · 얼티미트 픽토그램. `cover`가 없던 플로어볼 · 디스크 골프에 표지 사진. 플로어볼 링크 그림 숫자는 IFF 2026 규칙서 102조 원문과 대조(골 구역 4 × 5 m · 끝 판에서 2.85 m, 골키퍼 구역 1 × 2.5 m · 뒷선 = 골라인 = 끝에서 3.5 m, 골대 1.6 m, 페이스오프 점 옆 판에서 1.5 m) → 경기장 규격 칸에 골 구역 · 골키퍼 구역 더함. 빅발리볼 · 플레이트 야구는 자유 이용 그림이 없어 그대로
+- 슬라이드 표지 제목: `[word-break:keep-all]` + 여섯 글자 넘는 낱말이 있으면 글자를 조금 작게('플라잉디스 / 크 골프'로 끊기던 것). 점검 도구 `pe-log-demo-video/review-1115.mjs`
