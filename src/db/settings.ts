@@ -82,6 +82,8 @@ export interface AppSettings {
   /** 엑셀 없이 손으로 적은 예산 항목 (늘 체육 항목) */
   budgetManual: import('../lib/budget').BudgetItem[]
   budgetLayout: import('../lib/budget').SheetLayout
+  /** 지난 학년도 예산 (6-30): 새 학년도를 시작할 때 그해 예산(budgetCard · budgetManual)을 학년도 이름으로 옮겨 둔다. 학교 회계연도 = 학년도(3월 ~ 다음 해 2월) */
+  budgetArchive: Record<string, { card: AppSettings['budgetCard']; manual: import('../lib/budget').BudgetItem[] }>
   /** 건강체력교실 대상 기준 (학교 지침에 맞게, 기본 종합 4·5등급 · 경도 · 고도비만) */
   clinicRule: import('../lib/schoolPaps').ClinicRule
   /** 체력왕 선발 설정 (점수 기준 · 시상 비율 · 학교 자체 기준표). 학생 정보 없음 */
@@ -197,6 +199,7 @@ export function defaultSettings(): AppSettings {
     weatherLoc: null,
     weatherCache: null,
     budgetLayout: { startCell: 'N5', itemSheet: '물품구입 시트', itemCol: 'H', amountCol: 'F', firstRow: 4, withEdufine: true },
+    budgetArchive: {},
   }
 }
 

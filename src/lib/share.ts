@@ -1,4 +1,5 @@
 import type { Assessment, ProgressPlan } from '../db/types'
+import { defaultTerm } from './progressPlan'
 import type { WorkEvent } from './workCal'
 
 /**
@@ -38,12 +39,18 @@ export function packAssessment(a: Assessment): SharePack {
   return { app: 'PE LOG', v: 1, type: 'assessment', name: a.title, createdAt: Date.now(), data: rest satisfies AssessShare }
 }
 
-/** 받은 진도표 → 내 진도표 (새 id · 이 학년도 · 고른 수업반, 진도는 처음부터) */
+/** 받은 진도표 → 내 진도표 (새 id · 이 학년도 · 고른 수업반, 진도는 처음부터).
+ * 다른 학년도에 만든 진도표(지난해 것 가져오기 포함)는 학기 날짜를 이 학년도 기본 학기로 바꾸고, 그해의 쉬는 날 · 고정 날짜는 푼다 */
 export function unpackPlan(pack: SharePack, o: { id: string; schoolYear: number; groupIds: string[]; now: number }): ProgressPlan {
   if (pack.type !== 'plan') throw new ShareError('진도표가 아니에요.')
   const d = pack.data as PlanShare
   if (!Array.isArray(d.items)) throw new ShareError('진도표 차시를 읽지 못했어요.')
-  return { ...d, id: o.id, schoolYear: o.schoolYear, groupIds: o.groupIds, skips: {}, done: {}, createdAt: o.now, updatedAt: o.now }
+  const y = o.schoolYear
+  const sameYear = typeof d.startDate === 'string' && d.startDate >= `${y}-03-01` && d.startDate <= `${y + 1}-02-29`
+  const dates = sameYear
+    ? {}
+    : { ...defaultTerm(y, d.semester === 1 ? 1 : 2), offDays: [], items: d.items.map(({ lockedDate: _l, ...it }) => (void _l, it)) }
+  return { ...d, ...dates, id: o.id, schoolYear: y, groupIds: o.groupIds, skips: {}, done: {}, createdAt: o.now, updatedAt: o.now }
 }
 
 /** 받은 수행평가 → 내 평가 (새 id · 이 학년도 · 고른 수업반). 채점 요소 id는 그대로 둔다(점수는 따로라 겹치지 않음) */

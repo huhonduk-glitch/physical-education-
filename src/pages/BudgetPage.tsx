@@ -23,6 +23,7 @@ import {
   type SheetLayout,
 } from '../lib/budget'
 import { copyText, saveXlsx } from '../lib/download'
+import { budgetOf } from '../lib/newYear'
 import { readGridsFromFile } from '../lib/rosterFile'
 import { useApp } from '../state/AppContext'
 
@@ -36,14 +37,16 @@ const pct = (a: number, b: number) => (b > 0 ? `${Math.round((a / b) * 1000) / 1
  */
 export default function BudgetPage() {
   const { settings, updateSettings, readOnly } = useApp()
-  const saved = settings.budgetCard
+  // 지난 학년도를 보면 그해에 옮겨 둔 예산 (6-30, 학교 회계연도 = 학년도)
+  const year = budgetOf(settings)
+  const saved = year.card
   const picks = settings.budgetPicks
   const layout: SheetLayout = { ...DEFAULT_LAYOUT, ...settings.budgetLayout }
   const fileRef = useRef<HTMLInputElement>(null)
   const [err, setErr] = useState('')
   const [msg, setMsg] = useState('')
 
-  const manual = settings.budgetManual ?? []
+  const manual = year.manual
   const items = useMemo(() => mergeManual(saved?.card.items ?? [], manual), [saved, manual])
   const picked = useMemo(() => items.filter((x) => isPicked(x, picks)), [items, picks])
   const others = items.filter((x) => !isPicked(x, picks))
@@ -94,8 +97,18 @@ export default function BudgetPage() {
 
   return (
     <>
-      <PageHeader title="체육 예산 현황" sub={saved ? `${saved.fileName} · ${new Date(saved.fetchedAt).toLocaleDateString('ko-KR')}` : '에듀파인 사업관리카드'} back />
+      <PageHeader
+        title="체육 예산 현황"
+        sub={year.archived ? `${settings.schoolYear}학년도 예산 (보관)` : saved ? `${saved.fileName} · ${new Date(saved.fetchedAt).toLocaleDateString('ko-KR')}` : '에듀파인 사업관리카드'}
+        back
+      />
       <div className="page space-y-4 pb-10">
+        {year.archived && (
+          <p className="card bg-caution-light font-bold text-caution shadow-none">
+            {settings.schoolYear}학년도 예산을 보고 있어요. 새 학년도를 시작할 때 옮겨 둔 것이라 고칠 수 없어요.
+            {!saved && !manual.length && ' 이 학년도에는 옮겨 둔 예산이 없어요.'}
+          </p>
+        )}
         <section className="card space-y-2">
           <p className="font-bold">에듀파인 → 사업관리카드(예산) 엑셀을 넣어 주세요</p>
           <p className="hint">

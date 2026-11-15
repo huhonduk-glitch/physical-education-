@@ -16,7 +16,7 @@ import { useApp } from '../state/AppContext'
  * 새 견학 등록은 수업반 기록 보드의 학생 카드에서 한다. 대체 과제 연결은 수행평가(5단계)와 함께 만든다.
  */
 export default function AbsencesPage() {
-  const { settings } = useApp()
+  const { settings, readOnly } = useApp()
   const year = settings.schoolYear
   const data = useLiveQuery(async () => {
     const [students, absences, assessments, groups] = await Promise.all([
@@ -84,9 +84,11 @@ export default function AbsencesPage() {
                       {s.grade}-{s.classNo} {s.number}번 {s.name}
                     </Link>
                     <Masked text={a.detail ? `${a.reason} · ${a.detail}` : a.reason} />
-                    <button type="button" className="btn btn-ghost px-2 text-ink-3" aria-label="견학 지우기" onClick={() => confirm('이 견학 기록을 지울까요?') && db.absences.delete(a.id)}>
-                      <Icon name="trash" size={18} />
-                    </button>
+                    {!readOnly && (
+                      <button type="button" className="btn btn-ghost px-2 text-ink-3" aria-label="견학 지우기" onClick={() => confirm('이 견학 기록을 지울까요?') && db.absences.delete(a.id)}>
+                        <Icon name="trash" size={18} />
+                      </button>
+                    )}
                   </div>
                   {(data?.assessments ?? []).some((x) => appliesTo(x, s, data?.groups ?? [])) && (
                     <div className="flex flex-wrap items-center gap-2 pl-0 sm:pl-[5.5rem]">
@@ -94,6 +96,7 @@ export default function AbsencesPage() {
                         className="field min-h-[42px] w-auto flex-1 text-[0.92rem]"
                         aria-label="대체 과제로 연결할 수행평가"
                         value={a.altTaskId ?? ''}
+                        disabled={readOnly}
                         onChange={(e) => db.absences.update(a.id, { altTaskId: e.target.value || undefined, altTaskDone: false })}
                       >
                         <option value="">대체 과제 없음</option>
@@ -110,6 +113,7 @@ export default function AbsencesPage() {
                           type="button"
                           aria-pressed={a.altTaskDone}
                           className={`btn min-h-[42px] px-3 text-sm ${a.altTaskDone ? 'bg-ok-light text-ok' : 'btn-soft'}`}
+                          disabled={readOnly}
                           onClick={() => db.absences.update(a.id, { altTaskDone: !a.altTaskDone })}
                         >
                           {a.altTaskDone ? '✔ 제출함' : '미제출'}

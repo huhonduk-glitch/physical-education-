@@ -6,6 +6,7 @@ import { Logo } from '../components/Brand'
 import FeatureSheet from '../components/FeatureSheet'
 import Icon from '../components/Icon'
 import InstallGuide from '../components/InstallGuide'
+import NewYearNotice from '../components/NewYearNotice'
 import WeatherCard from '../components/WeatherCard'
 import ClockTile from '../components/home/ClockTile'
 import DdayTile from '../components/home/DdayTile'
@@ -342,6 +343,7 @@ export default function HomePage() {
       <div className="page flex flex-col gap-5 pt-3 pb-8 xl:max-w-[72rem]">
         <div className="space-y-3 empty:hidden">
           <AutoBackupNotice />
+          <NewYearNotice />
           {urgentInstall && <InstallGuide place="home" />}
           {/* 시작 준비에 '첫 백업'이 이미 보이면 겹치지 않게 */}
           {!showSetup && <BackupWarning hasData={(students?.length ?? 0) > 0} />}
