@@ -1054,3 +1054,11 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - GitHub Actions: checkout · setup-node v4 → v7, upload-pages-artifact v3 → v5, deploy-pages v4 → v5 (`deploy.yml` · `ci.yml`) — 'Node.js 20 지원 끝' 경고. upload-pages-artifact v4부터 점 파일(.으로 시작)은 빠지는데 `dist`에 점 파일 없음 확인
 - 그림 11장(위키미디어 공용, API로 저작자 · 라이선스, 눈으로 확인): 플로어볼 표지 경기 사진 · 스틱과 공 · 링크 그림 · 픽토그램, 디스크 골프 표지 · 바스켓 · 포핸드, 피클볼 패들과 공(실내 · 실외 공), 킨볼 체험 사진(CC0), 츄크볼 · 얼티미트 픽토그램. `cover`가 없던 플로어볼 · 디스크 골프에 표지 사진. 플로어볼 링크 그림 숫자는 IFF 2026 규칙서 102조 원문과 대조(골 구역 4 × 5 m · 끝 판에서 2.85 m, 골키퍼 구역 1 × 2.5 m · 뒷선 = 골라인 = 끝에서 3.5 m, 골대 1.6 m, 페이스오프 점 옆 판에서 1.5 m) → 경기장 규격 칸에 골 구역 · 골키퍼 구역 더함. 빅발리볼 · 플레이트 야구는 자유 이용 그림이 없어 그대로
 - 슬라이드 표지 제목: `[word-break:keep-all]` + 여섯 글자 넘는 낱말이 있으면 글자를 조금 작게('플라잉디스 / 크 골프'로 끊기던 것). 점검 도구 `pe-log-demo-video/review-1115.mjs`
+- 배포: PR #76 → main `e80d5ae` (2026-11-15), 새 Actions 4개 모두 성공 · Node.js 20 경고 사라짐
+
+### 6-29. 엑셀 부품 보안 업데이트 (2026-11-15 교사 '1번부터', 브랜치 `deps-security`)
+- SheetJS(xlsx) 0.18.5 → **0.20.3**. npm에 있는 판은 0.18.5에서 멈췄고(알려진 약점: 프로토타입 오염 · 정규식 서비스 거부), 새 판은 SheetJS 공식 배포처에서만 받음 → `package.json`에 `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`(lock에 무결성 값). 업체 견적서처럼 바깥 엑셀도 여는 앱이라 바꿈. 다음에 올릴 때도 같은 주소 꼴로(`npm i --save-exact https://cdn.sheetjs.com/xlsx-<판>/xlsx-<판>.tgz`)
+- 새 판에 딸린 부품 없음(옛 판의 cfb · codepage · ssf 등 8개 빠짐). CSV는 앱이 `decodeText`로 글자를 풀어 넘기므로 글자 코드표(cptable)는 필요 없음
+- 확인: 옛 판 ↔ 새 판으로 같은 파일을 앱과 같은 방법(`readGridsFromFile`)으로 읽어 비교 — references 5개 · 교육청 서식 xls(21시트) · 교사 실제 엑셀 · UTF-8/CP949 CSV, 칸 약 43,500개 차이 0. 새 판으로 만든 파일을 옛 판 · 새 판 · openpyxl이 똑같이 읽음. 빌드본에서 명렬 올리기 · 체력왕 엑셀 받기 확인
+- `overrides.image-size` ^2.0.3: pptxgenjs가 적어 둔 부품(약점 있는 1.2.1)이지만 pptxgenjs 빌드 파일 어디에도 안 쓰이고 브라우저에서는 false로 막혀 앱에 안 들어감 → 경고만 없앰
+- `npm audit --omit=dev` = 0. 남은 경고는 빌드 · 시험 도구(vite-plugin-pwa → workbox-build의 deepmerge · glob)뿐이고 앱에 안 실림, 고치려면 vite-plugin-pwa를 낮춰야 해서 그대로 둠. vitest 5.1.0(audit fix)
