@@ -66,6 +66,7 @@ const FLOORBALL: SportGuide = {
   name: '플로어볼',
   emoji: '🏑',
   group: 'invasion',
+  cover: 'fl-game',
   summary: '6명씩, 구멍 뚫린 공을 스틱으로, 스틱은 허리 아래 · 몸싸움 없음',
   sections: [
     {
@@ -80,8 +81,15 @@ const FLOORBALL: SportGuide = {
     { title: '역사', items: [{ t: '1970년대 스웨덴에서 플라스틱 스틱 · 공으로 시작했어요. 1986년 국제플로어볼연맹(IFF)이 생겼어요.' }] },
     {
       title: '경기장',
-      specs: [{ label: '링크', value: '40 m × 20 m, 둘레를 낮은 판으로 둘러요', ref: '101' }],
-      items: [{ t: '학교에서는 체육관 크기에 맞춰 줄이고, 판이 없으면 선으로 대신해요.' }],
+      specs: [
+        { label: '링크', value: '40 m × 20 m, 둘레를 낮은 판으로 둘러요', ref: '101' },
+        { label: '골 구역', value: '4 m × 5 m', ref: '102' },
+        { label: '골키퍼 구역', value: '1 m × 2.5 m', ref: '102' },
+      ],
+      items: [
+        { t: '골 구역은 짧은 쪽 판에서 2.85 m 떨어져 있고, 그 안 골키퍼 구역의 뒷선이 골라인이에요. 골대는 골라인 위에 1.6 m 너비로 놓아요.', ref: '102' },
+        { t: '학교에서는 체육관 크기에 맞춰 줄이고, 판이 없으면 선으로 대신해요.' },
+      ],
     },
     {
       title: '반칙 (프리 히트)',

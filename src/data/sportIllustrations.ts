@@ -51,4 +51,17 @@ export const SECTION_ILLUST: Record<string, Record<string, Figure>> = {
   gymnastics: { '한눈에 보기': { kind: 'photo', photo: 'il-gy-picto', caption: '거꾸로 선 동작(기계체조 픽토그램)' } },
   teeball: { 기술: { kind: 'photo', photo: 'il-bs-batter', caption: '타격 준비 자세 (야구 그림)' } },
   jumprope: { '한눈에 보기': { kind: 'photo', photo: 'il-jr-longrope', caption: '긴 줄넘기 — 두 사람이 줄을 돌리고 가운데서 뛰어요' } },
+  floorball: {
+    '한눈에 보기': { kind: 'photo', photo: 'fl-stick', caption: '플로어볼 스틱 날과 구멍 뚫린 플라스틱 공' },
+    경기장: { kind: 'photo', photo: 'il-fl-rink', caption: '링크 40 m × 20 m — 양쪽 끝 네모(4 m × 5 m)가 골 구역, 그 안 작은 네모가 골키퍼 구역이에요. 십자는 페이스오프 점(옆 판에서 1.5 m)' },
+    기술: { kind: 'photo', photo: 'il-fl-picto', caption: '무릎을 굽히고 스틱 날을 바닥 가까이 두는 모습(플로어볼 픽토그램)' },
+  },
+  discgolf: {
+    '한눈에 보기': { kind: 'photo', photo: 'dg-basket', caption: '바스켓 — 원반이 가운데 체인에 맞고 아래 바구니에 들어가면 그 홀이 끝나요' },
+    기술: { kind: 'photo', photo: 'dg-forehand', caption: '포핸드(사이드암) — 두 손가락으로 원반 안쪽을 받쳐 옆으로 튕겨요' },
+  },
+  pickleball: { 용구: { kind: 'photo', photo: 'pb-paddle', caption: '패들과 공 — 파랑은 구멍이 큰 실내용, 노랑은 구멍이 작은 실외용이에요' } },
+  kinball: { 기술: { kind: 'photo', photo: 'kb-lift', caption: '여럿이 손을 뻗어 큰 공을 받쳐 들어요(공원 킨볼 체험)' } },
+  tchoukball: { 기술: { kind: 'photo', photo: 'il-tb-picto', caption: '프레임을 향해 뛰어올라 공을 던지는 모습(츄크볼 픽토그램)' } },
+  ultimate: { 기술: { kind: 'photo', photo: 'il-ut-picto', caption: '원반을 향해 몸을 날리는 모습(얼티미트 픽토그램)' } },
 }

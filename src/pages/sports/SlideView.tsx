@@ -113,7 +113,12 @@ export default function SlideView({ slide, step = 99 }: { slide: Slide; step?: n
         )}
         <div className={`relative flex h-full flex-col justify-center p-[5%] ${slide.cover ? 'ml-[48%] tall:ml-0 tall:justify-start tall:pt-[44cqh]' : ''}`}>
           <Eyebrow label={slide.group} />
-          <h1 className="mt-2 text-[clamp(2.8rem,8vw,6.5rem)] leading-none font-black tracking-tight text-white">{slide.title}</h1>
+          {/* 띄어쓰기에서만 줄을 바꾼다. 여섯 글자 넘는 낱말(플라잉디스크)은 사진 옆 칸에 한 줄로 들어가게 조금 작게 (2026-11-15) */}
+          <h1
+            className={`mt-2 ${Math.max(...slide.title.split(' ').map((w) => w.length)) > 5 ? 'text-[clamp(2.4rem,6.2vw,5rem)]' : 'text-[clamp(2.8rem,8vw,6.5rem)]'} leading-none font-black tracking-tight text-white [word-break:keep-all]`}
+          >
+            {slide.title}
+          </h1>
           <p className="mt-4 text-[clamp(1rem,2.2vw,1.7rem)] font-semibold text-[#a1a1a6]">{slide.sub}</p>
           {slide.keys.length > 0 && (
             <div className="mt-6 flex flex-wrap gap-2">
