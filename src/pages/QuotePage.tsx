@@ -6,6 +6,7 @@ import PageHeader from '../components/PageHeader'
 import { AiError, manualPromptText, runAi } from '../lib/aiPolish'
 import { isPicked, mergeManual, type BudgetItem } from '../lib/budget'
 import { copyText, saveXlsx } from '../lib/download'
+import { budgetOf } from '../lib/newYear'
 import {
   QuoteError,
   QuoteScanError,
@@ -77,7 +78,10 @@ export default function QuotePage() {
     }
   }, [quote, addVat, title, purpose, vendor, budgetKey])
 
-  const budgets = useMemo(() => mergeManual(settings.budgetCard?.card.items ?? [], settings.budgetManual ?? []).filter((x) => isPicked(x, settings.budgetPicks)), [settings.budgetCard, settings.budgetManual, settings.budgetPicks])
+  const budgets = useMemo(() => {
+    const y = budgetOf(settings)
+    return mergeManual(y.card?.card.items ?? [], y.manual).filter((x) => isPicked(x, settings.budgetPicks))
+  }, [settings])
   const budget = budgets.find((b) => b.key === budgetKey) ?? null
 
   const take = (q: Quote, how: string) => {

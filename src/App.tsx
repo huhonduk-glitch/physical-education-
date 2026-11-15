@@ -23,6 +23,7 @@ const PapsPage = lazy(() => import('./pages/PapsPage'))
 const RosterImportPage = lazy(() => import('./pages/RosterImportPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 const SetupPage = lazy(() => import('./pages/SetupPage'))
+const NewYearPage = lazy(() => import('./pages/NewYearPage'))
 const StudentsPage = lazy(() => import('./pages/StudentsPage'))
 const TimerPage = lazy(() => import('./pages/TimerPage'))
 const JournalPage = lazy(() => import('./pages/groups/JournalPage'))
@@ -236,6 +237,7 @@ export default function App() {
           <Route path="/seteuk/ai-guide" element={<AiGuidePage />} />
           <Route path="/timetable/pe" element={<PeTimetablePage />} />
           <Route path="/more/data" element={<DataPage />} />
+          <Route path="/more/data/new-year" element={<NewYearPage />} />
           <Route path="/work/budget" element={<BudgetPage />} />
           <Route path="/work/quote" element={<QuotePage />} />
           <Route path="/work/flow" element={<WorkFlowPage />} />

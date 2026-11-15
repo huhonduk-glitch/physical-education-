@@ -464,7 +464,7 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - **전체 백업**: JSON 파일로 다운로드한다.
 - **복원**: 덮어쓰기 전에 현재 데이터를 자동 백업한다.
 - 마지막 백업 후 7일이 지나면 홈 화면에 경고를 띄운다.
-- **학년도 이월**: 새 학년도를 만든다. 이전 학년도는 읽기 전용으로 보관하고, 새 명렬 업로드를 안내한다. 키워드 사전과 설정은 새 학년도로 복사한다.
+- **학년도 이월**: 새 학년도를 만든다. 이전 학년도는 읽기 전용으로 보관하고, 새 명렬 업로드를 안내한다. 키워드 사전과 설정은 새 학년도로 복사한다. → **바뀜 (2026-11-15, 6-30)**: 전용 화면 `/more/data/new-year`에서 같은 학교/옮김을 고르고 지난해 진도표 · 수행평가 · 업무 일정을 골라 가져온다. 그해에만 맞는 설정(시간표 · 학사일정 · 받아 둔 주간 시간표 · 예산)은 비우거나 학년도별로 보관한다
 - **전체 데이터 삭제**: PIN을 다시 입력해야 실행된다.
 
 ### 4-12. 설정
@@ -1062,3 +1062,12 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - 확인: 옛 판 ↔ 새 판으로 같은 파일을 앱과 같은 방법(`readGridsFromFile`)으로 읽어 비교 — references 5개 · 교육청 서식 xls(21시트) · 교사 실제 엑셀 · UTF-8/CP949 CSV, 칸 약 43,500개 차이 0. 새 판으로 만든 파일을 옛 판 · 새 판 · openpyxl이 똑같이 읽음. 빌드본에서 명렬 올리기 · 체력왕 엑셀 받기 확인
 - `overrides.image-size` ^2.0.3: pptxgenjs가 적어 둔 부품(약점 있는 1.2.1)이지만 pptxgenjs 빌드 파일 어디에도 안 쓰이고 브라우저에서는 false로 막혀 앱에 안 들어감 → 경고만 없앰
 - `npm audit --omit=dev` = 0. 남은 경고는 빌드 · 시험 도구(vite-plugin-pwa → workbox-build의 deepmerge · glob)뿐이고 앱에 안 실림, 고치려면 vite-plugin-pwa를 낮춰야 해서 그대로 둠. vitest 5.1.0(audit fix)
+
+### 6-30. 새 학년도 시작 (2026-11-15 교사 승인 '추천 순서대로', 브랜치 `new-year`)
+- 점검: 예전 [새 학년도 시작]은 `schoolYear · latestYear · timetable`만 바꿔서 학년도와 상관없이 한 칸에 있는 설정(나이스 학사일정 · 받아 둔 한 주 체육 시간표 · 컴시간 주 · 예산)이 새 학년도로 넘어갔고, 지난해 진도표 · 수행평가 틀을 가져올 방법이 없었다. 학년도마다 쌓이는 표(명렬 · 기록 · PAPS · 수행평가 · 진도표 · 출결 …)는 `schoolYear`로 이미 나뉘어 있어 건드리지 않는다
+- 계산 `src/lib/newYear.ts`(테스트 `tests/newYear.test.ts`): `newYearPatch`(바꾸는 설정 — 시간표 · `neisSchedule` · `neisPeWeek` · `comciWeek` 비움, 예산 `budgetCard` · `budgetManual`은 `budgetArchive['지난 학년도']`로 옮기고 새 학년도는 빈 예산표(학교 회계연도 = 학년도). **다른 학교로 옮김**이면 학교 이름 · 나이스/컴시간 학교 · 교시 시각 · 날씨 위치 · 학교 공유 공간 · 고른 예산 항목 · 예산 시트 자리도 기본값). 키워드 · 기록 버튼 · 세특 문체/수준 틀 · 기능 고르기 · 홈 배치 · AI 연결 · 체력왕 기준 · 선생님 이름은 그대로. `budgetOf`(지난 학년도를 보면 그해 보관 예산 — 체육 예산 현황 · 견적서 → 품의가 씀, 보관 예산은 고칠 수 없음) · `newYearDue`(3월 1일이 지나 `currentSchoolYear`가 가장 최근 학년도보다 크면) · `carryPlan` · `carryAssessment`(보내기 · 받기 `share.ts`와 같은 규칙: 반 연결 · 끝낸 차시 · 빠진 수업 · 점수 빼고) · `carryEvents`(지난 학년도 3월 ~ 다음 해 2월에 직접 넣은 업무 일정 → 1년 뒤 같은 날, 2월 29일 → 28일 `shiftYear`. 교육청 제출 일정 `pedocs-`는 [제출 일정 넣기]로 해마다 다시 넣으므로 뺌)
+- `unpackPlan`(share.ts): 다른 학년도에 만든 진도표는 학기 날짜를 이 학년도 기본 학기(`defaultTerm`)로, 그해 쉬는 날 · 고정 날짜(`lockedDate`)는 푼다(남에게 받은 지난해 진도표에도 같이 적용)
+- 화면 `src/pages/NewYearPage.tsx`(`/more/data/new-year`, [백업 · 학년도]의 [N학년도 새로 시작]이 여기로): 1 학교(같은 학교 / 옮김) → 2 지난해 것 골라 가져오기(진도표 · 수행평가 · 업무 일정, 모두 고르기) → 3 바뀌는 것 안내 → 4 백업(파일 받기 권장) → [N학년도 시작] = 자동 백업(`saveSnapshot` 이유 '새 학년도 시작 전', 시연 모드는 안 함) → 가져온 것 넣기 → 설정 바꾸기 → '이제 할 일'(옮겼으면 학교 정보 · 새 명렬 · 나이스 · 컴시간 · 진도표/수행평가에 수업반 연결 · 공유 공간 다시 연결)
+- 홈 `src/components/NewYearNotice.tsx`: 3월이 되면 맨 위 안내 [새 학년도 시작] / [나중에](7일 숨김, localStorage `pelog.newYearLater`)
+- 같이 고친 것: 지난 학년도(읽기 전용)를 볼 때 견학 화면에서 기록 지우기 · 대체 과제 바꾸기가 되던 것(`AbsencesPage` `readOnly`)
+- 사용법 · 웹 설명서 · portfolio/manual.md · 땅콩이 `new-year` · 업데이트 소식 · CHANGELOG v1.26.0

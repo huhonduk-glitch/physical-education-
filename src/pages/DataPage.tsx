@@ -98,13 +98,6 @@ export default function DataPage() {
     location.reload()
   }
 
-  const newYear = async () => {
-    const next = latest + 1
-    if (!confirm(`${next}학년도를 새로 시작할까요?\n\n· ${latest}학년도 기록은 그대로 보관되고 읽기 전용이 돼요.\n· 키워드 사전·기록 버튼·설정은 그대로 이어져요.\n· 새 학년도 명렬을 올려 주세요.`)) return
-    await updateSettings({ schoolYear: next, latestYear: next, timetable: [] })
-    setMsg(`${next}학년도를 시작했어요. 이제 새 명렬을 올려 주세요.`)
-  }
-
   return (
     <>
       <PageHeader title="백업 · 학년도" back />
@@ -255,9 +248,9 @@ export default function DataPage() {
             </select>
           </label>
           {readOnly && <p className="rounded-xl bg-caution-light p-3 font-bold text-caution">지난 학년도를 보고 있어요. 기록·수정이 막혀 있어요.</p>}
-          <button type="button" className="btn btn-outline w-full" onClick={newYear}>
+          <Link to="/more/data/new-year" className="btn btn-outline w-full">
             <Icon name="plus" /> {latest + 1}학년도 새로 시작
-          </button>
+          </Link>
           {!readOnly && (
             <Link to="/students/import" className="btn btn-ghost w-full text-brand">
               새 명렬 올리기 →
