@@ -1,4 +1,4 @@
-import { CREDIT_SOURCE_LABEL, defaultTerm, heldClasses, termSessions } from '../../lib/creditBase'
+import { heldClasses, heldNote, planSessions, termFromSchedule, termSessions } from '../../lib/creditBase'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
 import { db } from '../../db/db'
@@ -53,7 +53,7 @@ export default function LedgerView({
   const praiseTools = tools.filter((t) => t.type === 'exemplary')
   const guideTools = tools.filter((t) => t.type === 'unprepared')
   const today = todayStr()
-  // 고교학점제 출석률 2/3 (누적 기록 화면과 같은 셈): 학년도 전체 결석 · 결과(인정 제외) / 수업 횟수(진도표 목표 차시, 없으면 기록한 날 수)
+  // 고교학점제 출석률 2/3 (누적 기록 화면과 같은 셈): 학년도 전체 결석 · 결과(인정 제외) / 수업 횟수(creditBase: 진도표 목표 차시 → 시간표 → 기록한 날 수)
   const year = useLiveQuery(async () => {
     const [att, recs, plans] = await Promise.all([
       db.attendance.where('groupId').equals(groupId).filter((x) => x.schoolYear === settings.schoolYear).toArray(),
@@ -63,9 +63,11 @@ export default function LedgerView({
     const missing = new Map<string, number>()
     for (const x of att) if ((x.status === 'absent' || x.status === 'result') && x.reason !== '인정') missing.set(x.studentId, (missing.get(x.studentId) ?? 0) + 1)
     const target = plans.reduce((m, p) => Math.max(m, p.target || 0), 0)
-    const sessions = group ? termSessions(groupId, settings.timetable, defaultTerm(settings.schoolYear, group.semester), settings.neisSchedule?.events ?? [], group.grade) : 0
-    const { held, source } = heldClasses({ planTarget: target, sessions, recordedDays: new Set([...att, ...recs].map((x) => x.date)).size })
-    return { missing, held, source }
+    const events = settings.neisSchedule?.events ?? []
+    const sessions = group ? termSessions(groupId, settings.timetable, termFromSchedule(settings.schoolYear, group.semester, events, group.grade), events, group.grade) : 0
+    const planCount = plans.reduce((m, p) => Math.max(m, planSessions(groupId, settings.timetable, p)), 0)
+    const h = heldClasses({ planTarget: target, sessions, recordedDays: new Set([...att, ...recs].map((x) => x.date)).size, planSessions: planCount })
+    return { missing, held: h.held, note: heldNote(h) }
   }, [groupId, settings.schoolYear, settings.timetable, settings.neisSchedule, group])
   const [month, setMonth] = useState(today.slice(0, 7))
   const data = useLiveQuery(async () => {
@@ -247,7 +249,7 @@ export default function LedgerView({
                       return (
                         <span
                           className={`ml-1 rounded px-1 text-[0.65rem] font-black ${risk === 'danger' ? 'bg-danger text-white' : 'bg-caution-light text-ink'}`}
-                          title={`고교학점제 출석률: 학년도 결석 · 결과 ${year?.missing.get(s.id) ?? 0}번 / 수업 ${year?.held}번 (${year ? CREDIT_SOURCE_LABEL[year.source] : ''}, 인정 결석 제외) — 담임 확인용 참고`}
+                          title={`고교학점제 출석률: 학년도 결석 · 결과 ${year?.missing.get(s.id) ?? 0}번 / 수업 ${year?.held}번 (${year?.note ?? ''}, 인정 결석 제외) — 담임 확인용 참고`}
                         >
                           {risk === 'danger' ? '미달' : '주의'}
                         </span>

@@ -27,3 +27,13 @@ describe('땅콩이 — 길라잡이 질문 (2026-11-04)', () => {
 it('출석률 질문 (2026-11-04)', () => {
   expect(findAnswer('고교학점제 출석률 미이수 학생 확인')?.id).toBe('credit')
 })
+
+describe('효과(useEffect)가 값을 돌려주지 않음 (2026-11-14)', () => {
+  it('scrollIntoView · scrollTo를 화살표 함수로 바로 돌려주지 않음 — 최신 크롬은 Promise를 돌려줘 React가 멈춘다', async () => {
+    const { readdirSync, readFileSync, statSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const walk = (d: string): string[] => readdirSync(d).flatMap((f) => (statSync(join(d, f)).isDirectory() ? walk(join(d, f)) : /\.tsx?$/.test(f) ? [join(d, f)] : []))
+    const bad = walk('src').filter((f) => /use(Layout)?Effect\(\(\) =>\s*[^{(\s][^,]*\.(scrollIntoView|scrollTo|scrollBy)\(/.test(readFileSync(f, 'utf8')))
+    expect(bad).toEqual([])
+  })
+})

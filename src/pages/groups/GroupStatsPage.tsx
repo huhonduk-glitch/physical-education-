@@ -1,4 +1,4 @@
-import { CREDIT_SOURCE_LABEL, defaultTerm, heldClasses, termSessions } from '../../lib/creditBase'
+import { heldClasses, heldNote, planSessions, termFromSchedule, termSessions } from '../../lib/creditBase'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -44,14 +44,18 @@ export default function GroupStatsPage() {
     return m
   }, [data, range])
   // 수업 횟수: 이 수업반의 교과 진도표 목표 차시(2학점 32 · 1학점 16, 교사 제안 2026-11-04)가 있으면 그것, 없으면 기록 · 출결이 있는 날 수(어림값)
-  const planTarget = useLiveQuery(async () => (await db.progressPlans.where('groupIds').equals(id).toArray()).reduce((m, p) => Math.max(m, p.target || 0), 0), [id])
+  const plans = useLiveQuery(() => db.progressPlans.where('groupIds').equals(id).toArray(), [id])
+  const planTarget = (plans ?? []).reduce((m, p) => Math.max(m, p.target || 0), 0)
+  // 진도표 기간 · 쉬는 날 · 빠진 수업으로 시간표를 센 수 (목표 차시와 다를 때 확인용)
+  const planCount = useMemo(() => (plans ?? []).reduce((m, p) => Math.max(m, planSessions(id, settings.timetable, p)), 0), [plans, id, settings.timetable])
   const dayCount = useMemo(() => new Set([...(data?.records ?? []), ...(data?.attendance ?? [])].filter((x) => inRange(x.date, range)).map((x) => x.date)).size, [data, range])
   // 진도표가 없으면 시간표로 이 학기 교시를 센다(학사일정 휴업일 · 방학 빼고) — creditBase.ts
   const sessions = useMemo(
-    () => (group ? termSessions(id, settings.timetable, defaultTerm(settings.schoolYear, group.semester), settings.neisSchedule?.events ?? [], group.grade) : 0),
+    () => (group ? termSessions(id, settings.timetable, termFromSchedule(settings.schoolYear, group.semester, settings.neisSchedule?.events ?? [], group.grade), settings.neisSchedule?.events ?? [], group.grade) : 0),
     [group, id, settings.timetable, settings.schoolYear, settings.neisSchedule],
   )
-  const { held, source: heldSource } = heldClasses({ planTarget: planTarget ?? 0, sessions, recordedDays: dayCount })
+  const heldInfo = heldClasses({ planTarget, sessions, recordedDays: dayCount, planSessions: planCount })
+  const held = heldInfo.held
   const days = useMemo(() => new Set((data?.records ?? []).filter((r) => inRange(r.date, range)).map((r) => r.date)).size, [data, range])
 
   // 표 열: 설정의 체크 항목 + 기간 안에 기록이 있는 예전 항목(이름을 바꾼 항목 등)
@@ -189,7 +193,7 @@ export default function GroupStatsPage() {
             </tbody>
           </table>
         </div>
-            <p className="hint px-1 pt-1">결석 칸 노랑 · 빨강 = 고교학점제 출석률 2/3 주의 · 미달 (인정 결석 제외, 담임 확인용 참고) · 수업 {held}번 = {CREDIT_SOURCE_LABEL[heldSource]}</p>
+            <p className="hint px-1 pt-1">결석 칸 노랑 · 빨강 = 고교학점제 출석률 2/3 주의 · 미달 (인정 결석 제외, 담임 확인용 참고) · 수업 {held}번 = {heldNote(heldInfo)}</p>
       </div>
     </>
   )
