@@ -98,6 +98,8 @@ export interface AppSettings {
   surveys: Record<string, import('../lib/survey').Survey[]>
   /** 홈 칸 순서 · 숨긴 칸 (2026-11-12 대시보드). 없으면 기본 배치 */
   homeLayout: import('../lib/dash').HomeLayout | null
+  /** 홈 메모 (2026-11-25, 슈퍼스쿨 홈 메모 참고): 새 것이 앞. 이 기기 자료 · 백업 · 구글 동기화에 함께 */
+  homeMemos: HomeMemo[]
   /** 업무 달력 일정 (같이 쓰기 6-13, 이 기기에만 · 학생 정보 없음) */
   workEvents: import('../lib/workCal').WorkEvent[]
   /** 학교 공유 공간 연결 (0-4 예외 6-13). 비밀번호가 있어 백업 파일에서 뺀다(SECRET_KEYS) */
@@ -129,6 +131,15 @@ export interface TimetableEntry {
 }
 
 /** 홈에서 켜고 끄는 기능 */
+export interface HomeMemo {
+  id: string
+  text: string
+  /** 색 번호 (MEMO_TONES) */
+  tone: number
+  createdAt: number
+  updatedAt: number
+}
+
 export type FeatureId = 'records' | 'plans' | 'paps' | 'assess' | 'sports' | 'tools' | 'apps' | 'absences' | 'captains' | 'seteuk' | 'work'
 export const FEATURE_IDS: FeatureId[] = ['records', 'plans', 'paps', 'assess', 'sports', 'tools', 'apps', 'absences', 'captains', 'seteuk', 'work']
 
@@ -188,6 +199,7 @@ export function defaultSettings(): AppSettings {
     budgetPicks: {},
     budgetManual: [],
     homeLayout: null,
+    homeMemos: [],
     workEvents: [],
     clinicRule: { lowGrades: [4, 5], obeseLabels: ['경도비만', '고도비만'] },
     fitKing: { mode: 'custom', percent: 20, count: null, gold: 1, silver: 2, split: false, cuts: {} },

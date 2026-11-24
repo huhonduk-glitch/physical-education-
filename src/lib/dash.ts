@@ -136,7 +136,9 @@ export function weekDates(today: string): string[] {
 export const HOME_WIDGETS = [
   { id: 'focus', label: '지금 수업 · 이어서 기록' },
   { id: 'setup', label: '시작 준비' },
+  { id: 'todo', label: '처리할 일' },
   { id: 'today', label: '오늘 수업' },
+  { id: 'memo', label: '메모' },
   { id: 'calendar', label: '달력 · 학사일정' },
   { id: 'weekly', label: '이번 주 수업 요약' },
   { id: 'timetable', label: '이번 주 내 시간표' },

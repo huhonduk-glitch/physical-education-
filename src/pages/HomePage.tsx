@@ -15,6 +15,8 @@ import HomeLayoutSheet from '../components/home/HomeLayoutSheet'
 import { periodRange, pickDdays, resolveLayout, weekDates, type HomeWidgetId } from '../lib/dash'
 import WeeklyCard from '../components/WeeklyCard'
 import LessonWx, { useLessonWx } from '../components/home/LessonWx'
+import MemoCard from '../components/home/MemoCard'
+import TodoCard from '../components/home/TodoCard'
 import { longDateLabel, todayStr } from '../lib/dates'
 import { FEATURES, featureOn } from '../lib/features'
 import { GROUP_COLORS, readLastGroup, SEMESTER_LABEL } from '../lib/groups'
@@ -181,6 +183,8 @@ export default function HomePage() {
           )}
       </>
     ),
+    todo: <TodoCard />,
+    memo: <MemoCard />,
     today: (
       <>
           {/* ③ 오늘 수업 — 세로 목록 (가로 칩은 폰에서 세 번째부터 잘렸다) */}

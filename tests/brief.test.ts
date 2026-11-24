@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { briefLines, briefLinks, briefText, type BriefInput } from '../src/lib/brief'
+import { briefLines, briefLinks, briefText, todoTiles, type BriefInput } from '../src/lib/brief'
 
 const base: BriefInput = { lessons: [], nowHHMM: '08:00', pendingNeis: 0, behind: [], grading: [], events: [], backupDays: 1, hasStudents: true }
 
@@ -31,7 +31,7 @@ describe('땅콩이 오늘 브리핑', () => {
       events: [{ title: 'PAPS 결과 제출', dday: 'D-3' }],
       backupDays: 9,
     })
-    expect(lines.map((l) => l.to)).toEqual(['/attend/neis', '/plans', '/more/assessments', '/work/calendar', '/more/backup'])
+    expect(lines.map((l) => l.to)).toEqual(['/attend/neis', '/plans', '/more/assessments', '/work/calendar', '/more/data'])
     expect(lines[0].text).toContain('4건')
     expect(lines[1].text).toBe('진도가 늦은 반: A(3차시), B(2차시), C(1차시) 외 1')
     expect(lines[4].text).toBe('백업한 지 9일 지났어요.')
@@ -45,5 +45,24 @@ describe('땅콩이 오늘 브리핑', () => {
   })
   it('학생 이름을 받는 칸이 없다 (수 · 반 이름 · 평가 이름만)', () => {
     expect(Object.keys(base).sort()).toEqual(['backupDays', 'behind', 'events', 'grading', 'hasStudents', 'lessons', 'nowHHMM', 'pendingNeis'])
+  })
+  it('홈 처리할 일: 4칸 · 0도 보임 · 남은 채점은 합 · 늦은 반은 가장 늦은 차시', () => {
+    const zero = todoTiles(base)
+    expect(zero.map((t) => [t.id, t.value, t.to])).toEqual([
+      ['neis', 0, '/attend/neis'],
+      ['grading', 0, '/more/assessments'],
+      ['behind', 0, '/plans'],
+      ['events', 0, '/work/calendar'],
+    ])
+    expect(zero.map((t) => t.sub)).toEqual(['모두 옮겼어요', '채점 중인 평가 없음', '계획대로', '다가오는 일정 없음'])
+    const t = todoTiles({
+      ...base,
+      pendingNeis: 3,
+      grading: [{ title: '농구', left: 4 }, { title: '배구', left: 6 }],
+      behind: [{ group: '1-1', late: 1 }, { group: '1-2', late: 3 }],
+      events: [{ title: 'PAPS 마감', dday: 'D-2' }],
+    })
+    expect(t.map((x) => x.value)).toEqual([3, 10, 2, 1])
+    expect(t.map((x) => x.sub)).toEqual(['수업 출결 → 나이스', '평가 2개', '가장 늦은 반 3차시', 'PAPS 마감 D-2'])
   })
 })
