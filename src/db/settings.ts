@@ -104,7 +104,7 @@ export interface AppSettings {
   space: import('../lib/space').SpaceConn | null
   /** 날씨 · 미세먼지 (6-11 H, 0-4 예외): 학교 위치(기상청 격자 · 측정소)와 마지막으로 받은 값 */
   weatherLoc: import('../lib/weather').WeatherLoc | null
-  weatherCache: { fetchedAt: number; ncst?: import('../lib/weather').Ncst; fcst?: import('../lib/weather').Fcst; air?: import('../lib/weather').Air } | null
+  weatherCache: { fetchedAt: number; ncst?: import('../lib/weather').Ncst; fcst?: import('../lib/weather').Fcst; air?: import('../lib/weather').Air; /** 그날 시간별 예보 (교시별 날씨) */ hours?: import('../lib/weather').HourWx[]; hoursDate?: string } | null
 }
 
 export interface NeisTemplate {

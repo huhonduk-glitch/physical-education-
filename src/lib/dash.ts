@@ -7,7 +7,7 @@ import { eventsOn, type WorkEvent, WORK_KIND } from './workCal'
 
 /** 기상청 강수형태(PTY) · 하늘상태(SKY) → 날씨 그림 글자. 밤(19~5시)에 맑으면 달 */
 export function weatherEmoji(pty: number | undefined, sky: number | undefined, hour: number): string {
-  if (pty === 1 || pty === 5) return '🌧️'
+  if (pty === 1 || pty === 4 || pty === 5) return '🌧️'
   if (pty === 2 || pty === 6) return '🌨️'
   if (pty === 3 || pty === 7) return '❄️'
   const night = hour >= 19 || hour < 6

@@ -46,7 +46,8 @@ export interface Air {
 
 export const SIDO_LIST = ['서울', '부산', '대구', '인천', '광주', '대전', '울산', '경기', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주', '세종'] as const
 export const GRADE_LABEL: Record<number, string> = { 1: '좋음', 2: '보통', 3: '나쁨', 4: '매우나쁨' }
-export const PTY_LABEL: Record<number, string> = { 0: '', 1: '비', 2: '비/눈', 3: '눈', 5: '빗방울', 6: '빗방울 · 눈날림', 7: '눈날림' }
+/** 강수형태: 초단기실황(0 · 1 · 2 · 3 · 5 · 6 · 7)과 단기예보(0~4, 4 = 소나기) 코드를 함께 */
+export const PTY_LABEL: Record<number, string> = { 0: '', 1: '비', 2: '비/눈', 3: '눈', 4: '소나기', 5: '빗방울', 6: '빗방울 · 눈날림', 7: '눈날림' }
 export const SKY_LABEL: Record<number, string> = { 1: '맑음', 3: '구름 많음', 4: '흐림' }
 
 /** 위도 · 경도 → 기상청 격자 (기상청 단기예보 활용 가이드의 LCC 변환, 격자 5 km) */
@@ -129,6 +130,66 @@ export function parseNcst(items: readonly Item[]): Ncst {
 }
 
 /** 오늘(YYYYMMDD) 최고 · 최저, 지금 이후 최고 강수확률, 지금 가까운 하늘 */
+/** 시간별 예보 한 칸 (단기예보 정시 값: TMP 기온 · SKY 하늘 · PTY 강수형태 · POP 강수확률) */
+export interface HourWx {
+  /** 'HHmm' (정시, 예: '1100') */
+  time: string
+  tmp?: number
+  sky?: number
+  /** 단기예보 PTY: 0 없음 1 비 2 비/눈 3 눈 4 소나기 */
+  pty?: number
+  pop?: number
+}
+
+const HOUR_KEYS: Record<string, 'tmp' | 'sky' | 'pty' | 'pop'> = { TMP: 'tmp', SKY: 'sky', PTY: 'pty', POP: 'pop' }
+
+/** 단기예보 → 그날(date 'YYYYMMDD') 시간별 값, 시각순 (2026-11-25 교시별 날씨) */
+export function parseHours(items: readonly Item[], date: string): HourWx[] {
+  const map = new Map<string, HourWx>()
+  for (const i of items) {
+    const k = HOUR_KEYS[i.category]
+    if (!k || i.fcstDate !== date || !i.fcstTime) continue
+    const h = map.get(i.fcstTime) ?? { time: i.fcstTime }
+    h[k] = num(i.fcstValue)
+    map.set(i.fcstTime, h)
+  }
+  return [...map.values()].sort((a, b) => a.time.localeCompare(b.time))
+}
+
+/** 옛 예보(그날 02시 발표 — 하루 전체) 위에 새 예보를 덮어 합친다. 같은 시각은 새 예보 값 */
+export function mergeHours(older: readonly HourWx[], newer: readonly HourWx[]): HourWx[] {
+  const map = new Map(older.map((h) => [h.time, { ...h }]))
+  for (const h of newer) map.set(h.time, { ...map.get(h.time), ...h })
+  return [...map.values()].sort((a, b) => a.time.localeCompare(b.time))
+}
+
+/** 수업 시간(시작 'HH:MM' + 분)의 가운데에 가장 가까운 정시 예보. 90분 넘게 떨어지면 없음 */
+export function lessonHour(start: string | undefined, minutes: number, hours: readonly HourWx[]): HourWx | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(start ?? '')
+  if (!m || !hours.length) return null
+  const mid = Number(m[1]) * 60 + Number(m[2]) + minutes / 2
+  let best: HourWx | null = null
+  let gap = Infinity
+  for (const h of hours) {
+    const t = Number(h.time.slice(0, 2)) * 60 + Number(h.time.slice(2, 4))
+    const d = Math.abs(t - mid)
+    if (d < gap) {
+      gap = d
+      best = h
+    }
+  }
+  return gap <= 90 ? best : null
+}
+
+/** 수업 한 칸 주의 한마디 (실외 수업 참고 — outdoorAdvice와 같은 기준) */
+export function hourWarn(h: HourWx): string | null {
+  if (h.pty && h.pty > 0) return PTY_LABEL[h.pty] || '비 · 눈'
+  if ((h.pop ?? 0) >= 60) return `비 ${h.pop}%`
+  if (h.tmp !== undefined && h.tmp >= 33) return '폭염 주의'
+  if (h.tmp !== undefined && h.tmp <= -12) return '한파 주의'
+  return null
+}
+
 export function parseFcst(items: readonly Item[], today: string, nowHHmm: string): Fcst {
   const todays = items.filter((i) => i.fcstDate === today)
   const val = (c: string) => todays.filter((i) => i.category === c)

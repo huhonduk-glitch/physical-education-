@@ -7,7 +7,9 @@ import {
   dailyBase,
   fcstBase,
   fetchWx,
+  mergeHours,
   ncstBase,
+  parseHours,
   outdoorAdvice,
   parseAir,
   parseFcst,
@@ -67,6 +69,13 @@ export default function WeatherCard() {
             return { ...cur, tmn: cur.tmn ?? day?.tmn, tmx: cur.tmx ?? day?.tmx }
           })(),
       air: a.error ? cache?.air : parseAir(a.items as never, loc.station) ?? undefined,
+      // 교시별 날씨: 그날 02시 예보(하루 전체) 위에 최근 예보를 덮어 합친다. 받지 못하면 같은 날 것만 남긴다
+      ...(() => {
+        const older = dy && !dy.error ? parseHours(dy.items as never, today) : cache?.hoursDate === today ? (cache.hours ?? []) : []
+        const newer = f.error ? [] : parseHours(f.items as never, today)
+        const hours = mergeHours(older, newer)
+        return hours.length ? { hours, hoursDate: today } : {}
+      })(),
     }
     setErr(n.error || a.error || f.error || '')
     await updateSettings({ weatherCache: next })

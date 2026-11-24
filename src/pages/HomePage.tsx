@@ -14,6 +14,7 @@ import MonthCalendar from '../components/home/MonthCalendar'
 import HomeLayoutSheet from '../components/home/HomeLayoutSheet'
 import { periodRange, pickDdays, resolveLayout, weekDates, type HomeWidgetId } from '../lib/dash'
 import WeeklyCard from '../components/WeeklyCard'
+import LessonWx, { useLessonWx } from '../components/home/LessonWx'
 import { longDateLabel, todayStr } from '../lib/dates'
 import { FEATURES, featureOn } from '../lib/features'
 import { GROUP_COLORS, readLastGroup, SEMESTER_LABEL } from '../lib/groups'
@@ -37,6 +38,7 @@ export default function HomePage() {
   const { groups, students, membersOf } = useGroups()
   const [pick, setPick] = useState(false)
   const [arrange, setArrange] = useState(false)
+  const wxOf = useLessonWx()
   const layout = resolveLayout(settings.homeLayout)
   const now = new Date()
   const lessons = todaysLessons(now, settings.timetable)
@@ -90,8 +92,14 @@ export default function HomePage() {
               to={`/groups/${focusGroup.id}`}
               className="anim-pop block rounded-3xl bg-brand p-5 text-white shadow-[var(--shadow-float)] transition-transform active:scale-[0.99]"
             >
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-sm font-bold">
-                {focus.status === 'now' ? '● 지금 수업' : '다음 수업'} · {focus.entry.period}교시 {focus.start}
+              <span className="flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-sm font-bold">
+                  {focus.status === 'now' ? '● 지금 수업' : '다음 수업'} · {focus.entry.period}교시 {focus.start}
+                </span>
+                {(() => {
+                  const h = wxOf(focus.entry.period)
+                  return h && <LessonWx h={h} tone="onBrand" />
+                })()}
               </span>
               <b className="mt-3 block text-[1.6rem] leading-tight font-black">{focusGroup.name}</b>
               <span className="mt-1 block font-semibold text-white/85">{membersOf(focusGroup).length}명</span>
@@ -191,6 +199,10 @@ export default function HomePage() {
                       <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-black tabular-nums ${live ? 'bg-brand text-white' : 'bg-fill text-ink-2'}`}>{l.period}</span>
                       <i className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: c.fg }} aria-hidden />
                       <b className="min-w-0 flex-1 truncate">{g.name}</b>
+                      {(() => {
+                        const h = past ? null : wxOf(l.period)
+                        return h && <LessonWx h={h} />
+                      })()}
                       {live && <span className="badge bg-brand-light text-brand">지금</span>}
                       <Icon name="chevronRight" size={18} className="text-ink-3" />
                     </Link>

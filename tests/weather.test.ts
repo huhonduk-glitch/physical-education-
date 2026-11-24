@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 // @ts-expect-error 순수 JS (Cloudflare Worker)
 import { wxQuery } from '../relay/comcigan-worker.js'
-import { dailyBase, fcstBase, itemsOf, ncstBase, outdoorAdvice, parseAir, parseFcst, parseNcst, stationNames, toGrid } from '../src/lib/weather'
+import { dailyBase, fcstBase, hourWarn, itemsOf, lessonHour, mergeHours, ncstBase, outdoorAdvice, parseAir, parseFcst, parseHours, parseNcst, stationNames, toGrid } from '../src/lib/weather'
 
 describe('날씨 · 미세먼지', () => {
   it('위경도 → 기상청 격자 (서울시청 60,127 · 제주시청 53,38)', () => {
@@ -26,6 +26,33 @@ describe('날씨 · 미세먼지', () => {
     const it = (category: string, fcstTime: string, fcstValue: string) => ({ category, fcstDate: '20261106', fcstTime, fcstValue })
     const f = parseFcst([it('TMX', '1500', '17.0'), it('TMN', '0600', '8.0'), it('POP', '0900', '80'), it('POP', '1500', '30'), it('SKY', '1500', '4')], '20261106', '1210')
     expect(f).toEqual({ tmx: 17, tmn: 8, pop: 30, sky: 4 })
+  })
+  it('교시별 날씨: 시간별 값 꺼내기 · 새 예보 덮어 합치기', () => {
+    const it = (category: string, fcstDate: string, fcstTime: string, fcstValue: string) => ({ category, fcstDate, fcstTime, fcstValue })
+    const daily = parseHours(
+      [it('TMP', '20261125', '0900', '1'), it('SKY', '20261125', '0900', '1'), it('TMP', '20261125', '1100', '3'), it('POP', '20261125', '1100', '20'), it('TMX', '20261125', '1500', '9.0'), it('TMP', '20261126', '0900', '5')],
+      '20261125',
+    )
+    // 다른 날 · 시간별이 아닌 칸(TMX)은 빼고 시각순
+    expect(daily).toEqual([{ time: '0900', tmp: 1, sky: 1 }, { time: '1100', tmp: 3, pop: 20 }])
+    const newer = parseHours([it('TMP', '20261125', '1100', '4'), it('PTY', '20261125', '1100', '4'), it('TMP', '20261125', '1200', '5')], '20261125')
+    expect(mergeHours(daily, newer)).toEqual([{ time: '0900', tmp: 1, sky: 1 }, { time: '1100', tmp: 4, pop: 20, pty: 4 }, { time: '1200', tmp: 5 }])
+  })
+  it('교시별 날씨: 수업 가운데에 가까운 정시 · 90분 넘으면 없음 · 주의 한마디', () => {
+    const hours = [{ time: '0900', tmp: 1 }, { time: '1000', tmp: 2 }, { time: '1100', tmp: 3 }, { time: '1500', tmp: 8 }]
+    // 10:40 + 50분 → 가운데 11:05 → 11시
+    expect(lessonHour('10:40', 50, hours)?.time).toBe('1100')
+    // 08:30 + 50분 → 08:55 → 9시
+    expect(lessonHour('8:30', 50, hours)?.time).toBe('0900')
+    // 13:00 + 50분 → 13:25: 11시는 145분 · 15시는 95분 떨어짐 → 없음
+    expect(lessonHour('13:00', 50, hours)).toBeNull()
+    expect(lessonHour(undefined, 50, hours)).toBeNull()
+    expect(lessonHour('09:00', 50, [])).toBeNull()
+    expect(hourWarn({ time: '1100', pty: 4 })).toBe('소나기')
+    expect(hourWarn({ time: '1100', pop: 60 })).toBe('비 60%')
+    expect(hourWarn({ time: '1100', pop: 50, tmp: 34 })).toBe('폭염 주의')
+    expect(hourWarn({ time: '1100', tmp: -12 })).toBe('한파 주의')
+    expect(hourWarn({ time: '1100', tmp: 10, pop: 30, sky: 4 })).toBeNull()
   })
   it('미세먼지: 측정소 찾기 · 에어코리아 등급 그대로', () => {
     const items = [{ stationName: '이도동', pm10Value: '85', pm25Value: '40', pm10Grade1h: '3', pm25Grade1h: '3', dataTime: '2026-11-06 09:00' }, { stationName: '연동', pm10Value: '-', pm25Value: '-', pm10Grade1h: null, pm25Grade1h: null, dataTime: null }]
