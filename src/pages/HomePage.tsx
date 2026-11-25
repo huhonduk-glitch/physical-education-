@@ -5,6 +5,7 @@ import BackupWarning from '../components/BackupWarning'
 import { Logo } from '../components/Brand'
 import FeatureSheet from '../components/FeatureSheet'
 import Icon from '../components/Icon'
+import { openMenuSearch } from '../components/MenuSearch'
 import InstallGuide from '../components/InstallGuide'
 import NewYearNotice from '../components/NewYearNotice'
 import WeatherCard from '../components/WeatherCard'
@@ -14,6 +15,10 @@ import MonthCalendar from '../components/home/MonthCalendar'
 import HomeLayoutSheet from '../components/home/HomeLayoutSheet'
 import { periodRange, pickDdays, resolveLayout, weekDates, type HomeWidgetId } from '../lib/dash'
 import WeeklyCard from '../components/WeeklyCard'
+import LessonWx, { useLessonWx } from '../components/home/LessonWx'
+import MemoCard from '../components/home/MemoCard'
+import TodoCard from '../components/home/TodoCard'
+import { useClassEvents } from '../state/useClassEvents'
 import { longDateLabel, todayStr } from '../lib/dates'
 import { FEATURES, featureOn } from '../lib/features'
 import { GROUP_COLORS, readLastGroup, SEMESTER_LABEL } from '../lib/groups'
@@ -37,6 +42,8 @@ export default function HomePage() {
   const { groups, students, membersOf } = useGroups()
   const [pick, setPick] = useState(false)
   const [arrange, setArrange] = useState(false)
+  const wxOf = useLessonWx()
+  const classEvts = useClassEvents()
   const layout = resolveLayout(settings.homeLayout)
   const now = new Date()
   const lessons = todaysLessons(now, settings.timetable)
@@ -90,8 +97,14 @@ export default function HomePage() {
               to={`/groups/${focusGroup.id}`}
               className="anim-pop block rounded-3xl bg-brand p-5 text-white shadow-[var(--shadow-float)] transition-transform active:scale-[0.99]"
             >
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-sm font-bold">
-                {focus.status === 'now' ? '● 지금 수업' : '다음 수업'} · {focus.entry.period}교시 {focus.start}
+              <span className="flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-2.5 py-1 text-sm font-bold">
+                  {focus.status === 'now' ? '● 지금 수업' : '다음 수업'} · {focus.entry.period}교시 {focus.start}
+                </span>
+                {(() => {
+                  const h = wxOf(focus.entry.period)
+                  return h && <LessonWx h={h} tone="onBrand" />
+                })()}
               </span>
               <b className="mt-3 block text-[1.6rem] leading-tight font-black">{focusGroup.name}</b>
               <span className="mt-1 block font-semibold text-white/85">{membersOf(focusGroup).length}명</span>
@@ -173,6 +186,8 @@ export default function HomePage() {
           )}
       </>
     ),
+    todo: <TodoCard />,
+    memo: <MemoCard />,
     today: (
       <>
           {/* ③ 오늘 수업 — 세로 목록 (가로 칩은 폰에서 세 번째부터 잘렸다) */}
@@ -191,6 +206,10 @@ export default function HomePage() {
                       <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-sm font-black tabular-nums ${live ? 'bg-brand text-white' : 'bg-fill text-ink-2'}`}>{l.period}</span>
                       <i className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: c.fg }} aria-hidden />
                       <b className="min-w-0 flex-1 truncate">{g.name}</b>
+                      {(() => {
+                        const h = past ? null : wxOf(l.period)
+                        return h && <LessonWx h={h} />
+                      })()}
                       {live && <span className="badge bg-brand-light text-brand">지금</span>}
                       <Icon name="chevronRight" size={18} className="text-ink-3" />
                     </Link>
@@ -205,7 +224,7 @@ export default function HomePage() {
       <>
           {/* 달력 — 학사일정 · 업무 일정이 바로 보이게 (2026-11-12) */}
           <div className="xl:order-none">
-            <MonthCalendar today={today} school={schoolEvents} work={settings.workEvents ?? []} />
+            <MonthCalendar today={today} school={schoolEvents} work={settings.workEvents ?? []} extra={classEvts} />
           </div>
       </>
     ),
@@ -331,6 +350,9 @@ export default function HomePage() {
             <p className="text-sm font-bold text-ink-3">{longDateLabel(today)}</p>
             <h1 className="truncate text-[1.4rem] leading-tight font-black tracking-tight">{settings.schoolName || 'PE LOG'}</h1>
           </div>
+          <button type="button" className="btn btn-ghost px-2 text-ink-3 lg:hidden" aria-label="메뉴 찾기" onClick={openMenuSearch}>
+            <Icon name="search" />
+          </button>
           <Link to="/help" className="btn btn-ghost px-2 text-ink-3" aria-label="사용법">
             <Icon name="info" />
           </Link>

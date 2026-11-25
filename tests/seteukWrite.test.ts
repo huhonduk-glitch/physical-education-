@@ -48,6 +48,9 @@ describe('세특 검사 (기재요령 총칙 3~5)', () => {
     expect(by('afterschool')?.level).toBe('error')
     expect(checkSeteuk('Badminton 랠리를 함.').find((h) => h.id === 'english')?.words).toEqual(['Badminton'])
     expect(checkSeteuk("'하이클리어' 동작을 [분석]해 설명함.")).toEqual([])
+    // ㄹ 받침 말의 명사형(ㄻ)도 명사형 종결로 본다 (2026-11-25)
+    expect(checkSeteuk('모둠 활동을 앞에서 이끎. 경기 규칙 안내문을 만듦.').find((h) => h.id === 'ending')).toBeUndefined()
+    expect(checkSeteuk('규칙을 익혔다.').find((h) => h.id === 'ending')).toBeDefined()
   })
   it('고친 정도: 같으면 0, 전부 다르면 1', () => {
     expect(editRatio('가나다라', '가나다라')).toBe(0)

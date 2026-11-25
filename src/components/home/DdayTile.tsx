@@ -7,6 +7,7 @@ const TONE: Record<Dday['kind'], string> = {
   exam: 'from-[#fdeee6] to-[#fff6f0] text-[#d9541e]',
   off: 'from-[#fdecea] to-[#fff5f4] text-[#d0342c]',
   school: 'from-[#eef0f3] to-[#f8f9fa] text-ink',
+  class: 'from-[#e3f5f2] to-[#f2fbf9] text-[#0d7a70]',
 }
 
 /** 홈 D-day (2026-11-12): 가장 가까운 고사 · 업무 일정 하나를 크게, 그 뒤 일정 두 개를 작게 */

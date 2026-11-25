@@ -49,7 +49,7 @@ export function briefLines(i: BriefInput): BriefLine[] {
   if (i.behind.length) out.push({ icon: '📚', text: `진도가 늦은 반: ${list(i.behind.map((b) => `${b.group}(${b.late}차시)`))}`, to: '/plans' })
   if (i.grading.length) out.push({ icon: '✏️', text: `채점이 남은 평가: ${list(i.grading.map((g) => `${g.title}(${g.left}명)`))}`, to: '/more/assessments' })
   if (i.events.length) out.push({ icon: '📅', text: `다가오는 업무: ${list(i.events.map((e) => `${e.title} ${e.dday}`))}`, to: '/work/calendar' })
-  if (i.hasStudents && (i.backupDays === null || i.backupDays >= 7)) out.push({ icon: '💾', text: i.backupDays === null ? '아직 백업을 한 번도 안 했어요.' : `백업한 지 ${i.backupDays}일 지났어요.`, to: '/more/backup' })
+  if (i.hasStudents && (i.backupDays === null || i.backupDays >= 7)) out.push({ icon: '💾', text: i.backupDays === null ? '아직 백업을 한 번도 안 했어요.' : `백업한 지 ${i.backupDays}일 지났어요.`, to: '/more/data' })
   return out
 }
 
@@ -65,7 +65,7 @@ export const BRIEF_LINK_LABELS: Record<string, string> = {
   '/plans': '진도표',
   '/more/assessments': '수행평가',
   '/work/calendar': '업무 달력',
-  '/more/backup': '백업',
+  '/more/data': '백업',
 }
 
 /** 바로가기 (같은 화면은 한 번만) */
@@ -78,4 +78,27 @@ export function briefLinks(lines: readonly BriefLine[], labels: Record<string, s
     out.push({ to: l.to, label: labels[l.to] ?? '열기' })
   }
   return out
+}
+
+/** 홈 '처리할 일' 칸 하나 (2026-11-25, 슈퍼스쿨 '처리할 업무' 칸 참고 — 브리핑과 같은 셈을 숫자로) */
+export interface TodoTile {
+  id: 'neis' | 'grading' | 'behind' | 'events'
+  label: string
+  value: number
+  unit: string
+  /** 숫자 아래 한 줄 (학생 이름 없음) */
+  sub: string
+  to: string
+}
+
+/** 브리핑 자료 → 숫자 칸 4개 (0이어도 보인다 — 할 일이 없다는 것도 정보) */
+export function todoTiles(i: Pick<BriefInput, 'pendingNeis' | 'behind' | 'grading' | 'events'>): TodoTile[] {
+  const left = i.grading.reduce((s, g) => s + g.left, 0)
+  const maxLate = i.behind.reduce((m, b) => Math.max(m, b.late), 0)
+  return [
+    { id: 'neis', label: '나이스에 옮길 출결', value: i.pendingNeis, unit: '건', sub: i.pendingNeis ? '수업 출결 → 나이스' : '모두 옮겼어요', to: '/attend/neis' },
+    { id: 'grading', label: '남은 채점', value: left, unit: '명', sub: i.grading.length ? `평가 ${i.grading.length}개` : '채점 중인 평가 없음', to: '/more/assessments' },
+    { id: 'behind', label: '진도 늦은 반', value: i.behind.length, unit: '반', sub: i.behind.length ? `가장 늦은 반 ${maxLate}차시` : '계획대로', to: '/plans' },
+    { id: 'events', label: '업무 일정 7일', value: i.events.length, unit: '건', sub: i.events[0] ? `${i.events[0].title} ${i.events[0].dday}` : '다가오는 일정 없음', to: '/work/calendar' },
+  ]
 }

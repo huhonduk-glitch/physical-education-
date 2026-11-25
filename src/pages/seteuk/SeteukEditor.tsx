@@ -49,8 +49,8 @@ export default function SeteukEditor({ group, basis, draft, level, autoLevel, le
 
   const important = draft?.important ?? []
   const excluded = draft?.excluded ?? []
-  // 근거 목록: 기록 · 수행평가 메모 + 받은 등급 기준 문장 (#번호는 이 순서)
-  const items = [...basis.evidence.map((e) => ({ id: e.id, text: e.text })), ...basis.parts.filter((p) => p.kind === 'assess').map((p) => ({ id: p.id, text: p.text }))]
+  // 근거 목록: 기록 · 수행평가 메모 + 받은 등급 기준 문장 + 수업 역할 (#번호는 이 순서)
+  const items = [...basis.evidence.map((e) => ({ id: e.id, text: e.text })), ...basis.parts.filter((p) => p.kind === 'assess' || p.kind === 'role').map((p) => ({ id: p.id, text: p.text }))]
   const used = items.filter((i) => !excluded.includes(i.id))
   const curKey = basisKeyFor(basis, excluded)
   const stale = !!draft?.basisKey && draft.basisKey !== curKey && draft.status !== 'confirmed'

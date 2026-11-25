@@ -96,3 +96,40 @@ export const teamName = (i: number) => `${i + 1}팀`
 export function teamsText(teams: readonly { name: string }[][], label: (p: { name: string }) => string = (p) => p.name): string {
   return teams.map((t, i) => `${teamName(i)} (${t.length}명): ${t.map(label).join(', ')}`).join('\n')
 }
+
+/**
+ * 저장한 팀 (2026-11-25, 슈퍼스쿨 '자리' 화면을 체육에 맞게 — 모둠 · 팀 고정).
+ * 수업반에 한 벌만 둔다(ClassGroup.squads). 단원 동안 같은 팀으로 수업할 때 [불러오기].
+ */
+export interface SavedTeams {
+  /** 선생님이 붙인 이름 (예: 배구 단원) */
+  name: string
+  savedAt: number
+  /** 팀마다 학생 id */
+  teams: string[][]
+}
+
+/**
+ * 저장한 팀 → 지금 명단의 팀. 명단에 없는 학생(전출 · 오늘 견학으로 뺀 학생)은 빠지고(missing),
+ * 저장한 팀에 없는 새 학생은 그때 가장 적은 팀에 차례로 넣는다(added).
+ */
+export function restoreTeams<T extends { id: string }>(saved: readonly (readonly string[])[], people: readonly T[]): { teams: T[][]; missing: number; added: T[] } {
+  const byId = new Map(people.map((p) => [p.id, p]))
+  let missing = 0
+  const teams = saved.map((ids) =>
+    ids.flatMap((id) => {
+      const p = byId.get(id)
+      if (!p) missing++
+      return p ? [p] : []
+    }),
+  )
+  const placed = new Set(saved.flat())
+  const added = people.filter((p) => !placed.has(p.id))
+  if (teams.length)
+    for (const p of added) {
+      let min = 0
+      for (let i = 1; i < teams.length; i++) if (teams[i].length < teams[min].length) min = i
+      teams[min].push(p)
+    }
+  return { teams, missing, added }
+}

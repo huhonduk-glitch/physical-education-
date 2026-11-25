@@ -13,11 +13,12 @@ export default function ClassToolsSheet({ group, onClose, onTeamSend }: { group:
   const links: { to: string; icon: IconName; title: string; desc: string; show: boolean }[] = [
     { to: `/groups/${group.id}/stats`, icon: 'list', title: '누적 기록', desc: '학생별 칭찬 · 지도 · 견학 합계 · 엑셀', show: true },
     { to: `/tools/pick?g=${group.id}`, icon: 'dice', title: '뽑기', desc: '오늘 참여 학생 중에서', show: tools },
-    { to: `/tools/teams?g=${group.id}`, icon: 'shuffle', title: '팀 나누기', desc: '무작위 · 남녀 고르게 · 실력 고르게', show: tools },
+    { to: `/tools/teams?g=${group.id}`, icon: 'shuffle', title: '팀 나누기', desc: group.squads ? `저장한 팀 ‘${group.squads.name}’ ${group.squads.teams.length}팀 · 불러오기` : '무작위 · 남녀 고르게 · 실력 고르게 · 팀 저장', show: tools },
     { to: '/sports', icon: 'book', title: '종목 수업자료', desc: '규칙 · 경기 방법 · 리그전 · 토너먼트 설정 안내', show: featureOn(settings.features, 'sports') },
     { to: `/paps?c=${group.grade}-${group.classNo}`, icon: 'paps', title: 'PAPS', desc: '이 반 측정 입력 · 등급', show: paps },
     { to: `/timer?tab=paps&aid=shuttle&c=${group.grade}-${group.classNo}`, icon: 'flag', title: '왕복오래달리기', desc: '신호마다 한 번 · 늦은 학생만 누르기', show: paps && tools },
     { to: `/groups/${group.id}/journal`, icon: 'book', title: '수업 일지', desc: '단원 · 한 일 · 다음 시간 메모', show: true },
+    { to: `/groups/${group.id}/roles`, icon: 'team', title: '수업 역할', desc: '준비운동 리더 · 교구 담당 … 맡기기 · 돌리기', show: true },
     { to: `/plans?g=${group.id}`, icon: 'calendar', title: '교과 진도표', desc: '이 반 차시 · 날짜 · 진도', show: featureOn(settings.features, 'plans') },
     { to: `/seteuk/write?g=${group.id}`, icon: 'edit', title: '세특 쓰기', desc: '기록으로 초안 · 기재요령 검사 · AI 다듬기 · 확정', show: featureOn(settings.features, 'seteuk') },
     { to: `/more/keywords?g=${group.id}`, icon: 'tag', title: '세특 모아보기', desc: '학생별 키워드 · 근거 기록', show: featureOn(settings.features, 'seteuk') },

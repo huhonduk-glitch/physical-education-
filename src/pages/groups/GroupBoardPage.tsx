@@ -18,6 +18,7 @@ import { dayStatus, isMissing } from '../../lib/attendance'
 import { cellCounts, checkItems, type CheckItem } from '../../lib/checkBoard'
 import { todayStr } from '../../lib/dates'
 import { memberNo, saveLastGroup, SEMESTER_LABEL } from '../../lib/groups'
+import { holdersOn } from '../../lib/classRoles'
 import { pointTally, summarizeDay } from '../../lib/recordStats'
 import { classForNow } from '../../lib/timetable'
 import { useApp } from '../../state/AppContext'
@@ -228,6 +229,26 @@ export default function GroupBoardPage() {
           <Icon name="chevronRight" className="text-ink-3" />
         </Link>
         </div>
+        {/* 수업 역할 (2026-11-25): 이 날짜에 누가 무엇을 맡았는지 한 줄 */}
+        {group && (group.roles?.length ?? 0) > 0 && (
+          <Link to={`/groups/${id}/roles`} className="flex min-h-[48px] items-center gap-2 rounded-2xl bg-white px-4 py-2 shadow-[var(--shadow-card)]">
+            <Icon name="team" size={18} className="shrink-0 text-brand" />
+            <span className="min-w-0 flex-1 truncate text-[0.92rem]">
+              {group.roles!.map((r) => {
+                const who = holdersOn(group.roleTerms ?? [], r.id, date)
+                  .map((sid) => list.find((s) => s.id === sid))
+                  .filter((s): s is Student => !!s)
+                  .map((s) => `${memberNo(group, s)} ${s.name}`)
+                return (
+                  <span key={r.id} className="mr-3 whitespace-nowrap">
+                    <b>{r.name}</b> <span className={who.length ? 'text-ink-2' : 'text-ink-3'}>{who.length ? who.join(', ') : '없음'}</span>
+                  </span>
+                )
+              })}
+            </span>
+            <Icon name="chevronRight" size={18} className="shrink-0 text-ink-3" />
+          </Link>
+        )}
         <div className="segment" role="tablist" aria-label="기록 방법">
           {(
             [

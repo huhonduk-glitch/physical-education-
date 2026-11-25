@@ -52,6 +52,12 @@ export interface ClassGroup {
   sortOrder: number
   archived: boolean
   createdAt: number
+  /** 수업 역할 (2026-11-25, 선택 칸 — 없으면 역할 없음) */
+  roles?: import('../lib/classRoles').ClassRole[]
+  /** 역할을 맡은 학생 · 기간 */
+  roleTerms?: import('../lib/classRoles').RoleTerm[]
+  /** 저장한 팀 (모둠 · 팀 고정, 2026-11-25) */
+  squads?: import('../lib/teams').SavedTeams
 }
 
 export type RecordType = 'unprepared' | 'exemplary' | 'captain' | 'observation'

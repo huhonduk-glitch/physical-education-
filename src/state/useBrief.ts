@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { db } from '../db/db'
 import type { Student } from '../db/types'
 import { areaTotal } from '../lib/assessScore'
-import { BRIEF_LINK_LABELS, briefLines, briefLinks, briefText } from '../lib/brief'
+import { BRIEF_LINK_LABELS, briefLines, briefLinks, briefText, todoTiles } from '../lib/brief'
 import { todayStr } from '../lib/dates'
 import { pendingCount } from '../lib/neisCarry'
 import { groupProgress, meetings, schedule } from '../lib/progressPlan'
@@ -12,7 +12,7 @@ import { dday, upcoming } from '../lib/workCal'
 import { useApp } from './AppContext'
 import { useGroups } from './useGroups'
 
-/** 땅콩이 오늘 브리핑에 넣을 자료를 기기 안에서 센다. on=false면 읽지 않는다 */
+/** 땅콩이 오늘 브리핑 · 홈 '처리할 일' 칸에 넣을 자료를 기기 안에서 센다. on=false면 읽지 않는다 */
 export function useBrief(on: boolean) {
   const { settings } = useApp()
   const { groups, students, membersOf } = useGroups()
@@ -57,7 +57,7 @@ export function useBrief(on: boolean) {
       })
       .filter((x) => x.done > 0 && x.left > 0)
     const groupIds = new Set(groups.map((g) => g.id))
-    const lines = briefLines({
+    const input = {
       lessons,
       nowHHMM: `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`,
       pendingNeis: pendingCount(data.attendance.filter((a) => groupIds.has(a.groupId))),
@@ -66,7 +66,8 @@ export function useBrief(on: boolean) {
       events: upcoming(settings.workEvents ?? [], today, 7).map((e) => ({ title: e.title, dday: dday(e.date, today) })),
       backupDays: settings.lastBackupAt ? Math.floor((now.getTime() - settings.lastBackupAt) / 86400000) : null,
       hasStudents: (students?.length ?? 0) > 0,
-    })
-    return { count: lines.length, text: briefText(lines), links: briefLinks(lines, BRIEF_LINK_LABELS) }
+    }
+    const lines = briefLines(input)
+    return { count: lines.length, text: briefText(lines), links: briefLinks(lines, BRIEF_LINK_LABELS), tiles: todoTiles(input) }
   }, [on, data, groups, students, membersOf, settings.timetable, settings.periodStarts, settings.workEvents, settings.lastBackupAt, today])
 }

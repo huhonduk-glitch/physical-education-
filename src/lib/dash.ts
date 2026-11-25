@@ -2,12 +2,13 @@
  * 홈 대시보드 (2026-11-12 교사 요청 '스쿨보드처럼 가독성 · 가시성 좋게'): 시계 · 날씨 그림 · D-day · 학사일정 달력.
  * 구성만 참고(코드 · 문구 · 그림은 가져오지 않음). 순수 함수 — 화면은 src/components/home/.
  */
+import type { ClassEvent } from './classEvents'
 import type { NeisEvent } from './neisOpenApi'
 import { eventsOn, type WorkEvent, WORK_KIND } from './workCal'
 
 /** 기상청 강수형태(PTY) · 하늘상태(SKY) → 날씨 그림 글자. 밤(19~5시)에 맑으면 달 */
 export function weatherEmoji(pty: number | undefined, sky: number | undefined, hour: number): string {
-  if (pty === 1 || pty === 5) return '🌧️'
+  if (pty === 1 || pty === 4 || pty === 5) return '🌧️'
   if (pty === 2 || pty === 6) return '🌨️'
   if (pty === 3 || pty === 7) return '❄️'
   const night = hour >= 19 || hour < 6
@@ -20,8 +21,8 @@ export function weatherEmoji(pty: number | undefined, sky: number | undefined, h
 /** 달력 한 칸에 보일 일정 한 줄 */
 export interface DayMark {
   label: string
-  /** school = 학사일정, off = 쉬는 날(빨강), exam = 고사, work = 업무 일정 */
-  kind: 'school' | 'off' | 'exam' | 'work'
+  /** school = 학사일정, off = 쉬는 날(빨강), exam = 고사, work = 업무 일정, class = 수업 일정(진도표 평가 차시 · PAPS 측정일) */
+  kind: 'school' | 'off' | 'exam' | 'work' | 'class'
   fg: string
   bg: string
 }
@@ -32,6 +33,7 @@ const TONE = {
   school: { fg: '#4e5968', bg: '#eef0f3' },
   off: { fg: '#d0342c', bg: '#fdecea' },
   exam: { fg: '#7442d6', bg: '#f0eafd' },
+  class: { fg: '#0d7a70', bg: '#e3f5f2' },
 } as const
 
 export function schoolKind(name: string): 'school' | 'off' | 'exam' {
@@ -40,8 +42,10 @@ export function schoolKind(name: string): 'school' | 'off' | 'exam' {
 }
 
 /** 그날의 일정: 업무 일정 먼저(내가 넣은 것), 그다음 학사일정. 같은 이름은 한 번 */
-export function marksOn(date: string, school: readonly NeisEvent[], work: readonly WorkEvent[]): DayMark[] {
+export function marksOn(date: string, school: readonly NeisEvent[], work: readonly WorkEvent[], extra: readonly ClassEvent[] = []): DayMark[] {
   const out: DayMark[] = eventsOn(date, work).map((e) => ({ label: e.title, kind: 'work', fg: WORK_KIND[e.kind].fg, bg: WORK_KIND[e.kind].bg }))
+  // 수업 일정 (2026-11-25): 내가 넣은 업무 일정 다음, 학사일정 앞
+  for (const e of extra) if (e.date === date) out.push({ label: e.label, kind: 'class', ...TONE.class })
   const seen = new Set(out.map((m) => m.label))
   for (const e of school) {
     if (e.date !== date || seen.has(e.name)) continue
@@ -53,10 +57,10 @@ export function marksOn(date: string, school: readonly NeisEvent[], work: readon
 }
 
 /** 그 달에 일정이 있는 날 → 일정 목록 (달력 그릴 때 한 번에) */
-export function monthMarks(dates: readonly string[], school: readonly NeisEvent[], work: readonly WorkEvent[]): Map<string, DayMark[]> {
+export function monthMarks(dates: readonly string[], school: readonly NeisEvent[], work: readonly WorkEvent[], extra: readonly ClassEvent[] = []): Map<string, DayMark[]> {
   const map = new Map<string, DayMark[]>()
   for (const d of dates) {
-    const m = marksOn(d, school, work)
+    const m = marksOn(d, school, work, extra)
     if (m.length) map.set(d, m)
   }
   return map
@@ -136,7 +140,9 @@ export function weekDates(today: string): string[] {
 export const HOME_WIDGETS = [
   { id: 'focus', label: '지금 수업 · 이어서 기록' },
   { id: 'setup', label: '시작 준비' },
+  { id: 'todo', label: '처리할 일' },
   { id: 'today', label: '오늘 수업' },
+  { id: 'memo', label: '메모' },
   { id: 'calendar', label: '달력 · 학사일정' },
   { id: 'weekly', label: '이번 주 수업 요약' },
   { id: 'timetable', label: '이번 주 내 시간표' },

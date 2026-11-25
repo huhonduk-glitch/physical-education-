@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { db } from '../../db/db'
 import Icon from '../../components/Icon'
 import PageHeader from '../../components/PageHeader'
 import { copyText } from '../../lib/download'
 import { GROUP_COLORS } from '../../lib/groups'
 import { tacticBoardJson, tacticBoardLink } from '../../lib/teamExport'
-import { makeTeams, teamName, teamsForSize, teamsText } from '../../lib/teams'
+import { eulReul, euroRo } from '../../lib/seteukDraft'
+import { makeTeams, restoreTeams, teamName, teamsForSize, teamsText } from '../../lib/teams'
 import { useApp } from '../../state/AppContext'
 import { useTeamLevels } from '../../state/useClassTools'
 import { NumberField } from '../timer/common'
@@ -15,8 +17,10 @@ const colorOf = (i: number) => COLORS[i % COLORS.length]
 
 /** 팀 나누기: 무작위 · 남녀 고르게 · 실력(PAPS) 고르게. 실력은 평가 정보라 기본으로 끈다 */
 export default function TeamsPage() {
-  const { settings } = useApp()
+  const { settings, readOnly } = useApp()
   const t = useToolPeople()
+  const [saveName, setSaveName] = useState('')
+  const [sureDrop, setSureDrop] = useState(false)
   const [by, setBy] = useState<'count' | 'size'>('count')
   const [num, setNum] = useState(2)
   const [gender, setGender] = useState(true)
@@ -32,6 +36,31 @@ export default function TeamsPage() {
   useEffect(() => setTeams(null), [key])
 
   const teamCount = by === 'count' ? num : teamsForSize(t.people.length, num)
+  // 저장한 팀 (모둠 · 팀 고정, 2026-11-25): 수업반에 한 벌
+  const saved = byGroup ? t.group?.squads : undefined
+  const load = () => {
+    if (!saved) return
+    const r = restoreTeams(saved.teams, t.people)
+    setTeams(r.teams)
+    setMsg(
+      [`저장한 팀 '${saved.name}'${eulReul(saved.name).slice(saved.name.length)} 불러왔어요.`, r.missing ? `오늘 명단에 없는 ${r.missing}명은 빠졌어요.` : '', r.added.length ? `새로 온 ${r.added.map((p) => p.name).join(', ')} 학생은 인원이 적은 팀에 넣었어요.` : '']
+        .filter(Boolean)
+        .join(' '),
+    )
+  }
+  const saveTeams = async () => {
+    if (!teams || !t.group) return
+    const name = saveName.trim() || `${new Date().getMonth() + 1}/${new Date().getDate()} 팀`
+    await db.groups.update(t.group.id, { squads: { name, savedAt: Date.now(), teams: teams.map((team) => team.map((p) => p.id)) } })
+    setSaveName('')
+    setMsg(`'${name}'${euroRo(name).slice(name.length)} 저장했어요. 다음 시간에 [불러오기]로 같은 팀을 써요.`)
+  }
+  const dropSaved = async () => {
+    if (!t.group) return
+    await db.groups.update(t.group.id, { squads: undefined })
+    setSureDrop(false)
+    setMsg('저장한 팀을 지웠어요.')
+  }
   const measured = levels ? [...levels.values()].filter(Boolean).length : 0
 
   const split = () => {
@@ -111,6 +140,28 @@ export default function TeamsPage() {
       <div className="page space-y-4 pb-8">
         <SourceCard t={t} />
 
+        {saved && (
+          <section className="card space-y-2" aria-label="저장한 팀">
+            <div className="flex items-center gap-3">
+              <Icon name="team" className="text-brand" />
+              <div className="min-w-0 flex-1">
+                <b className="block truncate">저장한 팀 · {saved.name}</b>
+                <span className="hint">
+                  {saved.teams.length}팀 · {new Date(saved.savedAt).getMonth() + 1}/{new Date(saved.savedAt).getDate()} 저장
+                </span>
+              </div>
+              <button type="button" className="btn btn-primary min-h-[44px] px-4" onClick={load}>
+                불러오기
+              </button>
+            </div>
+            {!readOnly && (
+              <button type="button" className={`text-sm font-bold ${sureDrop ? 'text-danger' : 'text-ink-3'}`} onClick={() => (sureDrop ? void dropSaved() : setSureDrop(true))}>
+                {sureDrop ? '한 번 더 누르면 저장한 팀을 지워요' : '저장한 팀 지우기'}
+              </button>
+            )}
+          </section>
+        )}
+
         <section className="card space-y-3">
           <div className="segment" role="tablist" aria-label="나누는 방법">
             <button type="button" role="tab" aria-selected={by === 'count'} onClick={() => (setBy('count'), setNum(2))}>
@@ -148,6 +199,18 @@ export default function TeamsPage() {
           <section className="space-y-3">
             <p className="hint px-1">학생을 누르면 다음 팀으로 옮겨요.</p>
             {board(false)}
+            {byGroup && t.group && !readOnly && (
+              <div className="card space-y-2">
+                <b className="block">이 팀으로 계속 수업하나요?</b>
+                <p className="hint">수업반에 저장해 두면 단원 동안 다음 시간에도 [불러오기]로 같은 팀을 써요. {saved ? `지금 저장한 '${saved.name}'${(eulReul(saved.name).endsWith('을') ? '은' : '는')} 바뀌어요.` : ''}</p>
+                <div className="flex gap-2">
+                  <input className="field min-w-0 flex-1" value={saveName} placeholder="이름 (예: 배구 단원)" aria-label="저장할 팀 이름" onChange={(e) => setSaveName(e.target.value)} />
+                  <button type="button" className="btn btn-outline shrink-0 px-4" onClick={() => void saveTeams()}>
+                    {saved ? '바꿔 저장' : '저장'}
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="grid gap-2 sm:grid-cols-2">
               <button
                 type="button"
