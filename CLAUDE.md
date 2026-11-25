@@ -1071,3 +1071,13 @@ attendance      { id, schoolYear, groupId, studentId, date, period?, status: 'ab
 - 홈 `src/components/NewYearNotice.tsx`: 3월이 되면 맨 위 안내 [새 학년도 시작] / [나중에](7일 숨김, localStorage `pelog.newYearLater`)
 - 같이 고친 것: 지난 학년도(읽기 전용)를 볼 때 견학 화면에서 기록 지우기 · 대체 과제 바꾸기가 되던 것(`AbsencesPage` `readOnly`)
 - 사용법 · 웹 설명서 · portfolio/manual.md · 땅콩이 `new-year` · 업데이트 소식 · CHANGELOG v1.26.0
+- 배포: PR #78 → main `50dba34` (2026-11-15), GitHub Pages 배포 성공
+
+### 6-31. 슈퍼스쿨 참고: 교시별 날씨 · 처리할 일 · 메모 · 수업 역할 (2026-11-25 교사 '추천한 대로 진행', 브랜치 `weather-todo-roles`)
+- 근거: 교사 계정(슈퍼스쿨 체험 학교)으로 교사 화면을 직접 열어 보고 공식 설명서(노션)와 교차 확인. 구성만 참고하고 코드 · 문구 · 그림은 가져오지 않음. 학생 · 보호자 계정이 필요한 것(과제 제출 · 가정통신문 · 설문 · 채팅 · 알림)은 0-4와 부딪혀 넣지 않음, 성장 마일리지 +/− 점수는 6-1 결정(횟수만)대로 넣지 않음
+- **교시별 날씨**: `src/lib/weather.ts` `parseHours`(단기예보 TMP · SKY · PTY · POP을 그날 시각순) · `mergeHours`(그날 02시 예보 위에 최근 예보) · `lessonHour`(수업 가운데에 가장 가까운 정시, 90분 넘으면 없음) · `hourWarn`(outdoorAdvice와 같은 기준). 단기예보 PTY 4 = 소나기를 `PTY_LABEL` · `weatherEmoji`에 더함. `WeatherCard`가 받은 예보를 `weatherCache.hours` · `hoursDate`로 저장(따로 인터넷 안 씀), 홈 지금 수업 · 오늘 수업(남은 교시만)에 `LessonWx` 칩. 미세먼지는 시간별 예보가 아니라 지금 측정값만
+- **처리할 일**: `todoTiles`(`src/lib/brief.ts`, 땅콩이 브리핑과 같은 셈 → 숫자 칸 4개: 옮길 출결 · 남은 채점 · 진도 늦은 반 · 7일 업무 일정, 0도 보임) · `useBrief`가 `tiles`도 돌려줌 · `src/components/home/TodoCard.tsx`(끈 기능의 칸은 숨김). 같이 고친 버그: 브리핑 [백업] 링크가 없는 주소 `/more/backup`(→ 홈으로 튕김) → `/more/data`
+- **메모**: `settings.homeMemos`(HomeMemo, defaultSettings에 `[]` — 백업 · 구글 동기화에 함께, DEVICE_KEYS 아님) · `src/lib/memo.ts`(`splitMemo` 첫 줄 = 제목 · `saveMemo` 새 것 앞 · 빈 글이면 지움) · `src/components/home/MemoCard.tsx`(색 4개, [가리기] = 이 기기 localStorage `pelog.memoHidden`, 홈은 학생이 볼 수 있다는 안내). 홈 칸 `HOME_WIDGETS`에 `todo`(시작 준비 다음) · `memo`(오늘 수업 다음)
+- **수업 역할**: 저장은 수업반의 선택 칸 `ClassGroup.roles`(ClassRole: 이름 · 하는 일) · `roleTerms`(RoleTerm: 학생 · from · to) — 저장 구조 버전 그대로. 계산 `src/lib/classRoles.ts`(`assignRole` 빠지는 학생은 전날로 닫고 그날 시작한 기간은 지움 · `rotateRoles` 맡은 사람 수만큼 가장 뒤 번호의 다음 학생, 끝에서 처음으로 · `rolesOfStudent` · `roleSentence`). 화면 `/groups/:id/roles`(`RolesPage`: 많이 쓰는 역할 6개 · 직접 만들기 · 학생 고르기 · 미리 보고 돌리기 · 지난 기록), 수업반 ⋯ 메뉴 · 보드 날짜 아래 그날 역할 한 줄. 세특: `draftParts` kind `role`(부장 다음, 두 개까지, '수업에서 ‘교구 담당’ 역할을 맡아 교구를 준비하고 정리함'), 세특 편집 창 근거 목록 · 근거 수에 포함. 시연 1-1에 역할 2개
+- 기본 역할 문구는 검사기 오류 · 경고 0 (시험). **검사기 오탐 발견(안 고침, 교사 확인 필요)**: `badEndings`가 받침 ㅁ만 명사형으로 봐서 '이끎 · 만듦 · 앎'(ㄻ) 끝을 경고함
+- 시험 `tests/weather.test.ts` · `tests/brief.test.ts` · `tests/memo.test.ts` · `tests/classRoles.test.ts`. v1.27.0. 화면 확인: 시연 모드 PC에서 홈 날씨 칩까지 봄 — 개발 서버가 메모리 부족으로 멈춰 처리할 일 · 메모 · 수업 역할 화면은 아직 확인 전
