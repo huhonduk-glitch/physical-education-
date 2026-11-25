@@ -1,4 +1,5 @@
 import type { AssessItem, Assessment, AssessmentScore, ClassRecord, Keyword } from '../db/types'
+import { roleSentence } from './classRoles'
 
 /**
  * 세특 틀 초안 (6-5 ③). 순수 함수. 인터넷 안 씀.
@@ -35,10 +36,12 @@ export interface DraftInput {
   /** 이 학생이 받은 평가와 채점값 */
   assessments: readonly { a: Assessment; items: readonly AssessItem[]; scores: Record<string, string | number> | undefined; score?: Pick<AssessmentScore, 'checks' | 'texts' | 'status'> }[]
   captainRoles: readonly string[]
+  /** 이 수업반에서 맡았던 수업 역할 (2026-11-25) */
+  classRoles?: readonly { name: string; duty?: string }[]
 }
 
 export interface DraftPart {
-  kind: 'praise' | 'keyword' | 'note' | 'captain' | 'assess'
+  kind: 'praise' | 'keyword' | 'note' | 'captain' | 'role' | 'assess'
   text: string
   /** 근거 id (메모 = 기록 id, 수행평가 = 'assess:평가id:요소id') — 중요 · 빼기 표시에 쓴다 */
   id: string
@@ -64,6 +67,8 @@ export function draftParts(inp: DraftInput, opts: { maxNotes?: number } = {}): D
   // 3) 체육부장 활동
   const capCats = [...new Set(inp.records.filter((r) => r.type === 'captain' && r.category !== '기타').map((r) => r.category))].slice(0, 3)
   if (inp.captainRoles.length) parts.push({ kind: 'captain', id: 'captain', text: sentence(capCats.length ? `${euroRo(inp.captainRoles[0])}서 ${eulReul(capCats.join(', '))} 맡아 수행함` : `${euroRo(inp.captainRoles[0])} 활동함`) })
+  // 3-1) 수업 역할 (2026-11-25): 맡았던 역할과 하는 일 — 교사가 적은 '하는 일' 그대로, 두 개까지
+  for (const r of (inp.classRoles ?? []).slice(0, 2)) parts.push({ kind: 'role', id: `role:${r.name}`, text: sentence(roleSentence(r)) })
   // 4) 교사가 적은 메모 (관찰 · 칭찬 · 부장 활동, 최근 순) — 교사 문장 그대로
   const notes = inp.records
     .filter((r) => r.type !== 'unprepared' && r.note?.trim())
@@ -127,7 +132,7 @@ export function draftText(parts: readonly DraftPart[]): string {
 
 /**
  * 수준 틀로 고른 초안 문장 (6-7): 뺀 근거는 빼고, 중요 표시한 근거를 먼저, 수준 틀의 문장 수까지.
- * 순서는 원래 짜임(칭찬 → 키워드 → 부장 → 메모 → 수행평가)을 지킨다. 기록에 없는 문장은 더하지 않는다.
+ * 순서는 원래 짜임(칭찬 → 키워드 → 부장 → 수업 역할 → 메모 → 수행평가)을 지킨다. 기록에 없는 문장은 더하지 않는다.
  */
 export function partsForLevel(parts: readonly DraftPart[], o: { maxParts: number; important?: readonly string[]; excluded?: readonly string[] }): DraftPart[] {
   const imp = new Set(o.important ?? [])

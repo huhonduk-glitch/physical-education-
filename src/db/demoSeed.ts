@@ -97,6 +97,21 @@ export async function seedDemo(db: PeDatabase, opts: DemoSeedOptions = {}): Prom
   const g21: ClassGroup = { ...g11, id: id('g'), name: '2학년 1반', subject: '운동과 건강', grade: 2, classNo: 1, color: 'orange', sortOrder: 2 }
   const electiveMembers = [...classOf(1, 1).slice(0, 5), ...classOf(1, 2).slice(0, 5)].map((s) => s.id)
   const gEl: ClassGroup = { id: id('g'), schoolYear: year, semester: 2, kind: 'elective', name: '스포츠 생활 · 배드민턴', subject: '스포츠 생활', memberIds: electiveMembers, color: 'purple', sortOrder: 3, archived: false, createdAt: ts }
+  // 수업 역할 (2026-11-25): 1-1 준비운동 리더는 한 번 돌렸고, 교구 담당은 두 명
+  {
+    const c = classOf(1, 1)
+    g11.roles = [
+      { id: id('role'), name: '준비운동 리더', duty: '준비운동을 앞에서 진행함' },
+      { id: id('role'), name: '교구 담당', duty: '교구를 준비하고 정리함' },
+    ]
+    const [warm, gear] = g11.roles.map((r) => r.id)
+    g11.roleTerms = [
+      { id: id('rt'), roleId: warm, studentId: c[2].id, from: addDays(today, -21), to: addDays(today, -8) },
+      { id: id('rt'), roleId: warm, studentId: c[3].id, from: addDays(today, -7) },
+      { id: id('rt'), roleId: gear, studentId: c[0].id, from: addDays(today, -21) },
+      { id: id('rt'), roleId: gear, studentId: c[1].id, from: addDays(today, -21) },
+    ]
+  }
   const groups = [g11, g12, g21, gEl]
   const membersOf = (g: ClassGroup) => (g.kind === 'homeroom' ? classOf(g.grade!, g.classNo!) : students.filter((s) => g.memberIds.includes(s.id)))
 

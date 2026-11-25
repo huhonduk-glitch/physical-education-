@@ -27,6 +27,7 @@ const NewYearPage = lazy(() => import('./pages/NewYearPage'))
 const StudentsPage = lazy(() => import('./pages/StudentsPage'))
 const TimerPage = lazy(() => import('./pages/TimerPage'))
 const JournalPage = lazy(() => import('./pages/groups/JournalPage'))
+const RolesPage = lazy(() => import('./pages/groups/RolesPage'))
 const PlansPage = lazy(() => import('./pages/plans/PlansPage'))
 const PlanPage = lazy(() => import('./pages/plans/PlanPage'))
 const PlanSetupPage = lazy(() => import('./pages/plans/PlanSetupPage'))
@@ -187,6 +188,7 @@ export default function App() {
           <Route path="/groups/:id/edit" element={<GroupEditPage />} />
           <Route path="/groups/:id/stats" element={<GroupStatsPage />} />
           <Route path="/groups/:id/journal" element={<JournalPage />} />
+          <Route path="/groups/:id/roles" element={<RolesPage />} />
           <Route path="/groups/:id/report" element={<ReportPage scope="group" />} />
           <Route path="/weekly" element={<WeeklyPage />} />
           <Route path="/attend/neis" element={<NeisCarryPage />} />
