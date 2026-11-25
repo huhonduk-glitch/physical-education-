@@ -18,6 +18,7 @@ import WeeklyCard from '../components/WeeklyCard'
 import LessonWx, { useLessonWx } from '../components/home/LessonWx'
 import MemoCard from '../components/home/MemoCard'
 import TodoCard from '../components/home/TodoCard'
+import { useClassEvents } from '../state/useClassEvents'
 import { longDateLabel, todayStr } from '../lib/dates'
 import { FEATURES, featureOn } from '../lib/features'
 import { GROUP_COLORS, readLastGroup, SEMESTER_LABEL } from '../lib/groups'
@@ -42,6 +43,7 @@ export default function HomePage() {
   const [pick, setPick] = useState(false)
   const [arrange, setArrange] = useState(false)
   const wxOf = useLessonWx()
+  const classEvts = useClassEvents()
   const layout = resolveLayout(settings.homeLayout)
   const now = new Date()
   const lessons = todaysLessons(now, settings.timetable)
@@ -222,7 +224,7 @@ export default function HomePage() {
       <>
           {/* 달력 — 학사일정 · 업무 일정이 바로 보이게 (2026-11-12) */}
           <div className="xl:order-none">
-            <MonthCalendar today={today} school={schoolEvents} work={settings.workEvents ?? []} />
+            <MonthCalendar today={today} school={schoolEvents} work={settings.workEvents ?? []} extra={classEvts} />
           </div>
       </>
     ),

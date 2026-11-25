@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import type { ClassEvent } from '../../lib/classEvents'
 import { monthMarks, type DayMark } from '../../lib/dash'
 import { addMonths, monthOf, shortDateLabel } from '../../lib/dates'
 import type { NeisEvent } from '../../lib/neisOpenApi'
@@ -12,11 +13,23 @@ const HEAD = ['월', '화', '수', '목', '금', '토', '일']
  * 홈 달력 (2026-11-12): 이번 달 한 장에 학사일정 · 업무 일정을 바로 보여 준다.
  * 넓은 화면은 칸 안에 일정 이름, 폰은 점 → 날짜를 누르면 아래에 그날 일정.
  */
-export default function MonthCalendar({ today, school, work }: { today: string; school: readonly NeisEvent[]; work: readonly WorkEvent[] }) {
+export default function MonthCalendar({ today, school, work, extra = [] }: { today: string; school: readonly NeisEvent[]; work: readonly WorkEvent[]; extra?: readonly ClassEvent[] }) {
   const [month, setMonth] = useState(() => monthOf(today))
   const [picked, setPicked] = useState(today)
+  // 수업 일정(진도표 평가 차시 · PAPS 측정일) 켜고 끄기 — 이 기기만 기억 (2026-11-25)
+  const [showClass, setShowClass] = useState(readShowClass)
   const weeks = useMemo(() => monthGrid(month), [month])
-  const marks = useMemo(() => monthMarks(weeks.flat().map((c) => c.date), school, work), [weeks, school, work])
+  const marks = useMemo(() => monthMarks(weeks.flat().map((c) => c.date), school, work, showClass ? extra : []), [weeks, school, work, extra, showClass])
+  const inMonth = extra.filter((e) => e.date.startsWith(month)).length
+  const toggleClass = () => {
+    const next = !showClass
+    setShowClass(next)
+    try {
+      localStorage.setItem(SHOW_CLASS_KEY, next ? '1' : '0')
+    } catch {
+      /* 저장이 막힌 브라우저: 이번만 */
+    }
+  }
   const [y, m] = month.split('-').map(Number)
   const sel = marks.get(picked) ?? []
   const move = (n: number) => {
@@ -24,7 +37,7 @@ export default function MonthCalendar({ today, school, work }: { today: string; 
     setMonth(next)
     setPicked(next === monthOf(today) ? today : `${next}-01`)
   }
-  const empty = school.length === 0 && work.length === 0
+  const empty = school.length === 0 && work.length === 0 && extra.length === 0
 
   return (
     <section className="card space-y-2 p-3 sm:p-4" aria-label="달력 · 학사일정">
@@ -45,6 +58,20 @@ export default function MonthCalendar({ today, school, work }: { today: string; 
         </button>
       </div>
 
+      {extra.length > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 px-1">
+          <button
+            type="button"
+            aria-pressed={showClass}
+            className={`inline-flex min-h-[36px] items-center gap-1.5 rounded-full px-3 text-[0.82rem] font-bold ${showClass ? 'bg-[#e3f5f2] text-[#0d7a70]' : 'bg-fill text-ink-3'}`}
+            onClick={toggleClass}
+          >
+            <i className={`h-2 w-2 rounded-full ${showClass ? 'bg-[#0d7a70]' : 'bg-ink-3'}`} aria-hidden />
+            수업 일정{inMonth > 0 && ` ${inMonth}`}
+          </button>
+          <span className="text-[0.76rem] text-ink-3">진도표 평가 차시 · PAPS 측정일</span>
+        </div>
+      )}
       <div className="grid grid-cols-7 text-center text-[0.78rem] font-extrabold">
         {HEAD.map((d, i) => (
           <span key={d} className={i === 5 ? 'text-[#2a78d6]' : i === 6 ? 'text-danger' : 'text-ink-3'}>
@@ -135,4 +162,13 @@ function diff(a: string, b: string): number {
   const [ay, am] = a.split('-').map(Number)
   const [by, bm] = b.split('-').map(Number)
   return (ay - by) * 12 + (am - bm)
+}
+
+const SHOW_CLASS_KEY = 'pelog.calClass'
+function readShowClass(): boolean {
+  try {
+    return localStorage.getItem(SHOW_CLASS_KEY) !== '0'
+  } catch {
+    return true
+  }
 }
