@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { BrandLine } from './Brand'
 import { Link, useLocation } from 'react-router-dom'
 import { NAV, activeItem, sectionOf, visibleGroups, visibleSections, type NavGroup } from '../lib/nav'
@@ -8,6 +8,7 @@ import { useApp } from '../state/AppContext'
 import { NEW_LABEL, useNewMarks } from '../state/useNewMarks'
 import Icon from './Icon'
 import { toneOf } from './MenuTile'
+import MenuSearch, { MENU_SEARCH_EVENT } from './MenuSearch'
 
 /**
  * 큰 메뉴 (CLAUDE.md 6-12, 메뉴 표 src/lib/nav.ts): 홈 · 수업 · PAPS · 평가 · 업무 · 설정.
@@ -28,6 +29,23 @@ export default function BottomNav() {
   const [folded, toggleFold] = useFolded()
   // 새 기능 점: 업데이트 소식의 화면 주소. 지금 화면은 본 것으로 표시
   const fresh = useNewMarks(pathname)
+  // 메뉴 찾기 (2026-11-25): PC 위 메뉴 버튼 · 홈 돋보기 · Ctrl+K
+  const [finding, setFinding] = useState(false)
+  useEffect(() => {
+    const open = () => setFinding(true)
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setFinding(true)
+      }
+    }
+    window.addEventListener(MENU_SEARCH_EVENT, open)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener(MENU_SEARCH_EVENT, open)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [])
   const sectionFresh = (s: (typeof NAV)[number]) => fresh.size > 0 && visibleGroups(s, settings.features).some((g) => g.items.some((i) => fresh.has(i.to)))
 
   return (
@@ -92,8 +110,19 @@ export default function BottomNav() {
             )
           })}
         </ul>
-        <span className="ml-auto truncate text-sm font-bold text-ink-3">{settings.schoolName}</span>
+        <button
+          type="button"
+          className="ml-auto flex h-10 min-w-[12rem] items-center gap-2 rounded-xl bg-fill px-3 text-sm font-bold text-ink-3 hover:bg-fill-2"
+          onClick={() => setFinding(true)}
+          title="메뉴 찾기 (Ctrl + K)"
+        >
+          <Icon name="search" size={18} />
+          <span className="flex-1 text-left">메뉴 찾기</span>
+          <kbd className="rounded-md bg-white px-1.5 text-[0.72rem] font-bold text-ink-3">Ctrl K</kbd>
+        </button>
+        <span className="truncate text-sm font-bold text-ink-3">{settings.schoolName}</span>
       </nav>
+      {finding && <MenuSearch onClose={() => setFinding(false)} />}
 
       {/* PC: 왼쪽 하위 메뉴 (지금 큰 메뉴만). 묶음 이름 = 아이콘 + 굵은 검정, 하위 메뉴 = 들여 쓴 보통 글씨 + 세로 안내선 */}
       {groups.length > 0 && open && (

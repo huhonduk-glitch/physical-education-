@@ -5,6 +5,7 @@ import BackupWarning from '../components/BackupWarning'
 import { Logo } from '../components/Brand'
 import FeatureSheet from '../components/FeatureSheet'
 import Icon from '../components/Icon'
+import { openMenuSearch } from '../components/MenuSearch'
 import InstallGuide from '../components/InstallGuide'
 import NewYearNotice from '../components/NewYearNotice'
 import WeatherCard from '../components/WeatherCard'
@@ -347,6 +348,9 @@ export default function HomePage() {
             <p className="text-sm font-bold text-ink-3">{longDateLabel(today)}</p>
             <h1 className="truncate text-[1.4rem] leading-tight font-black tracking-tight">{settings.schoolName || 'PE LOG'}</h1>
           </div>
+          <button type="button" className="btn btn-ghost px-2 text-ink-3 lg:hidden" aria-label="메뉴 찾기" onClick={openMenuSearch}>
+            <Icon name="search" />
+          </button>
           <Link to="/help" className="btn btn-ghost px-2 text-ink-3" aria-label="사용법">
             <Icon name="info" />
           </Link>
