@@ -141,7 +141,8 @@ function badEndings(text: string): string[] {
     const body = sen.replace(/[.\s'’‘\])]+$/, '')
     const last = body.slice(-1)
     const code = last.charCodeAt(0) - 0xac00
-    if (code >= 0 && code <= 11171 && code % 28 !== 16) out.push(`'…${body.slice(-6)}.'`)
+    // 명사형 끝 받침: ㅁ(16) · ㄻ(10 — '이끎 · 만듦 · 앎'처럼 ㄹ 받침 말의 명사형)
+    if (code >= 0 && code <= 11171 && code % 28 !== 16 && code % 28 !== 10) out.push(`'…${body.slice(-6)}.'`)
   }
   return out.slice(0, 5)
 }
