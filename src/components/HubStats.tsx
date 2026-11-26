@@ -18,7 +18,7 @@ export default function HubStats({ section }: { section: SectionId }) {
       const recs = await db.records.where('date').equals(today).toArray()
       const abs = await db.absences.where('date').equals(today).count()
       return [
-        { label: '오늘 수업', value: todaysLessons(new Date(), settings.timetable).length, unit: '교시' },
+        { label: '오늘 수업', value: todaysLessons(new Date(), settings.timetable, settings.timetableChanges).length, unit: '교시' },
         { label: '오늘 칭찬', value: recs.filter((r) => r.schoolYear === year && r.type === 'exemplary').length, unit: '번' },
         { label: '오늘 지도', value: recs.filter((r) => r.schoolYear === year && r.type === 'unprepared').length, unit: '번', warn: true },
         { label: '오늘 견학', value: abs, unit: '명' },
@@ -37,7 +37,7 @@ export default function HubStats({ section }: { section: SectionId }) {
       ]
     }
     return null
-  }, [section, today, year, settings.timetable])
+  }, [section, today, year, settings.timetable, settings.timetableChanges])
   if (!stats) return null
   return (
     <section className="grid grid-cols-2 gap-2 md:grid-cols-4" aria-label="요약">

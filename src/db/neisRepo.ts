@@ -2,7 +2,7 @@ import type { TimetableEntry } from './settings'
 import type { PeDatabase } from './db'
 import { createGroup } from './groupsRepo'
 import type { ClassGroup } from './types'
-import { COLOR_KEYS, newHomeroomGroup } from '../lib/groups'
+import { COLOR_KEYS, combinedName, newHomeroomGroup } from '../lib/groups'
 import { newId } from './db'
 
 export interface SlotPick {
@@ -21,8 +21,7 @@ export interface ApplyResult {
 }
 
 const classKey = (c: { grade: number; classNo: number }) => `${c.grade}-${c.classNo}`
-export const combinedName = (subject: string, classes: { grade: number; classNo: number }[]) =>
-  `${subject} ${[...classes].sort((a, b) => a.grade - b.grade || a.classNo - b.classNo).map(classKey).join('·')}`
+export { combinedName }
 
 /**
  * 나이스 시간표에서 고른 칸 → 수업반 + 앱 시간표.

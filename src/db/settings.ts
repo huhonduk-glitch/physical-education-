@@ -25,6 +25,8 @@ export interface AppSettings {
   recordButtons: RecordButtons
   /** 수업 시간표: 요일·교시별 담당 반 */
   timetable: TimetableEntry[]
+  /** 날짜 하나만 바뀐 수업 (교환 · 보강 · 결강 · 행사, 2026-11-26) */
+  timetableChanges: TimetableChange[]
   /** 교시 시작 시각 'HH:MM' (1교시부터). 학교마다 달라서 설정에서 고친다 */
   periodStarts: string[]
   /** 한 교시 길이(분) */
@@ -130,6 +132,19 @@ export interface TimetableEntry {
   groupId: string
 }
 
+/** 이번 주만 바뀐 수업 (2026-11-26): 그 날짜 · 교시만 요일 시간표 대신 이것 (교환 · 보강 · 결강 · 행사) */
+export type ChangeKind = '교환' | '보강' | '결강' | '행사' | '기타'
+export interface TimetableChange {
+  id: string
+  /** YYYY-MM-DD */
+  date: string
+  period: number
+  /** 그 교시에 하는 내 수업반. null = 내 수업 없음(결강 · 행사) */
+  groupId: string | null
+  kind: ChangeKind
+  note?: string
+}
+
 /** 홈에서 켜고 끄는 기능 */
 export interface HomeMemo {
   id: string
@@ -168,6 +183,7 @@ export function defaultSettings(): AppSettings {
     tacticUrl: 'https://k-tacticboard.netlify.app',
     recordButtons: structuredClone(DEFAULT_RECORD_BUTTONS),
     timetable: [],
+    timetableChanges: [],
     periodStarts: ['09:00', '10:00', '11:00', '12:00', '13:50', '14:50', '15:50'],
     periodMinutes: 50,
     latestYear: 0,

@@ -8,7 +8,7 @@ import { checkItems, type CheckItem } from '../../lib/checkBoard'
 import type { Student } from '../../db/types'
 import { todayStr } from '../../lib/dates'
 import { creditRisk } from '../../lib/attendance'
-import { filterLedger, ledgerCells, ledgerColumns, ledgerTotals, shiftMonth, weekSpans, type AttendMark } from '../../lib/ledger'
+import { classColumns, filterLedger, ledgerCells, ledgerTotals, shiftMonth, weekSpans, type AttendMark } from '../../lib/ledger'
 import { useApp } from '../../state/AppContext'
 import Icon from '../../components/Icon'
 
@@ -64,11 +64,11 @@ export default function LedgerView({
     for (const x of att) if ((x.status === 'absent' || x.status === 'result') && x.reason !== '인정') missing.set(x.studentId, (missing.get(x.studentId) ?? 0) + 1)
     const target = plans.reduce((m, p) => Math.max(m, p.target || 0), 0)
     const events = settings.neisSchedule?.events ?? []
-    const sessions = group ? termSessions(groupId, settings.timetable, termFromSchedule(settings.schoolYear, group.semester, events, group.grade), events, group.grade) : 0
-    const planCount = plans.reduce((m, p) => Math.max(m, planSessions(groupId, settings.timetable, p)), 0)
+    const sessions = group ? termSessions(groupId, settings.timetable, termFromSchedule(settings.schoolYear, group.semester, events, group.grade), events, group.grade, settings.timetableChanges) : 0
+    const planCount = plans.reduce((m, p) => Math.max(m, planSessions(groupId, settings.timetable, p, settings.timetableChanges)), 0)
     const h = heldClasses({ planTarget: target, sessions, recordedDays: new Set([...att, ...recs].map((x) => x.date)).size, planSessions: planCount })
     return { missing, held: h.held, note: heldNote(h) }
-  }, [groupId, settings.schoolYear, settings.timetable, settings.neisSchedule, group])
+  }, [groupId, settings.schoolYear, settings.timetable, settings.timetableChanges, settings.neisSchedule, group])
   const [month, setMonth] = useState(today.slice(0, 7))
   const data = useLiveQuery(async () => {
     const [r, a, t] = await Promise.all([
@@ -79,12 +79,11 @@ export default function LedgerView({
     return { r, a, t }
   }, [groupId, month])
 
-  const weekdays = useMemo(() => new Set(settings.timetable.filter((x) => x.groupId === groupId).map((x) => x.day % 7)), [settings.timetable, groupId])
   const cols = useMemo(() => {
     const extra = [...(data?.r ?? []), ...(data?.a ?? []), ...(data?.t ?? [])].map((x) => x.date)
-    // 시간표가 없으면 평일 전부
-    return ledgerColumns(month, weekdays.size ? weekdays : new Set([1, 2, 3, 4, 5]), extra)
-  }, [month, weekdays, data])
+    // 시간표 요일 + 기록 있는 날 + 이번 주만 바꾼 보강, 결강 날은 뺌 (시간표가 없으면 평일 전부)
+    return classColumns(month, groupId, settings.timetable, settings.timetableChanges, extra)
+  }, [month, groupId, settings.timetable, settings.timetableChanges, data])
   const cells = useMemo(() => ledgerCells(data?.r ?? [], data?.a ?? [], (data?.t ?? []) as { studentId: string; date: string; status: AttendMark }[]), [data])
   const spans = weekSpans(cols)
   const shown = useMemo(() => filterLedger(students, numberOf, cells, find, onlyMarked), [students, numberOf, cells, find, onlyMarked])

@@ -36,14 +36,14 @@ export function useBrief(on: boolean) {
     if (!on || !data || !groups) return null
     const now = new Date()
     const nameOf = new Map(groups.map((g) => [g.id, g.name]))
-    const lessons = todaysLessons(now, settings.timetable)
+    const lessons = todaysLessons(now, settings.timetable, settings.timetableChanges)
       .filter((l) => nameOf.has(l.groupId))
       .map((l) => ({ period: l.period, start: settings.periodStarts[l.period - 1], group: nameOf.get(l.groupId)! }))
     const behind: { group: string; late: number }[] = []
     for (const p of data.plans)
       for (const g of groups) {
         if (!p.groupIds.includes(g.id)) continue
-        const pr = groupProgress(schedule(p.items, meetings(g.id, settings.timetable, p, p.skips[g.id])), p.done[g.id] ?? [], today)
+        const pr = groupProgress(schedule(p.items, meetings(g.id, settings.timetable, p, p.skips[g.id], settings.timetableChanges)), p.done[g.id] ?? [], today)
         if (pr.diff < 0) behind.push({ group: g.name, late: -pr.diff })
       }
     behind.sort((a, b) => b.late - a.late)
@@ -69,5 +69,5 @@ export function useBrief(on: boolean) {
     }
     const lines = briefLines(input)
     return { count: lines.length, text: briefText(lines), links: briefLinks(lines, BRIEF_LINK_LABELS), tiles: todoTiles(input) }
-  }, [on, data, groups, students, membersOf, settings.timetable, settings.periodStarts, settings.workEvents, settings.lastBackupAt, today])
+  }, [on, data, groups, students, membersOf, settings.timetable, settings.timetableChanges, settings.periodStarts, settings.workEvents, settings.lastBackupAt, today])
 }

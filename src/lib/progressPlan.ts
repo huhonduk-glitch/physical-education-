@@ -1,7 +1,8 @@
 import type { PlanItem, ProgressPlan } from '../db/types'
-import type { TimetableEntry } from '../db/settings'
+import type { TimetableChange, TimetableEntry } from '../db/settings'
 import type { NeisEvent } from './neisOpenApi'
 import { addDays } from './dates'
+import { lessonsOnDate } from './timetable'
 
 /**
  * 교과 진도표 (6-5). 순수 함수.
@@ -23,22 +24,26 @@ export interface Meeting {
 
 export const meetingKey = (m: Meeting) => `${m.date}|${m.period}`
 
-function weekday(date: string): number {
-  const [y, m, d] = date.split('-').map(Number)
-  return new Date(y, m - 1, d).getDay()
-}
 
-/** 학기 기간 안에서 이 수업반이 수업하는 날·교시 (쉬는 날 · 빠진 수업 빼고), 날짜·교시 순 */
-export function meetings(groupId: string, timetable: readonly TimetableEntry[], plan: Pick<ProgressPlan, 'startDate' | 'endDate' | 'offDays'>, skips: readonly string[] = []): Meeting[] {
-  const slots = timetable.filter((t) => t.groupId === groupId)
-  if (!slots.length || !plan.startDate || !plan.endDate || plan.startDate > plan.endDate) return []
+/**
+ * 학기 기간 안에서 이 수업반이 수업하는 날·교시 (쉬는 날 · 빠진 수업 빼고), 날짜·교시 순.
+ * changes(이번 주만 바꾸기, 2026-11-26)를 따른다: 결강 · 다른 반으로 바뀐 교시는 빠지고(뒤 차시가 밀림), 보강은 더해진다.
+ */
+export function meetings(
+  groupId: string,
+  timetable: readonly TimetableEntry[],
+  plan: Pick<ProgressPlan, 'startDate' | 'endDate' | 'offDays'>,
+  skips: readonly string[] = [],
+  changes: readonly TimetableChange[] = [],
+): Meeting[] {
+  const has = timetable.some((t) => t.groupId === groupId) || changes.some((c) => c.groupId === groupId)
+  if (!has || !plan.startDate || !plan.endDate || plan.startDate > plan.endDate) return []
   const off = new Set(plan.offDays)
   const skip = new Set(skips)
   const out: Meeting[] = []
   for (let d = plan.startDate; d <= plan.endDate; d = addDays(d, 1)) {
     if (off.has(d)) continue
-    const wd = weekday(d)
-    for (const s of slots.filter((t) => t.day === wd).sort((a, b) => a.period - b.period)) {
+    for (const s of lessonsOnDate(d, timetable, changes).filter((t) => t.groupId === groupId)) {
       const m = { date: d, period: s.period }
       if (!skip.has(meetingKey(m))) out.push(m)
     }

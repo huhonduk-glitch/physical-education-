@@ -1,4 +1,4 @@
-import type { TimetableEntry } from '../db/settings'
+import type { TimetableChange, TimetableEntry } from '../db/settings'
 import { currentPeriod, todaysLessons } from './timetable'
 
 /**
@@ -41,8 +41,9 @@ export function lessonFocus(
   timetable: readonly TimetableEntry[],
   periodStarts: readonly string[],
   periodMinutes: number,
+  changes: readonly TimetableChange[] = [],
 ): { entry: TimetableEntry; status: 'now' | 'next'; start: string } | null {
-  const lessons = todaysLessons(now, timetable)
+  const lessons = todaysLessons(now, timetable, changes)
   if (!lessons.length) return null
   const cur = currentPeriod(now, periodStarts, periodMinutes)
   const live = cur === null ? undefined : lessons.find((l) => l.period === cur)

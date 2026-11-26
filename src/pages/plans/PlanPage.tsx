@@ -56,7 +56,7 @@ export default function PlanPage() {
   const stdCodes = subjectStandards(plan.subject, settings.schoolLevel).map((s) => s.code)
   const coverage = standardCoverage(items, stdCodes)
 
-  const schedFor = (groupId: string) => schedule(items, meetings(groupId, settings.timetable, plan, plan.skips[groupId]))
+  const schedFor = (groupId: string) => schedule(items, meetings(groupId, settings.timetable, plan, plan.skips[groupId], settings.timetableChanges))
 
   const exportXlsx = async () => {
     const sheets = planGroups.length

@@ -55,6 +55,7 @@ const CaptainsPage = lazy(() => import('./pages/CaptainsPage'))
 const AbsencesPage = lazy(() => import('./pages/AbsencesPage'))
 const RecordButtonsPage = lazy(() => import('./pages/RecordButtonsPage'))
 const TimetablePage = lazy(() => import('./pages/TimetablePage'))
+const TimetableChangesPage = lazy(() => import('./pages/TimetableChangesPage'))
 const PapsInputPage = lazy(() => import('./pages/paps/PapsInputPage'))
 const PapsPastePage = lazy(() => import('./pages/paps/PapsPastePage'))
 const PapsResultsPage = lazy(() => import('./pages/paps/PapsResultsPage'))
@@ -271,6 +272,7 @@ export default function App() {
           <Route path="/more/settings" element={<SettingsPage />} />
           <Route path="/more/settings/buttons" element={<RecordButtonsPage />} />
           <Route path="/more/settings/timetable" element={<TimetablePage />} />
+          <Route path="/more/settings/timetable/changes" element={<TimetableChangesPage />} />
           <Route path="/more/settings/neis" element={<NeisSyncPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

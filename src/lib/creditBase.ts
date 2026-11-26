@@ -1,5 +1,5 @@
 import type { ProgressPlan } from '../db/types'
-import type { TimetableEntry } from '../db/settings'
+import type { TimetableChange, TimetableEntry } from '../db/settings'
 import type { NeisEvent } from './neisOpenApi'
 import { meetings, offDaysFromSchedule } from './progressPlan'
 
@@ -55,14 +55,14 @@ export function termFromSchedule(schoolYear: number, semester: 0 | 1 | 2, events
 }
 
 /** 진도표로 센 이 반 수업: 진도표 기간 · 쉬는 날을 따르고, 이 반의 빠진 수업(밀기)은 뺀다 */
-export function planSessions(groupId: string, timetable: readonly TimetableEntry[], plan: Pick<ProgressPlan, 'startDate' | 'endDate' | 'offDays' | 'skips'>): number {
-  return meetings(groupId, timetable, plan, plan.skips?.[groupId] ?? []).length
+export function planSessions(groupId: string, timetable: readonly TimetableEntry[], plan: Pick<ProgressPlan, 'startDate' | 'endDate' | 'offDays' | 'skips'>, changes: readonly TimetableChange[] = []): number {
+  return meetings(groupId, timetable, plan, plan.skips?.[groupId] ?? [], changes).length
 }
 
 /** 시간표에 있는 이 반 교시를 학기 동안 센다 (휴업일 · 방학 · 공휴일 빼고) */
-export function termSessions(groupId: string, timetable: readonly TimetableEntry[], term: { start: string; end: string }, events: readonly NeisEvent[], grade?: number): number {
+export function termSessions(groupId: string, timetable: readonly TimetableEntry[], term: { start: string; end: string }, events: readonly NeisEvent[], grade?: number, changes: readonly TimetableChange[] = []): number {
   const offDays = offDaysFromSchedule(events, term.start, term.end, grade)
-  return meetings(groupId, timetable, { startDate: term.start, endDate: term.end, offDays }).length
+  return meetings(groupId, timetable, { startDate: term.start, endDate: term.end, offDays }, [], changes).length
 }
 
 export function heldClasses(o: { planTarget: number; sessions: number; recordedDays: number; planSessions?: number }): { held: number; source: CreditSource; counted?: number } {

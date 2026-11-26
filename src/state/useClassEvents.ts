@@ -16,5 +16,5 @@ export function useClassEvents(): ClassEvent[] {
     ])
     return { plans, rounds }
   }, [settings.schoolYear])
-  return useMemo(() => (data && groups ? classEvents({ plans: data.plans, groups, timetable: settings.timetable, rounds: data.rounds }) : []), [data, groups, settings.timetable])
+  return useMemo(() => (data && groups ? classEvents({ plans: data.plans, groups, timetable: settings.timetable, changes: settings.timetableChanges, rounds: data.rounds }) : []), [data, groups, settings.timetable, settings.timetableChanges])
 }
