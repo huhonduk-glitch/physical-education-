@@ -151,3 +151,7 @@ export function matchMembers(rows: readonly RosterRow[], students: readonly Stud
   }
   return { found, create, problems }
 }
+
+/** 합반 수업반 이름: '체육 1-1·1-2' (나이스 · 컴시간 시간표 넣기와 이번 주 변경 가져오기가 같이 씀) */
+export const combinedName = (subject: string, classes: readonly { grade: number; classNo: number }[]) =>
+  `${subject} ${[...classes].sort((a, b) => a.grade - b.grade || a.classNo - b.classNo).map((c) => `${c.grade}-${c.classNo}`).join('·')}`

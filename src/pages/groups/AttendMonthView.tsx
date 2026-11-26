@@ -6,7 +6,7 @@ import { db } from '../../db/db'
 import type { AttendStatus, Student } from '../../db/types'
 import { ATTEND_LABEL, ATTEND_ORDER, attendByDay, attendTally, emptyTally, isMissing, nextStatus } from '../../lib/attendance'
 import { todayStr } from '../../lib/dates'
-import { ledgerColumns, shiftMonth, weekSpans } from '../../lib/ledger'
+import { classColumns, shiftMonth, weekSpans } from '../../lib/ledger'
 import { useApp } from '../../state/AppContext'
 
 const WD = ['일', '월', '화', '수', '목', '금', '토']
@@ -28,8 +28,7 @@ export default function AttendMonthView({ groupId, students, numberOf, readOnly 
   const today = todayStr()
   const [month, setMonth] = useState(today.slice(0, 7))
   const rows = useLiveQuery(() => db.attendance.where('groupId').equals(groupId).filter((x) => x.date.startsWith(month)).toArray(), [groupId, month])
-  const weekdays = useMemo(() => new Set(settings.timetable.filter((x) => x.groupId === groupId).map((x) => x.day % 7)), [settings.timetable, groupId])
-  const cols = useMemo(() => ledgerColumns(month, weekdays, (rows ?? []).map((r) => r.date)), [month, weekdays, rows])
+  const cols = useMemo(() => classColumns(month, groupId, settings.timetable, settings.timetableChanges, (rows ?? []).map((r) => r.date), false), [month, groupId, settings.timetable, settings.timetableChanges, rows])
   const spans = weekSpans(cols)
   const { cell, perDay } = useMemo(() => attendByDay(rows ?? []), [rows])
   const tally = useMemo(() => attendTally([...cell.values()]), [cell])

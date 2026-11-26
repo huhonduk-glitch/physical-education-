@@ -1,3 +1,6 @@
+import type { TimetableChange, TimetableEntry } from '../db/settings'
+import { lessonsOnDate } from './timetable'
+
 /**
  * 누가 기록표 (2026-11-05 교사 요청: "나이스처럼 학생 명렬이 세로, 주차별로 기록") — 순수 함수.
  * 세로 = 학생, 가로 = 그 달의 수업일(시간표에 이 반이 있는 요일 + 기록이 있는 날), 주차로 묶음.
@@ -52,6 +55,31 @@ export function ledgerColumns(month: string, classWeekdays: ReadonlySet<number>,
     const dt = parse(date)
     return { date, day: dt.getDate(), weekday: dt.getDay(), week: weekOfMonth(date) }
   })
+}
+
+/**
+ * 이번 주만 바꾸기(2026-11-26)를 따른 이 수업반의 수업일 칸: 요일 시간표 날짜 + 보강한 날, 결강으로 이 반 수업이 없어진 날은 뺀다
+ * (그날 기록이 있으면 남긴다 — keepDates). 시간표가 없으면 평일 전부(allIfNone=false면 기록 있는 날만 — 출결 월간은 예전 그대로).
+ */
+export function classColumns(
+  month: string,
+  groupId: string,
+  timetable: readonly TimetableEntry[],
+  changes: readonly TimetableChange[],
+  keepDates: readonly string[] = [],
+  allIfNone = true,
+): LedgerColumn[] {
+  const mine = timetable.filter((x) => x.groupId === groupId)
+  const weekdays = new Set(mine.map((x) => x.day % 7))
+  const inMonth = changes.filter((c) => c.date.startsWith(`${month}-`))
+  const added = inMonth.filter((c) => c.groupId === groupId).map((c) => c.date)
+  const keep = new Set(keepDates)
+  const dropped = new Set(
+    inMonth
+      .map((c) => c.date)
+      .filter((d) => !keep.has(d) && !lessonsOnDate(d, timetable, changes).some((l) => l.groupId === groupId)),
+  )
+  return ledgerColumns(month, weekdays.size || !allIfNone ? weekdays : new Set([1, 2, 3, 4, 5]), [...keepDates, ...added]).filter((c) => !dropped.has(c.date))
 }
 
 /** 주차 머리글: 같은 주의 칸 수 */

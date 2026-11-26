@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { TimetableEntry } from '../../db/settings'
+import type { TimetableChange, TimetableEntry } from '../../db/settings'
 import { leftText } from '../../lib/dash'
 import { lessonClock } from '../../lib/timetable'
 
@@ -11,11 +11,13 @@ const DAYS = ['일', '월', '화', '수', '목', '금', '토']
  */
 export default function ClockTile({
   timetable,
+  changes = [],
   periodStarts,
   periodMinutes,
   nameOf,
 }: {
   timetable: readonly TimetableEntry[]
+  changes?: readonly TimetableChange[]
   periodStarts: readonly string[]
   periodMinutes: number
   nameOf: (groupId: string) => string | undefined
@@ -26,7 +28,7 @@ export default function ClockTile({
     return () => clearInterval(t)
   }, [])
   const p2 = (n: number) => String(n).padStart(2, '0')
-  const lc = lessonClock(now, timetable, periodStarts, periodMinutes)
+  const lc = lessonClock(now, timetable, periodStarts, periodMinutes, changes)
   const name = lc ? nameOf(lc.groupId) : undefined
   return (
     <section className="dash-tile flex flex-col items-center justify-center bg-gradient-to-br from-[#eef4ff] to-[#f6f0ff] text-center" aria-label="지금 시각">

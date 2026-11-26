@@ -63,7 +63,7 @@ export default function PlansPage() {
         {sorted.map((p) => {
           const gs = (groups ?? []).filter((g) => p.groupIds.includes(g.id))
           const prog = gs.map((g) => {
-            const sched = schedule(p.items, meetings(g.id, settings.timetable, p, p.skips[g.id]))
+            const sched = schedule(p.items, meetings(g.id, settings.timetable, p, p.skips[g.id], settings.timetableChanges))
             return { g, ...groupProgress(sched, p.done[g.id] ?? [], today) }
           })
           return (

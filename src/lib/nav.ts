@@ -68,6 +68,7 @@ export const NAV: NavSection[] = [
           { to: '/students/import', label: '명렬 올리기', icon: 'upload', desc: '나이스 파일 · 붙여넣기' },
           { to: '/groups/new', label: '수업반 만들기', icon: 'plus', desc: '학적반 · 수강반', feature: 'records' },
           { to: '/more/settings/timetable', label: '내 수업 시간표', icon: 'calendar', desc: '요일 · 교시마다 수업반' },
+          { to: '/more/settings/timetable/changes', label: '이번 주만 바꾸기', icon: 'calendar', desc: '교환 · 보강 · 결강 · 행사 · 컴시간 변경' },
           { to: '/more/settings/neis', label: '나이스에서 불러오기', icon: 'download', desc: '학급 · 시간표 · 학사일정' },
           { to: '/timetable/pe', label: '전체 체육 시간표', icon: 'grid', desc: '컴시간 · 체육관 겹침' },
         ],

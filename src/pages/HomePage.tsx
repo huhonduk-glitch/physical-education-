@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import type { TimetableChange } from '../db/settings'
 import { Link } from 'react-router-dom'
 import AutoBackupNotice from '../components/AutoBackupNotice'
 import BackupWarning from '../components/BackupWarning'
@@ -24,7 +25,7 @@ import { FEATURES, featureOn } from '../lib/features'
 import { GROUP_COLORS, readLastGroup, SEMESTER_LABEL } from '../lib/groups'
 import { lessonFocus, setupProgress, setupSteps } from '../lib/home'
 import { currentInstallInfo } from '../lib/install'
-import { currentPeriod, todaysLessons } from '../lib/timetable'
+import { currentPeriod, lessonsOnDate, todaysLessons } from '../lib/timetable'
 import { useApp } from '../state/AppContext'
 import { useGroups } from '../state/useGroups'
 import { NAV, visibleGroups } from '../lib/nav'
@@ -46,7 +47,7 @@ export default function HomePage() {
   const classEvts = useClassEvents()
   const layout = resolveLayout(settings.homeLayout)
   const now = new Date()
-  const lessons = todaysLessons(now, settings.timetable)
+  const lessons = todaysLessons(now, settings.timetable, settings.timetableChanges)
   const period = currentPeriod(now, settings.periodStarts, settings.periodMinutes)
   const groupById = new Map((groups ?? []).map((g) => [g.id, g]))
   // 아래 탭(수업반·종목·평가·도구)과 겹치는 기능은 빼고, 탭에 없는 기능만 바로가기에 둔다
@@ -70,7 +71,7 @@ export default function HomePage() {
   const [setupHidden, setSetupHidden] = useState(readSetupHidden)
   const requiredDone = setup.filter((s) => !s.optional && s.id !== 'backup').every((s) => s.done)
   const showSetup = students !== undefined && groups !== undefined && progress.done < progress.total && !(requiredDone && setupHidden)
-  const focus = recordsOn ? lessonFocus(now, settings.timetable, settings.periodStarts, settings.periodMinutes) : null
+  const focus = recordsOn ? lessonFocus(now, settings.timetable, settings.periodStarts, settings.periodMinutes, settings.timetableChanges) : null
   const focusGroup = focus ? groupById.get(focus.entry.groupId) : undefined
   const lastGroup = (() => {
     const id = readLastGroup()
@@ -236,13 +237,16 @@ export default function HomePage() {
               <details className="group card p-0" open={wide}>
                 <summary className="flex min-h-[56px] cursor-pointer list-none items-center gap-2 px-4 [&::-webkit-details-marker]:hidden">
                   <b className="flex-1 text-[1.05rem]">이번 주 내 시간표</b>
+                  <Link to="/more/settings/timetable/changes" className="text-sm font-bold text-ink-3" onClick={(e) => e.stopPropagation()}>
+                    바꾸기
+                  </Link>
                   <Link to="/timetable/pe" className="text-sm font-bold text-ink-3" onClick={(e) => e.stopPropagation()}>
                     전체 체육 ›
                   </Link>
                   <Icon name="chevronDown" size={18} className="text-ink-3 transition-transform group-open:rotate-180" />
                 </summary>
                 <div className="overflow-x-auto px-2 pb-2">
-                  <WeekTable now={now} period={period} timetable={settings.timetable} groupById={groupById} dates={weekDates(today)} starts={settings.periodStarts} minutes={settings.periodMinutes} />
+                  <WeekTable now={now} period={period} timetable={settings.timetable} changes={settings.timetableChanges} groupById={groupById} dates={weekDates(today)} starts={settings.periodStarts} minutes={settings.periodMinutes} />
                 </div>
               </details>
             </section>
@@ -373,7 +377,7 @@ export default function HomePage() {
 
         {/* 맨 위 한 줄 (2026-11-12 대시보드): 시계 · 날씨 · D-day. 폰은 시계 | D-day 두 칸 + 날씨 한 줄 */}
         <div className="grid grid-cols-2 gap-3 xl:grid-cols-[1fr_1.25fr_1fr]">
-          <ClockTile timetable={recordsOn ? settings.timetable : []} periodStarts={settings.periodStarts} periodMinutes={settings.periodMinutes} nameOf={(id) => groupById.get(id)?.name} />
+          <ClockTile timetable={recordsOn ? settings.timetable : []} changes={settings.timetableChanges} periodStarts={settings.periodStarts} periodMinutes={settings.periodMinutes} nameOf={(id) => groupById.get(id)?.name} />
           <div className="order-3 col-span-2 xl:order-none xl:col-span-1">
             <WeatherCard />
           </div>
@@ -437,6 +441,7 @@ function WeekTable({
   now,
   period,
   timetable,
+  changes,
   groupById,
   dates,
   starts,
@@ -448,8 +453,12 @@ function WeekTable({
   now: Date
   period: number | null
   timetable: { day: number; period: number; groupId: string }[]
+  changes: readonly TimetableChange[]
   groupById: Map<string, { id: string; name: string; color: string }>
 }) {
+  // 이번 주만 바꾼 수업(2026-11-26)을 따른 날짜별 수업
+  const byDay = dates.map((d) => lessonsOnDate(d, timetable, changes))
+  const changeAt = (d: number, p: number) => changes.find((c) => c.date === dates[d - 1] && c.period === p)
   return (
     <table className="w-full table-fixed border-separate border-spacing-1 text-[0.8rem] xl:text-[0.86rem]">
       <thead>
@@ -475,14 +484,21 @@ function WeekTable({
               <span className="hidden text-[0.64rem] leading-tight font-semibold xl:block">{periodRange(starts[p - 1], minutes)}</span>
             </th>
             {[1, 2, 3, 4, 5].map((d) => {
-              const t = timetable.find((x) => x.day === d && x.period === p)
+              const t = byDay[d - 1]?.find((x) => x.period === p)
               const g = t ? groupById.get(t.groupId) : undefined
-              if (!g) return <td key={d} className={`h-11 rounded-lg ${now.getDay() === d ? 'bg-brand-light' : 'bg-fill/60'}`} />
+              const ch = changeAt(d, p)
+              if (!g)
+                return (
+                  <td key={d} className={`h-11 rounded-lg text-center ${now.getDay() === d ? 'bg-brand-light' : 'bg-fill/60'}`}>
+                    {ch && <span className="text-[0.68rem] font-bold text-ink-3 line-through decoration-ink-3/60">{ch.kind}</span>}
+                  </td>
+                )
               const c = GROUP_COLORS[g.color as keyof typeof GROUP_COLORS] ?? GROUP_COLORS.blue
               const live = now.getDay() === d && period === p
               return (
                 <td key={d} className={`h-11 rounded-lg p-0 text-center ${live ? 'ring-2 ring-brand' : now.getDay() === d ? 'ring-1 ring-brand/50' : ''}`} style={{ background: c.bg }}>
-                  <Link to={`/groups/${g.id}`} className="line-clamp-2 block px-1 py-0.5 leading-tight font-bold break-all text-ink" title={g.name}>
+                  <Link to={`/groups/${g.id}`} className="line-clamp-2 block px-1 py-0.5 leading-tight font-bold break-all text-ink" title={ch ? `${g.name} (${ch.kind})` : g.name}>
+                    {ch && <span className="block text-[0.62rem] leading-none font-extrabold text-caution">{ch.kind}</span>}
                     {shortName(g.name)}
                   </Link>
                 </td>

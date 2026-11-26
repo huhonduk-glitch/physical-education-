@@ -47,14 +47,14 @@ export default function JournalPage() {
   const planDay = useMemo(
     () =>
       (plans ?? []).map((p) => {
-        const sched = schedule(p.items, meetings(id, settings.timetable, p, p.skips[id]))
+        const sched = schedule(p.items, meetings(id, settings.timetable, p, p.skips[id], settings.timetableChanges))
         const done = p.done[id] ?? []
         return { p, done, on: itemsOn(sched, date), next: nextItem(sched, done) }
       }),
-    [plans, id, settings.timetable, date],
+    [plans, id, settings.timetable, settings.timetableChanges, date],
   )
 
-  const nowPeriod = date === todayStr() ? classForNow(new Date(), settings.timetable, settings.periodStarts, settings.periodMinutes) : null
+  const nowPeriod = date === todayStr() ? classForNow(new Date(), settings.timetable, settings.periodStarts, settings.periodMinutes, settings.timetableChanges) : null
   const [form, setForm] = useState({ period: '', unit: '', activity: '', note: '' })
   const [msg, setMsg] = useState('')
   // 날짜를 바꾸거나 저장된 내용이 바뀌면 칸을 다시 채운다

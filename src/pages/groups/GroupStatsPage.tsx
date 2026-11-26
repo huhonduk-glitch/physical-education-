@@ -47,12 +47,12 @@ export default function GroupStatsPage() {
   const plans = useLiveQuery(() => db.progressPlans.where('groupIds').equals(id).toArray(), [id])
   const planTarget = (plans ?? []).reduce((m, p) => Math.max(m, p.target || 0), 0)
   // 진도표 기간 · 쉬는 날 · 빠진 수업으로 시간표를 센 수 (목표 차시와 다를 때 확인용)
-  const planCount = useMemo(() => (plans ?? []).reduce((m, p) => Math.max(m, planSessions(id, settings.timetable, p)), 0), [plans, id, settings.timetable])
+  const planCount = useMemo(() => (plans ?? []).reduce((m, p) => Math.max(m, planSessions(id, settings.timetable, p, settings.timetableChanges)), 0), [plans, id, settings.timetable, settings.timetableChanges])
   const dayCount = useMemo(() => new Set([...(data?.records ?? []), ...(data?.attendance ?? [])].filter((x) => inRange(x.date, range)).map((x) => x.date)).size, [data, range])
   // 진도표가 없으면 시간표로 이 학기 교시를 센다(학사일정 휴업일 · 방학 빼고) — creditBase.ts
   const sessions = useMemo(
-    () => (group ? termSessions(id, settings.timetable, termFromSchedule(settings.schoolYear, group.semester, settings.neisSchedule?.events ?? [], group.grade), settings.neisSchedule?.events ?? [], group.grade) : 0),
-    [group, id, settings.timetable, settings.schoolYear, settings.neisSchedule],
+    () => (group ? termSessions(id, settings.timetable, termFromSchedule(settings.schoolYear, group.semester, settings.neisSchedule?.events ?? [], group.grade), settings.neisSchedule?.events ?? [], group.grade, settings.timetableChanges) : 0),
+    [group, id, settings.timetable, settings.timetableChanges, settings.schoolYear, settings.neisSchedule],
   )
   const heldInfo = heldClasses({ planTarget, sessions, recordedDays: dayCount, planSessions: planCount })
   const held = heldInfo.held

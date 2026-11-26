@@ -37,11 +37,11 @@ export default function WeeklyPage() {
     for (const p of plans ?? [])
       for (const g of groups ?? []) {
         if (!p.groupIds.includes(g.id)) continue
-        const pr = groupProgress(schedule(p.items, meetings(g.id, settings.timetable, p, p.skips[g.id])), p.done[g.id] ?? [], today)
+        const pr = groupProgress(schedule(p.items, meetings(g.id, settings.timetable, p, p.skips[g.id], settings.timetableChanges)), p.done[g.id] ?? [], today)
         if (pr.diff < 0) out.push({ planId: p.id, title: p.title, group: g.name, late: -pr.diff })
       }
     return out.sort((a, b) => b.late - a.late)
-  }, [plans, groups, settings.timetable, today])
+  }, [plans, groups, settings.timetable, settings.timetableChanges, today])
 
   // 채점: 수업반이 정해진 이 학년도 평가마다 아직 다 채점 안 된 학생 수
   const assess = useLiveQuery(async () => {

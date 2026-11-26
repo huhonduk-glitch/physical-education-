@@ -50,7 +50,7 @@ export default function GroupBoardPage() {
   const isToday = date === todayStr()
   const { groups, membersOf } = useGroups()
   const group = groups?.find((g) => g.id === id)
-  const now = isToday ? classForNow(new Date(), settings.timetable, settings.periodStarts, settings.periodMinutes) : null
+  const now = isToday ? classForNow(new Date(), settings.timetable, settings.periodStarts, settings.periodMinutes, settings.timetableChanges) : null
   const nowHere = now && now.groupId === id ? now : null
 
   const list: Student[] = useMemo(() => (group ? membersOf(group) : []), [group, membersOf])

@@ -1,5 +1,5 @@
 import type { ClassGroup, PapsRound, ProgressPlan } from '../db/types'
-import type { TimetableEntry } from '../db/settings'
+import type { TimetableChange, TimetableEntry } from '../db/settings'
 import { meetings, schedule } from './progressPlan'
 
 /**
@@ -19,6 +19,7 @@ export function classEvents(input: {
   plans: readonly ProgressPlan[]
   groups: readonly Pick<ClassGroup, 'id' | 'name'>[]
   timetable: readonly TimetableEntry[]
+  changes?: readonly TimetableChange[]
   rounds: readonly PapsRound[]
 }): ClassEvent[] {
   const out: ClassEvent[] = []
@@ -27,7 +28,7 @@ export function classEvents(input: {
     for (const gid of p.groupIds) {
       const name = nameOf.get(gid)
       if (!name) continue
-      for (const s of schedule(p.items, meetings(gid, input.timetable, p, p.skips[gid]))) {
+      for (const s of schedule(p.items, meetings(gid, input.timetable, p, p.skips[gid], input.changes))) {
         const note = s.item.evalNote?.trim()
         if (!note || !s.meeting) continue
         out.push({ date: s.meeting.date, label: `${name} ${s.meeting.period}교시 평가: ${note}`, kind: 'eval' })

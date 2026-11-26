@@ -27,6 +27,7 @@ export function newYearPatch(s: AppSettings, o: NewYearOptions): Partial<AppSett
     latestYear: o.next,
     // 내 시간표 · 나이스 학사일정(3월 ~ 다음 해 2월) · 받아 둔 한 주 시간표는 그해 것이라 새로 받는다
     timetable: [],
+    timetableChanges: [],
     neisSchedule: null,
     neisPeWeek: null,
     comciWeek: null,
