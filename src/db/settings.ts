@@ -102,6 +102,8 @@ export interface AppSettings {
   homeLayout: import('../lib/dash').HomeLayout | null
   /** 홈 메모 (2026-11-25, 슈퍼스쿨 홈 메모 참고): 새 것이 앞. 이 기기 자료 · 백업 · 구글 동기화에 함께 */
   homeMemos: HomeMemo[]
+  /** 민감한 화면(견학 · 세특 쓰기 · 건강체력교실)을 열 때 PIN 한 번 더 (2026-11-26, 처음엔 끔) */
+  sensitiveLock: boolean
   /** 업무 달력 일정 (같이 쓰기 6-13, 이 기기에만 · 학생 정보 없음) */
   workEvents: import('../lib/workCal').WorkEvent[]
   /** 학교 공유 공간 연결 (0-4 예외 6-13). 비밀번호가 있어 백업 파일에서 뺀다(SECRET_KEYS) */
@@ -216,6 +218,7 @@ export function defaultSettings(): AppSettings {
     budgetManual: [],
     homeLayout: null,
     homeMemos: [],
+    sensitiveLock: false,
     workEvents: [],
     clinicRule: { lowGrades: [4, 5], obeseLabels: ['경도비만', '고도비만'] },
     fitKing: { mode: 'custom', percent: 20, count: null, gold: 1, silver: 2, split: false, cuts: {} },

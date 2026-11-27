@@ -17,6 +17,7 @@ import { termsAccepted } from './lib/terms'
 import { DEFAULT_STANDARDS, type PapsStandards } from './lib/paps'
 import { PIN_SETTING_KEY, type StoredPin } from './lib/pin'
 import HomePage from './pages/HomePage'
+import SensitiveGate from './components/SensitiveGate'
 const LockPage = lazy(() => import('./pages/LockPage'))
 const MorePage = lazy(() => import('./pages/MorePage'))
 const PapsPage = lazy(() => import('./pages/PapsPage'))
@@ -222,7 +223,7 @@ export default function App() {
           <Route path="/paps/stats" element={<PapsStatsPage />} />
           <Route path="/paps/school" element={<PapsSchoolPage />} />
           <Route path="/paps/king" element={<PapsKingPage />} />
-          <Route path="/paps/clinic" element={<ClinicPage />} />
+          <Route path="/paps/clinic" element={<SensitiveGate what="건강체력교실"><ClinicPage /></SensitiveGate>} />
           <Route path="/paps/export" element={<PapsExportPage />} />
           <Route path="/paps/setup" element={<PapsSetupPage />} />
           <Route path="/paps/codes" element={<PapsLinkCodesPage />} />
@@ -235,7 +236,7 @@ export default function App() {
           <Route path="/students/:id" element={<StudentDetailPage />} />
           <Route path="/students/:id/report" element={<ReportPage scope="student" />} />
           <Route path="/more/keywords" element={<KeywordsPage />} />
-          <Route path="/seteuk/write" element={<SeteukWritePage />} />
+          <Route path="/seteuk/write" element={<SensitiveGate what="세특 쓰기"><SeteukWritePage /></SensitiveGate>} />
           <Route path="/seteuk/survey" element={<SurveyPage />} />
           <Route path="/seteuk/ai-guide" element={<AiGuidePage />} />
           <Route path="/timetable/pe" element={<PeTimetablePage />} />
@@ -268,7 +269,7 @@ export default function App() {
           <Route path="/more/assessments/:id/sheet" element={<AssessSheetPrintPage />} />
           <Route path="/more/assessments/:id" element={<AssessmentGradePage />} />
           <Route path="/more/captains" element={<CaptainsPage />} />
-          <Route path="/more/absences" element={<AbsencesPage />} />
+          <Route path="/more/absences" element={<SensitiveGate what="견학"><AbsencesPage /></SensitiveGate>} />
           <Route path="/more/settings" element={<SettingsPage />} />
           <Route path="/more/settings/buttons" element={<RecordButtonsPage />} />
           <Route path="/more/settings/timetable" element={<TimetablePage />} />
