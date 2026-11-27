@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
+import FirstTip from '../../components/FirstTip'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import ClassPicker, { classKeyStr } from '../../components/ClassPicker'
 import PageHeader from '../../components/PageHeader'
@@ -61,6 +62,9 @@ export default function PapsInputPage() {
     <>
       <PageHeader wide="xl" title={title} sub={cls ? `${cls.grade}학년 ${cls.classNo}반 · 엔터를 누르면 다음 칸` : undefined} back />
       <div className="page space-y-3 pb-8 xl:max-w-[72rem]">
+        <FirstTip id="paps-input" manual="paps">
+          숫자를 넣고 Enter를 누르면 다음 학생으로 넘어가요. 등급 · 점수는 교육부 공식 기준표로 바로 보여요. 범위를 벗어나거나 자릿수가 많으면 빨갛게 알려 줘요(나이스가 파일을 거부하지 않게).
+        </FirstTip>
         <ClassPicker classes={classes} mine={mine} value={cls} onChange={setCls} />
         {cls && <RoundBar rounds={pc.rounds} readOnly={readOnly} />}
         {readOnly && <p className="rounded-2xl bg-caution-light px-4 py-2.5 font-bold text-caution">지난 학년도는 읽기 전용이에요.</p>}

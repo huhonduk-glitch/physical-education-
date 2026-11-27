@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import FirstTip from '../components/FirstTip'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Collapse from '../components/Collapse'
@@ -149,6 +150,9 @@ export default function SeteukWritePage() {
         }
       />
       <div className="page space-y-4 pb-8">
+        <FirstTip id="seteuk" manual="seteuk">
+          ① [수준 정하기]로 학생을 나누고 → ② 학생을 눌러 기록으로 틀 초안을 넣고 → ③ 선생님 문장으로 고친 뒤 확인 4개를 체크하면 확정돼요. AI 글을 고치지 않고 그대로 두면 확정되지 않아요(기재요령 5-다).
+        </FirstTip>
         {groups && groups.length > 1 && <GroupPicker groups={groups} value={group?.id ?? null} onChange={(g) => setSp({ g }, { replace: true })} />}
 
         <Collapse title="기재요령 AI 규정 (꼭 읽어 주세요)" sub="AI 글을 그대로 입력하면 안 돼요" defaultOpen={rulesFirst && !settings.claudeApiKey && !settings.openrouterApiKey}>
