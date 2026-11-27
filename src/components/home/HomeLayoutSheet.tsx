@@ -9,9 +9,15 @@ import Icon from '../Icon'
  */
 export default function HomeLayoutSheet({ onClose }: { onClose: () => void }) {
   const { settings, updateSettings } = useApp()
-  const { order, hidden } = resolveLayout(settings.homeLayout)
+  const { order, hidden, wide } = resolveLayout(settings.homeLayout)
   const label = new Map<string, string>(HOME_WIDGETS.map((w) => [w.id, w.label]))
-  const save = (o: HomeWidgetId[], h: Set<HomeWidgetId>) => void updateSettings({ homeLayout: { order: o, hidden: [...h] } })
+  const save = (o: HomeWidgetId[], h: Set<HomeWidgetId>, w: Set<HomeWidgetId> = wide) => void updateSettings({ homeLayout: { order: o, hidden: [...h], wide: [...w] } })
+  const toggleWide = (id: HomeWidgetId) => {
+    const w = new Set(wide)
+    if (w.has(id)) w.delete(id)
+    else w.add(id)
+    save(order, hidden, w)
+  }
   const toggle = (id: HomeWidgetId) => {
     const h = new Set(hidden)
     if (h.has(id)) h.delete(id)
@@ -34,6 +40,16 @@ export default function HomeLayoutSheet({ onClose }: { onClose: () => void }) {
                 <button type="button" className="btn btn-ghost h-11 min-h-0 min-w-11 px-0" aria-label={`${label.get(id)} 아래로`} disabled={i === order.length - 1} onClick={() => save(moveWidget(order, id, 1), hidden)}>
                   <Icon name="down" size={18} />
                 </button>
+                <button
+                  type="button"
+                  className={`hidden h-9 shrink-0 rounded-full px-2.5 text-sm font-bold xl:block ${wide.has(id) ? 'bg-ink text-white' : 'bg-white text-ink-3'}`}
+                  aria-pressed={wide.has(id)}
+                  title="넓은 화면에서 두 단을 다 써요"
+                  disabled={off}
+                  onClick={() => toggleWide(id)}
+                >
+                  넓게
+                </button>
                 <button type="button" className={`h-9 shrink-0 rounded-full px-3 text-sm font-bold ${off ? 'bg-white text-ink-2' : 'bg-brand text-white'}`} aria-pressed={!off} onClick={() => toggle(id)}>
                   {off ? '숨김' : '보임'}
                 </button>
@@ -41,7 +57,7 @@ export default function HomeLayoutSheet({ onClose }: { onClose: () => void }) {
             )
           })}
         </ol>
-        <p className="hint">시작 준비 · 오늘 수업처럼 보여 줄 것이 없는 칸은 켜 두어도 나타나지 않아요.</p>
+        <p className="hint">시작 준비 · 오늘 수업처럼 보여 줄 것이 없는 칸은 켜 두어도 나타나지 않아요. 넓은 화면(PC)에서는 [넓게]를 누른 칸이 두 단을 다 써요.</p>
         <div className="grid grid-cols-2 gap-2 pt-1">
           <button type="button" className="btn btn-outline" onClick={() => void updateSettings({ homeLayout: null })}>
             처음 배치로

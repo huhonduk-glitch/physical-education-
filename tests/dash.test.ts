@@ -66,6 +66,8 @@ describe('홈 대시보드', () => {
     expect([...r.order].sort()).toEqual([...all].sort())
     expect(r.order.indexOf('setup')).toBe(r.order.indexOf('focus') + 1) // 빠진 칸은 기본 순서의 앞 칸 뒤
     expect([...r.hidden]).toEqual(['weekly'])
+    expect(resolveLayout({ order: [], hidden: [], wide: ['calendar', '없는칸'] }).wide).toEqual(new Set(['calendar']))
+    expect(resolveLayout(null).wide.size).toBe(0)
     expect(moveWidget(['focus', 'today', 'calendar'], 'calendar', -1)).toEqual(['focus', 'calendar', 'today'])
     expect(moveWidget(['focus', 'today'], 'focus', -1)).toEqual(['focus', 'today'])
   })
