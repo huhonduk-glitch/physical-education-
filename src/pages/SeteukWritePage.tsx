@@ -19,6 +19,7 @@ import { useGroups } from '../state/useGroups'
 import AiSetupCard, { aiSettingsOf } from './seteuk/AiSetupCard'
 import LevelSheet from './seteuk/LevelSheet'
 import SeteukEditor from './seteuk/SeteukEditor'
+import ObservePasteSheet from './seteuk/ObservePasteSheet'
 import { aiEvidence, basisKeyFor, LEVEL_TONE } from './seteuk/seteukShared'
 
 /**
@@ -65,6 +66,7 @@ export default function SeteukWritePage() {
 
   const [openId, setOpenId] = useState<string | null>(null)
   const [levelSheet, setLevelSheet] = useState(false)
+  const [pasteObs, setPasteObs] = useState(false)
   const [filter, setFilter] = useState<number | 0>(0)
   const [msg, setMsg] = useState('')
 
@@ -278,9 +280,20 @@ export default function SeteukWritePage() {
             )}
           </section>
         )}
+        {!readOnly && group && (
+          <button type="button" className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl bg-white px-4 text-left shadow-[var(--shadow-card)]" onClick={() => setPasteObs(true)}>
+            <Icon name="note" className="text-brand" />
+            <span className="min-w-0 flex-1">
+              <b className="block">관찰 메모 한꺼번에 넣기</b>
+              <span className="hint">엑셀 · 시트의 [학번 · 이름 · 내용]을 붙여 넣으면 학생마다 관찰 기록으로 → 세특 근거</span>
+            </span>
+            <Icon name="chevronRight" className="text-ink-3" />
+          </button>
+        )}
         <p className="hint px-1">나이스에는 확정한 글을 학생마다 [복사]해서 붙여 넣거나, 엑셀로 받아 옮겨 주세요. 나이스 화면에 자동으로 입력하지 않아요.</p>
       </div>
 
+      {pasteObs && group && <ObservePasteSheet group={group} members={members} onClose={() => setPasteObs(false)} />}
       {levelSheet && group && basis && <LevelSheet group={group} basis={basis} scores={scores} auto={auto} drafts={byStudent} onClose={() => setLevelSheet(false)} />}
       {openBasis && group && (
         <SeteukEditor
