@@ -389,7 +389,7 @@ export default function HomePage() {
           {layout.order
             .filter((id) => !layout.hidden.has(id))
             .map((id) => (
-              <div key={id} className="break-inside-avoid empty:hidden xl:mb-5">
+              <div key={id} className={`break-inside-avoid empty:hidden xl:mb-5 ${layout.wide.has(id) ? 'xl:[column-span:all]' : ''}`}>
                 {blocks[id]}
               </div>
             ))}

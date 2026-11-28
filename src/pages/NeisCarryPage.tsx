@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
+import NeisAttendCompareCard from './NeisAttendCompareCard'
 import { db } from '../db/db'
 import { setNeisCarried } from '../db/attendanceRepo'
 import { ATTEND_LABEL, isMissing } from '../lib/attendance'
@@ -107,6 +108,8 @@ export default function NeisCarryPage() {
             </section>
           )
         })}
+
+        <NeisAttendCompareCard withReason={withReason} />
 
         <p className="hint px-1">
           출결을 고치면(상태 · 사유) 그 줄은 다시 ‘안 옮긴 것’으로 돌아와요. 나이스 과목별 출결은 교과 선생님이, 일일 출결은 담임 선생님이 넣어요.

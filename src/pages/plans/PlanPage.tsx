@@ -1,4 +1,5 @@
 import ShareSheet from '../../components/ShareSheet'
+import FirstTip from '../../components/FirstTip'
 import { packPlan } from '../../lib/share'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
@@ -92,6 +93,9 @@ export default function PlanPage() {
         }
       />
       <div className="page space-y-4 pb-8">
+        <FirstTip id="plan" manual="class">
+          [날짜 · 진도]에서 끝낸 차시는 ✓, 행사로 수업이 빠지면 [빠짐]을 눌러요(뒤 차시가 밀려요). 결강 · 교환 · 보강은 [홈 → 이번 주만 바꾸기]에 적으면 날짜가 저절로 맞춰져요.
+        </FirstTip>
         <div className="segment" role="tablist">
           {(
             [

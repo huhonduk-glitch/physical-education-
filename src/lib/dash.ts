@@ -154,10 +154,12 @@ export type HomeWidgetId = (typeof HOME_WIDGETS)[number]['id']
 export interface HomeLayout {
   order: string[]
   hidden: string[]
+  /** 넓은 화면(PC)에서 두 단을 다 쓰는 칸 (2026-11-26, 슈퍼스쿨 홈 칸 크기 조절 참고) */
+  wide?: string[]
 }
 
 /** 저장한 배치 → 실제 순서. 모르는 이름은 버리고, 새로 생긴 칸은 기본 자리(앞 칸 바로 뒤)에 끼운다 */
-export function resolveLayout(saved?: HomeLayout | null): { order: HomeWidgetId[]; hidden: Set<HomeWidgetId> } {
+export function resolveLayout(saved?: HomeLayout | null): { order: HomeWidgetId[]; hidden: Set<HomeWidgetId>; wide: Set<HomeWidgetId> } {
   const all = HOME_WIDGETS.map((w) => w.id)
   const known = new Set<string>(all)
   const order = (saved?.order ?? []).filter((id, i, a): id is HomeWidgetId => known.has(id) && a.indexOf(id) === i)
@@ -167,7 +169,11 @@ export function resolveLayout(saved?: HomeLayout | null): { order: HomeWidgetId[
     const at = prev ? order.indexOf(prev) : -1
     order.splice(at + 1, 0, id)
   }
-  return { order, hidden: new Set((saved?.hidden ?? []).filter((id): id is HomeWidgetId => known.has(id))) }
+  return {
+    order,
+    hidden: new Set((saved?.hidden ?? []).filter((id): id is HomeWidgetId => known.has(id))),
+    wide: new Set((saved?.wide ?? []).filter((id): id is HomeWidgetId => known.has(id))),
+  }
 }
 
 /** 한 칸 위(-1) · 아래(+1)로 */

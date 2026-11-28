@@ -35,6 +35,9 @@ interface Props {
  * 학생 한 명 세특 쓰기 (6-5 ③ + 6-7): 수준 → 근거(#번호 · 중요 · 빼기) → 수준 틀 초안 → 선생님이 고침 →
  * (선택) AI 초안 · 다듬기 · 추가 요청 → 다시 고치고 확인 4개 → 확정. 살핌의 학생별 완성 화면을 참고했다.
  */
+/** 다듬기 빠른 요청: 교사 기록에 없는 내용을 더하라는 말은 넣지 않는다 (부풀리기 금지) */
+const QUICK_ASKS = ['조금 더 짧게', '조금 더 길게', '구체적인 장면을 살려', '성장 과정이 보이게', '같은 말 반복 줄이기']
+
 export default function SeteukEditor({ group, basis, draft, level, autoLevel, levelCount, frame, names, onClose }: Props) {
   const { settings, readOnly } = useApp()
   const student = basis.student
@@ -216,6 +219,19 @@ export default function SeteukEditor({ group, basis, draft, level, autoLevel, le
               placeholder="(선택) AI에 추가 요청 — 예: #2 강조, 조금 더 짧게"
               aria-label="AI 추가 요청"
             />
+            {/* 다듬기 빠른 요청 (2026-11-26, 슈퍼스쿨 '대화형 수정' 참고): 누르면 요청 칸에 이어 붙임 */}
+            <div className="flex flex-wrap gap-1.5" aria-label="빠른 요청">
+              {QUICK_ASKS.map((q) => (
+                <button
+                  key={q}
+                  type="button"
+                  className={`min-h-[36px] rounded-full px-3 text-[0.84rem] font-bold ${request.includes(q) ? 'bg-brand text-white' : 'bg-fill text-ink-2'}`}
+                  onClick={() => setRequest((r) => (r.includes(q) ? r.replace(q, '').replace(/^[,\s]+|[,\s]+$/g, '').replace(/,\s*,/g, ',') : r.trim() ? `${r.trim()}, ${q}` : q))}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" className="btn btn-soft" onClick={() => askAi('draft')} disabled={busy || !ready || !used.length}>
                 <Icon name="bolt" /> {manual ? 'AI 초안 요청문 복사' : 'AI 초안'}

@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import FirstTip from '../components/FirstTip'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Collapse from '../components/Collapse'
@@ -19,6 +20,7 @@ import { useGroups } from '../state/useGroups'
 import AiSetupCard, { aiSettingsOf } from './seteuk/AiSetupCard'
 import LevelSheet from './seteuk/LevelSheet'
 import SeteukEditor from './seteuk/SeteukEditor'
+import ObservePasteSheet from './seteuk/ObservePasteSheet'
 import { aiEvidence, basisKeyFor, LEVEL_TONE } from './seteuk/seteukShared'
 
 /**
@@ -65,6 +67,7 @@ export default function SeteukWritePage() {
 
   const [openId, setOpenId] = useState<string | null>(null)
   const [levelSheet, setLevelSheet] = useState(false)
+  const [pasteObs, setPasteObs] = useState(false)
   const [filter, setFilter] = useState<number | 0>(0)
   const [msg, setMsg] = useState('')
 
@@ -147,6 +150,9 @@ export default function SeteukWritePage() {
         }
       />
       <div className="page space-y-4 pb-8">
+        <FirstTip id="seteuk" manual="seteuk">
+          ① [수준 정하기]로 학생을 나누고 → ② 학생을 눌러 기록으로 틀 초안을 넣고 → ③ 선생님 문장으로 고친 뒤 확인 4개를 체크하면 확정돼요. AI 글을 고치지 않고 그대로 두면 확정되지 않아요(기재요령 5-다).
+        </FirstTip>
         {groups && groups.length > 1 && <GroupPicker groups={groups} value={group?.id ?? null} onChange={(g) => setSp({ g }, { replace: true })} />}
 
         <Collapse title="기재요령 AI 규정 (꼭 읽어 주세요)" sub="AI 글을 그대로 입력하면 안 돼요" defaultOpen={rulesFirst && !settings.claudeApiKey && !settings.openrouterApiKey}>
@@ -278,9 +284,20 @@ export default function SeteukWritePage() {
             )}
           </section>
         )}
+        {!readOnly && group && (
+          <button type="button" className="flex min-h-[56px] w-full items-center gap-3 rounded-2xl bg-white px-4 text-left shadow-[var(--shadow-card)]" onClick={() => setPasteObs(true)}>
+            <Icon name="note" className="text-brand" />
+            <span className="min-w-0 flex-1">
+              <b className="block">관찰 메모 한꺼번에 넣기</b>
+              <span className="hint">엑셀 · 시트의 [학번 · 이름 · 내용]을 붙여 넣으면 학생마다 관찰 기록으로 → 세특 근거</span>
+            </span>
+            <Icon name="chevronRight" className="text-ink-3" />
+          </button>
+        )}
         <p className="hint px-1">나이스에는 확정한 글을 학생마다 [복사]해서 붙여 넣거나, 엑셀로 받아 옮겨 주세요. 나이스 화면에 자동으로 입력하지 않아요.</p>
       </div>
 
+      {pasteObs && group && <ObservePasteSheet group={group} members={members} onClose={() => setPasteObs(false)} />}
       {levelSheet && group && basis && <LevelSheet group={group} basis={basis} scores={scores} auto={auto} drafts={byStudent} onClose={() => setLevelSheet(false)} />}
       {openBasis && group && (
         <SeteukEditor

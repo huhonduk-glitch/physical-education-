@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import FirstTip from '../../components/FirstTip'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import DateBar from '../../components/DateBar'
@@ -210,6 +211,9 @@ export default function GroupBoardPage() {
         }
       />
       <div className={`page space-y-3 pb-4 ${mode === 'ledger' ? 'lg:max-w-[72rem]' : ''}`}>
+        <FirstTip id="board" manual="class">
+          [기록표] 위 [입력]에서 결석 · 지각이나 칭찬 · 지도 항목을 고르면 칸을 누를 때마다 바로 기록되고, 다시 누르면 지워져요. 아무것도 안 고르면 칸을 눌러 그날 기록 창을 열어요. 오른쪽 위 ⋯에 수업 역할 · 누적 기록 · 수업 도구가 있어요.
+        </FirstTip>
         {groups && groups.length > 1 && <GroupPicker groups={groups} value={id} onChange={choose} />}
         {/* 넓은 화면: 날짜 · 수업 일지를 한 줄로 (표가 더 위로 올라오게, 2026-11-12) */}
         <div className="space-y-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-3 lg:space-y-0">

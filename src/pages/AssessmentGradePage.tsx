@@ -1,4 +1,5 @@
 import ShareSheet from '../components/ShareSheet'
+import FirstTip from '../components/FirstTip'
 import { packAssessment } from '../lib/share'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -120,6 +121,9 @@ export default function AssessmentGradePage() {
         }
       />
       <div className="page space-y-3 pb-8">
+        <FirstTip id="grade" manual="eval">
+          학생마다 등급 · 기록 · 점수를 넣으면 합계가 저절로 계산돼요. 구글 시트 · 엑셀에 이미 채점했다면 [구글 시트 · 엑셀에서 붙여넣기]로 한꺼번에 넣고, 다 끝나면 [평가 → 나이스 파일]에서 받아요.
+        </FirstTip>
         {!a.items && (
           <Link to={`/more/assessments/${a.id}/edit`} className="block rounded-2xl bg-caution-light px-4 py-3 font-bold text-caution">
             예전 방식 평가예요. 여기를 눌러 수업반과 등급 점수를 정해 주세요 →

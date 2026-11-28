@@ -197,6 +197,21 @@ function PinChange() {
       <button type="button" className="btn btn-primary w-full" disabled={busy || !cur || !next || !next2} onClick={change}>
         PIN 바꾸기
       </button>
+      <SensitiveLockSwitch />
     </Section>
+  )
+}
+
+/** 민감한 화면 다시 잠그기 (2026-11-26): 견학 · 세특 쓰기 · 건강체력교실을 열 때 PIN 한 번 더 */
+function SensitiveLockSwitch() {
+  const { settings, updateSettings } = useApp()
+  return (
+    <label className="flex min-h-[56px] items-start gap-3 rounded-2xl bg-fill px-4 py-3">
+      <input type="checkbox" className="mt-1 h-5 w-5 accent-[var(--color-brand)]" checked={settings.sensitiveLock} onChange={(e) => void updateSettings({ sensitiveLock: e.target.checked })} />
+      <span>
+        <b className="block">민감한 화면은 PIN 한 번 더</b>
+        <span className="hint">견학(건강) · 세특 쓰기 · 건강체력교실을 열 때 PIN을 다시 물어요. 10분 동안은 다시 안 묻고, 앱을 뒤로 내리면 다시 잠겨요. 수업 중 학생이 폰을 볼 때 좋아요.</span>
+      </span>
+    </label>
   )
 }
